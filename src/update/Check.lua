@@ -20,16 +20,13 @@
 -- recognises one.  Zero requires and no love.* calls, so it resolves on the
 -- main thread, inside the worker thread, and under plain Lua in a test.
 local Payload = require("src.update.Payload")
+local Semver = require("src.update.Semver")
 
 local Check = {}
 
--- MUST match `git remote get-url origin`.  This read UNDERdecodedHD/... for
--- a while, which is not a repository that exists: GitHub answered 404, curl
--- exited non-zero with an empty body, and the check reported "release check
--- failed" on every platform.  An updater that points at the wrong repo fails
--- exactly like an updater with no network, so verify this against the remote
--- rather than against how the account name is written down anywhere else.
-Check.REPO = "UNDERdecoded/Gen2Recomped"
+-- Temporary fork channel, shared with the launcher's news fallback. The
+-- native Switch mirror is checked by tools/auto_update_check.lua.
+Check.REPO = require("src.update.Repository").SLUG
 
 local CMD = "update_check_cmd"
 local STATE = "update_check_state"
@@ -80,6 +77,84 @@ function Check.parseRelease(jsonText, Json)
   }
 end
 
+function Check.previewId(id)
+  if type(id) ~= "string" then return nil end
+  local date, sequence = id:match("^(%d%d%d%d%d%d%d%d)%.(%d+)$")
+  if not date or #sequence > 9 then return nil end
+  return { date = tonumber(date), sequence = tonumber(sequence) }
+end
+
+function Check.previewMetadata(text, Json, expectedId)
+  if type(text) ~= "string" then return nil end
+  Json = Json or require("src.link.Json")
+  local ok, doc = pcall(Json.decode, text)
+  if not ok or type(doc) ~= "table" or not Check.previewId(doc.releaseId)
+      or expectedId and doc.releaseId ~= expectedId
+      or type(doc.engineVersion) ~= "string" or not doc.engineVersion:match("^%d+%.%d+%.%d+$")
+      or type(doc.sourceCommit) ~= "string" or #doc.sourceCommit ~= 40
+      or doc.sourceCommit:find("[^%x]") then return nil end
+  return { version = doc.engineVersion, releaseId = doc.releaseId, sourceCommit = doc.sourceCommit }
+end
+
+-- The fork currently publishes native-preview tags rather than stable semver
+-- releases. Resolve the actual engine version from its small build manifest;
+-- a date in a tag must never be mistaken for an engine version.
+function Check.parseReleaseFeed(text, Json, fetchManifest)
+  Json = Json or require("src.link.Json")
+  local ok, docs = pcall(Json.decode, text)
+  if not ok or type(docs) ~= "table" then return nil, "bad release list" end
+  if docs.tag_name then docs = { docs } end -- old single-release transports
+  local best, preview
+  local function choose(rel)
+    local version = best and Semver.compare(rel.version, best.version) or 1
+    if version > 0 or version == 0 and rel.kind == "native-preview" then best = rel end
+  end
+  for _, doc in ipairs(docs) do
+    if type(doc) == "table" and not doc.draft and type(doc.tag_name) == "string" then
+      local id = doc.tag_name:match("^native%-preview%-(.+)$")
+      local parts = Check.previewId(id)
+      if parts then
+        if not preview or parts.date > preview.parts.date
+            or parts.date == preview.parts.date and parts.sequence > preview.parts.sequence then
+          preview = { doc = doc, id = id, parts = parts }
+        end
+      else
+        local rel = Check.parseRelease(Json.encode(doc), Json)
+        if rel then choose(rel) end
+      end
+    end
+  end
+  -- At most one additional request. Its URL must belong to this repository,
+  -- and its declared size is bounded before the worker fetches it.
+  if preview and type(fetchManifest) == "function" then
+    local tag = preview.doc.tag_name
+    local expected = "https://github.com/" .. Check.REPO .. "/releases/download/" .. tag .. "/build-manifest.json"
+    local asset = Check.pickAsset(preview.doc.assets, "build-manifest.json")
+    if asset and asset.url == expected and asset.size and asset.size > 0 and asset.size <= 512 * 1024 then
+      local fetched, manifest = pcall(fetchManifest, expected)
+      local meta = fetched and Check.previewMetadata(manifest, Json, preview.id)
+      if meta then
+        choose({ version = meta.version, releaseId = meta.releaseId, kind = "native-preview",
+          displayVersion = meta.version .. " (" .. meta.releaseId .. ")" })
+      end
+    end
+  end
+  return best, best and nil or "no supported published release"
+end
+
+function Check.compareRelease(rel, currentVersion, currentPreview)
+  local version = Semver.compare(rel.version, currentVersion)
+  if version ~= 0 then return version end
+  if rel.kind == "native-preview" and currentPreview and currentPreview.version == currentVersion then
+    local a, b = Check.previewId(rel.releaseId), Check.previewId(currentPreview.releaseId)
+    if a and b then
+      if a.date ~= b.date then return a.date > b.date and 1 or -1 end
+      if a.sequence ~= b.sequence then return a.sequence > b.sequence and 1 or -1 end
+    end
+  end
+  return 0
+end
+
 -- Parse a shasum -a 256 file ("<hex>  <filename>", bare filenames).  With a
 -- `target` argument returns just that file's hash (or nil); otherwise returns
 -- the whole name -> hash map.  Tolerates the "*" binary marker and "./" prefix.
@@ -97,7 +172,11 @@ end
 -- ---------------------------------------------------------------------------
 
 function Check.releaseUrl()
-  return "https://github.com/" .. Check.REPO .. "/releases/latest"
+  return "https://github.com/" .. Check.REPO .. "/releases"
+end
+
+function Check.apiUrl()
+  return "https://api.github.com/repos/" .. Check.REPO .. "/releases?per_page=30"
 end
 
 -- ---------------------------------------------------------------------------

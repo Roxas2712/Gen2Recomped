@@ -235,10 +235,11 @@ Sidebar.NEWS_TTL = 6 * 60 * 60
 Sidebar.NEWS_CACHE = "launcher_news.lua"
 
 local function newsUrls()
-  local repo = "UNDERdecoded/Gen2Recomped"
+  local repo = require("src.update.Repository").SLUG
   local ok, Check = pcall(require, "src.update.Check")
   if ok and Check and type(Check.REPO) == "string" then repo = Check.REPO end
   return {
+    repo = repo,
     feed = "https://raw.githubusercontent.com/" .. repo .. "/main/launcher_news.json",
     releases = "https://api.github.com/repos/" .. repo .. "/releases?per_page=6",
     page = "https://github.com/" .. repo .. "/releases",
@@ -305,12 +306,12 @@ function Sidebar.parseReleases(text)
   return out
 end
 
-local function readNewsCache()
+local function readNewsCache(repo)
   if not (love and love.filesystem) then return nil end
   local ok, chunk = pcall(love.filesystem.load, Sidebar.NEWS_CACHE)
   if not ok or not chunk then return nil end
   local okR, t = pcall(chunk)
-  return okR and type(t) == "table" and t or nil
+  return okR and type(t) == "table" and t.repo == repo and t or nil
 end
 
 local function writeNewsCache(t)
@@ -323,7 +324,8 @@ end
 -- fetch both (blocking, so it runs from update one frame after "Loading" was
 -- drawn), keep whatever answered, fall back to the cache when offline
 function Sidebar.fetchNews(force)
-  local cache = readNewsCache()
+  local urls = newsUrls()
+  local cache = readNewsCache(urls.repo)
   if not force and cache and (os.time() - (tonumber(cache.at) or 0)) < Sidebar.NEWS_TTL then
     return cache
   end
@@ -331,7 +333,6 @@ function Sidebar.fetchNews(force)
   if not (HostShell.canFetch and HostShell.canFetch()) then
     return cache or { items = {}, at = 0, offline = true }
   end
-  local urls = newsUrls()
   local items = {}
   local okF, feed = pcall(HostShell.httpGet, urls.feed, "gen2recomp-news")
   if okF and type(feed) == "string" then
@@ -342,7 +343,7 @@ function Sidebar.fetchNews(force)
     for _, it in ipairs(Sidebar.parseReleases(rel)) do items[#items + 1] = it end
   end
   if #items == 0 and cache then cache.stale = true; return cache end
-  local out = { items = items, at = os.time() }
+  local out = { items = items, at = os.time(), repo = urls.repo }
   writeNewsCache(out)
   return out
 end
