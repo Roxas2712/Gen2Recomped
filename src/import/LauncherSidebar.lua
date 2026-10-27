@@ -92,7 +92,7 @@ Sidebar.metaText = metaText
 
 local function nameOf(v)
   local info = GameVersion.info(v)
-  return info and (info.displayName or info.launcherName) or tostring(v)
+  return info and Strings(info.displayName or info.launcherName) or tostring(v)
 end
 Sidebar.nameOf = nameOf
 
