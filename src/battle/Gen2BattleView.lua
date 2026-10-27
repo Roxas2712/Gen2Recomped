@@ -19,7 +19,11 @@ local function indexOf(party, mon)
 end
 
 function View.bind(screen)
+  -- Bind once; callers read the current native catalog without copying a
+  -- move, caching a definition, or switching the controller's moveset.
+  local function moveDef(_, move) return screen:moveDef(move) end
   local readers = {
+    moveDef = function() return moveDef end,
     player = function() return screen.player and screen.player.mon end,
     enemy = function() return screen.enemy and screen.enemy.mon end,
     party = function() return partyOf(screen) end,
