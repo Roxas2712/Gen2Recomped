@@ -27,8 +27,7 @@ event ID 4. Applied events at saturation (and other zero-delta happiness
 events) remain observable, as on the reference engine; unchanged walking
 steps remain silent.
 
-The award is not replayed by screen entry, semantic checkpoint reconstruction
-or presentation resume. Native badge/music and Yellow companion markers keep
+The award is not replayed by screen entry. Native badge/music and Yellow companion markers keep
 their separate meaning. Other editions and Gen2 hacks keep their existing
 friendship rules. No mod, Gen1 installation, player profile, save or ROM is
 modified by this change.
@@ -38,10 +37,14 @@ modified by this change.
 The committed ROM-free regressions exercise real `BattleState.newTrainer`,
 the production API2 loader and event bus, all vanilla classes and seven
 friendship boundaries, native egg representations, fainted/selected party
-members, decorator reachability, other-edition guards and actual semantic
-checkpoint reconstruction. Execution results and independent frozen-reference
+members, decorator reachability and other-edition guards. This older offered
+host lacks the fork's semantic checkpoint backend, so the fork-only checkpoint
+test/result is not inherited. Execution results and independent frozen-reference
 comparison are recorded in the PR after running those checks.
 
 This closes the class-predicate/constructor-award gap. It does not establish
 complete source-model constructors, turn/event parity, graphical parity,
 unchanged VASC acceptance or release readiness.
+
+Native integration/tests by Roxas2712, offered to Cedric / UNDERdecoded under
+the specific PR permission in LICENSE-ROXAS2712.md; existing rights remain intact.
