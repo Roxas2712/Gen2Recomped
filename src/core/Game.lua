@@ -2393,6 +2393,10 @@ function Game:restoreSave(loaded, recovered)
                 home and tostring(loaded.player and loaded.player.map)
                      or "the saved spot (this dataset has no start map)")
   end
+  -- RS's League autosave resumes in the gender's ROM-derived bedroom.
+  -- Only our versioned return marker can spend the RS bit; legacy flags
+  -- and other editions continue through their existing paths.
+  require('src.core.Gen3RsEndingSave').apply(loaded,self.data)
   local modsDiff = SaveData.modsDiff(loaded, activeMods)
   local report = SaveData.validate(loaded, self.data)
   report.recovered = recovered
