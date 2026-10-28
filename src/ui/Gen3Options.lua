@@ -191,6 +191,8 @@ function Gen3Options.new(game, opts)
   end
 
   self.scroll = 0
+  local Rs=require('src.ui.Gen3RsOptions');local rsRecord=Rs.record(game)
+  if rsRecord then self.rsNative=Rs.new(self,rsRecord)end
   if #self.rows == 0 then
     Logger.warn("gen3 options: this dataset carries no OPTION vocabulary")
   end
@@ -277,6 +279,7 @@ function Gen3Options:clampScroll()
 end
 
 function Gen3Options:update(dt)
+  if self.rsNative then return self.rsNative:update(dt)end
   self:animate(dt)
   local input = self.game.input
   local n = #self.rows + 1                  -- the rows, then CANCEL
@@ -380,6 +383,7 @@ function Gen3Options:drawFireRed()
 end
 
 function Gen3Options:draw()
+  if self.rsNative then return self.rsNative:draw()end
   if require("src.core.GameVersion").isFRLG() then return self:drawFireRed() end
   love.graphics.setColor(0.30, 0.44, 0.64, 1)
   love.graphics.rectangle("fill", 0, 0, GBA_W, GBA_H)
@@ -425,4 +429,7 @@ function Gen3Options:draw()
   love.graphics.setColor(1, 1, 1, 1)
 end
 
+function Gen3Options:exit()
+  if self.rsNative then self.rsNative:exit();self.rsNative=nil end
+end
 return Gen3Options
