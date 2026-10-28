@@ -58,6 +58,22 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  repeat p:update()until p:isDone()
  T.eq(p.frames,6,'actual native source-program edit reaches the genuine VM')
  p:release()
+ local source=require('src.import.LuaWriter').encodeSplit(c)
+ local restored=assert(loadstring(source))()
+ T.same(restored,c,'actual generated-cache writer preserves the complete native schema')
+ T.eq(Data.tables(restored,constants),restored,'restored data remains the native owner')
+ local fixtures=T.fixtures.fresh();fixtures.constants.gen=2;fixtures.battle_anims=restored
+ require('src.render.Font').load(fixtures)
+ local save=require('src.core.SaveData').newGame()
+ save.party={require('src.pokemon.Pokemon').new(fixtures,'FIXMON_A',20)}
+ local screen=require('src.battle.BattleState').newWild({data=fixtures,save=save,
+  stack={top=function()end}},'FIXMON_C',15)
+ restored.moves.ADDED='5010'
+ T.eq(restored.moveAnims.ADDED,nil,'new native registration does not need a stale legacy index map')
+ T.check(screen:animForMove('ADDED','player'),'actual native screen admits the canonical source registration')
+ T.eq(screen.animPlayer.runtime.data,restored,'real screen, public data and VM share the restored owner')
+ T.eq(screen.anims,restored,'real screen exposes the complete native dataset')
+ screen.animPlayer:release()
  local missing=E.new(nil,edition,{symbols={}}):gen2BattleAnims()
  T.eq(Data.isNative(missing),false,'missing ROM animation table remains an explicit unsupported result')
 end

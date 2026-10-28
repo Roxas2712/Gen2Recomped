@@ -38,7 +38,7 @@ function M.install(Screen)
   function Screen:animForMove(moveId,side,param,effectiveness,afterAnim)
     local player=self.animPlayer
     if not (Version.isGen2() and self:animationsOn() and player
-        and player.anims.moveAnims and player.anims.moveAnims[moveId]) then return false end
+        and player.anims.gen2 and player:scriptFor(moveId)) then return false end
     local started=M.start(self,moveId,side~='enemy',{param=param or 0})
     if started then
       local name=self:afterAnimFor(side,afterAnim)
