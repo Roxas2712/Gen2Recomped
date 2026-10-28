@@ -25,6 +25,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  local c=e:gen2BattleAnims()
  T.eq(Data.isNative(c),true,'actual ROM importer publishes native interpreter schema')
  T.eq(c.bank,1);T.eq(c.gameVersion,edition)
+ T.eq(c.source,'ROM:BattleAnimations + data/battle_anims/*','ROM provenance remains explicit')
  T.eq(c.moves.PROBE,'5000');T.eq(c.moves.OTHER,'5010');T.eq(c.moves.ALIAS,'5000')
  T.eq(c.indices[0],'4008','cartridge dummy entry is part of the complete pool')
  T.same(c.scriptOrder,{'4008','5000','5100','5010'},'pool includes call-only blocks and unselected moves once')
@@ -92,6 +93,7 @@ do
   {op='ifparamequal',args={5,0,80},to=3},{op='ret'},{op='delay',frames=2},{op='ret'}}}},
   moveAnims={PROBE=1},objects={},framesets={},oam={},gfx={}},nil,'crystal')
  T.eq(c.moves.PROBE,'program:1:1','non-ROM registration has an explicit program namespace')
+ T.eq(c.source,'Registered GSC animation programs','registered programs do not claim cartridge provenance')
  T.same(c.scripts['program:1:1'],{{'if_param_equal',5,'program:1:3'},{'ret'}},
   'canonical branch has one target key, not leftover cartridge pointer bytes')
  T.same(c.scripts['program:1:3'],{{'wait',2},{'ret'}})
