@@ -70,7 +70,7 @@ T.check(saved~=nil,'hotbar writes a decodable native save through memory filesys
 T.eq(saved and saved.money,4321,'actual saved snapshot contains captured world state')
 local loaded
 -- World admission is separate from IO; verify actual F2/SaveData.load here.
-g.continueGame=function(_,snapshot)loaded=snapshot end
+g.restoreSave=function(_,snapshot)loaded=snapshot end
 tap('LOAD')
 T.eq(loaded and loaded.money,4321,'hotbar F2 reads actual persisted snapshot')
 T.eq(pointers,0,'visible native cells have priority over claiming mod pointer hook')

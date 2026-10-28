@@ -19,3 +19,6 @@ the preserved Gen1 GPL terms. Existing GPL-covered code is not relicensed.
 
 The identified haptic controls in TouchControls.lua are also adapted from the
 same Gen1Recomp source under the same preserved GPL/Section7 grant.
+
+The identified hotbar geometry/drawing and adapted hotbar reference test also
+originate in that source, under the same preserved GPL/Section7 terms.
