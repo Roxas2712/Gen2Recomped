@@ -1,6 +1,8 @@
 -- Native object drawing over Gen2AnimPlayer's actual OAM projection.
 -- Object layout/flip math retains Gen2AnimPlayer provenance (Cedric);
 -- public owner integration by Roxas2712, see NOTICE.md and contribution licence.
+-- GSC BG/OBJ register integration follows Gen1Recomp535a5ec0 under
+-- compat/gen1-gsc/LICENSE.MD; inherited object-drawing rights remain intact.
 local Palette = require('src.render.Gen2PaletteDraw')
 local PaletteFX = require('src.render.PaletteFX')
 local View = {}
@@ -58,16 +60,18 @@ function View:drawObjects(runner, battle)
   g.push('all')
   local ok, err = pcall(function()
     g.setColor(1,1,1,1)
-    local active
+    local active,activeByte
     for _, obj in ipairs(runner:oam()) do
       local sheet = self.data.gfx and self.data.gfx[obj.gfx]
       local image = sheet and self:image(sheet.image)
       local quad = image and self:quad(obj.gfx, obj.tile, image)
       if quad then
         local colors = self:objPalette(obj.palette, battle)
-        if colors ~= active then
-          if not Palette.useRaw(Palette.resolve(colors)) then g.setShader() end
-          active = colors
+        local slot=slots[obj.palette]or tonumber(obj.palette)
+        local byte=(slot==2 or slot==3)and runner.bg and runner.bg.obp0 or nil
+        if colors~=active or byte~=activeByte then
+          if not Palette.useRaw(Palette.remap(Palette.resolve(colors),byte))then g.setShader()end
+          active,activeByte=colors,byte
         end
         local attr = obj.attr or 0
         local sx = math.floor(attr/32)%2 == 1 and -1 or 1
