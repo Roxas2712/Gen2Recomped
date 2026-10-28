@@ -44,6 +44,10 @@ end
 local function make(edition,rows,attacker)
   V.set(edition);Assets.invalidate();Battle.invalidate();sources={}
   local data=T.fixtures.fresh();data.constants.gen=2
+  for name,def in pairs(data.pokemon)do
+    def.spriteFront='qa/front/'..name..'.png'
+    def.spriteBack='qa/back/'..name..'.png'
+  end
   data.constants.battleAnimGfxOrder={'BATTLE_ANIM_GFX_PLAYERHEAD','BATTLE_ANIM_GFX_ENEMYFEET'}
   data.battle_anims={gen2=true,moveAnims={PROBE=1},scripts={[1]={entry=1,code={
     {op=rows==2 and 'battlergfx_1row'or'battlergfx_2row'},
