@@ -26,6 +26,11 @@ recolouring. Crystal crop descriptors select a single frame. Replacement
 art and queued Transform use the existing picture presentation authority;
 reading the source never reveals a queued future picture.
 
+The OAM pass also restores the caller's indexed palette uniforms, including
+when drawing throws. Graphics push/pop alone restores the shader reference
+but cannot undo uploads to the same shader object. The stronger actual-draw
+fixture reproduces 96 uniform mismatches before this palette-scope fix.
+
 Copied images belong to the native view, keyed weakly by the actual loaded
 descriptor. Retaining an old runner retains its copied picture; a restarted
 animation cannot substitute its current image into old OAM. View retirement
