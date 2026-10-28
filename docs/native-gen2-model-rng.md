@@ -33,7 +33,13 @@ The source contract is inspected against read-only Gen1Recomp Gen2 revision
 `Battle:roller`. Native integration and tests are original contributions by
 Roxas2712 under `LICENSE-ROXAS2712.md`; existing rights remain intact.
 
-Validation is pending execution of `gen2_model_rng.lua`,
-`gen2_model_rng_link.lua`, `gen2_model_rng_checkpoint.lua`, the independent
-frozen-reference stream comparison and native regressions. Static preparation
-does not establish unchanged-mod, GPU, full model or release acceptance.
+Validation: 7951 native RNG/domain/replacement/switch/lifetime checks, 174 actual
+host/guest/spectator callback checks and 45 semantic checkpoint checks pass.
+Model (252), live-view (366), volatile-state (423) and protection-link (66)
+regressions pass separately. An independent frozen Gen1 model comparison over
+separately seeded actual native LinkBattle streams passes 9471 comparisons and
+7020 draw cases, including every bound 1 through 256, normalized LOVE ranges,
+current-function replacement and native switches in G/S/C. Reference source
+hashes are unchanged. Whole-host/current-main, unchanged-mod GPU and release
+qualification remain separate; these checks do not establish complete model
+constructor/turn or injected-RNG parity.
