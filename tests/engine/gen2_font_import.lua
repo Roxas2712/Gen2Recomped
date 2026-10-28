@@ -4,6 +4,8 @@ local T=require('tests.modkit')
 local E=require('src.import.RomExtractorGen2')
 local M=require('src.import.Gen2FontExtras')
 local Writer=require('src.import.ImageWriter')
+local imageBefore=love.image
+love.image=love.image or {}
 local before=love.image.newImageData
 love.image.newImageData=function(w,h)
   local rows={}
@@ -66,5 +68,5 @@ end
 for _,edition in ipairs{'red','emerald','platinum'}do
   T.check(not markerFor(edition):find('gen2%-font%-extras'),edition..' cache unchanged')
 end
-Version.set(version);love.image.newImageData=before
+Version.set(version);love.image.newImageData=before;love.image=imageBefore
 T.finish('GSC ROM battle font and all eight frame imports, pixels and cache regeneration')
