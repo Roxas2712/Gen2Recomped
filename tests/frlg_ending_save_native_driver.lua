@@ -12,6 +12,8 @@ return function(game)
  for _,id in ipairs{'CHARIZARD','NIDORINA','PIDGEOT','LAPRAS','MEWTWO','SNORLAX'}do game.save.party[#game.save.party+1]=P.new(game.data,id,50)end
  IO.validate(game.save,game.data)
  for _,mon in ipairs(game.save.party)do require('src.battle.BattleState').stampOT(game.save,mon)end
+ local boot=assert(game.data.field.boot)
+ U.teleport(game,assert(boot.startMap),assert(boot.startX),assert(boot.startY),boot.startFacing or'down')
  local function disk()return love.filesystem.read(IO.saveFilename(edition))end
  assert(game:writeSave()==true);local original=assert(disk());local actualWrite=game.writeSave
  local mode,attempts='false',0;local Sound=require('src.core.Sound');local play,cry=Sound.playId,Sound.playCry
@@ -19,7 +21,9 @@ return function(game)
  local se=assert(game.data.constants.gen3FrlgHall.songIds.SE_SAVE)
  Sound.playId=function(data,id,...)
   if id==se then saveSounds=saveSounds+1 end
-  local source=play(data,id,...);if id==98 and source then applause=applause+1 end;return source
+  local source=play(data,id,...)
+  if id==se then assert(source,'Successful native save has no audio source')end
+  if id==98 and source then applause=applause+1 end;return source
  end
  Sound.playCry=function(data,id,...)
   local source=cry(data,id,...)
@@ -76,7 +80,7 @@ return function(game)
   elseif h.phase=='exitwait'then shot('frlg-league-player-panel');break end
   U.wait(1)
  end
- assert(h.phase=='exitwait'and confetti and failures['false']and failures.error and attempts==3 and saveSounds==1 and h.saved)
+ assert(h.phase=='exitwait'and confetti and armed and failures['false']and failures.error and attempts==3 and saveSounds==1 and h.saved)
  for i=1,6 do assert(mons[i],'Missing champion party member')end
  local durable=assert(Save.decode(assert(disk())))
  assert(durable.player.map=='MAP_G01_N80'and durable.specialSaveWarpFlags%2==1 and durable.continueGameWarp.map=='MAP_G03_N00')
