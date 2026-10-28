@@ -13904,7 +13904,6 @@ function BattleState:drawClassic()
 end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
-Gen2Vanish.install(BattleState)
 require('src.battle.Gen2BattleScene').install(BattleState)
 require('src.battle.Gen2BattleWindow').install(BattleState)
 Gen2BattleView.install(BattleState, {
@@ -13992,5 +13991,6 @@ require('src.battle.Gen2BgPictures').install(BattleState)
 require('src.battle.Gen2PicturePresentation').install(BattleState)
 require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf,
   source=function(image)return imageMeta[image]end})
+Gen2Vanish.install(BattleState)
 
 return BattleState

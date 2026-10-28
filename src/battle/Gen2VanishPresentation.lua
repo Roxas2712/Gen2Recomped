@@ -90,5 +90,12 @@ function M.install(Screen)
   function Screen:fxHidden(b)
     return Version.isGen2() and M.hidden(self,b) or hidden(self,b)
   end
+  local read=Screen.animPicState
+  function Screen:animPicState(side)
+    local state=read and read(self,side)
+    local b=(side=='player' or side=='enemy')and self[side]
+    if Version.isGen2() and M.hidden(self,b)then state=state or {};state.hidden=true end
+    return state
+  end
 end
 return M
