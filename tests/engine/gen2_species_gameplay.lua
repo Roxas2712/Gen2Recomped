@@ -14,7 +14,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   d.map_scripts={scripts={IDENTITY={
     {'getmonname',155,0},{'checkpoke',155},{'giveegg',175,5},{'cry',155},
     {'pokepic',155},{'loadwildmon',133,5},{'end'},
-  }}}
+  },GIFT={{'checkpoke',155},{'giveegg',175,5},{'end'}}}}
   local rows=assert(VM.compile(d,'IDENTITY'));local lowered={}
   for _,row in ipairs(rows)do lowered[row[1]]=row end
   for _,op in ipairs{'g2_getmonname','g2_check_poke','g2_cry','g2_pokepic'}do
@@ -35,8 +35,8 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   -- not a second simulated VM or a facade replacing the party Pokemon.
   local Runner=require('src.script.ScriptRunner')
   local runner=Runner.new(game,game.overworld)
-  runner:run(VM.compile(d,'IDENTITY'))
-  -- pokepic can yield; the preceding check and gift must already have run.
+  runner:run(VM.compile(d,'GIFT'))
+  T.eq(runner:isRunning(),false,'real noninteractive gift program finishes')
   T.eq(save.party[1].species,'CYNDAQUIL')
   local found
   for _,m in ipairs(save.party)do if m.isEgg and m.species=='TOGEPI'then found=m end end
