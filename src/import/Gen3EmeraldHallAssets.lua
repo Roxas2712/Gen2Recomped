@@ -43,12 +43,16 @@ function M.extract(x)
   local man={format=1,version='emerald',width=240,height=160,confettiFrames=17,
     frames={message_box={width=box.width,height=box.height}},textIR=text}
   cache:write(resource('emerald.lua'),Writer.encode(man))
-  x._constants.gen3EmeraldHall={format=1,version='emerald',resources=resources,manifest=M.ROOT..'emerald.lua',textIR=text}
+  local trainers=basic('src.core.game3.constants.emerald.trainer_classes').byName
+  local pics={boy=('assets/generated/battle/trainers/%03d.png'):format(assert(trainers.TRAINER_PIC_BRENDAN)),
+    girl=('assets/generated/battle/trainers/%03d.png'):format(assert(trainers.TRAINER_PIC_MAY))}
+  x._constants.gen3EmeraldHall={format=1,version='emerald',resources=resources,manifest=M.ROOT..'emerald.lua',textIR=text,trainerPics=pics}
 end
 function M.valid(spec,version)
   if version~='emerald'or type(spec)~='table'or spec.format~=1 or spec.version~='emerald'
     or spec.manifest~=M.ROOT..'emerald.lua'or type(spec.resources)~='table'or#spec.resources~=26
-    or type(spec.textIR)~='table'then return false end
+    or type(spec.textIR)~='table'or type(spec.trainerPics)~='table'
+    or type(spec.trainerPics.boy)~='string'or type(spec.trainerPics.girl)~='string'then return false end
   for _,name in ipairs(names)do if type(spec.textIR[name])~='table'or#spec.textIR[name]==0 then return false end end
   for i,path in ipairs(M.resources())do if spec.resources[i]~=path then return false end end
   return true
@@ -62,6 +66,7 @@ function M.missing()
   local spec=(read('data/generated/constants.lua')or{}).gen3EmeraldHall
   if not M.valid(spec,'emerald')then return{'<emerald:native-hall>'}end
   local out={};for _,path in ipairs(spec.resources)do if type(path)~='string'or not Fs.exists(path)then out[#out+1]=tostring(path)end end
+  for _,path in pairs(spec.trainerPics)do if not Fs.exists(path)then out[#out+1]=path end end
   local m=read(spec.manifest)
   if not m or m.format~=1 or m.version~='emerald'or m.width~=240 or m.height~=160 or m.confettiFrames~=17
     or type(m.frames)~='table'or type(m.frames.message_box)~='table'

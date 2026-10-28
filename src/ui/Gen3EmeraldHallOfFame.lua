@@ -35,7 +35,7 @@ function M.new(game,onDone)
     ['src.core.game3.dex']={regionalNumber=function(n)return(data.constants.gen3HoennDex.numbers or{})[row(n).id]end},
     ['src.core.game3.trainer_pic']={front=function(pic)
       assert(pic==trainers.TRAINER_PIC_MAY or pic==trainers.TRAINER_PIC_BRENDAN)
-      local path=require('src.pokemon.Sprites').playerPath(data,'front',{kind='hof',save=save})
+      local path=spec.trainerPics[pic==trainers.TRAINER_PIC_MAY and'girl'or'boy']
       return{image=require('src.render.Assets').image(assert(path,'Emerald trainer portrait missing'))}
     end},
     ['src.core.game3.pokemon']={national=function(n)return row(n).def.dex end,name=function(n)return row(n).def.name end,

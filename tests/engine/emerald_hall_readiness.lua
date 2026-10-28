@@ -6,11 +6,13 @@ local Fs,W=require('src.import.CacheFs'),require('src.import.LuaWriter')
 local old,read,exists=V.get(),Fs.read,Fs.exists;V.set('emerald')
 local text={};for _,name in ipairs{'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_Time',
   'gText_WelcomeToHOF','gText_SavingDontTurnOffPower','gText_EggNickname','gText_LeagueChamp'}do text[name]={{t='text',s='OWNED LABEL'}}end
-local spec={format=1,version='emerald',resources=M.resources(),manifest=M.ROOT..'emerald.lua',textIR=text}
+local spec={format=1,version='emerald',resources=M.resources(),manifest=M.ROOT..'emerald.lua',textIR=text,
+  trainerPics={boy='OWNED_BOY.png',girl='OWNED_GIRL.png'}}
 local constants={gen3EmeraldHall=spec}
 local man={format=1,version='emerald',width=240,height=160,confettiFrames=17,frames={message_box={width=64,height=16}}}
 local art={format_version=1,width=240,height=160,confetti={w=8,h=8,frames=17}}
 local files,bodies={},{};for _,p in ipairs(spec.resources)do files[p]=true end
+for _,p in pairs(spec.trainerPics)do files[p]=true end
 local function write()
   bodies['data/generated/constants.lua']=W.encode(constants);bodies[spec.manifest]=W.encode(man)
   bodies[M.ROOT..'manifest.lua']=W.encode(art)
@@ -22,6 +24,7 @@ T.eq(#M.missing(),0,'original bands, stripes, confetti, text and twenty frames r
 for _,p in ipairs(spec.resources)do
   files[p]=nil;T.check(#M.missing()>0,'every native art/frame resource required: '..p);files[p]=true
 end
+for _,p in pairs(spec.trainerPics)do files[p]=nil;T.check(#M.missing()>0,'original trainer portrait required: '..p);files[p]=true end
 local first=spec.resources[1];spec.resources[1]=spec.resources[2]
 T.eq(M.valid(spec,'emerald'),false,'duplicated resources cannot substitute for native assets');spec.resources[1]=first
 local keys={};for key in pairs(text)do keys[#keys+1]=key end
