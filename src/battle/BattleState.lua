@@ -2754,12 +2754,12 @@ end
 function BattleState:stepGen3Ball(anim)
   local before = anim.phase
   anim:update()
+  if anim.sound then
+    require("src.core.Sound").playId(self.data, anim.sound)
+  end
   if before ~= "release" and anim.phase == "release" then
     local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
     if source then source._nativeBallOpen(self, anim) end
-  end
-  if anim.sound then
-    require("src.core.Sound").playId(self.data, anim.sound)
   end
   -- the trainer is gone by the time his Pokemon is out of the ball
   -- ...unless the trainer's own walk-off is still running (#407): the
