@@ -17,7 +17,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   from={x=24,y=68},frames=25,arc=-30,targetOffsetY=24,foeOffsetY=24,
   foeWait=16,fadeFrames=14,riseStep=-288}}}
  local b=f.fresh('TACKLE').battle;b.kind='trainer'
- b.enemy.mon.isShiny=false;b.player.mon.isShiny=false
+ for _,actor in ipairs{b.enemy,b.player}do
+  actor.mon.isShiny=nil;actor.mon.shiny=nil;actor.mon.personality=0
+  actor.mon.otId=1000;actor.mon.otSecretId=nil
+ end
  Native.battlerCentre=function(_,actor)return actor==b.player and 72 or 176,72 end
  f.game.input.wasPressed=function(_,key)return key=='a'end
  local offers,steps,completed=0,0,0;local last,borrowed

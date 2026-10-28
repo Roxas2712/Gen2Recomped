@@ -17,7 +17,11 @@ local function run(edition,mode,shiny)
   from={x=24,y=68},frames=25,arc=-30,targetOffsetY=24,foeOffsetY=24,
   foeWait=16,fadeFrames=14,riseStep=-288}}}
  local b=f.fresh('TACKLE').battle;b.kind='trainer'
- b.enemy.mon.isShiny=shiny==true;b.player.mon.isShiny=false
+ -- Use actual shared personality/OT identity rather than a newer cache flag.
+ b.enemy.mon.isShiny=nil;b.enemy.mon.shiny=nil;b.enemy.mon.personality=0
+ b.enemy.mon.otId=shiny and 0 or 1000;b.enemy.mon.otSecretId=nil
+ b.player.mon.isShiny=nil;b.player.mon.shiny=nil;b.player.mon.personality=0
+ b.player.mon.otId=1000;b.player.mon.otSecretId=nil
  Native.battlerCentre=function(_,actor)return actor==b.player and 72 or 176,72 end
  f.game.input.wasPressed=function(_,key)return key=='a'end
  local trace,sounds,steps={},{},{}
