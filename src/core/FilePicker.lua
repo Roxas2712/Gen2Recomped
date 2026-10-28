@@ -56,7 +56,7 @@ function M.commands(prompt,kind)
    '$d.Filter='..windows(filter)..';',"if($d.ShowDialog() -eq 'OK'){$p=$d.FileName;$ascii=$true;",
    'foreach($c in $p.ToCharArray()){if([int]$c -lt 32 -or [int]$c -gt 126){$ascii=$false}};',
    '[Console]::OutputEncoding=[Text.Encoding]::UTF8;if($ascii){[Console]::Write($p)}else{',
-   "$t=Join-Path $env:TEMP ('pokeport_base_'+[Guid]::NewGuid().ToString('N')+'.bin');",
+   "$t=Join-Path $env:TEMP ('pokeport_base_'+[Guid]::NewGuid().ToString('N')+[IO.Path]::GetExtension($p));",
    'try{Copy-Item -LiteralPath $p -Destination $t -ErrorAction Stop;[Console]::Write($t)}catch{}}}'})
   local command='powershell -NoProfile -STA -Command "'..script..'"'
   if #command>7000 then return end

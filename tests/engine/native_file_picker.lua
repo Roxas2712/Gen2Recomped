@@ -30,6 +30,8 @@ for _,os in ipairs{'OS X','Windows','Linux'}do
   T.check(cmds[1]:find('[Text.Encoding]::UTF8.GetString([byte[]]@(',1,true)~=nil)
   T.check(cmds[1]:find('if($ascii){[Console]::Write($p)}else{',1,true)~=nil,'large ASCII file fast path')
   T.check(cmds[1]:find('[Guid]::NewGuid()',1,true)~=nil,'unique non-ASCII staging')
+  T.check(cmds[1]:find('[IO.Path]::GetExtension($p)',1,true)~=nil,
+    'non-ASCII staging preserves image/archive extension for the actual importer')
   T.check(cmds[1]:find('-ErrorAction Stop',1,true)~=nil,'failed staging cannot return stale data')
  else T.check(cmds[1]:find('zenity ',1,true)==1)end
 end
