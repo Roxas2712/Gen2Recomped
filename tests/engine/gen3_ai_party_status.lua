@@ -12,14 +12,14 @@ for _, version in ipairs({ "red", "gold", "diamond", "black" }) do
   require("src.battle.Status").RECORDS.SLP.onInflict({
     rng = function(lo, hi)
       draws[#draws + 1] = { lo, hi }
-      return lo
+      return version=='gold'and 1 or lo
     end,
   }, b, {}, "TEST")
-  T.same(draws, { { 1, 7 } }, version .. " keeps ordinary sleep RNG range")
-  T.eq(b.mon.sleepTurns, nil, version .. " has no GBA party writer")
+  T.same(draws, version=='gold'and{{0,255}}or{{1,7}}, version .. " keeps its native sleep RNG range")
+  T.eq(b.mon.sleepTurns, version=='gold'and 2 or nil, version .. " uses its native persistent sleep owner")
   b.mon.status, b.sleepTurns = "SLP", 1
   local ready = require("src.battle.Status").RECORDS.SLP.beforeMove(b)
-  T.eq(ready, false, version .. " keeps its existing waking-turn policy")
+  T.eq(ready, version=='gold', version .. " keeps its native waking-turn policy")
   T.eq(b.mon.sleepTurns, nil, version .. " waking does not add GBA party state")
 end
 require("src.core.GameVersion").set("emerald")

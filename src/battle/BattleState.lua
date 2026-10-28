@@ -8391,8 +8391,9 @@ function BattleState:executeAction(user, target, action)
     if action.special == "recharge" then
       -- only reaching .HyperBeamCheck consumes the flag (core.asm:3384-
       -- 3392): sleep/freeze/held/flinch keep the mon recharging next turn
-      if self:preRechargeChecks(user, target) then return end
+      if not GameVersion.isGen2() and self:preRechargeChecks(user, target) then return end
       user.mustRecharge = nil
+      if GameVersion.isGen2()then require('src.battle.Gen2Sleep').cancel(user,action)end
       self:sayNext(self:romText("_MustRechargeText", "%s\nmust recharge!", displayName(user)))
       return
     end
