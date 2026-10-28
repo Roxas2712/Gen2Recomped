@@ -1,0 +1,128 @@
+diff --git a/src/gba/gba_ppu.cpp b/src/gba/gba_ppu.cpp
+index 0454527..0a18ec8 100644
+--- a/src/gba/gba_ppu.cpp
++++ b/src/gba/gba_ppu.cpp
+@@ -1182,6 +1182,11 @@ void render_scanline_internal(uint8_t* rgb,
+     }
+
+     if (dispcnt & 0x1000u) {
++        // GBA objects form ONE layer before BG priority and color effects.
++        // The lowest OAM index wins, regardless of its priority relative to BG.
++        // In particular a semi-transparent mask must blend with BG, never with
++        // a hidden lower object (Pinball uses this to clip its monitor).
++        PixelCandidate object_pixels[GbaPpu::kScreenWidth];
+         constexpr uint32_t obj_tile_base = 0x10000u;
+         bool obj_1d_mapping = (dispcnt & 0x0040u) != 0;
+         const uint8_t* obj_pal = pal + 0x200;
+@@ -1211,14 +1216,8 @@ void render_scanline_internal(uint8_t* rgb,
+             int tiles_w = sw / 8;
+             int tiles_h = sh / 8;
+             int priority = static_cast<int>((attr2 >> 10) & 0x3u);
+-            // Composite key (lower = front). Per-priority stride 256 with OBJ in
+-            // [p*256, p*256+127] (tie-break by OAM idx) and BG in [p*256+128,
+-            // p*256+131] (tie-break by layer) yields the exact GBA order
+-            // OBJ0<BG0<OBJ1<BG1<OBJ2<BG2<OBJ3<BG3: an OBJ is in front of a same-
+-            // priority BG, but a BG of priority p sits in front of any OBJ of
+-            // priority p+1 (this is what lets the player walk BEHIND roof/tree
+-            // tops). The stride MUST exceed 128 so OBJ idx (0..127) can't bleed
+-            // into the next priority's BG band.
++            // After OAM selection this key compares the single OBJ pixel
++            // against BG priority. OBJ precedes BG on a priority tie.
+             int key = priority * 256 + idx;
+             bool obj_target2 = (second_targets & (1u << 4)) != 0;
+             auto emit_obj = [&](int tex_x, int tex_y, int screen_x) {
+@@ -1255,7 +1254,9 @@ void render_scanline_internal(uint8_t* rgb,
+                 uint32_t ux = static_cast<uint32_t>(screen_x);
+                 bool t1 = blend_enabled(ux) &&
+                     obj_mode == 1;
+-                submit(ux, color, key, 4, t1, obj_target2);
++                auto& pixel = object_pixels[ux];
++                pixel.color = color; pixel.key = key; pixel.layer = 4;
++                pixel.target1 = t1; pixel.target2 = obj_target2; pixel.valid = true;
+             };
+             if (rot_scale) {
+                 int bw = disable_or_double ? sw * 2 : sw;
+@@ -1310,6 +1311,11 @@ void render_scanline_internal(uint8_t* rgb,
+                 emit_obj(src_tx * 8 + src_px, src_ty * 8 + src_py, sx + dx);
+             }
+         }
++        for (uint32_t x = 0; x < kScreenWidth; ++x) {
++            const auto& pixel = object_pixels[x];
++            if (pixel.valid) submit(x, pixel.color, pixel.key, 4,
++                                    pixel.target1, pixel.target2);
++        }
+     }
+
+     // BLDY brightness coefficient (clamped to 16/16 = full).
+@@ -1872,6 +1878,11 @@ void render_scanline_wide(uint8_t* rgb, int y, uint16_t dispcnt,
+     }
+
+     if ((native_row || g_ws_obj_attr_y_provider) && (dispcnt & 0x1000u)) {
++        // GBA objects form ONE layer before BG priority and color effects.
++        // The lowest OAM index wins, regardless of its priority relative to BG.
++        // In particular a semi-transparent mask must blend with BG, never with
++        // a hidden lower object (Pinball uses this to clip its monitor).
++        PixelCandidate object_pixels[GbaPpu::kMaxRenderWidth];
+         constexpr uint32_t obj_tile_base = 0x10000u;
+         bool obj_1d_mapping = (dispcnt & 0x0040u) != 0;
+         const uint8_t* obj_pal = pal + 0x200;
+@@ -1923,14 +1934,8 @@ void render_scanline_wide(uint8_t* rgb, int y, uint16_t dispcnt,
+             int tiles_w = sw / 8;
+             int tiles_h = sh / 8;
+             int priority = static_cast<int>((attr2 >> 10) & 0x3u);
+-            // Composite key (lower = front). Per-priority stride 256 with OBJ in
+-            // [p*256, p*256+127] (tie-break by OAM idx) and BG in [p*256+128,
+-            // p*256+131] (tie-break by layer) yields the exact GBA order
+-            // OBJ0<BG0<OBJ1<BG1<OBJ2<BG2<OBJ3<BG3: an OBJ is in front of a same-
+-            // priority BG, but a BG of priority p sits in front of any OBJ of
+-            // priority p+1 (this is what lets the player walk BEHIND roof/tree
+-            // tops). The stride MUST exceed 128 so OBJ idx (0..127) can't bleed
+-            // into the next priority's BG band.
++            // After OAM selection this key compares the single OBJ pixel
++            // against BG priority. OBJ precedes BG on a priority tie.
+             int key = priority * 256 + idx;
+             bool obj_target2 = (second_targets & (1u << 4)) != 0;
+             auto emit_obj = [&](int tex_x, int tex_y, int screen_x) {
+@@ -1976,7 +1981,9 @@ void render_scanline_wide(uint8_t* rgb, int y, uint16_t dispcnt,
+                 const uint16_t color = load_u16_le(&obj_pal[pal_index * 2]);
+                 uint32_t ux = static_cast<uint32_t>(screen_x);
+                 bool t1 = (blend_enabled(ux) || authored_margin) && obj_mode == 1;
+-                submit(ux, color, key, 4, t1, obj_target2);
++                auto& pixel = object_pixels[ux];
++                pixel.color = color; pixel.key = key; pixel.layer = 4;
++                pixel.target1 = t1; pixel.target2 = obj_target2; pixel.valid = true;
+             };
+             if (rot_scale) {
+                 int bw = disable_or_double ? sw * 2 : sw;
+@@ -2044,6 +2051,11 @@ void render_scanline_wide(uint8_t* rgb, int y, uint16_t dispcnt,
+                          sx + dx + static_cast<int>(ox));
+             }
+         }
++        for (uint32_t x = 0; x < out_w; ++x) {
++            const auto& pixel = object_pixels[x];
++            if (pixel.valid) submit(x, pixel.color, pixel.key, 4,
++                                    pixel.target1, pixel.target2);
++        }
+     }
+
+     uint32_t bldy = static_cast<uint32_t>(io[0x54] | (io[0x55] << 8)) & 0x1Fu;
+diff --git a/src/runtime/runtime_arm_default_aborts.cpp b/src/runtime/runtime_arm_default_aborts.cpp
+index 275663f..7cbdda9 100644
+--- a/src/runtime/runtime_arm_default_aborts.cpp
++++ b/src/runtime/runtime_arm_default_aborts.cpp
+@@ -817,6 +817,15 @@ extern "C" int runtime_bridge_interpret(uint32_t entry_pc, bool entry_thumb,
+     const std::uint32_t entry_floor = runtime_call_stack_floor();
+     std::uint32_t unwound_depth = UINT32_MAX;
+     for (;;) {
++        // HALT suspends instructions, including inside an interpreted subtree.
++        // Running the IntrWait polling loop while halted consumed guest cycles
++        // and could leave HALT latched after its SWI returned to the game.
++        // The outer dispatcher already handles this for native instructions.
++        if (bus->io().halted()) {
++            gbarecomp::store_interp_into_arm_cpu(cpu, g_cpu);
++            do { runtime_tick(64); } while (bus->io().halted());
++            gbarecomp::load_arm_cpu_into_interp(g_cpu, cpu);
++        }
+         // Sync interp -> g_cpu (pre-execution state) so the fingerprint ring,
+         // the BIOS-read gate, and any IRQ/SWI excursion all see exactly what
+         // the generated per-instruction prologue would have set.

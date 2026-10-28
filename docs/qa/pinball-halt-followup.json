@@ -1,0 +1,201 @@
+{
+  "scope": "Pinball HALT execution correction; original guest inputs; no production network qualification",
+  "author": "Roxas2712",
+  "runtime_revision": "e353848ca8e82e7860469a235784a000102e7781",
+  "reference_revision": "33ad42e8f2afca891831f03179820b96a3fdef6a",
+  "mgba_reference_revision": "1509d86028c7df2d844b590723a80b2978f49e7c",
+  "prepared_state_steps": {
+    "vblanks": 120,
+    "before": 74,
+    "after_native_ram": 120,
+    "after_ram_interpreter": 120
+  },
+  "fresh_native_cadence": [
+    {
+      "locale": "en",
+      "field": 0,
+      "frames": 240,
+      "measurement_start": 740,
+      "game_steps": 240,
+      "missed_game_steps": 0,
+      "vblank_counts": [
+        1
+      ],
+      "mixer_locked_at_boundary": 0,
+      "audio_rates": [
+        65536
+      ],
+      "audio_seconds": 4.01824951171875,
+      "expected_seconds": 4.01824951171875,
+      "passed": true
+    },
+    {
+      "locale": "de",
+      "field": 1,
+      "frames": 240,
+      "measurement_start": 875,
+      "game_steps": 240,
+      "missed_game_steps": 0,
+      "vblank_counts": [
+        1
+      ],
+      "mixer_locked_at_boundary": 0,
+      "audio_rates": [
+        65536
+      ],
+      "audio_seconds": 4.01824951171875,
+      "expected_seconds": 4.01824951171875,
+      "passed": true
+    }
+  ],
+  "original_menus": {
+    "passed": true,
+    "cases": [
+      {
+        "locale": "en",
+        "states_seen": [
+          0,
+          1,
+          4,
+          5,
+          8
+        ],
+        "native_menu_picture_sha256": {
+          "pokedex": "32438002f89692d4dbdf144ccb5f9681ad937d36a3a2e9ad915b136771a6596e",
+          "options": "36aa803e0d74901d439009dd264c5aee84387354edf501bd4bf1b9931f1e06cd",
+          "high-scores": "e6c42e4d8b23d6750b36cc0de84c8806e7f2e34a6c71b4488e42ad6a8387454c"
+        },
+        "sram_bytes": 32768,
+        "reopened": true
+      },
+      {
+        "locale": "de",
+        "states_seen": [
+          0,
+          1,
+          4,
+          5,
+          8,
+          12
+        ],
+        "native_menu_picture_sha256": {
+          "pokedex": "bfc3fd74fd4f9df62466d8ef0453faf0f339f3d5ba6cc0fe1bedac97ad704b61",
+          "options": "98d33e79f956408f612ebeeaf146885c3b609225e13ffbfdae473a9f358452c1",
+          "high-scores": "c251c3e058d5356591a1d1e39304fc1d66f77f8b21495e289e9926556436d00b"
+        },
+        "sram_bytes": 32768,
+        "reopened": true
+      }
+    ]
+  },
+  "audio_comparison": {
+    "window_seconds": [
+      7,
+      15
+    ],
+    "spectral_similarity_before": 0.42690573100811685,
+    "spectral_similarity_after": 0.9486322711665699,
+    "lag_samples": 0,
+    "note": "Observational short-time spectral metric; not identical PCM or a listening test."
+  },
+  "native_cache_comparison": {
+    "images": 6000,
+    "ram_checkpoints": 56,
+    "exact_quick_replay_frames_per_case": 40,
+    "legacy_states": true,
+    "hud_expanded_frames_per_case": 120
+  },
+  "displayed_ruby": {
+    "passed": true,
+    "seconds": 20.000519791666672,
+    "unique_native_presents": 1193,
+    "audio_restarts": 1,
+    "active_audio_restarts": null,
+    "audio_restart_history": null,
+    "display": {
+      "max_ms": 35.301166666663164,
+      "over25": 4,
+      "over50": 0,
+      "n": 1196,
+      "mean_ms": 16.722841241638776,
+      "p95_ms": 17.323749999999194,
+      "p99_ms": 18.52558333333576
+    },
+    "source_gap": {
+      "max_ms": 35.306375000004664,
+      "over25": 7,
+      "over50": 0,
+      "n": 1192,
+      "mean_ms": 16.764978991890388,
+      "p95_ms": 17.35674999999759,
+      "p99_ms": 18.996083333334468
+    },
+    "native": {
+      "max_ms": 11.10779166666731,
+      "over25": 0,
+      "over50": 0,
+      "n": 1196,
+      "mean_ms": 7.731887646321236,
+      "p95_ms": 10.14441666666599,
+      "p99_ms": 10.603041666662705
+    },
+    "states": {
+      "1:2:1:0": 1196
+    },
+    "shapes": {
+      "256x364": 1061,
+      "240x160": 135
+    },
+    "images_per_second": 59.6484497616442
+  },
+  "displayed_sapphire": {
+    "passed": true,
+    "seconds": 20.00033804166667,
+    "unique_native_presents": 1195,
+    "audio_restarts": 0,
+    "active_audio_restarts": 0,
+    "audio_restart_history": null,
+    "display": {
+      "p99_ms": 18.659749999997643,
+      "max_ms": 32.56487499999494,
+      "over25": 2,
+      "over50": 0,
+      "n": 1198,
+      "mean_ms": 16.694770172509713,
+      "p95_ms": 17.8371666666699
+    },
+    "source_gap": {
+      "p99_ms": 18.870208333332528,
+      "max_ms": 33.357749999996855,
+      "over25": 5,
+      "over50": 0,
+      "n": 1194,
+      "mean_ms": 16.73668715103293,
+      "p95_ms": 17.861249999999274
+    },
+    "native": {
+      "p99_ms": 6.450041666667516,
+      "max_ms": 8.312999999997572,
+      "over25": 0,
+      "over50": 0,
+      "n": 1198,
+      "mean_ms": 3.952020624652217,
+      "p95_ms": 5.61362500000584
+    },
+    "states": {
+      "1:2:1:1": 1198
+    },
+    "shapes": {
+      "240x160": 234,
+      "256x388": 964
+    },
+    "images_per_second": 59.74899011758994
+  },
+  "limitations": [
+    "Earlier image-FPS counts did not establish guest game-step cadence.",
+    "Ruby pre-logging run counted one total audio restart; no phase history was captured.",
+    "The simultaneous menu/Sapphire probe failed display pacing; its table-selection harness was corrected and the actual Sapphire run repeated.",
+    "Menus and original SRAM were driven in English and German, not every language/scene.",
+    "Every bonus field, hardware accessories, original cable exchange and live friend duels remain separately unqualified."
+  ]
+}

@@ -6,6 +6,7 @@ local function accountId(s)return type(s)=='string'and #s<=20 and s:match('^[1-9
 local function now()return love.timer.getTime()end
 local function account(Auth)return Auth.signedIn()and Auth.accountId()or nil end
 function M.fingerprint(session)
+ if not session then return end
  local bytes=table.concat({'pinball-duel-v1',session.rom_sha1,session.backend,session.content},'\n')
  return love.data.encode('string','hex',love.data.hash('sha256',bytes))
 end
@@ -13,19 +14,21 @@ function M.new(session,options)
  options=options or {}
  local self=setmetatable({session=session,options=options,Auth=options.auth or require('src.cloud.RetroCloud'),
   Play=options.play or require('src.cloud.Play'),Task=options.task or require('src.cloud.Task'),
-  Net=options.net or require('src.link.CloudNet'),fingerprint=M.fingerprint(session),seen={},state='idle',nextEnter=0},M)
+  Net=options.net or require('src.link.CloudNet'),fingerprint=M.fingerprint(session)or false,seen={},state='idle',nextEnter=0},M)
  self.account=account(self.Auth);return self
 end
 function M:context(available)
- return {edition='pinballrs',fingerprint=self.fingerprint,available=available==true and self.state=='idle',
+ if not self.session then return {available=false}end
+ return {edition='pinballrs',fingerprint=self.session and self.fingerprint or nil,available=self.session~=nil and available==true and self.state=='idle',
   pinball={protocol=1,field=self.options.field or 0,frames=18000,locale=self.session.locale or 'en'}}
 end
 function M:rules()
+ if not self.session then return end
  return {protocol=1,field=self.options.field or 0,frames=18000,seed=0,rom=self.session.rom_sha1,
   backend=self.session.backend,content=self.session.content,locale=self.session.locale or 'en'}
 end
 function M:compatible(r)
- return type(r)=='table'and r.protocol==1 and(r.field==0 or r.field==1)and r.frames==18000 and r.seed==0
+ return self.session~=nil and type(r)=='table'and r.protocol==1 and(r.field==0 or r.field==1)and r.frames==18000 and r.seed==0
   and r.rom==self.session.rom_sha1 and r.backend==self.session.backend and r.content==self.session.content
   and r.locale==(self.session.locale or 'en')
 end
@@ -46,8 +49,17 @@ function M:invitation(id)
 end
 function M:action(id)
  local op,value=id:match('^pinball:(%a+):([a-f0-9%-]+)$')
- if not op or not uuid(value)then return false end
- if op=='invite'then
+ if not op or not((op=='inviteaccount'and accountId(value))or uuid(value))then return false end
+ if op=='inviteaccount'then
+  local found
+  for _,peer in ipairs((self:document()or {}).friends or {})do if tostring(peer.account_id)==value then found=peer end end
+  if not found or not found.online or self.state~='idle'then self.notice='Dieser Freund ist gerade nicht für eine Spielanfrage erreichbar.';return true end
+  if not self.session then
+   if self.options.prepare then self.options.prepare(nil,value)end
+   return true
+  end
+  self:request('invite','invites',{account=value,mode='pinball',rules=self:rules(),fingerprint=self.fingerprint})
+ elseif op=='invite'then
   local found
   for _,friend in ipairs((self:document()or {}).friends or {})do
    for _,device in ipairs(friend.playing or {})do
@@ -59,7 +71,11 @@ function M:action(id)
  elseif op=='accept'or op=='decline'or op=='cancel'then
   local i=self:invitation(value)
   if not i or (op~='cancel'and(i.state~='pending'or not i.incoming))then self.notice='Diese Einladung ist nicht mehr verfügbar.';return true end
-  if op=='accept'and not self:compatible(i.rules)then self.notice='Spielversion, Sprache oder Pinball-Build stimmen nicht überein.';return true end
+  if op=='accept'and not self:compatible(i.rules)then
+   if self.options.prepare then self.options.prepare(i)
+   else self.notice='Spielversion, Sprache oder Pinball-Build stimmen nicht überein.'end
+   return true
+  end
   if op=='cancel'and self.active and self.active.id==value then
    if self.job then self.job:cancel();self.job=nil end
    self:retire()
@@ -104,9 +120,10 @@ function M:tick(available)
      local invite=self.active
      self.net=self.Net.new(invite.id,invite.id,invite.id,'',function(payload)
       return self.Play.request('POST','invites/'..invite.id..'/wire',payload)
-     end)
+     end,{drainPeer=true})
+     self.net.peerTicket=function()return self.Play.request('POST','invites/'..invite.id..'/transport',{})end
      self.state='playing'
-     local ok,why=self.options.start(self.net,tostring(invite.host)==identity,invite.rules)
+     local ok,why=self.options.start(self.net,tostring(invite.host)==identity,invite.rules,invite.nickname)
      if not ok then self.notice=tostring(why or 'Pinball konnte nicht gestartet werden.');self:finished()end
     elseif purpose~='enter'then self.Play.refresh(true)end
    end
@@ -138,12 +155,15 @@ function M:rows(peer)
   if not peer and i.mode=='pinball'and i.edition=='pinballrs'and uuid(i.id)then
    if i.state=='pending'and i.incoming then
     if self:compatible(i.rules)then add('pinball:accept:'..i.id,'PINBALL ANNEHMEN · '..title(i),'5 Minuten · frische Partie · normale Spielstände bleiben erhalten.')
-    else add('noop','PINBALL · '..title(i),'Gleiche Sprache, Spielversion und gleicher Build erforderlich.')end
+    else add('pinball:accept:'..i.id,'PINBALL VORBEREITEN & ANNEHMEN · '..title(i),'Passenden eigenen Import vorbereiten; anschließend wird diese Anfrage fortgesetzt.')end
     add('pinball:decline:'..i.id,'Pinball-Einladung ablehnen')
    elseif i.state=='pending'or i.state=='accepted'and self.state~='playing'then add('pinball:cancel:'..i.id,'PINBALL ABSAGEN · '..title(i),'Warte auf den gemeinsamen Start.')end
   end
  end
  if peer then
+  if peer.online and self.state=='idle'then
+   add('pinball:inviteaccount:'..tostring(peer.account_id),'ZU PINBALL EINLADEN','Spielanfrage an diesen Freund · fehlender eigener Import kann danach vorbereitet werden.')
+  end
   for _,d in ipairs(peer.playing or {})do
    if d.edition=='pinballrs'and uuid(d.device)then
     if d.available and d.compatible and self.state=='idle'then add('pinball:invite:'..d.device,'ZU PINBALL EINLADEN','Gewählter Tisch · 5 Minuten · Start nach Annahme und beidseitiger Vorbereitung.')

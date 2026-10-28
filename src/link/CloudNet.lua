@@ -8,10 +8,10 @@ local Json=require('src.link.Json')
 local retiring={}
 local BATCH_SIZE=8
 local function now() return love.timer.getTime() end
-function N.new(cup,match,battle,ticket,request)
+function N.new(cup,match,battle,ticket,request,options)
  return setmetatable({cup=cup,match=match,battle=battle,ticket=ticket,account=Auth.accountId(),
   paired=true,mode='cloudArena',inbox={},outbox={},sequence=0,received=0,accepted=0,
-  nextPoll=0,lastSuccess=now(),closed=false,request=request},N)
+  nextPoll=0,lastSuccess=now(),closed=false,request=request,drainPeer=options and options.drainPeer==true},N)
 end
 function N:send(message)
  if self.closed then return end
@@ -44,6 +44,8 @@ function N:exchange()
   end
   local doc=response.first
   if doc.battle~=self.battle or type(doc.sent)~='number' or doc.sent<self.accepted or doc.sent>self.sequence then return self:fail('Invalid Arena message acknowledgement.') end
+  if doc.peer_sent~=nil and (type(doc.peer_sent)~='number'or doc.peer_sent%1~=0 or doc.peer_sent<self.received or doc.peer_sent>2147483647)then return self:fail('Invalid peer message watermark.')end
+  self.peerSent=doc.peer_sent
   if self.hasPeer and doc.peer_online==false and not doc.peer_closed then return self:fail('Your rival disconnected from the Arena.') end
   self.accepted=doc.sent;self.lastSuccess=now();self.peerClosed=doc.peer_closed
   while self.outbox[1] and self.outbox[1].sequence<=doc.sent do table.remove(self.outbox,1) end
@@ -57,8 +59,12 @@ function N:exchange()
   end
   -- A full page can still have a tail. Keep fetching until a short page
   -- proves that the closed peer stream is drained; then flush our final ACK.
-  if self.peerClosed and #messages<BATCH_SIZE then self:close() end
-  if self.sentClose and #self.outbox==0 then self.finished=true;return end
+  local peerDrained=not self.peerSent or self.received>=self.peerSent
+  if self.peerClosed and #messages<BATCH_SIZE and peerDrained then self:close() end
+  if self.sentClose and #self.outbox==0 and (not self.drainPeer or
+   self.peerClosed and peerDrained and #messages<BATCH_SIZE and self.closeAfter==self.received)then
+   self.finished=true;return
+  end
  end
  if now()<self.nextPoll then return end
  self.nextPoll=now()+.4
@@ -71,6 +77,7 @@ function N:exchange()
  local payload={battle=self.battle,ticket=self.ticket,after=self.received,messages=batch,close=closing}
  local cup,match=self.cup,self.match
  self.sentClose=closing
+ self.closeAfter=closing and payload.after or nil
  self.job=Task.new(function()
   local doc,why,status
   if self.request then doc,why,status=self.request(payload)

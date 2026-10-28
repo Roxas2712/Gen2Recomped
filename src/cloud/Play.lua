@@ -67,7 +67,7 @@ function P.tick(game)
    else P.error=tostring(r.second or r.error or 'Friend connection unavailable.');P.next=now()+5 end
   end
  elseif now()>=(P.next or 0) then
-  P.next=now()+((game or ctx.edition=='pinballrs')and 1 or 20)
+  P.next=now()+((game or P.externalOwner or ctx.edition=='pinballrs')and 1 or 20)
   P.job=Task.new(function() return P.request('POST','presence',ctx) end)
  end
  local doc=P.read()

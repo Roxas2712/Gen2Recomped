@@ -104,4 +104,21 @@ check(a.state=='entering'and a.job,'pending enter prepared')
 local cancelled=false;a.job={poll=function()return nil end,cancel=function()cancelled=true end}
 clock=clock+91;a:tick(true)
 check(cancelled and a.state=='idle'and a.purpose=='cancel','timeout cancels an in-flight enter before queuing cancellation')
+-- An invitation can be shown and prepared without a local cartridge. It must
+-- never claim ready or accept on the server until the actual import matches.
+a,b=reset();invitePair(a,b);identity='2'
+local prepared
+local unprepared=Friends.new(nil,{auth=Auth,task=Task,play=b.Play,locale='de',prepare=function(i)prepared=i end})
+check(not unprepared:context(true).available and not unprepared:context(true).fingerprint,'missing import is explicitly unavailable')
+check(not unprepared:context(true).edition and unprepared.options.locale=='de','missing import keeps ordinary friend presence and the selected preparation language')
+check(unprepared:rows()[1].id=='pinball:accept:'..id,'missing import offers a preparation action')
+unprepared:action('pinball:accept:'..id)
+check(prepared and prepared.id==id and not unprepared.job and invite.state=='pending','prepare does not prematurely accept or enter')
+local requested
+identity='1'
+local accountPlay={read=function()return{friends={{account_id='2',online=true,playing={}}}}end,request=function(_,path,payload)requested=payload;return{}end,refresh=function()end}
+local sender=Friends.new(session,{auth=Auth,task=Task,play=accountPlay})
+check(sender:rows({account_id='2',online=true,playing={}})[1].id=='pinball:inviteaccount:2','friend invitation is available without peer game presence')
+sender:action('pinball:inviteaccount:2');sender:tick(true)
+check(requested and requested.account=='2'and not requested.device and requested.mode=='pinball','account invitation needs no IP or pre-imported peer cartridge')
 print(checks..' synthetic ModCompass Pinball checks passed (not a live server test)')
