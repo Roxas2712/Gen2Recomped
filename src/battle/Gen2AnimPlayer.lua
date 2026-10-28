@@ -130,6 +130,9 @@ function Gen2AnimPlayer:start(moveId,attackerIsPlayer,opts)
     param=param,ballPalette=options.ballPalette,sgb=options.sgb,
     flying=options.flying,
     hooks={
+      battlerGfx=function(runner,front,back)
+        self.view:loadBattlerRows(self.screen,front,back)
+      end,
       pokeballWobble=function()
         wobbles=wobbles+1
         return wobbles<=(options.shakes or 0)and 0 or options.caught and 1 or 2

@@ -31,6 +31,19 @@ function M.replacement(screen,b,back)
 end
 function M.install(Screen,images)
   Screen._gen2PictureImages=images
+  function Screen:gen2ObjectPictureSource(side)
+    if not Version.isGen2()then return end
+    local b=self[side]
+    if not b then return end
+    local art=record(self)
+    local kind=Pictures.override(self,b)
+    local row=art and type(kind)=='string'and art[kind]
+    local path=row and row[side]
+    if path then return {path=path}end
+    local image=Pictures.sprite(self,b)
+    local meta=images.source(image)
+    if meta then return {path=meta.path,crop=meta.crop,trueColor=meta.trueColor}end
+  end
   local sprite=Screen.pictureSprite
   function Screen:pictureSprite(b)
     return M.replacement(self,b) or sprite(self,b)
