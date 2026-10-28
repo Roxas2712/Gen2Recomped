@@ -272,19 +272,29 @@ end
 -- to blit from in the current color mode, plus whether the OG-RED redraw
 -- queue needs the sprite.  Split out so a fixed-frame object (polished's cut
 -- trees on the ball/cut/fruit sheet) recolors exactly like everything else.
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- A rectangular exemption restores the terrain behind an RGBA sprite too.
+-- The world replay uses the image alpha, so only authored pixels retain
+-- their colour. Other passes retain their existing rectangle contract.
+local function preserveSpriteColor(x, y, w, h)
+  if PaletteFX.spriteRedrawPassActive() then return true end
+  PaletteFX.markTrueColor(x, y, w, h)
+  return false
+end
+
 function SpriteRenderer:resolveModeImage(x, y)
   local image = self.image
   local redraw = false
-  -- full-color art claims its 16x16 cell out of the shade-remap pass
+  -- Full-colour pixels retain their colour without exempting transparent gaps.
   if self.def.trueColor then
     -- the CELL, not a tile: a fixed-frame sheet may be 16x32 (Emerald's berry
     -- trees), and claiming only the top square left the trunk to the shade
     -- remap while the crown above it stayed in colour
-    PaletteFX.markTrueColor(x, y, self.tileW or 16, self.tileH or 16)
+    redraw = preserveSpriteColor(x, y, self.tileW or 16, self.tileH or 16)
   elseif self:objPalette() and PaletteFX.usesGen2ObjPal() then
     local objColors, objGroup = self:objPalette()
     image = getObpImage(self.def.image, objColors, objGroup)
-    PaletteFX.markTrueColor(x, y, self.tileW or 16, self.tileH or 16)
+    redraw = preserveSpriteColor(x, y, self.tileW or 16, self.tileH or 16)
   elseif PaletteFX.usesGbcPack() then
     local colors, group = PaletteFX.spriteObp(self.def, self.seed)
     if colors then
@@ -327,17 +337,16 @@ function SpriteRenderer:draw(px, py, camX, camY, facing, walkPhase, stepFlip, to
   local y = math.floor(py - camY) + (self.cellYBias or -4) - (self.offsetY or 0)
   local image = self.image
   local redraw = false
-  -- full-color art claims its 16x16 cell out of the shade-remap pass
+  -- Full-colour pixels retain their colour without exempting transparent gaps.
   if self.def.trueColor then
-    PaletteFX.markTrueColor(x, y, self.tileW or 16, self.tileH or 16)
+    redraw = preserveSpriteColor(x, y, self.tileW or 16, self.tileH or 16)
   elseif self:objPalette() and PaletteFX.usesGen2ObjPal() then
     -- Gen2 GBC mode: the ROM's own OBJ palette for this sheet, baked in --
-    -- or, for a customised player, the mix they chose. It is full colour, so
-    -- it claims its cell out of the shade-remap pass exactly like a trueColor
-    -- sprite does.
+    -- or, for a customised player, the mix they chose. Replay its actual
+    -- alpha after the zone pass, like other full-colour sprites.
     local objColors, objGroup = self:objPalette()
     image = getObpImage(self.def.image, objColors, objGroup)
-    PaletteFX.markTrueColor(x, y, self.tileW or 16, self.tileH or 16)
+    redraw = preserveSpriteColor(x, y, self.tileW or 16, self.tileH or 16)
   elseif PaletteFX.usesGbcPack() then
     -- RED++: the world canvas is already true-color (TileRenderer bakes
     -- terrain, this bakes the sprite) and the world pass runs unshaded
@@ -414,12 +423,11 @@ function SpriteRenderer:drawPose(index, px, py, camX, camY)
   index = math.max(0, math.min(n - 1, math.floor(tonumber(index) or 0)))
   local x = math.floor(px - camX) - (self.offsetX or 0)
   local y = math.floor(py - camY) + (self.cellYBias or -4) - (self.offsetY or 0)
-  if self.def.trueColor then
-    PaletteFX.markTrueColor(x, y, self.tileW or 16, self.tileH or 16)
-  end
+  local redraw = self.def.trueColor
+    and preserveSpriteColor(x, y, self.tileW or 16, self.tileH or 16) or false
   local quad = self.frames[index] or self.frames[0]
   if not quad then return end
-  blitFrame(self.image, quad, x, y, false, false, self.tileW)
+  blitFrame(self.image, quad, x, y, false, redraw, self.tileW)
 end
 
 -- ---------------------------------------------------------------------------
@@ -672,7 +680,7 @@ end
 function SpriteRenderer:drawTile(path, x, y, flip)
   local image, redraw = getImage(path), false
   if self.def.trueColor then
-    PaletteFX.markTrueColor(x, y, 16, 8)
+    redraw = preserveSpriteColor(x, y, 16, 8)
   elseif PaletteFX.usesGbcPack() then
     local colors, group = PaletteFX.spriteObp(self.def, self.seed)
     if colors then image = getObpImage(path, colors, group) end
