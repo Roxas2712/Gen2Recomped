@@ -25,3 +25,13 @@ The focused readiness tests reject missing/wrong-edition art, labels, fonts,
 frames, portraits and native sound IDs. The prepared native fixture exercises
 both genders, six-/three-member layouts, frames 1/10, an egg, actual cries and
 applause, the player clock, draw save/RNG immutability and credits handoff.
+
+Runtime `04d9f2235bb7b5f053cd0769acb88638871ece2b` passed fresh full
+imports in both USA editions: 15 actual-renderer captures, eight actual cry
+sources and two applause sources each. Boy/six-member and girl/three-member
+parties reached their own credits music; the girl fixture's egg showed only
+its own name/image and made no cry. Draw-time host save/RNG and frozen-source
+checks passed. Member, confetti, frame-10 player-panel and egg captures were
+visually inspected. CPU acceptance includes 98 Hall readiness assertions,
+32 extractor dependency/address checks, and unchanged FR/LG, RS and Emerald
+related contracts. This remains prepared presentation acceptance.
