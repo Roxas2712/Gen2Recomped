@@ -17,5 +17,8 @@ local images={
   soulsilver={file='soulsilver-acb2b46aad403e80.png',sha256='acb2b46aad403e807db1d67df89a72db2e7905d2416f4ac67abfb348ffa86203',width=538,height=568,bytes=533300,credit='TheMalevolentOne'},
   black={file='black-5e9fd5fbb0394b00.png',sha256='5e9fd5fbb0394b009baff33d3043c361d043185cf39c13e12d269dea0f57f57c',width=806,height=830,bytes=718211,credit='TheMalevolentOne'},
   white={file='white-ad51732de78aa9ed.png',sha256='ad51732de78aa9ed52de01bd9c78f1092c19c1459bd94cbc73f6b8dede9a2783',width=1173,height=1164,bytes=1582741,credit='TheMalevolentOne'},
+  x={file='x-5ca35b60a0a16b96.png',sha256='5ca35b60a0a16b96d0eed0836267b28a020c501edc56743ed5090d3fc1107321',width=500,height=499,bytes=464468,credit='UnethicalVoxel'},
+  y={file='y-029c4da563a8b758.png',sha256='029c4da563a8b758355a230a0216dfbdd77355bed936ba2f9c054b4445dbb5b1',width=892,height=866,bytes=804844,credit='TheMalevolentOne'},
+  pinballrs={file='pinballrs-2084b6e76f11950e.png',sha256='2084b6e76f11950e984a56e989f24bb3854d8815b7b62a3852f66ccad52025f9',width=1142,height=686,bytes=1186451,credit='TheMalevolentOne'},
 }
 return images

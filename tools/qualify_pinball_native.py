@@ -31,6 +31,7 @@ def run_child(args):
         fn=getattr(lib,'ascendant_pinball_'+name);fn.restype=result;fn.argtypes=arguments
     machines=[];pictures=[];ram=[];cost=[];reused=rendered=0;states={};max_score=[0,0]
     width,height,a,b=c.c_uint32(),c.c_uint32(),c.c_uint32(),c.c_uint32()
+    hud_checks=0
     timings=c.c_double*4;slow_steps=[]
     try:
         for _ in range(2):
@@ -58,11 +59,25 @@ def run_child(args):
                 pixels=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height));assert pixels
                 pictures.append([width.value,height.value,hashlib.sha256(c.string_at(pixels,width.value*height.value*4)).hexdigest()])
                 assert lib.ascendant_pinball_table_stats(m,c.byref(a),c.byref(b));reused+=a.value;rendered+=b.value
+                if width.value==256 and n%120==0:
+                    full=c.string_at(pixels,width.value*height.value*4)
+                    expanded=b''.join(full[((height.value-16+y)*256+8)*4:((height.value-16+y)*256+248)*4]for y in range(16))
+                    pixels=[expanded[i:i+4]for i in range(0,len(expanded),4)]
+                    assert all(p[3]==255 for p in pixels),'HUD must be fully opaque'
+                    assert sum(p[:3]==b'\0\0\0'for p in pixels)>len(pixels)*.6,'Scrolling board leaked into the score strip'
+                    assert any(p[:3]!=b'\0\0\0'for p in pixels),'Score glyphs missing'
+                    assert lib.ascendant_pinball_view(m,0)
+                    original=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height))
+                    assert width.value==240 and height.value==160
+                    hud_checks+=1
+                    assert lib.ascendant_pinball_view(m,1)
                 if n%120==0 or n==args.frames-1:ram.append(lib.ascendant_pinball_checkpoint(m).decode())
             if playing:cost.append(total)
         report={'frames_per_seat':args.frames,'pictures':pictures,'ram':ram,'max_scores':max_score,'states':states,
           'two_guest_mean_ms':statistics.mean(cost),'two_guest_p95_ms':sorted(cost)[int(len(cost)*.95)],
           'two_guest_p99_ms':sorted(cost)[int(len(cost)*.99)],'two_guest_max_ms':max(cost),'reused_rows':reused,'rendered_rows':rendered,'slow_steps':slow_steps}
+        assert hud_checks>0,'No expanded HUD reached for scanline comparison'
+        report['isolated_hud_checks']=hud_checks
         # Exercise the host layout/cache reset as well as the native snapshot.
         # Use a fully expanded board so a stale recovery gate is observable.
         m=machines[0]
@@ -89,6 +104,44 @@ def run_child(args):
         assert lib.ascendant_pinball_checkpoint(m)==checkpoint,'Quick-state load changed RAM'
         assert replay()==expected,'Quick-state replay changed pixels/RAM'
         report['quick_state_replay_frames']=40;report['quick_state_immediate_picture_equal']=True
+        # Legacy states have no isolated host strip; new states retain the exact
+        # visual layer without importing the canonical board fragments again.
+        raw=Path(state.decode()).read_bytes()
+        assert int.from_bytes(raw[52:60],'little')==1
+        hud_bytes=240*16*3
+        assert len(raw)==64+hud_bytes+int.from_bytes(raw[60:64],'little')
+        legacy=bytearray(raw[:64]+raw[64+hud_bytes:]);legacy[52:60]=bytes(8)
+        old_path=args.output.parent/'states'/(args.output.stem+'-legacy.state');old_path.write_bytes(legacy)
+        assert lib.ascendant_pinball_state(m,str(old_path).encode(),1),lib.ascendant_pinball_error()
+        assert lib.ascendant_pinball_checkpoint(m)==checkpoint,'Legacy state changed RAM'
+        for _ in range(6):assert lib.ascendant_pinball_step(m,0)
+        lit=[];recovery=30;fallback_frames=0
+        for _ in range(1200):
+            assert lib.ascendant_pinball_step(m,0)
+            ptr=lib.ascendant_pinball_picture(m,c.byref(width),c.byref(height))
+            read=lambda address,size=1:lib.ascendant_pinball_read(m,address,size)
+            main=0x0200B0C0
+            eligible=(read(main+2)in(2,3)and read(main+3)==1 and read(main+4)<=1
+                and not(read(0x04000000,2)&0x87)and not read(main+15)
+                and not read(main+0x28,2)and not read(main+0x2c,2))
+            if not eligible:recovery=30
+            if width.value==240:
+                assert not eligible or recovery>0,'Full table failed to recover after the native overlay'
+                if eligible:recovery-=1
+                fallback_frames+=1
+                continue
+            assert width.value==256 and eligible
+            data=c.string_at(ptr,width.value*height.value*4)[-16*256*4:]
+            rgb=[data[i:i+3]for i in range(0,len(data),4)]
+            count=sum(p!=b'\0\0\0'for p in rgb)
+            assert 0<count<len(rgb)*.4,'HUD blanked or copied board pixels'
+            lit.append(count)
+            if len(lit)==120:break
+        assert len(lit)==120,'No 120 expanded HUD frames available after the native overlay'
+        report['hud_nonblank_frames']=len(lit)
+        report['native_overlay_fallback_frames']=fallback_frames
+        report['hud_foreground_pixels_min']=min(lit);report['hud_foreground_pixels_max']=max(lit)
+        report['legacy_state_loaded']=True
         args.output.write_text(json.dumps(report))
     finally:
         for m in reversed(machines):assert lib.ascendant_pinball_close(m),lib.ascendant_pinball_error()
@@ -98,6 +151,7 @@ def main():
     parser.add_argument('--frames',type=int,default=4200)
     parser.add_argument('--library-root',type=Path)
     parser.add_argument('--label',default='cached-reference')
+    parser.add_argument('--cases',choices=('all','ruby','sapphire'),default='all')
     parser.add_argument('--child',action='store_true',help=argparse.SUPPRESS)
     parser.add_argument('--locale',choices=('en','de'),default='en',help=argparse.SUPPRESS)
     parser.add_argument('--field',type=int,default=0,help=argparse.SUPPRESS)
@@ -120,6 +174,7 @@ def main():
     qa.qa_profile(profile);profile.mkdir(parents=True,exist_ok=True)
     aggregate={'passed':True,'cases':[]}
     for locale,field in [('en',0),('de',1)]:
+        if args.cases=='ruby'and field!=0 or args.cases=='sapphire'and field!=1:continue
         runs={}
         for mode in ('reference','cached'):
             name=f'{locale}-{field}-{mode}';output=cache/(name+'.json')

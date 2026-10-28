@@ -8,6 +8,14 @@ int16_t signed_word(const uint8_t* p){return static_cast<int16_t>(word(p));}
 int offset_x(uint16_t v){return (v&256)?int(v&511)-512:int(v&511);}
 int offset_y(uint16_t v){return (v&128)?int(v&255)-256:int(v&255);}
 void put(uint8_t* p,uint16_t v){p[0]=v;p[1]=v>>8;}
+// This pinned runtime's native_code_view exposes RAM and mapper-backed code,
+// not ordinary 8/16 MiB cartridge assets. Pinball's verified ROM is contiguous.
+const uint8_t* cartridge_view(const gba::GbaBus& bus,uint32_t address,size_t size){
+ if(address<0x08000000u)return nullptr;
+ const uint64_t offset=uint64_t(address)-0x08000000u;
+ if(!bus.rom_ptr()||offset+size>bus.rom_size())return nullptr;
+ return bus.rom_ptr()+offset;
+}
 // These hooks exist only during composition of the separate host surface.
 // The canonical GBA PPU never sees expanded rows, altered OAM or tile banks.
 struct Providers {
@@ -20,6 +28,36 @@ struct Providers {
 }
 PinballTableView* PinballTableView::rendering_=nullptr;
 PinballTableView::PinballTableView():cache_enabled_(std::getenv("ASCENDANT_PINBALL_REFERENCE_TABLE")==nullptr){}
+// Render only BG0 with each line's real scroll/VRAM/palette state. Copying the
+// canonical composite also copied the scrolling board through transparent HUD
+// texels; re-rendering BG0 at the frame boundary used the wrong raster registers.
+void PinballTableView::scanline(const gba::GbaPpu& source,uint32_t y,uint16_t display,
+ const uint8_t* io,const uint8_t* vram,const uint8_t* oam,const uint8_t* palette) {
+ if(y==0)hud_rows_.fill(false);
+ if(y<144||y>=160)return;
+ if(!hud_surface_)hud_surface_=std::make_unique<gba::GbaPpu>();
+ std::array<uint8_t,0x60> hud_io;std::memcpy(hud_io.data(),io,hud_io.size());
+ std::array<uint8_t,1024> hud_palette;std::memcpy(hud_palette.data(),palette,hud_palette.size());
+ hud_palette[0]=hud_palette[1]=0; // Opaque host backdrop, never the board.
+ put(hud_io.data()+0x50,0); // Do not blend BG0 with removed board layers.
+ put(hud_io.data()+0x52,0);put(hud_io.data()+0x54,0);
+ const uint16_t hud_display=(display&0xff)|0x100; // keep BG0; no OBJ, BG1-3 or windows
+ hud_surface_->render_presentation_scanline(source,y,hud_display,hud_io.data(),vram,oam,hud_palette.data());
+ hud_rows_[y-144]=true;
+}
+void PinballTableView::frame_ready() {
+ if(!hud_surface_||!std::all_of(hud_rows_.begin(),hud_rows_.end(),[](bool row){return row;}))return;
+ hud_surface_->mark_framebuffer_latched();
+ const auto* strip=hud_surface_->latched_framebuffer()+144*240*3;
+ // A blank BG0 scanout contains no new score. Retain the latest complete
+ // authored strip across these observed presentation gaps. Zero
+ // scores still contain glyphs; genuine changes publish on the next HUD pass.
+ if(std::any_of(strip,strip+hud_bytes,[](uint8_t value){return value!=0;}))
+  std::memcpy(hud_rgb_.data(),strip,hud_bytes);
+}
+void PinballTableView::restored() noexcept {hud_rgb_.fill(0);hud_rows_.fill(false);}
+std::vector<uint8_t> PinballTableView::save_hud() const {return {hud_rgb_.begin(),hud_rgb_.end()};}
+void PinballTableView::load_hud(const uint8_t* bytes) {std::memcpy(hud_rgb_.data(),bytes,hud_bytes);}
 bool PinballTableView::unchanged_band(unsigned band,unsigned first,unsigned end,uint16_t display,const uint8_t* palette) {
  if(!cache_enabled_)return false;
  dependency_.clear();
@@ -99,7 +137,12 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
  if(!game||!upper||!lower)return false;
  if(!surface_){surface_=std::make_unique<gba::GbaPpu>();surface_->set_view_margins(0,16,0,288);}
  std::memcpy(vram_.data(),bus.vram_ptr(),vram_.size());
- std::memcpy(oam_.data(),bus.oam_ptr(),oam_.size());
+ // Sprite-group IDs/poses describe the freshly built software OAM buffer.
+ // Hardware OAM is uploaded later by DefaultMainCallback after VBlank wait;
+ // pairing its previous frame with current IDs made actors blink/misassign.
+ const auto* sprite_oam=bus.native_code_view(0x03005000,oam_.size());
+ if(!sprite_oam)return false;
+ std::memcpy(oam_.data(),sprite_oam,oam_.size());
  std::memcpy(io_.data(),bus.io().raw(),io_.size());
  // Board BG1/2/3 share world coordinates. Stream BG3's 22-row hardware ring
  // from the game's two live decompressed buffers for EACH authored world row.
@@ -160,7 +203,7 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
   const auto original=bus.read32(sprites+group*4);
   const auto count=std::min<unsigned>(22,bus.read16(original));
   for(unsigned part=0;part<count;part++) {
-   const auto* item=bus.native_code_view(original+2+part*8,8);
+   const auto* item=cartridge_view(bus,original+2+part*8,8);
    if(!item||(word(item)&0x100))continue; // unauthored affine pose
    unsigned id=0;while(id<128&&authored_[id])id++;if(id==128)return;
    const auto a=word(item),b=word(item+2);
@@ -179,7 +222,7 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
  // Supply those original frames to the HOST copy only; never patch guest VRAM.
  auto tiles=[&](unsigned group,uint32_t source,unsigned tile,unsigned length) {
   if(word(groups+group*0xb8))return;
-  const auto* bytes=bus.native_code_view(source,length);
+  const auto* bytes=cartridge_view(bus,source,length);
   if(bytes&&0x10000+tile*32+length<=vram_.size())std::memcpy(vram_.data()+0x10000+tile*32,bytes,length);
  };
  if(field==0) {
@@ -240,17 +283,11 @@ bool PinballTableView::render(gba::GbaBus& bus,const gba::GbaPpu& canonical,uint
   auto* dest=rgba.data()+(size_t(y)*width+x)*4;
   std::memcpy(dest,pixel,3);dest[3]=255;
  }
- // BG0 contains the live score, coins, caught count and reserve balls. Isolate
- // it from the scrolling board instead of copying a repeated camera fragment.
- if(!hud_)hud_=std::make_unique<gba::GbaPpu>();
- std::array<uint8_t,1024> palette;
- std::memcpy(palette.data(),bus.pal_ptr(),palette.size());palette[0]=palette[1]=0;
- for(unsigned y=144;y<160;y++)hud_->render_presentation_scanline(canonical,y,(display&0xff)|0x100,
-  bus.io().raw(),bus.vram_ptr(),bus.oam_ptr(),palette.data());
- hud_->mark_framebuffer_latched();const auto* hud=hud_->latched_framebuffer();
+ // The isolated completed BG0 mirror has an opaque black backdrop. No pixels
+ // from BG1/2/3, table sprites or camera movement can leak into this strip.
  for(unsigned y=0;y<16;y++)for(unsigned x=0;x<width;x++) {
   auto* dest=rgba.data()+(size_t(y+board_height)*width+x)*4;
-  if(x>=8&&x<248)std::memcpy(dest,hud+((y+144)*240+x-8)*3,3);
+  if(x>=8&&x<248)std::memcpy(dest,hud_rgb_.data()+(y*240+x-8)*3,3);
   dest[3]=255;
  }
  return true;

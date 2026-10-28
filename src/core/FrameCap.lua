@@ -51,6 +51,14 @@ FrameCap.backgroundPacing = true
 FrameCap.BACKGROUND = 20
 FrameCap.focused = true
 
+-- Native streams feed their audio/video from the host update loop. Unlike the
+-- RPG fixed-step logic they cannot recover a 20 Hz consumer by scaling dt.
+local realtimeOwners=setmetatable({},{__mode='k'})
+function FrameCap.setRealtime(owner,active)
+  if owner then realtimeOwners[owner]=active and true or nil end
+end
+function FrameCap.realtime()return next(realtimeOwners)~=nil end
+
 function FrameCap.setFocus(f)
   FrameCap.focused = f and true or false
 end
@@ -91,10 +99,11 @@ end
 -- the original fallback here lets tests exercise the real pacing operation.
 function FrameCap.pace(timer, window, presented, nextFrame, idleWork)
   local now = timer.getTime()
-  local cap = FrameCap.current
+  local realtime=FrameCap.realtime()
+  local cap = math.max(FrameCap.current,realtime and 60 or 0)
   local background = Performance.backgroundPacing and FrameCap.backgroundPacing and not FrameCap.focused
     and FrameCap.BACKGROUND < cap
-  if background then cap = FrameCap.BACKGROUND end
+  if background and not realtime then cap = FrameCap.BACKGROUND end
   local budget = 1 / cap
   nextFrame = nextFrame + budget
   -- a vsync'd present paces by itself -- unless the window is in the
