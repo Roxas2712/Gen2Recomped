@@ -6,6 +6,20 @@ Gen2Recomped**, built on **Gen1Recomp by bryanthaboi / BOIS CLUB GAMES, LLC**.
 This fork is not a claim of sole authorship or ownership of the upstream
 engine.
 
+## Third-party game content and marks
+
+This project claims no ownership of third-party games, characters, graphics,
+music, sound recordings, names or trademarks. Their applicable rights remain
+with their respective rights holders. Source-code contribution notices do not
+grant permission to use, extract or distribute that third-party content.
+
+Local import, free distribution, attribution and user acknowledgement are not
+substitutes for the permissions required for a particular use. No statement in
+this notice promises that complaints will be limited to removal requests or
+excludes claims by third-party rights holders. Any permissions for independently
+owned contributions extend only to rights actually held by the contributor;
+existing upstream and third-party licence conditions remain applicable.
+
 ## Read the licences by provenance
 
 - [LICENSE](LICENSE) and [LICENSE.MD](LICENSE.MD) retain the upstream licence

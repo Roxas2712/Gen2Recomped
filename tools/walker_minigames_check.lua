@@ -24,6 +24,8 @@ local Treasure = require('src.pokewalker.minigames.TreasureHunt')
 local Memory = require('src.pokewalker.minigames.MemoryMatch')
 local Rhythm = require('src.pokewalker.minigames.RhythmTap')
 local Hub = require('src.ui.WalkerMinigames')
+-- Pure rules/input regression; the real mandatory UI gate has its own suite.
+package.loaded['src.pokewalker.minigames.Enrollment'].accepted=function()return true end
 
 local NOW = 20000 * 86400 + 3600
 Rewards.clock = function() return NOW end

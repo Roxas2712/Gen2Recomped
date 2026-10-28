@@ -17,20 +17,23 @@ def main():
     parser.add_argument('--love', type=Path, required=True)
     parser.add_argument('--label', required=True)
     parser.add_argument('--conflict', action='store_true', help='Render the explicit complete-snapshot conflict chooser.')
+    parser.add_argument('--enrollment', action='store_true', help='Render the mandatory minigame notice instead of the social page.')
     args = parser.parse_args()
+    assert not (args.conflict and args.enrollment)
     assert args.label.replace('-', '').isalnum()
     import qa_storage as qa
     qa._storage = qa.Storage(ROOT)
     atexit.register(qa._storage.close, collect=False)
     for path in (ROOT, args.love, Path(sys.executable)):
         qa.qa_source(path.resolve())
-    output = ROOT / '.local/qa' / ('walker-online-render-' + args.label)
+    output = ROOT / '.local/qa' / (('minigame-enrollment-render-' if args.enrollment else 'walker-online-render-') + args.label)
     qa.qa_cache(output)
     output.mkdir(parents=True, exist_ok=True)
     assert not (output / 'report.json').exists(), 'Preserve existing evidence'
     results = []
-    for width, guest in ((360, False), (1120, False), (360, True)):
-        label = str(width) + ('-guest' if guest else '-account')
+    cases = ((360, 800, False), (851, 393, False)) if args.enrollment else ((360, 1000, False), (1120, 1000, False), (360, 1000, True))
+    for width, height, guest in cases:
+        label = str(width) + 'x' + str(height) + ('-guest' if guest else '-account')
         identity = 'oasc-walker-online-qa-' + args.label + '-' + label
         profile = Path.home() / 'Library/Application Support/LOVE' / identity
         qa.qa_source(profile)
@@ -40,11 +43,12 @@ def main():
         host.mkdir(parents=True)
         for name in ('src', 'data', 'assets', 'mods', 'tools', 'tests'):
             (host / name).symlink_to(ROOT / name, target_is_directory=True)
-        (host / 'main.lua').write_bytes((ROOT / 'tests/fixtures/walker_online_preview.lua').read_bytes())
+        fixture = 'minigame_enrollment_preview.lua' if args.enrollment else 'walker_online_preview.lua'
+        (host / 'main.lua').write_bytes((ROOT / 'tests/fixtures' / fixture).read_bytes())
         (host / 'conf.lua').write_text(
             'function love.conf(t) love.filesystem.setSymlinksEnabled(true);'
             't.identity=' + json.dumps(identity) + ';t.version="12.0";'
-            't.window.width=' + str(width) + ';t.window.height=1000;'
+            't.window.width=' + str(width) + ';t.window.height=' + str(height) + ';'
             't.modules.audio=false;t.modules.physics=false end\n')
         image = output / (label + '.png')
         with (output / (label + '.log')).open('w') as log:
@@ -59,7 +63,7 @@ def main():
                 if child.poll() is None:
                     child.terminate()
                     child.wait(timeout=10)
-        results.append({'width': width, 'guest': guest, 'image': image.name, 'rendered': True})
+        results.append({'width': width, 'height': height, 'guest': guest, 'image': image.name, 'rendered': True})
     (output / 'report.json').write_text(json.dumps({'passed': True, 'scope': 'Actual LÖVE renderer; synthetic social state; no live service', 'results': results}, indent=2) + '\n')
     print(output, flush=True)
 
