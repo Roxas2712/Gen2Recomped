@@ -87,4 +87,19 @@ end
 for _,edition in ipairs{'emerald','firered','leafgreen','gold'} do
   V.set(edition);T.eq(Ice.step({},{}),nil);T.eq(Ice.restore({},{}),false)
 end
+-- Actual world entry used to clear the saved masks after restoring them.
+for _,edition in ipairs{'ruby','sapphire'} do
+  local f=require('tests.checkpoint_fixture').boot(edition,3)
+  local g,w=f.game,f.world
+  g.save.gen3Vars={[0x4008]=48,[0x4022]=29}
+  g.save.flags.FLAG_G3_0011=true
+  w.continuingSave=true
+  w:setMap('FIX_TOWN',2,3,'down',{via='boot'})
+  T.eq(g.save.gen3Vars[0x4008],48,'actual CONTINUE map setup preserves saved temporary vars')
+  T.eq(g.save.flags.FLAG_G3_0011,true,'actual CONTINUE preserves temporary field flags')
+  w:setMap('FIX_TOWN',2,3,'down',{via='warp'})
+  T.eq(g.save.gen3Vars[0x4008],nil,'fresh map setup still clears temporary vars')
+  T.eq(g.save.flags.FLAG_G3_0011,nil,'fresh map setup still clears temporary flags')
+  f.close()
+end
 T.finish('RS native ice timing, sound, saved row restoration, falls and continue callback phases')

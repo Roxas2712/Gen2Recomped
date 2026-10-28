@@ -2049,9 +2049,6 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
      and Game.save and Game.save.gen3ThinIce then
     Game.save.gen3ThinIce[mapId] = nil
   end
-  if not (opts and opts.checkpoint) then
-    require("src.world.Gen3RsIce").enter(self, Game, self.gen3RsContinuing)
-  end
   -- ...and so does the plank that was down, for the same reason
   self.bridgeDown = nil
   -- ...and the log that was under, likewise
@@ -2102,11 +2099,12 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- is asked anything -- the map-entered listeners, the onEnter chain and the
   -- frame table all read them.  ClearTempFieldEventData (0x0009D344) sits at
   -- exactly this point in both of the cartridge's map-load paths.
-  if GameVersion.isGen3() and Game and Game.save then
+  if GameVersion.isGen3() and Game and Game.save and not self.gen3RsContinuing then
     pcall(function()
       require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)
     end)
   end
+  require("src.world.Gen3RsIce").enter(self, Game, self.gen3RsContinuing)
   -- ...and Sinnoh / Johto's, from the same call (field_warp_tasks.c, on every
   -- warp and every connection).  See Gen4Commands.clearTempFieldEventData for
   -- the Twinleaf report it fixes.
