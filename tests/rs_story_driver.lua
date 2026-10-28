@@ -284,9 +284,10 @@ return function(game)
         -- A d-pad tap ends at the conveyor's exit, not its first arrow.
         -- Simulate only read-only collision/rules; actual travel still uses
         -- ordinary input and is recorded one frame/press at a time.
-        local forcedSeen={}
+        local forcedSeen={};local incoming=dir
         while entered and not w.player.surfing and map.forcedMovementAt do
           local row=map:forcedMovementAt(x,y);local way=row and row.way
+          if not way and map.isIceCell and map:isIceCell(x,y)then way=incoming end
           if not way then break end
           local here=key(x,y,elevation)
           if forcedSeen[here]then entered=false;break end
@@ -296,7 +297,7 @@ return function(game)
           local nx,ny=x+step[1],y+step[2]
           if not map:inBounds(nx,ny)or not Collision.mayEnter(map,w.entities or{},mover,nx,ny,way)then break end
           elevation=map.elevationAfter and map:elevationAfter(elevation,nx,ny,x,y)or elevation
-          x,y=nx,ny
+          x,y=nx,ny;incoming=way
         end
         local k=key(x,y,elevation)
         if entered and not seen[k]then

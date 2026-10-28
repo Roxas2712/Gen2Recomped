@@ -11,6 +11,15 @@ the loop bound, predicates, direction immediates and driver calls. No floor
 rules are supplied as fallback data. RS import requires all eight floor rules
 and changes its cache revision so an earlier incomplete import is rebuilt.
 
+Resuming the ordinary gym traversal also exposed a direction handoff defect:
+the southbound slide at `(3,13)` enters a slippery crossing at `(3,14)`.
+The legacy ice handler reused an older slide direction or the locked sprite's
+facing, reversing travel and creating an endless two-cell bounce. A directed
+floor now hands its actual travel direction to the slippery continuation;
+Gen3 keeps its facing lock. The native regression enters that conveyor from
+the side and must reach the original exit `(14,26)` after releasing input.
+Gen2's existing facing behavior remains unchanged.
+
 | Original USA dump | Dispatcher | Predicates | Actions | Walk driver | Slide driver |
 | --- | --- | --- | --- | --- | --- |
 | Ruby | `058944` | `30FB58` | `30FBA0` | `0589EC` | `058B6C` |

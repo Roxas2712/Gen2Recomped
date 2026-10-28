@@ -10697,6 +10697,10 @@ function OverworldState:checkGen3Forced()
   if not Collision.canMove(map, self.cast or self.entities, p, way) then
     return false
   end
+  -- A directional arrow can feed a slippery crossing. Carry the actual
+  -- travel direction into that crossing, even when slide locks the sprite's
+  -- facing. Retaining an earlier ice direction bounces between two cells.
+  self.iceSlide = way
   self:scriptMove(p, way, 1, function() self:onStepComplete() end,
                   row.slide and true or nil)
   return true
@@ -10820,8 +10824,11 @@ function OverworldState:checkGen2Ice()
     return false
   end
   self.iceSlide = dir
-  p.facing = dir
-  self:scriptMove(p, dir, 1, function() self:onStepComplete() end)
+  -- Gen3's slip action continues movementDirection; it does not release a
+  -- facing lock inherited from a directional slide (Mossdeep crossings).
+  local keepFacing = GameVersion.isGen3() or nil
+  if not keepFacing then p.facing = dir end
+  self:scriptMove(p, dir, 1, function() self:onStepComplete() end, keepFacing)
   return true
 end
 

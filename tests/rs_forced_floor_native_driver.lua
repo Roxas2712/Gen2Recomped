@@ -29,6 +29,14 @@ return function(game)
   shot('native-mossdeep-switch-after')
   press('a',180)
   assert(map:forcedMovementAt(1,23).way=='right','second switch use did not restore the arrow')
+  -- Enter a southbound slide facing east. The slippery bridge at (3,14)
+  -- continues south underneath the crossing, keeping the sprite's facing.
+  U.teleport(game,'MAP_G14_N00',2,13,'right');w=game.overworld
+  shot('native-mossdeep-crossing-before');press('right',12);U.wait(900)
+  assert(w.player.cellX==14 and w.player.cellY==26 and not w.player.moving,
+    'directional slide lost its movement direction on the slippery crossing')
+  assert(w.player.facing=='right','slippery crossing released native facing lock')
+  shot('native-mossdeep-crossing-after');report.slipperyCrossingContinuesActualMovement=true
   -- One tap onto the western conveyor must carry the player after release.
   -- The east-facing red arrow exits onto ordinary floor beside the trainer.
   U.teleport(game,'MAP_G14_N00',1,28,'up');w=game.overworld
