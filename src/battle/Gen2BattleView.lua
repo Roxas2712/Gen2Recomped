@@ -162,6 +162,11 @@ function View.install(Screen, images)
     local trainer = back and self.showPlayerBack and self.playerBackPic
       or (not back and self.showEnemyTrainer and self.trainerPic)
     local image, _, path = self:pic(mon, back)
+    -- The public pic getter remains the Pokemon's indexed art. Drawing the
+    -- active replacement uses its full ROM box while retaining that art's
+    -- image-specific scale setting, as on the source screen.
+    local replacement = not trainer and require('src.battle.Gen2PictureArt').replacement(self,b,back)
+    if replacement then image = self:picImage(replacement) end
     if trainer then image, path = self:picImage(trainer), images.path(trainer) end
     if not image then return end
     local frame = not trainer and not back and self:frontAnimFrame(mon)
@@ -180,6 +185,7 @@ function View.install(Screen, images)
       -- This isolated window owns the clip below. The native effect drawer's
       -- rear-side window would erase a front capture of the SAME player.
       wideRegion = true,
+      _gen2PicBack = back,
       battlerPic = function() return image end,
       -- Sprite extraction must stay a sprite even with native Stadium enabled.
       drawStadiumBattlerPic = function() return false end,

@@ -44,14 +44,16 @@ for _,edition in ipairs({'gold','silver','crystal'})do
 end
 for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
  local marker=markerFor(edition)
- T.check(marker:find('gen2%-anim%-object%-v1:')~=nil,'generated animation cache has a new contract')
+ T.check(marker:find('gen2%-anim%-object%-v2:')~=nil,'generated animation cache has a new contract')
  Version.set(edition)
- local old=marker:gsub('gen2%-anim%-object%-v1:','')
- love.filesystem.write(Version.cachePrefix(edition)..'rom-cache.complete',old)
- local report=Importer.readyReport(edition)
- T.eq(report.ok,false,'old handler-labelled cache must be rebuilt')
- T.check(report.why and report.why:find('another version',1,true)~=nil,
-  'real readiness gate refuses the old format before checking file gaps')
+ for _,old in ipairs({marker:gsub('gen2%-anim%-object%-v2:',''),
+     (marker:gsub('gen2%-anim%-object%-v2:','gen2-anim-object-v1:'))})do
+  love.filesystem.write(Version.cachePrefix(edition)..'rom-cache.complete',old)
+  local report=Importer.readyReport(edition)
+  T.eq(report.ok,false,'old commands or missing-picture cache must be rebuilt')
+  T.check(report.why and report.why:find('another version',1,true)~=nil,
+   'real readiness gate refuses old format before checking file gaps')
+ end
 end
 for _,edition in ipairs({'red','emerald','platinum'})do
  T.check(not markerFor(edition):find('gen2%-anim%-object'),
