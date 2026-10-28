@@ -54,7 +54,7 @@ end
 local advancedHidden=true
 for _,button in ipairs(ui._pinButtons)do if button.label:find('IP / Port',1,true)then advancedHidden=false end end
 check(advancedHidden,'manual IP entry is hidden in the normal friend flow')
-click('ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY')
+click('ERWEITERTE VERBINDUNG · LAN / EIGENES RELAY')
 click('ONLINE / LAN · DIREKT HOSTEN')
 check(connections==0 and ui._pinConnectJob,'button queues connection instead of doing account I/O in the click handler')
 ui:update(.016);check(connections==1 and started==1 and ui._pinPlayer.net==lastNet,'completed transport launches the actual player path')
@@ -72,7 +72,7 @@ ui._launcherSequence=nil;ui._pinPendingNet=nil;ui._pinOpen=true;ui.section='game
 Translation.setLauncher({launcherLanguage='en'})
 ui._pinAdvanced=false;ui:_sbDrawContent(0,0,1000,700)
 local english={};for _,button in ipairs(ui._pinButtons)do english[button.label]=true end
-check(english['ADVANCED CONNECTION · LAN / CUSTOM RELAY']and not english['ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY'],
+check(english['ADVANCED CONNECTION · LAN / CUSTOM RELAY']and not english['ERWEITERTE VERBINDUNG · LAN / EIGENES RELAY'],
  'the actual English page does not force German connection copy')
 check(english['DUEL TABLE: RUBY']and not english['DUELL-TISCH: RUBIN'],
  'the actual table selector follows the English launcher language')
