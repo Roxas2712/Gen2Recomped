@@ -19,10 +19,16 @@ local function press(g,key)
 end
 for _,edition in ipairs{'gold','silver','crystal'}do
   local g=session(edition,true);local m=Menu.new(g);g.stack:push(m)
-  local p=m:focusRow('frame')
-  T.check(p and p~=m,edition..' FRAME opens native GRAPHICS group')
+  -- This standalone upstream base has a flat options menu. Reach FRAME
+  -- through its ordinary input controller without requiring the fork's
+  -- independent grouped-options PR.
+  local at
+  for i,row in ipairs(m.rows)do if row.id=='frame'then at=i end end
+  T.check(at~=nil,edition..' FRAME is offered by the native menu')
+  local p=at and m
   if p then
-    T.eq(p:row().id,'frame')
+    for _=1,#m.rows+1 do if m.index==at then break end;press(g,'down')end
+    T.eq(m.rows[m.index].id,'frame')
     press(g,'left');T.eq(g.save.options.frame,8);T.eq(Font.frameIndex(),8,'normal input updates renderer immediately')
     press(g,'right');T.eq(g.save.options.frame,1);T.eq(Font.frameIndex(),1)
     for i=2,8 do press(g,'right');T.eq(g.save.options.frame,i);T.eq(Font.frameIndex(),i)end
@@ -34,7 +40,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     local Game=require('src.core.Game')
     Game.applyOptions(g,saved.options)
     T.eq(Font.frameIndex(),8,'actual Game option application restores frame')
-    press(g,'b');T.eq(g.stack:top(),m,'BACK restores original option page')
+    press(g,'b');T.eq(g.stack:top(),nil,'BACK releases the flat native option page')
   end
 end
 for _,edition in ipairs{'red','emerald','crystal'}do

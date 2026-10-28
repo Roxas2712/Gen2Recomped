@@ -100,8 +100,8 @@ The GSC importer emits the actual battle-extra font and eight six-tile
 segmented/compressed font manifests retain their previous extraction;
 other non-retail layouts need an explicit `fontFrameCount` to admit a
 frame sheet. The generated Gen2 cache revision requires an ordinary
-reimport of older font records while retaining saves. The native GRAPHICS
-group offers FRAME when the extracted sheet exists, applies changes
+reimport of older font records while retaining saves. The native options
+menu offers FRAME when the extracted sheet exists, applies changes
 immediately, and restores the saved selection through `Game:applyOptions`.
 
 The selection, import and options contract fixtures test glyph boundaries,
