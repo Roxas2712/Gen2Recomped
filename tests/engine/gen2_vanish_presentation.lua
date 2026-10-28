@@ -126,7 +126,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   s:updateQueue();s:updateQueue();s:updateQueue()
   T.eq(r.bg.picSize[side],nil,'CheckFlyDigStatus suppresses actual SHOW_MON')
   T.eq(r.bg.liftedRows[side],nil,'hidden target contributes no lifted BG rows')
-  T.eq(#r.objects:activeObjects(),0,'hidden target contributes no battler-row OBJ')
+  T.eq(r.objects:activeCount(),0,'hidden target contributes no battler-row OBJ')
   finish(s)
   b.invulnerable=nil;b.hiddenAs=nil;s:advanceQueue()
   T.eq(underground(s,side),false,'native cancellation removes visibility flag')
@@ -135,7 +135,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   T.eq(s.anim.env.flying[side],false,'fresh runner reads the cleared actual flag')
   s:updateQueue();s:updateQueue()
   T.check(s.anim.bg.picSize[side]~=nil,'on-field target admits actual SHOW_MON')
-  T.check(#s.anim.objects:activeObjects()>0,'on-field target admits real battler OBJ')
+  T.check(s.anim.objects:activeCount()>0,'on-field target admits real battler OBJ')
   T.eq(r.env.flying[side],true,'starting next runner cannot rebind retained runner')
   s.animPlayer:release()
  end end
