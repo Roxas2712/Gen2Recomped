@@ -6907,6 +6907,14 @@ Gen3Commands.SPECIALS[300] = function(ctx)
 end
 
 -- ---------------------------------------------------------------------------
+-- 313: StartGroudonKyogreBattle. RS native 311 is imported under this
+-- Emerald identity. Without a handler the Cave of Origin script advances
+-- its completion flags without ever starting the prepared level-45 battle.
+Gen3Commands.SPECIALS[313] = function(ctx)
+  Commands.g3_wild_battle(ctx, true)
+end
+
+-- ---------------------------------------------------------------------------
 -- 314: BattleSetup_StartLegendaryBattle -- and it is a wild battle.
 --
 -- Seven scripts on the cartridge run it, and they are the seven that matter:
