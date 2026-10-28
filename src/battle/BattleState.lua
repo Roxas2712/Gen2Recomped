@@ -979,6 +979,7 @@ function StatBox.new(game, mon, onDone, change)
     screen.uiSize=function()return 240,160 end
     screen.wantsFillScale=function()return true end
   end
+  if GameVersion.isGen3()then require('src.compat.gen1.NativeModalObservation').capture(screen,game)end
   return screen
 end
 
