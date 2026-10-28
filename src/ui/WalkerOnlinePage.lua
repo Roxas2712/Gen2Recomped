@@ -60,9 +60,16 @@ function M.install(P)
    g.printf(label,x+24,y+10,w-48,'center');y=y+hh+12
   end
   line(Strings('POKÉWALKER · FRIENDS & CLOUD'))
+  local function withdrawButton()
+   button('WITHDRAW MINIGAME ACCEPTANCE',function()
+    local ok,why=require('src.pokewalker.minigames.Enrollment').revoke()
+    self:say(ok and Strings('Acceptance withdrawn. Minigames require confirmation again.')or Strings(why or'The confirmation could not be saved. Minigames remain locked.'))
+   end)
+  end
   if not Auth.signedIn()then
    line(Strings('Walks and minigames work without an account. Sign in for your friends, chat and private cloud progress.'))
    button('SIGN IN / REGISTER',function()M.openAccount(self)end)
+   withdrawButton()
    return math.max(h,y-top)
   end
   line(Strings('Cloud progress includes walks, watts, items, achievements and minigame records. Conflicting rewards are never merged.'))
@@ -83,6 +90,7 @@ function M.install(P)
   end
   button('FRIENDS',function()M.openAccount(self,'friends')end)
   button('INBOX',function()M.openAccount(self,'inbox')end)
+  withdrawButton()
   local rows=M.friends()
   if not rows then line(Strings('Friend status is refreshing. Open Friends to check availability.'))
   elseif #rows==0 then line(Strings('Your accepted friends appear here. Requests need the other player’s confirmation.'))

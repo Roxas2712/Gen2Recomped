@@ -145,8 +145,25 @@ for _,platform in ipairs{'iOS','Android'}do
  T.eq(Studio.touchId,nil,'actual '..platform..' release ends finger ownership')
 end
 Studio.mousepressed=mouse;osName='Linux'
+-- The visible modal owns a dropped file even with an underlying setup page.
+local oldHub,oldSetup=package.loaded['src.ui.WalkerMinigames'],package.loaded['src.pokewalker.minigames.ContentSetup']
+local drop,studioDrop,setupDrop,launcherDrop={},0,0,0
+local priorDrop=Studio.filedropped
+Studio.filedropped=function(file)T.eq(file,drop);studioDrop=studioDrop+1 end
+package.loaded['src.ui.WalkerMinigames']={active={settingContent=true}}
+package.loaded['src.pokewalker.minigames.ContentSetup']={file=function(_,file)T.eq(file,drop);setupDrop=setupDrop+1;return true end}
+love.filedropped(drop)
+T.eq(studioDrop,1,'actual main routes the dropped file to the visible skin editor')
+T.eq(setupDrop,0,'underlying minigame setup cannot steal a modal drop')
+Studio.filedropped=priorDrop
 Studio.mode='library';Studio.dirty=false
 love.gamepadpressed(nil,'b')
+host.filedropped=function()launcherDrop=launcherDrop+1 end
+love.filedropped(drop)
+T.eq(setupDrop,1,'minigame setup receives the actual drop after the editor closes')
+T.eq(launcherDrop,0,'an accepted content drop does not reach the launcher importer')
+package.loaded['src.ui.WalkerMinigames'],package.loaded['src.pokewalker.minigames.ContentSetup']=oldHub,oldSetup
+
 T.eq(up(love.keypressed,'TouchEditor'),nil,'normal B closes actual native studio owner')
 T.eq(up(love.keypressed,'Importer'),host,'normal close restores the same native launcher')
 T.eq(next(host._padDir),nil,'close cannot restore stale held launcher direction')

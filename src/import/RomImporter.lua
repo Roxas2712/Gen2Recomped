@@ -1290,7 +1290,7 @@ local function markerFor(version)
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
   if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
-  if GameVersion.isFRLG(version) then revision = "frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = "frlg-native-credits-v1:frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -1349,7 +1349,9 @@ local function markerFor(version)
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:rs-forced-floors-v1:rs-battler-coords-v1:'
   end
-  if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  if GameVersion.generation(version)==3 then
+    revision=revision..'gba-field-move-art-v1:gba-door-metadata-v'..require('src.import.Gen3DoorMetadata').REVISION..':'
+  end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then
     revision=revision..'frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'

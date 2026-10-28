@@ -28,8 +28,10 @@ P.attachTask(task);account='17'
 local ok,allowed,opts=coroutine.resume(task)
 check(ok and not allowed and S.decode(opts).musicVol==6,'a pending task stays pinned to its original profile and refuses account-changing operations')
 check(P.check() and Saves.peekSlot('red',slot).player.name=='Alice' and Saves.loadOptions().musicVol==2,'switching back restores the original save registry, data and options')
+Saves.persistenceFs().write('minigames/enrollment.lua','A acceptance')
 local ui={_bankOverlay={accountId='17',right={dirty=true}},ready={}}
 account='29';P.profileChanged(ui)
+check(not Saves.persistenceFs().read('minigames/enrollment.lua'),'minigame acknowledgement is private to the active account')
 check(not ui._bankOverlay and ui._profileBankDrafts['17'].right.dirty,'account switching retains another profile’s staged Bank draft without displaying it')
 local binding=files[P.FILE];files[P.FILE]='damaged legacy binding'
 check(P.check() and Saves.peekSlot('red',slotB).player.name=='Bob','a damaged legacy binding does not block an independently linked named profile')
@@ -58,4 +60,16 @@ account='29';local taskState=W.load()
 local co=coroutine.create(function()return W.save(taskState)end);P.attachTask(co);account='17'
 local resumed,written=coroutine.resume(co)
 check(resumed and not written and W.load().watts==321,'background storage scope refuses a changed active account')
+-- File handles and both sides of a publication rename must follow the same
+-- profile mapping as getInfo/read/write (no inherited unscoped base methods).
+local renameFrom,renameTo,opened
+local base={read=fs.read,write=fs.write,getInfo=fs.getInfo,createDirectory=fs.createDirectory,
+ rename=function(a,b)renameFrom,renameTo=a,b;files[b]=files[a];files[a]=nil;return true end,
+ newFile=function(p)opened=p;return{}end}
+files['storage_account.lua']=binding
+local scoped=require('src.storage.ProfileFs').wrap(base,'29')
+scoped.write('minigames/content/a.tmp','private');scoped.rename('minigames/content/a.tmp','minigames/content/a.lua')
+check(renameFrom=='profiles/29/minigames/content/a.tmp'and renameTo=='profiles/29/minigames/content/a.lua'and not files['minigames/content/a.lua'],'atomic publication cannot rename outside its account')
+scoped.newFile('minigames/content/a.lua')
+check(opened=='profiles/29/minigames/content/a.lua','bounded file handles cannot bypass profile routing')
 print('Account profiles: '..n..' checks passed')

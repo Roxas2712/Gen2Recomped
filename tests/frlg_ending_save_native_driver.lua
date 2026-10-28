@@ -36,7 +36,7 @@ return function(game)
   return actualWrite(g)
  end
  local report={status='running',edition=edition,preparedFixture=true,continuousStory=false,
-  originalHallController=true,originalCreditsController=false,captures={}}
+  originalHallController=true,originalCreditsController=true,captures={}}
  local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
  local function shot(name)
   local before=Save.encode(game.save);local rng=love.math.getRandomState();local top=game.stack:top()
@@ -91,26 +91,34 @@ return function(game)
  assert(durable.hallOfFame==1 and durable.gen3Stats[10]==1 and durable.flags.FLAG_G3_082C)
  for _,mon in ipairs(durable.party)do assert(mon.ribbons.champion)end
  press('a');for _=1,1200 do if game.stack:top()~=h then break end;U.wait(1)end
- credits=game.stack:top();assert(getmetatable(credits)==require('src.ui.Gen3CreditsFRLG'))
+ credits=game.stack:top();assert(getmetatable(credits)==require('src.ui.Gen3FrlgCredits'))
  assert(require('src.core.Music').current()==require('src.core.Music').special(game.data,'credits'))
- local commands,maps,monScenes={},{},{};local copyright,theEnd=false,false
+ local commands,maps,monScenes,sheets={},{},{},{};local copyright,theEnd=false,false
+ local scene=credits.scene;local C=scene.SCENE;local pack=assert(love.filesystem.load('data/generated/gba/credits/pack.lua'))()
+ local hostPlayer=Save.encode(game.save.player);local hostMap=ow.map
  for _=1,50000 do
   assert(game.stack:top()==credits,'Credits ended before their final wait')
-  if credits.cmd then commands[credits.idx-1]=true end
-  if credits.phase=='hold'and not maps[credits.cmd.param]then maps[credits.cmd.param]=true;shot('frlg-credits-map-'..credits.cmd.param)
-  elseif credits.phase=='mon'and credits.mon.t>=104 and not monScenes[credits.cmd.param]then
-   monScenes[credits.cmd.param]=true;shot('frlg-credits-mon-'..credits.cmd.param)
-  elseif credits.phase=='end'and credits.fade==1 then
-   if credits.cmd.param==0 and not copyright then copyright=true;shot('frlg-credits-copyright')
-   elseif credits.cmd.param==1 and not theEnd then theEnd=true;shot('frlg-credits-the-end')end
-  elseif credits.phase=='wait'then break end
+  local state=assert(scene.state());local idx=state.scrcmdidx-1
+  if pack.script[idx]then commands[idx]=true end
+  if state.world and state.textLevel==0 and(credits.renderer.worldFadeAlpha or 0)==0 then
+   if credits.mapId and not maps[credits.mapId]then maps[credits.mapId]=true;shot('frlg-original-credits-'..credits.mapId)end
+   if state.task and not sheets[state.task.sheet]then sheets[state.task.sheet]=true;shot('frlg-original-credits-'..state.task.sheet)end
+  elseif state.mainseq==C.MON_SHOW and state.mon and state.mon.showBall and not monScenes[state.whichMon]then
+   monScenes[state.whichMon]=true;shot('frlg-original-credits-mon-'..state.whichMon)
+  elseif state.mainseq==C.THEEND_SHOW and state.closing and state.closing.shown and state.textLevel==0 then
+   if state.whichMon==0 and not copyright then copyright=true;shot('frlg-original-credits-copyright')
+   elseif state.whichMon==1 and not theEnd then theEnd=true;shot('frlg-original-credits-the-end')end
+  elseif state.mainseq==C.WAITBUTTON then break end
+  assert(Save.encode(game.save.player)==hostPlayer and ow.map==hostMap,'Private credits map altered live world/player')
   U.wait(1)
  end
- assert(credits.phase=='wait'and copyright and theEnd,'Full imported credits script missed THE END')
- for i=1,#credits.rec.script do assert(commands[i],'Missing credit command '..i)end
- for i=0,3 do assert(monScenes[i],'Missing original credit Pokémon scene '..i)end
+ assert(scene.state().mainseq==C.WAITBUTTON and copyright and theEnd,'Original credits missed THE END')
+ for i=1,#pack.script do assert(commands[i],'Missing original credit command '..i)end
+ for i=0,3 do assert(monScenes[i],'Missing original credit Pokemon scene '..i)end
+ local mapCount=0;for _ in pairs(maps)do mapCount=mapCount+1 end;assert(mapCount==14,'Original Indigo plus thirteen native map scenes missing')
+ assert(sheets[edition=='firered'and'player_female'or'player_male']and sheets.rival,'Original player/rival sprites missing')
  for _,id in ipairs{'CHARIZARD','VENUSAUR','BLASTOISE','PIKACHU'}do assert(creditCries[id]==1,'Credit scene cry missing: '..id)end
- local commandCount=#credits.rec.script;press('a');for _=1,1200 do if credits.finished then break end;U.wait(1)end
+ local commandCount=#pack.script;press('a');for _=1,1200 do if credits.finished then break end;U.wait(1)end
  assert(credits.finished and game.stack:top().screenId=='TitleState','Ending did not reset to native title')
  assert(not ow.runner:isRunning()and owner.scriptCancelled and ow.runner.co~=co,'Retired Hall script continued behind title')
  local title=game.stack:top();for _=1,2400 do if title.phase=='run'then break end;U.wait(1)end
@@ -128,6 +136,7 @@ return function(game)
  assert(Save.decode(disk()).specialSaveWarpFlags%2==1,'CONTINUE rewrote durable snapshot')
  shot('frlg-league-continue-pallet');game.writeSave=actualWrite;Sound.playId,Sound.playCry=play,cry
  report.automaticLeagueSave=true;report.failedWritesPreserveDisk=true;report.writeAttempts=attempts;report.saveSounds=saveSounds
+ report.originalCreditsMaps=mapCount;report.originalCreditsPlayerAndRival=true
  report.applauseSources=applause;report.actualCartridgeSpecial=272;report.fullImportedCreditsCommands=commandCount
  report.nativeTitleAndActualContinue=true;report.outdoorPalletAndIndoorWhiteout=true;report.drawSaveRngPreserved=true
  report.status='pass';persist();print('PASS_NATIVE_FRLG_LEAGUE_SAVE '..edition);love.event.quit(0)

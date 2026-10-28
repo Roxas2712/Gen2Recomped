@@ -13,24 +13,15 @@ function M.new(game,onDone,opts)
   local session={version=version,name=player.name or'',trainerId=player.id or 0,
     gender=(player.gender=='girl'or player.gender=='female'or player.gender==1 or player.female==true)and 1 or 0,
     playtime={hours=math.floor(seconds/3600),minutes=math.floor(seconds/60)%60,seconds=seconds%60},party={}}
-  local species={};for id,def in pairs(data.pokemon)do if def.index then species[def.index]={id=id,def=def}end end
-  local function row(n)return assert(species[tonumber(n)],'Unknown native FR/LG Hall species '..tostring(n))end
   for _,mon in ipairs(save.party or{})do
     local def=data.pokemon[mon.species]
     if def then session.party[#session.party+1]={species=def.index,level=mon.level,nickname=mon.nickname,name=def.name,
       personality=mon.personality or mon.pid or 0,otId=mon.otId or player.id or 0,otSecretId=mon.otSecretId or 0,_hostMon=mon}end
   end
-  local gv={current=version,get=function()return version end}
-  local profile={id=version,family='frlg'}
-  local profiles={forSession=function()return profile end,of=function()return profile end,active=function()return profile end,family=function()return'frlg'end}
-  local function readLua(path)local f=assert(love.filesystem.load(path));setfenv(f,{});return f()end
-  local fs={readActive=function(path)return love.filesystem.read(path)end,loadActive=readLua};fs.read=fs.readActive
-  local songs=spec.songIds;local audio={}
-  function audio.playSong(id)return require('src.core.Music').play(data,('SONG_%03X'):format(tonumber(id)or assert(songs[id])))end
-  function audio.playSe(id)return require('src.core.Sound').playId(data,tonumber(id)or assert(songs[id]))end
-  function audio.playCry(n)return require('src.core.Sound').playCry(data,row(n).id)end
-  audio.isCryFinished=require('src.core.Sound').isCryFinished;audio.fadeOutBgm=require('src.core.Music').fadeOutM4a
   local self;local saveEnding=opts and opts.saveEnding==true
+  local runtime={session=session,_game={saveGame=function()return self:writeEnding()end}}
+  local bindings,audio,row=require('src.ui.Gen3FrlgSceneBindings').new(game,session,runtime)
+  local songs=spec.songIds
   -- The cart continues with a hardware backup-memory check. Host IO retries
   -- use its first sentence, within the original two-line saving window.
   local failureIR={spec.textIR.gText_SaveFailedCheckingBackup[1],{t='eos'}}
@@ -39,18 +30,7 @@ function M.new(game,onDone,opts)
     return assert(spec.textIR[key],'Missing original FR/LG Hall text '..key)
   end}
   function text.plain(key,ctx)return self.load('src.core.game3.scripting.text_ir').toAscii(text.ir(key),ctx)end
-  local runtime={session=session,_game={saveGame=function()return self:writeEnding()end}}
-  local bindings={__package={loaded={['src.core.GameVersion']=gv,['src.core.game3.profile']=profiles,
-    ['src.core.game3.runtime']=runtime}},
-    ['src.core.GameVersion']=gv,['src.core.game3.profile']=profiles,
-    ['src.core.Logger']=require('src.core.Logger'),['src.mods.Runtime']=require('src.mods.Runtime'),
-    ['src.render.Font']=require('src.render.Font'),['src.import.CacheFs']=fs,
-    ['src.import.CacheBlob']={readFs=fs.readActive,decode=function(_,bytes)return bytes end},
-    ['src.import.gba.extract_island1']={CACHE_ROOT='data/generated/gba'},
-    ['src.core.game3.dataset']={cache=function()return{read=function(_,path)return love.filesystem.read(path)end}end},
-    ['src.ui.game3.stack']={push=function()end,pop=function()end},
-    ['src.core.game3.display']={W=240,H=160,TILE=8,COLS=30,ROWS=20},
-    ['src.core.game3.audio']=audio,['src.core.game3.song_ids']=songs,['src.core.game3.se_ids']=songs,
+  local specific={
     ['src.core.game3.scripting.flags']={forVersion=function()return{IDS={FLAG_SYS_GAME_CLEAR=0x82c}}end},
     ['src.core.game3.rom_text']=text,
     ['src.core.game3.pokedex_data']={isNationalUnlocked=function()return save.nationalDex==true end},
@@ -80,6 +60,7 @@ function M.new(game,onDone,opts)
         return path and{image=require('src.render.Assets').image(path)}or nil
       end},
   }
+  for key,value in pairs(specific)do bindings[key]=value end
   self=setmetatable({game=game,version=version,session=session,onDone=onDone,
     saveEnding=saveEnding,endingResult={nativeFrlgSaved=true},saveSound=assert(songs.SE_SAVE)},M)
   local playSe=audio.playSe
