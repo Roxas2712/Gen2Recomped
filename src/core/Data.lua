@@ -1897,6 +1897,8 @@ function Data:seedDefaults()
     end
     seedMissingGen2Tilesets(self)
     self:publishGen2Palettes()
+    require("src.core.Gen2SpeciesNames").canonicalize(self)
+    require("src.core.Gen2SpeciesNames").publish(self)
     ensureGen2WarpFallbacks(self)
     ensureGen2HomeTextFallbacks(self)
   end

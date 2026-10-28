@@ -1310,6 +1310,7 @@ local function stampAudioOwners(data, name, registry)
 end
 
 function Loader:load(data)
+  require("src.core.Gen2SpeciesNames").publish(data)
   local palette=package.loaded['src.render.PaletteFX']
   if palette and palette.clearGen2Context then palette.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]
