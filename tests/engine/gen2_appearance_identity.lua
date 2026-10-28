@@ -7,6 +7,7 @@ local Stats=require('src.pokemon.Stats')
 local Save=require('src.core.SaveData')
 local Copy=require('src.mods.Merge').deepCopy
 local F=require('tests.gsc_species_fixture')
+require('src.script.Gen2Commands')
 local function genes(a,d,s,c)return {attack=a,defense=d,speed=s,special=c}end
 local function noRoll()error('fixed genes must not draw random birth DVs')end
 for _,edition in ipairs{'gold','silver','crystal'}do
