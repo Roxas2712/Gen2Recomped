@@ -69,6 +69,25 @@ Font.popFace();sample(0x79,'frames',0,24)
 -- Authored inactive pages must never win the ordinary same-base lookup.
 d=data();d.font.imageBattleExtra=nil;d.font.pages.battleExtra.inactive=true
 Font.load(d);sample(0x6e,'extra',112,0)
+-- The public content registry retains inactive pages through the actual
+-- SDK merge. A replacement battle sheet must not leak into field text.
+local Schemas=require('src.mods.Schemas')
+T.check(Schemas.check(Schemas.REGISTRIES.font,'font','battleExtra',
+  {image='battle',base=0x60,inactive=true},'register'))
+T.check(not Schemas.check(Schemas.REGISTRIES.font,'font','battleExtra',
+  {image='battle',base=0x60,inactive='yes'},'register'))
+local target=T.fixtures.fresh();target.font=data().font
+local json=require('src.link.Json')
+local run=T.sdk.loadMods({'mods/battle_font_probe'},{data=target,fs=T.sdk.memfs({
+  ['mods/battle_font_probe/manifest.json']=json.encode({id='battle_font_probe',name='Font sheet fixture',version='1.0.0',api=2,entry='main.lua'}),
+  ['mods/battle_font_probe/main.lua']='local mod=...;mod.content.font:register("battleExtra",{image="battle",base=96,inactive=true,advance=5})',
+})})
+T.eq(#run.errors,0)
+T.eq(target.font.pages.battleExtra.inactive,true)
+Font.load(target);sample(0x6e,'extra',112,0)
+Font.useBattleExtra(true);sample(0x6e,'battle',112,0)
+T.eq(Font.width('X'),5)
+run.release()
 Font.setFrame(1);Font.useBattleExtra(false)
 Assets.image,G.draw,G.newQuad=oldImage,oldDraw,oldQuad
 T.finish('Gen1 GSC battle-sheet controls and eight independent textbox frames')

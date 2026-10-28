@@ -81,3 +81,30 @@ actual successful load, rather than the presence of a configuration table.
 merge with synthetic font I/O. Real raster and final-window checks are
 separate acceptance requirements; passing this contract alone is not a
 claim of complete visual parity.
+
+## Gen2 extra sheets and frame selection
+
+`Font.useBattleExtra(on)` returns the prior sheet selection;
+`Font.battleExtraActive()` reports it. The battle page replaces only the
+25 tiles at `$60-$78`. The selected textbox frame still owns `$79-$7e`
+and the blank at `$7f` remains on the ordinary page. An inactive authored
+`battleExtra` page also survives the public content-registry merge.
+
+`Font.setFrame(index)` and `Font.frameIndex()` retain the selected row
+across font reloads and work before loading the font. Optional missing or
+out-of-range rows fall back to the baked frame. GBA named faces and their
+separate nine-tile frame sheets keep their own lookup path.
+
+The GSC importer emits the actual battle-extra font and eight six-tile
+1bpp frame rows from each mounted ROM. No ROM art is shipped. Custom
+segmented/compressed font manifests retain their previous extraction;
+other non-retail layouts need an explicit `fontFrameCount` to admit a
+frame sheet. The generated Gen2 cache revision requires an ordinary
+reimport of older font records while retaining saves. The native GRAPHICS
+group offers FRAME when the extracted sheet exists, applies changes
+immediately, and restores the saved selection through `Game:applyOptions`.
+
+The selection, import and options contract fixtures test glyph boundaries,
+all eight rows, missing sheets, named-face isolation, native input, save
+codec and the real cache-readiness gate. These ROM-free checks do not
+replace a mounted-ROM GPU test or establish complete mod/release parity.
