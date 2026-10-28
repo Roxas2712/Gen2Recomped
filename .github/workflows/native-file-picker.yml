@@ -1,0 +1,55 @@
+name: Native desktop file selection
+on:
+  pull_request:
+    paths:
+      - 'src/core/FilePicker.lua'
+      - 'src/core/NativeFile.lua'
+      - 'src/core/HostShell.lua'
+      - 'src/import/RomImporter.lua'
+      - 'tests/engine/native_file_picker.lua'
+      - 'tests/engine/native_file_io.lua'
+      - 'tests/native_file_io/**'
+      - 'tests/*picker*'
+      - 'tests/rom_importer_android_mod_pick_test.lua'
+      - '.github/workflows/native-file-picker.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-file-picker-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Model desktop commands without opening dialogs
+        run: |
+          luajit tests/engine/native_file_picker.lua
+          luajit tests/engine/native_file_io.lua
+      - name: Preserve native pointer release and mobile fallback
+        run: |
+          luajit tests/parity_picker_pointer_grab.lua
+          luajit tests/rom_importer_no_picker_test.lua
+          luajit tests/rom_importer_android_mod_pick_test.lua
+  windows-unicode-files:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - name: Read real Unicode files through the native wide API
+        shell: python
+        run: |
+          import os, pathlib, subprocess, urllib.request, zipfile
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'love-native-file-io'
+          target.mkdir()
+          archive = target / 'runtime.zip'
+          urllib.request.urlretrieve('https://github.com/love2d/love/releases/download/11.5/love-11.5-win64.zip', archive)
+          with zipfile.ZipFile(archive) as z: z.extractall(target)
+          executable = next(target.rglob('lovec.exe'))
+          subprocess.run([str(executable), 'tests/native_file_io', str(pathlib.Path.cwd())], check=True, timeout=90)

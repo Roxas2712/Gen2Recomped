@@ -48,3 +48,19 @@ Native integration, FilePicker provider and vector artwork contributions by
 Roxas2712 are expressly offered under LICENSE-ROXAS2712.md, subject to
 existing grants and other authors' retained rights. Mods/player profiles
 are not modified. Full parity and release acceptance remain open.
+
+## Windows original-path file reads
+
+SkinStudio's `FilePicker.open/read` now keeps the original UTF-8 filename and
+uses `NativeFile`'s readonly Win32 wide-character reader. It does not copy the
+image into `%TEMP%`, whose user-profile path can itself contain non-ASCII
+characters. Existing `chooseFileByExt` callers retain their staging contract
+unless they explicitly select the native UTF-8 reader.
+
+The Windows workflow runs LÖVE/LuaJIT against real binary files under a directory
+containing accented, CJK and non-BMP characters, checks exact multi-block bytes
+and basename preservation, then replaces/removes them to prove handle release.
+It also checks missing/empty files and invalid UTF-8. The portable engine suite covers exception
+and close handling. These are file-IO checks, not a Windows GPU or full-mod
+qualification; inspect the exact-head workflow result before claiming Windows
+acceptance.

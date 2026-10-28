@@ -2721,7 +2721,7 @@ end
 local function chooseFileByExt(exts, promptName, opts)
   opts = opts or {}
   local prompt = opts.title or Strings("Choose your %s", promptName or "file")
-  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts})
+  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts}, opts.nativeUTF8)
   for _,command in ipairs(commands or {}) do
     -- One selected backend: cancelling its dialog must not open another one.
     return commandOutput(command)
