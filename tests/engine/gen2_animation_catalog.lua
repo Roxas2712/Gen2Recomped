@@ -74,6 +74,16 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  T.eq(screen.animPlayer.runtime.data,restored,'real screen, public data and VM share the restored owner')
  T.eq(screen.anims,restored,'real screen exposes the complete native dataset')
  screen.animPlayer:release()
+ -- Gen1Recomp's native GSC schema has generation=2 and these real tables,
+ -- without the old fork's private gen2/format/moveAnims/index markers.
+ restored.gen2,restored.format,restored.moveAnims,restored.indices,restored.misc=nil,nil,nil,nil,nil
+ T.eq(Data.isNative(restored),true,'source-native data needs no fork-only format flag')
+ local native=require('src.battle.BattleState').newWild({data=fixtures,save=save,
+  stack={top=function()end}},'FIXMON_C',15)
+ T.check(native:animForMove('ADDED','player'),'real screen accepts the original source-native schema')
+ T.eq(native.animPlayer.runtime.data,restored)
+ T.eq(Runtime.scriptForMove(restored,'PROBE'),'5000')
+ native.animPlayer:release()
  local missing=E.new(nil,edition,{symbols={}}):gen2BattleAnims()
  T.eq(Data.isNative(missing),false,'missing ROM animation table remains an explicit unsupported result')
 end
