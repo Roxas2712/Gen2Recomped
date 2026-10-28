@@ -2741,7 +2741,8 @@ function BattleState:updateQueue()
     if not item then return false end
     if item.fn then
       self.nextInsert = 0 -- sayNext inserts right after this item
-      item.fn()
+      local plan=GameVersion.isGen3()and package.loaded['src.battle.Gen3ActionPlan']
+      if plan then plan.run(self,item)else item.fn()end
       self.current = nil
       return true
     end
@@ -5803,8 +5804,12 @@ function BattleState:resolveTurn(playerAction)
   self.phase = "messages"
   self.afterQueue = "menu"
 
-  for _, entry in ipairs(order) do
-    self:act(function()
+  local nativePlan
+  if GameVersion.isGen3()and package.loaded['src.core.game3.battle']then
+    nativePlan=require('src.battle.Gen3ActionPlan').begin(self,order)
+  end
+  for slot, entry in ipairs(order) do
+    local nativeAction=function()
       -- WHO IT HITS IS DECIDED HERE, not when the turn was sorted.
       --
       -- Between the sort and this entry running, the target can faint --
@@ -5827,11 +5832,14 @@ function BattleState:resolveTurn(playerAction)
                  or self:defaultTargetFor(entry[1])
       end
       self:executeAction(entry[1], target, entry[3])
-    end)
+    end
+    self:act(nativeAction)
+    if nativePlan then require('src.battle.Gen3ActionPlan').attach(self,nativePlan,self.queue[#self.queue],slot,nativeAction)end
   end
   self:act(function()
     -- the collected choices belong to the turn that just ran, not the next
     self.pendingActions, self.chosenTargets = nil, nil
+    if nativePlan then require('src.battle.Gen3ActionPlan').retire(self)end
     self:endOfTurn()
   end)
 end
