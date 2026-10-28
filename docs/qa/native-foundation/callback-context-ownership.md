@@ -20,8 +20,8 @@ writes. Their RNG handles require the same visible native ancestry and close
 with the transaction. Public RNG closures hold weak leases. Source event
 transactions also close on return/error.
 
-Both native hook walks reject revoked coroutines before entering/falling back to
-vanilla and before returning a cached result. A source yielding before or after
+The existing classic hook walk rejects revoked coroutines before entering/falling
+back to vanilla and before returning a cached result. A source yielding before or after
 next cannot use a fallback or late commit to advance HP/RNG after its parent
 phase has returned. Existing ordinary failure fallback/once-only/nil-tuple
 behavior remains covered by the native hook and callback regressions.
@@ -31,3 +31,17 @@ preempt already-suspended arbitrary Lua statements, provide a complete native
 HP/RNG continuation, install a resolver or enable Action Card. Native default
 combat, Gen2 and native-owner ABI qualification are separate explicit checks.
 Player saves and private mod files are not changed by QA.
+
+Older-public qualification: component `7cba4427`, exact composition
+`1b6ef135a5`, passes60 selected CPU groups, including186 source context checks,
+1516 existing unified callback checks and111 API3 entry checks. This host has
+one classic hook walk; no newer native hook/controller body was overlaid.
+Declared foundations are the already offered API3 entry packet #102 and native
+source/session packets #265/#329/#346. Existing API3 changes were merged against
+the actual older files, resolving only the battle command registration, loader
+retirement ordering and retained native TextBox reveal/update behavior. Three
+already-owned added helpers were retained. The absent Gen4MoveEffects preimage
+was explicitly omitted from this Gen3 callback composition: this is not full
+API3/Gen4 qualification. Eight existing native presentation/weather/follower
+hooks now have explicit callback decisions; absent native hooks are not invented.
+The current-fork qualification and locked-Mac Ruby run above are separate evidence.
