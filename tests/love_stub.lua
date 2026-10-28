@@ -12,6 +12,14 @@ function Image:getDimensions() return self.w, self.h end
 function Image:getWidth() return self.w end
 function Image:getHeight() return self.h end
 
+-- Equal quad records share their API methods just as Image records do.
+-- Per-instance closures make otherwise identical renderer traces unequal.
+local function setQuadViewport(self,a,b,c,d,e,f)
+  self.x,self.y,self.w,self.h=a,b,c,d
+  self.sw,self.sh=e or self.sw,f or self.sh
+end
+local function getQuadViewport(self)return self.x,self.y,self.w,self.h end
+
 -- read PNG dimensions from the file header (no decoder needed)
 local function pngSize(path)
   local f = io.open(path, "rb")
@@ -38,14 +46,6 @@ local files = {} -- in-memory love.filesystem
 local gstate = { shader = nil, canvas = nil, blend = "alpha",
                  color = { 1, 1, 1, 1 } }
 local gstack = {}
-
--- Real Quad methods are shared. Fresh closures per object make identical
--- draw traces differ by method identity instead of viewport geometry.
-local function setQuadViewport(self, a, b, c, d, e, f)
-  self.x, self.y, self.w, self.h = a, b, c, d
-  self.sw, self.sh = e or self.sw, f or self.sh
-end
-local function getQuadViewport(self) return self.x, self.y, self.w, self.h end
 
 stub.graphics = {
   newImage = function(path)
