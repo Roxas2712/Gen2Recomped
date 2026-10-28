@@ -69,8 +69,19 @@ local function read(d,id,key)
   if key=='side'then return Coords.sideOf(id)end
   local ball=(key=='visible'or key=='scale'or key=='oy')
     and screen.gen3BallFor and screen:gen3BallFor(b)or nil
-  if key=='visible'then return not b.fainted and not(ball and ball.monHidden)
-    and not screen:fxHidden(b)and not screen:gen3AnimMonBgHidden(b)end
+  if key=='visible'then
+    -- Before a ball exists, the native entry/switch flags already own the
+    -- empty slot. A source capture must not expose the queued Pokemon while
+    -- the trainer is still arriving or the send-out text is being printed.
+    local hidden
+    if id>=2 then hidden=screen:sideArriving(id%2==0,screen.introSlide)
+    elseif b==screen.player then
+      hidden=screen.showPlayerBack or screen.sendingOut or screen.safari
+        or screen:demoHidesPlayer()
+    else hidden=screen.showEnemyTrainer or screen.enemySendingOut or screen.enemyHidden end
+    return not hidden and not b.fainted and not(ball and ball.monHidden)
+      and not screen:fxHidden(b)and not screen:gen3AnimMonBgHidden(b)
+  end
   if key=='invisible'or key=='battlerInvisible'then return screen:gen3AnimMonBgHidden(b)end
   if key=='ox'or key=='oy'then
     local x,y=screen:gen3AnimShake(b);local fx=screen.picFx and screen.picFx[b]

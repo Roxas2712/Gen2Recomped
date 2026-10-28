@@ -56,5 +56,27 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   Probe.close(f);A._service.release();Battle._service.release();G.release()
  end
 end
+-- Native slots are also empty BEFORE their first ball has been created.
+-- Exercise the same flags used by the native picture pass, including the
+-- opposite actor and an explicit presentation override.
+for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
+ local f,b=Probe.open(edition)
+ local p,q=A.present(0),A.present(1)
+ for _,case in ipairs{{'showPlayerBack',p,q},{'sendingOut',p,q},
+   {'showEnemyTrainer',q,p},{'enemySendingOut',q,p},{'enemyHidden',q,p}}do
+  local flag,target,other=unpack(case);local previous=b[flag]
+  b[flag]=true
+  local frame,n=b.frame,#b.queue
+  for _=1,3 do
+   T.eq(target.visible,false,'native '..flag..' keeps its unthrown Pokemon inside')
+   T.eq(other.visible,true,'native pre-throw hiding belongs to one actor')
+  end
+  target.visible=true;T.eq(target.visible,true,'explicit source visibility keeps precedence')
+  target.visible=nil;T.eq(target.visible,false)
+  T.eq(b.frame,frame);T.eq(#b.queue,n);T.eq(b.gen3Ball,nil,'visibility reads cannot create a ball')
+  b[flag]=previous;T.eq(target.visible,true,'retired native entry flag restores visibility')
+ end
+ Probe.close(f);A._service.release();Battle._service.release();G.release()
+end
 package.loaded['src.core.Game']=original
 T.finish('read-only native ball visibility, composited scale/rise, actor isolation and presentation override precedence')
