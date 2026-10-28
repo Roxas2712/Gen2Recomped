@@ -117,19 +117,7 @@ end
 -- heal-location stage's, and a destination is offered only once it has been
 -- visited -- which is the same gate every other generation's fly uses.
 local function flyTargets(game)
-  local field = (game.data or {}).field or {}
-  local warps = field.flyWarps or {}
-  local visited = (game.save or {}).visited or {}
-  local maps = (game.data or {}).maps or {}
-  local bySection = {}
-  for _, mapId in ipairs(field.flyOrder or {}) do
-    local def = maps[mapId]
-    local sec = def and tonumber(def.regionMapSection)
-    if sec and visited[mapId] and warps[mapId] and not bySection[sec] then
-      bySection[sec] = mapId
-    end
-  end
-  return bySection
+  return require('src.world.Gen3FlyTargets').bySection(game)
 end
 
 -- ---------------------------------------------------------------------------
@@ -192,7 +180,18 @@ function Gen3RegionMap.new(game, opts)
     blink = 0,
   }, Gen3RegionMap)
 
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
+  local ow=game.overworld
+  self.here=ow and ow.map and ow.map.def and tonumber(ow.map.def.regionMapSection)
   self.targets = self.fly and flyTargets(game) or nil
+  if require('src.ui.Gen3RsRegionMap').available(game,opts)then
+    self.uiSize=function()return 240,160 end
+    self.wantsFillScale=function()return true end
+    self.wantsEdgeBleed=function()return false end
+    self.sgbPalettes=function()return {require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
+    self.rsNative=require('src.ui.Gen3RsRegionMap').new(self)
+    return self
+  end
 
   -- THE AREA PAGE.  Not a picker: the cartridge's area screen has no cursor
   -- at all -- it lights the places the Pokemon lives and waits for a press.
@@ -298,6 +297,29 @@ function Gen3RegionMap:current()
   return self:sectionAt(self.cx, self.cy)
 end
 
+-- Detached logical atlas metadata from this controller's actual cell lookup.
+-- Metadata-only context: no screen construction, image load or cursor state.
+function Gen3RegionMap.manifest(game)
+  local c=constants(game)
+  local layout=c.gen3RegionMapLayout
+  local grid=layout or c.gen3RegionMapGrid or{width=28,height=15}
+  local width,height=grid.width,grid.height
+  for _,n in ipairs{width,height}do
+    assert(type(n)=='number'and n%1==0 and n>0 and n<=256,'invalid native region atlas dimensions')
+  end
+  assert(width and height,'missing native region atlas dimensions')
+  local context={game=game,places=places(game)}
+  local out={game=require('src.core.GameVersion').get(),nativePicker=true,layout={}}
+  for y=0,height-1 do
+    local row={};out.layout[y+1]=row
+    for x=0,width-1 do
+      local place=Gen3RegionMap.sectionAt(context,x,y)
+      row[x+1]=place and place.section or(layout and layout.none)or false
+    end
+  end
+  return out
+end
+
 function Gen3RegionMap:close()
   if self.game.stack then self.game.stack:pop() end
   if self.onCancel then self.onCancel() end
@@ -370,6 +392,7 @@ function Gen3RegionMap:toggleZoom()
 end
 
 function Gen3RegionMap:update()
+  if self.rsNative then return self.rsNative:update()end
   self.blink = (self.blink + 1) % 60
   self.areaClock = ((self.areaClock or 0) + 1)
                    % (Gen3RegionMap.AREA_CYCLE * math.max(1, #(self.areaPlaces or {})))
@@ -432,6 +455,7 @@ end
 -- ...and the callback stays, forwarding to the same places, so a host that
 -- does deliver key events still works.
 function Gen3RegionMap:keypressed(key)
+  if self.rsNative then return self.rsNative:press(key)end
   if key == "b" then
     Sound.play(self.game.data, "Press_AB")
     return self:close()
@@ -765,6 +789,7 @@ end
 -- DRAWING IT
 -- ---------------------------------------------------------------------------
 function Gen3RegionMap:draw()
+  if self.rsNative then return self.rsNative:draw()end
   if self.frlg then return self:drawFireRed() end
   local w, h = self:uiSize()
   local grid = constants(self.game).gen3RegionMapGrid
@@ -956,6 +981,10 @@ function Gen3RegionMap:draw()
   end
   if faced then Font.popFace() end
   love.graphics.setColor(1, 1, 1, 1)
+end
+
+function Gen3RegionMap:exit()
+  if self.rsNative then self.rsNative:exit()end
 end
 
 return Gen3RegionMap

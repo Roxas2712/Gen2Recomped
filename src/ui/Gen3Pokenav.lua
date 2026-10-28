@@ -171,6 +171,8 @@ function Gen3Pokenav:anyRibbons()
 end
 
 function Gen3Pokenav.new(game, opts)
+  local Rs=require('src.ui.Gen3RsPokenav')
+  if Rs.available(game)then return Rs.new(game,opts)end
   local self = setmetatable({}, Gen3Pokenav)
   self.game = game
   self.opts = opts or {}

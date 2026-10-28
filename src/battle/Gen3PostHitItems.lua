@@ -77,6 +77,7 @@ function P.run(battle, frame)
       local label = def and def.name or "the item"
       battle:sayNext(Strings("%s's %s restored\na little HP!", user.name or user.mon.nickname, label))
       user.mon.hp = math.min(maxHP(user), user.mon.hp + amount)
+      require('src.battle.Gen3Faint').healed(user)
       battle:drainNext(user, user.mon.hp)
       return true
     end

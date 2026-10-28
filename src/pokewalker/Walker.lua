@@ -85,6 +85,7 @@ function W.storage()
   return require('src.core.SaveData').persistenceFs()
 end
 function W.check(st)
+  if W.transferError then return nil,W.transferError end
   if stateErrors[st]then return nil,stateErrors[st]end
   local fs=W.storage()
   local policy=package.loaded['src.storage.AccountStorage']
@@ -103,13 +104,14 @@ end
 function W.peek()
   if liveFs~=W.storage() then
     if W.live then stateScopes[W.live]=false end
-    W.live=nil;liveFs=nil;W.recoveryError=nil
+    W.live=nil;liveFs=nil;W.recoveryError=nil;W.transferError=nil
   end
   return W.live
 end
 function W.exists()
   local fs=W.storage()
   if not fs then return false end
+  if require('src.pokewalker.WalkerTransfer').pending(fs)then return true end
   for _,name in ipairs{W.FILE,W.FILE..'.tmp',W.FILE..'.bak'}do
     if fs.getInfo(name)and require('src.pokewalker.WalkerStorage').read(fs,name)~=nil then return true end
   end
@@ -126,6 +128,9 @@ function W.load()
   local fs=W.storage()
   local Storage=require('src.pokewalker.WalkerStorage')
   local migrated,migrationError=Storage.migrateGuest(fs,W.FILE)
+  local recovered,transferError=require('src.pokewalker.WalkerTransfer').recover(fs,W.FILE)
+  W.transferError=not recovered and transferError or nil
+  if not recovered then migrated=false;migrationError=transferError end
   local damaged=false
   -- the state file, then its staged and previous copies: a phone killing the
   -- app mid-write must not cost the walking Pokemon (it left its PC box when
@@ -191,6 +196,32 @@ function W.adopt(st)
   local ok,why=W.save(st)
   if ok and previous and previous~=st then stateScopes[previous]=false end
   return ok,why
+end
+
+-- Keep existing screen references only after both durable participants verify.
+function W.transfer(st,version,slot,before,save,nextState)
+  local allowed,why=W.check(st);if not allowed then return false,why end
+  local fs=W.storage();local T=require('src.pokewalker.WalkerTransfer')
+  if not fs then return false,'walker storage unavailable'end
+  local source=st.walking and st.walking.source
+  if source and source.version==version and source.slot==slot
+    and serializer().decode(before).walkerTransfer~=st.transferReceipt then
+    return false,"The source save's Pokémon transfer changed. Sync or recover the Pokéwalker before continuing."
+  end
+  local previous=fs.read(W.FILE)
+  local called,ok,value=pcall(T.commit,fs,W.FILE,version,slot,before,save,nextState)
+  if not called then value=ok;ok=nil end
+  if not ok then
+    local examined,pending=pcall(T.pending,fs)
+    if not examined or pending or fs.read(W.FILE)~=previous then
+      W.transferError=tostring(value or 'Pending Pokémon transfer needs recovery.');W.recoveryError=W.transferError
+    end
+    return false,value
+  end
+  for key in pairs(st)do st[key]=nil end
+  for key,v in pairs(value)do st[key]=v end
+  W.live=st;liveFs=fs;stateScopes[st]=fs
+  return true
 end
 
 -- the walker's own finds (Dowsing, the Poke Radar, a find): three of each, as

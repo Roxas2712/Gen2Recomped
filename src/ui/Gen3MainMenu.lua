@@ -62,7 +62,10 @@ local INFO_VALUE_X = 112
 -- screen and fill the screen without black borders".
 local Gen3Wide = require("src.ui.Gen3Wide")
 
-function Gen3MainMenu:uiSize() return Gen3Wide.uiSize() end
+function Gen3MainMenu:uiSize()
+  if self.rsNative then return 240,160 end
+  return Gen3Wide.uiSize()
+end
 function Gen3MainMenu:wantsFillScale() return true end
 
 -- NOT A PANEL, so its edge is not a frame to continue.
@@ -79,7 +82,7 @@ function Gen3MainMenu:wantsEdgeBleed() return false end
 
 function Gen3MainMenu:sgbPalettes()
   local P = require("src.render.PaletteFX")
-  local w = select(1, Gen3Wide.uiSize())
+  local w = select(1, self:uiSize())
   return { P.trueColorZone(0, 0, math.ceil(w / 8) - 1,
                            math.ceil(GBA_H / 8) - 1) }
 end
@@ -109,11 +112,13 @@ function Gen3MainMenu.new(game, opts)
   self.index = 1
   self.info = nil
 
+  local text=GameVersion.isFRLG() and ((game.data.constants or {}).gen3FRLGMainMenu or {}).text or {}
+  text=text or {}
   local items = {}
   if saveOnDisk() then
-    items[#items + 1] = { key = "continue", label = Strings("CONTINUE") }
+    items[#items + 1] = { key = "continue", label = Strings(text.continue or "CONTINUE") }
   end
-  items[#items + 1] = { key = "newGame", label = Strings("NEW GAME") }
+  items[#items + 1] = { key = "newGame", label = Strings(text.newGame or "NEW GAME") }
   -- OPTION AND EXIT GAME ON EVERY GEN 3 MENU, FIRERED INCLUDED.
   --
   -- FireRed's cartridge menu really is CONTINUE and NEW GAME only -- its
@@ -133,6 +138,26 @@ function Gen3MainMenu.new(game, opts)
                  type(hooked))
   end
   self.items = items
+  local RsMenu=require('src.ui.Gen3RsMainMenu')
+  if RsMenu.available(self)then self.rsNative=RsMenu.new(self)end
+  local EmeraldMenu=require('src.ui.Gen3EmeraldMainMenu')
+  if EmeraldMenu.available(self)then self.rsNative=EmeraldMenu.new(self)end
+  if GameVersion.isFRLG() then
+    -- Read once on construction. A draw must never recover/write a save.
+    self.frlgSave = false
+    for _,item in ipairs(items) do if item.key == "continue" then
+      local ok,loaded=pcall(require("src.core.SaveData").load,GameVersion.get())
+      self.frlgSave=ok and loaded or false
+      break
+    end end
+    self.frlgSummary=require("src.ui.Gen3FrlgMainMenu").snapshot(game,self.frlgSave)
+    self.frlgFrame=self.frlgSummary and self.frlgSummary.frame or 1
+    self.frlgLabels=self:infoRows(self.frlgSave or {})
+    self.frlgArrow=require("src.ui.Gen3FrlgMainMenu").arrow(self.game)
+    self.frlgPalModule=require("compat.gen1-frlg.Loader").new({})("src.core.game3.pal_fade")
+    self.frlgTick,self.frlgScroll=0,0
+    self:frlgBeginFade(false)
+  end
   return self
 end
 
@@ -141,8 +166,8 @@ function Gen3MainMenu:close()
   if self.onCancel then self.onCancel() end
 end
 
-function Gen3MainMenu:choose()
-  local item = self.items[self.index]
+function Gen3MainMenu:choose(selected)
+  local item = selected or self.items[self.index]
   if not item then return end
   -- a row a mod added carries its own handler and is not one of the four
   if item.onSelect and not item.key then
@@ -164,7 +189,12 @@ function Gen3MainMenu:choose()
   elseif item.key == "option" then
     local boot = self.game.data.field and self.game.data.field.boot
     local screens = boot and boot.screens or {}
-    Screens.push(self.game, screens.options or "OptionsMenu")
+    if GameVersion.isFRLG() then
+      Screens.push(self.game,screens.options or "OptionsMenu",{onCancel=function()
+        local options=self.game.save and self.game.save.options or {}
+        self.frlgFrame=math.max(1,math.min(10,math.floor(tonumber(options.gen3Frame)or 1)))
+      end})
+    else Screens.push(self.game, screens.options or "OptionsMenu") end
   elseif item.key == "exit" then
     -- back to the game list, not out of the process -- see
     -- Game:returnToLauncher
@@ -185,6 +215,8 @@ local function menuBeep(self)
 end
 
 function Gen3MainMenu:update(dt)
+  if self.rsNative then return self.rsNative:update(dt)end
+  if GameVersion.isFRLG() then return self:updateFireRed(dt) end
   local input = self.game.input
   if self.info then
     -- the continue panel: A loads, B goes back to the rows
@@ -216,6 +248,8 @@ end
 function Gen3MainMenu:infoRows(save)
   local game = self.game
   local words = ((game.data.constants or {}).gen3Screens or {}).saveInfo
+  local native=GameVersion.isFRLG() and ((game.data.constants or {}).gen3FRLGMainMenu or {}).text
+  if native then words={items={native.player,native.pokedex,native.time,native.badges}} end
   words = words and words.items or { Strings("PLAYER"), Strings("POKéDEX"),
                                      Strings("TIME"), Strings("BADGES") }
   local badges = 0
@@ -236,131 +270,50 @@ function Gen3MainMenu:infoRows(save)
   }
 end
 
--- ---------------------------------------------------------------------------
--- FIRERED'S MAIN MENU (pokefirered src/main_menu.c)
---
--- Wide white windows 24 tiles across at tile column 3 on a light-blue field:
--- CONTINUE is ten rows tall and prints PLAYER / POKeDEX / TIME / BADGES in the
--- player's gender colour, every other row is two.  There is no cursor -- the
--- chosen window is the one left undimmed (WIN0 over it, BLDY 7 darken
--- outside).  OPTION and EXIT GAME are this port's rows, laid out the same way.
--- ---------------------------------------------------------------------------
-local FRLG_BG = { 139 / 255, 148 / 255, 1 }
-local FRLG_INK, FRLG_SHADOW = { 98 / 255, 98 / 255, 98 / 255 }, { 213 / 255, 213 / 255, 205 / 255 }
-local FRLG_BOY, FRLG_GIRL = { 33 / 255, 132 / 255, 1 }, { 1, 24 / 255, 173 / 255 }
-
--- WHAT FITS ON A 160-PIXEL SCREEN.
---
--- Twenty tile rows, and every window draws a border row above and below
--- itself -- so the stack runs from `top - 1` down to
--- `top + total + (n - 1) * gap`, and that last row has to be 19 or less.
---
--- The cartridge's own look is a two-row gap and sixteen pixels between the
--- CONTINUE panel's four lines, and it has room for that because its menu is
--- three windows.  A launcher build shows FOUR -- EXIT GAME is ours, not the
--- cartridge's -- and four at those sizes wants twenty-one rows.  The old
--- fixed layout simply ran off the bottom: the last window's lower border
--- landed on row 20 and was never drawn.
---
--- So the spacing is chosen rather than fixed, widest first, closing the gap
--- before tightening the panel.  Three windows keep the cartridge's exact
--- layout; four sit one row closer with two pixels less leading.
-local FRLG_LINE_STEPS = { 16, 14, 12 }
-local FRLG_GAPS = { 2, 1 }
-local FRLG_LAST_ROW = 19
-
--- The CONTINUE panel is its label plus four lines at `step`, and the lines
--- start 18px down: 26 + 3 * step pixels of content, in whole tiles.
-local function frlgPanelRows(step)
-  return math.ceil((26 + 3 * step) / 8)
-end
-
+-- FR/LG retains the native panel height and scrolls additional host rows.
 function Gen3MainMenu:frlgWindows()
-  local n = #self.items
-  local function rowsFor(step)
-    local total = 0
-    for _, item in ipairs(self.items) do
-      total = total + (item.key == "continue" and frlgPanelRows(step) or 2)
-    end
-    return total
-  end
-  local step, gap = FRLG_LINE_STEPS[1], FRLG_GAPS[1]
-  local fitted = false
-  for _, s in ipairs(FRLG_LINE_STEPS) do
-    for _, g in ipairs(FRLG_GAPS) do
-      if not fitted and 1 + rowsFor(s) + (n - 1) * g <= FRLG_LAST_ROW then
-        step, gap, fitted = s, g, true
-      end
-    end
-  end
-  -- Nothing fitted only if a mod has added rows past what the screen holds;
-  -- the tightest layout is still the best answer, and the rows past the
-  -- bottom are that mod's problem rather than a silently broken menu.
-  local wins, top = { step = step }, 1
-  for i, item in ipairs(self.items) do
-    local h = item.key == "continue" and frlgPanelRows(step) or 2
-    wins[i] = { tx = 3, ty = top, tw = 24, th = h }
-    top = top + h + gap
-  end
-  return wins
+  return require("src.ui.Gen3FrlgMainMenu").windows(self.items,self.index,self.frlgScroll)
 end
 
-local function frlgText(text, x, y, ink)
-  local two = Font.beginTwoTone(ink, FRLG_SHADOW)
-  if not two then love.graphics.setColor(ink[1], ink[2], ink[3], 1) end
-  Font.draw(text, x, y)
-  if two then Font.endTwoTone() end
+function Gen3MainMenu:frlgBeginFade(leaving,action)
+  local Pal=self.frlgPalModule
+  self.frlgPalette=Pal.new()
+  self.frlgPalette:beginFade(Pal.ALL,0,leaving and 0 or 16,leaving and 16 or 0,leaving and Pal.BLACK or Pal.WHITE)
+  self.frlgLeaving,self.frlgAction=leaving,action
+  self.frlgFade=self.frlgPalette.slots[0].y
+end
+
+function Gen3MainMenu:updateFireRed(dt)
+  self.frlgTick=(self.frlgTick or 0)+1
+  if self.frlgPalette:fadeActive()then
+    self.frlgPalette:updateFade();self.frlgFade=self.frlgPalette.slots[0].y;return
+  end
+  if self.frlgLeaving then
+    local action=self.frlgAction
+    local selected=self.frlgSelected
+    self.frlgSelected=nil
+    self:frlgBeginFade(false)
+    if action=='cancel'then return self:close()end
+    return self:choose(selected)
+  end
+  local input=self.game.input;local n=#self.items
+  if n==0 then return end
+  if input:wasPressed("down")then self.index=math.min(n,self.index+1)
+  elseif input:wasPressed("up")then self.index=math.max(1,self.index-1)
+  elseif input:wasPressed("a")or input:wasPressed("b")then
+    menuBeep(self)
+    self.frlgSelected=self.items[self.index]
+    self:frlgBeginFade(true,input:wasPressed("b")and 'cancel'or 'choose')
+  end
+  self.frlgScroll=self:frlgWindows().scroll
 end
 
 function Gen3MainMenu:drawFireRed()
-  local g = love.graphics
-  local width = select(1, self:uiSize())
-  g.setColor(FRLG_BG[1], FRLG_BG[2], FRLG_BG[3], 1)
-  g.rectangle("fill", 0, 0, width, GBA_H)
-  g.setColor(1, 1, 1, 1)
-  if self.frlgSave == nil then
-    local ok, loaded = pcall(require("src.core.SaveData").load)
-    self.frlgSave = ok and loaded or false
-  end
-  local save = self.frlgSave
-  local wins = self:frlgWindows()
-  for i, item in ipairs(self.items) do
-    local w = wins[i]
-    Font.drawBox(w.tx - 1, w.ty - 1, w.tw + 2, w.th + 2)
-    local x, y = w.tx * 8, w.ty * 8
-    frlgText(item.label, x + 2, y + 2, FRLG_INK)
-    if item.key == "continue" and save then
-      local rows = self:infoRows(save)
-      local ink = (save.player and save.player.gender == "girl") and FRLG_GIRL or FRLG_BOY
-      -- the cartridge's order: PLAYER, POKeDEX (once you have one), TIME, BADGES
-      local order = { rows[1], rows[3], rows[4], rows[2] }
-      local line = 0
-      -- ...at whatever leading the window was sized for (frlgWindows)
-      local step = wins.step or 16
-      for _, row in ipairs(order) do
-        if row then
-          frlgText(row[1], x + 2, y + 18 + line * step, ink)
-          frlgText(row[2], x + 62, y + 18 + line * step, ink)
-          line = line + 1
-        end
-      end
-    end
-  end
-  -- dim everything but the chosen window
-  local sel = wins[self.index]
-  if sel then
-    local top = (sel.ty - 1) * 8 + 2
-    local bottom = (sel.ty + sel.th + 1) * 8 - 2
-    g.setColor(0, 0, 0, 7 / 16)
-    g.rectangle("fill", 0, 0, width, top)
-    g.rectangle("fill", 0, bottom, width, GBA_H - bottom)
-    g.rectangle("fill", 0, top, 18, bottom - top)
-    g.rectangle("fill", 222, top, width - 222, bottom - top)
-  end
-  g.setColor(1, 1, 1, 1)
+  return require("src.ui.Gen3FrlgMainMenu").draw(self)
 end
 
 function Gen3MainMenu:draw()
+  if self.rsNative then return self.rsNative:draw()end
   if GameVersion.isFRLG() then return self:drawFireRed() end
   -- the plain field the cartridge clears to, not the title art: the menu is
   -- its own screen and nothing shows through it
@@ -404,4 +357,7 @@ function Gen3MainMenu:draw()
   love.graphics.setColor(1, 1, 1, 1)
 end
 
+function Gen3MainMenu:exit()
+  if self.rsNative then self.rsNative:exit();self.rsNative=nil end
+end
 return Gen3MainMenu

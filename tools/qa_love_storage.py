@@ -104,13 +104,18 @@ def acquire(storage, stack, scopes, held):
     return True
 
 
-def cache_rows(profile):
-    return [(p,s) for e in EDITIONS for rel in ('data/generated','assets/generated')
-            for p,s in rows(profile/e/rel)]
+def cache_rows(profile, *, meshes_only=False):
+    if meshes_only:return list(rows(profile/'modstorage/VOXEL_ASCENDANT/gen2_mesh_cache'))
+    found=[(p,s) for e in EDITIONS for rel in ('data/generated','assets/generated')
+           for p,s in rows(profile/e/rel)]
+    # Only derived meshes; hd-content, sprite-content, wardrobe and saves are
+    # deliberately outside this namespace, including inside QA identities.
+    found.extend(rows(profile/'modstorage/VOXEL_ASCENDANT/gen2_mesh_cache'))
+    return found
 
 
 def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
-          live=None, clock=time.time, wait=False, only=None):
+          live=None, clock=time.time, wait=False, only=None, meshes_only=False):
     """Archive exact cache bytes, then remove idle old data; models/saves stay put."""
     live=live or legacy.LiveUse();home=storage.home
     result=dict(logical_bytes=0,files=0,profiles=0,retained_busy=0)
@@ -126,7 +131,7 @@ def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
                 with ExitStack() as lease:
                     if not acquire(storage,lease,(outer,profile),set()) or live.busy(outer) or live.busy(profile):
                         result['retained_busy']+=1;continue
-                    plan=cache_rows(profile)
+                    plan=cache_rows(profile,meshes_only=meshes_only)
                     if not plan:continue
                     updated=max(max(s.st_mtime,s.st_ctime) for _,s in plan)
                     inventory.append((updated,outer,profile,sum(s.st_blocks*512 for _,s in plan),len(plan)))
@@ -139,7 +144,7 @@ def sweep(storage, *, max_age=86400, limit=2*1024**3, min_age=3600,
             # Bound open descriptors and archive memory on large old test suites.
             if selected and (len(selected)>=48 or files+count>100000):break
             if not acquire(storage,locks,(outer,profile),held):continue
-            plan=cache_rows(profile)
+            plan=cache_rows(profile,meshes_only=meshes_only)
             if not plan or max(max(s.st_mtime,s.st_ctime) for _,s in plan)!=updated:continue
             selected.append((outer,profile,plan));total-=size;files+=len(plan)
         if not selected:return result

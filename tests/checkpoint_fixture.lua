@@ -1,14 +1,14 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Owned ROM-free content over actual native services; no player profile.
 local F = {}
-function F.boot(edition, api)
+function F.boot(edition, api, format)
   local SDK = require("tests.modkit.sdk")
   local Json = require("src.link.Json")
   local GV = require("src.core.GameVersion")
   GV.set(edition)
   local id = "checkpoint_fixture"
   local fs = SDK.memfs({
-    ["mods/" .. id .. "/manifest.json"] = Json.encode({ id = id, name = id, version = "1.0.0", api = api or 3, entry = "main.lua" }),
+    ["mods/" .. id .. "/manifest.json"] = Json.encode({ id = id, name = id, version = "1.0.0", api = api or 3, content_format = format, entry = "main.lua" }),
     ["mods/" .. id .. "/main.lua"] = "return function(mod) mod.exports.checkpoints=mod.checkpoints;mod.exports.api=mod end",
   })
   local loaded = SDK.loadMods({ "mods/" .. id }, { fs = fs })

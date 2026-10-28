@@ -19,6 +19,16 @@ local stored,bankReason=B.keep({schema=1,source={version='red'},mon={species='BU
 check(not stored and bankReason:find('confirm your email',1,true) and #B.list()==0 and writes==guestWrites,'direct Bank storage access cannot bypass the account gate or create guest copies')
 signed=true;account='17'
 check(not P.check() and not files[P.FILE],'sign-in never silently assigns pre-existing storage')
+check(P.saveCheck(),'a signed-in account may continue local play before choosing cloud ownership')
+local localSave={meta={playthroughId='local-adventure'}}
+check(P.stamp(localSave)and localSave.meta.localOnly and not localSave.meta.retroAccountId and not files[P.FILE],'local progress does not silently become cloud-owned after sign-in')
+local started,openedBefore={},0
+local localLauncher={ready={},_openAccount=function()openedBefore=openedBefore+1 end,play=function(_,version)started[#started+1]=version end}
+P.install(localLauncher)
+for _,version in ipairs(require('src.core.GameVersion').ORDER)do localLauncher.ready[version]=true;localLauncher:play(version)end
+check(#started==#require('src.core.GameVersion').ORDER and openedBefore==0,'every ready edition, including Crystal, starts without opening the profile for an unlinked signed-in account')
+localLauncher.ready.crystal=false;localLauncher:play('crystal')
+check(#started==#require('src.core.GameVersion').ORDER and openedBefore==0,'an unimported game cannot trigger an account prompt before the ready check')
 files['saves/red/slot1.lua']='original save';files['bank/entries/original.lua']='original Bank copy'
 check(P.bind() and P.check() and files['saves/red/slot1.lua']=='original save' and files['bank/entries/original.lua']=='original Bank copy','explicit storage linking preserves existing saves and Bank bytes')
 local save={meta={playthroughId='unchanged'},player={name='Owner'}}

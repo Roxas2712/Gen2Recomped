@@ -13,8 +13,10 @@ local Performance = require('src.core.Performance')
 
 -- resolved path -> love Image
 local cache = {}
+local recoveries = {}
 -- downstream caches that must empty when the search path changes
 local invalidators = {}
+local releasers = {}
 
 -- The loader bridge: overrideOrder() yields mods highest-priority-first
 -- and derivedPath(rel) yields an existing save/mod-derived/<id>/<rel>.
@@ -22,6 +24,9 @@ local invalidators = {}
 Assets.loader = nil
 
 local GENERATED = "assets/generated/"
+local function canRecover(path)
+  return type(path)=='string' and path:sub(1,#GENERATED)==GENERATED
+end
 
 -- Session-owned language files. The provider owns its tables; switching or
 -- retiring a loader drops their visibility without patching LOVE's constructors.
@@ -125,42 +130,49 @@ local function blank()
   return blankImage
 end
 
--- A missing asset must degrade to visibly-wrong art, never to a thrown error.
--- love.graphics.newImage raises on a path PhysFS cannot open, and this is the
--- single choke point every renderer loads sheets through -- an unguarded raise
--- here propagates out of SpriteRenderer.new -> NPC.new -> the map build and
--- takes the whole map load down.
-local function loadImage(resolved)
+-- Native generated sheets recover without aborting a map load. Optional
+-- images retain the Gen1 failure contract so pcall can select a real fallback.
+local function loadImage(resolved, recover)
   local ok, image = pcall(function()
     local bytes=languageFile(resolved)
     if bytes then return love.graphics.newImage(love.image.newImageData(love.data.newByteData(bytes))) end
     return love.graphics.newImage(resolved)
   end)
-  if ok then return image end
+  if ok then return image, false end
+  if not recover then error(image,3) end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image '%s' (using placeholder)", tostring(resolved))
   local fellBack, placeholder = pcall(love.graphics.newImage, Assets.resolve(MISSING_IMAGE))
-  if fellBack then return placeholder end
-  return blank()
+  if fellBack then return placeholder, true end
+  return blank(), true
 end
 
 function Assets.image(path)
   local resolved = Assets.resolve(path)
   local image = cache[resolved]
-  if not image then
-    image = loadImage(resolved)
+  local recover=canRecover(path)
+  if not image or (not recover and recoveries[resolved]) then
+    local recovered
+    image,recovered=loadImage(resolved,recover)
     cache[resolved] = image
+    recoveries[resolved]=recovered or nil
   end
   return image
 end
 
 -- pixel-level reads (tile-shift variants, the spinner strip blit) resolve
 -- the same way but stay uncached: the caller keeps the derived product.
--- Same rule as Assets.image: a missing path degrades instead of raising.
+-- Native generated sheets keep their missing-sheet fallback. Other pixel
+-- inputs retain the Gen1 API's decode failure: callers use pcall to choose an
+-- optional atlas/native renderer. Returning unrelated placeholder pixels can
+-- make that caller publish invalid dimensions, masks and frame bounds.
 function Assets.imageData(path)
   local resolved = Assets.resolve(path)
   local ok, data = pcall(love.image.newImageData, imageSource(resolved))
   if ok then return data end
+  if not canRecover(path) then
+    error(data,2)
+  end
   local Logger = require("src.core.Logger")
   Logger.warn("assets: missing image data '%s' (using placeholder)", tostring(resolved))
   local fellBack, placeholder = pcall(love.image.newImageData, Assets.resolve(MISSING_IMAGE))
@@ -179,21 +191,38 @@ end
 -- caller must not paste into, mapPixel over or otherwise change what it
 -- gets back; it may copy from it.  Cleared with the image cache.
 local dataCache = {}
+local dataOrigins = {}
 function Assets.imageDataShared(path)
   if Performance.assetSharedDecode == false then
-    if next(dataCache) then dataCache = {} end
+    if next(dataCache) then dataCache,dataOrigins = {},{} end
     return Assets.imageData(path)
   end
   local resolved = Assets.resolve(path)
   local data = dataCache[resolved]
-  if data then return data end
+  -- A native recovery entry cannot masquerade as an optional decode.
+  -- A successful generated entry may be decoded once more on this uncommon
+  -- alias boundary; the public mutable reader remains the actual owner.
+  if data and (canRecover(path) or not dataOrigins[resolved]) then return data end
   data = Assets.imageData(path)
   dataCache[resolved] = data
+  dataOrigins[resolved] = canRecover(path)
   return data
 end
 
-function Assets.register(invalidate)
-  invalidators[#invalidators + 1] = invalidate
+-- Gen1Recomp's hook contract distinguishes a soft cache refresh from retiring
+-- a session. Keep function registrations compatible with existing renderers.
+function Assets.register(hooks)
+  if type(hooks) == "function" then
+    invalidators[#invalidators + 1] = hooks
+    return
+  end
+  if type(hooks) ~= "table" then return end
+  if type(hooks.invalidate) == "function" then
+    invalidators[#invalidators + 1] = hooks.invalidate
+  end
+  if type(hooks.release) == "function" then
+    releasers[#releasers + 1] = hooks.release
+  end
 end
 
 -- hot reload's single entry point (20-developer-tooling): drop the central
@@ -206,13 +235,34 @@ function Assets.invalidate()
   local dropped = 0
   for _ in pairs(cache) do dropped = dropped + 1 end
   cache = {}
+  recoveries = {}
   dataCache = {}
+  dataOrigins = {}
   resolved = {}
   for _, fn in ipairs(invalidators) do pcall(fn) end
   return dropped
 end
 
 Assets.flush = Assets.invalidate
+
+-- Session retirement, following Gen1Recomp's releaseSession API. A refresh
+-- leaves live renderers' images usable; only a retired session releases owned
+-- resources. Native missing-sheet aliases may share the same blank image.
+function Assets.releaseSession()
+  local released = {}
+  local function release(resource)
+    if resource and not released[resource] then
+      released[resource] = true
+      pcall(function() if resource.release then resource:release() end end)
+    end
+  end
+  for _, resource in pairs(cache) do release(resource) end
+  for _, resource in pairs(dataCache) do release(resource) end
+  release(blankImage)
+  cache, recoveries, dataCache, dataOrigins, resolved = {}, {}, {}, {}, {}
+  blankImage = nil
+  for _, fn in ipairs(releasers) do pcall(fn) end
+end
 
 -- Loader:load hands over the live mod set once the merge is done.  Load
 -- order is priority ascending, so the search walks it backwards: the mod

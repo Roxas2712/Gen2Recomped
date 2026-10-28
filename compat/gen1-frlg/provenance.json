@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/bryanthaboi/gen1recomp",
+  "commit": "fb7b0366efcb85e703e9e6d5a8a24d01456a109b",
+  "files": {
+    "src/ui/game3/title_screen.lua": "744b6119fb0102e54ef5520c25d93ccfbd481576607567c5be7d0bea7f7f2438",
+    "src/core/game3/bg.lua": "f0621204b66ff2c7212e482d0cd094bdb9dff46305035282ec76ebbbb6d7f819",
+    "src/core/game3/oam.lua": "7ffa866424bd574b61eff59f8bae93d138c4237145652910b6db50228fef383a",
+    "src/core/game3/pal_fade.lua": "0244c71c6964368c79d102ac3957b9be82c4adb51076d796cdf1bca2e42d6f12",
+    "src/core/game3/gba_fx.lua": "e340e371af7d9232af5655ffe2fc66865778fe22a9105e33adf7b04e4fd8a4af",
+    "src/core/game3/rng.lua": "f77ef2f1e0ad2c6d9a2457f9145d2254ab3adc49cdb809ea3dc97a17adf4df7e",
+    "LICENSE.MD": "b369ce45656b3d87453541816fac6982b13e09ea0734ab9cfe61cf3faf5e95ed",
+    "src/ui/game3/boot.lua": "7909da6300d7df2ea7b56a4202fd6c87bb5c78476f5765f6712bc9a143374b96"
+  }
+}

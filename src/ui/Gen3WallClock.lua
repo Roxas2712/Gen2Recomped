@@ -69,6 +69,8 @@ function Gen3WallClock.read(save)
 end
 
 function Gen3WallClock.new(game, opts)
+  local Native=require('src.ui.Gen3RsWallClock')
+  if Native.available(game)then return Native.new(game,opts)end
   local self = setmetatable({}, Gen3WallClock)
   self.game = game
   self.onDone = opts and opts.onDone

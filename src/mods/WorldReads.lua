@@ -1,5 +1,6 @@
 -- Data-only readers shared by mod.world. Nothing here constructs a Pokemon,
 -- loads a map, calls gameplay methods or advances either random generator.
+local Pokemon = require("src.pokemon.Pokemon")
 local Ids = require("src.mods.UnifiedIds")
 local Reads = {}
 local METHODS = { party = true, activeBlockAt = true, liveMaps = true }
@@ -93,11 +94,11 @@ function Reads.party(game, context)
     for slot, move in ipairs(raw.moves or {}) do
       local id = type(move) == "table" and move.id or move
       local def = (data.moves or {})[id]
-      local ups = type(move) == "table" and (move.ppUps or 0) or 0
+      local ups = Pokemon.ppUps(def, move)
       moves[slot] = {
         id = ids:read("moves", id),
         pp = type(move) == "table" and move.pp or nil,
-        maxPp = def and ((def.pp or 0) + ups * math.floor((def.pp or 0) / 5)) or nil,
+        maxPp = def and Pokemon.maxPP(def, move) or nil,
         ppUps = ups,
       }
     end

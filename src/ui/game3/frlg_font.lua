@@ -2,6 +2,7 @@
 -- Source text uses the native imported proportional faces and shaders.
 local Font=require('src.render.Font')
 local Scope=require('src.render.GraphicsScope')
+local Pen=require('src.render.Gen3TextPen')
 local F={LINE_PITCH=15,GLYPH_HEIGHT=14}
 F.COLOR={NORMAL={fg={98/255,98/255,98/255,1},shadow={213/255,213/255,205/255,1}},
   WHITE={fg={1,1,1,1},shadow={98/255,98/255,98/255,1}}}
@@ -37,6 +38,8 @@ function F.drawGlyph(code,x,y,opts)
 end
 function F.measure(text,opts)
   return face(opts,function()
+    if Pen.isCompound(text)and not(opts and(opts.limitChars or opts.maxWidth or(opts.letterSpacing or 0)~=0))then return Pen.compoundWidth(text)end
+    if Pen.has(text)then return Pen.layout(text,opts)end
     local max=0
     for line in(tostring(text or'')..'\n'):gmatch('(.-)\n')do max=math.max(max,Font.width(line)+math.max(0,#Font.split(line)-1)*(opts and opts.letterSpacing or 0))end
     return max
@@ -48,6 +51,10 @@ function F.draw(text,x,y,opts)
     local colors=opts.colors or F.COLOR.NORMAL
     local toned=Font.beginTwoTone(opts.color or colors.fg or F.COLOR.NORMAL.fg,colors.shadow or F.COLOR.NORMAL.shadow)
     local good,width=pcall(function()
+      if Pen.isCompound(text)and not(opts.limitChars or opts.maxWidth or(opts.letterSpacing or 0)~=0)then return Pen.drawCompound(text,x,y)end
+      if Pen.has(text)then return Pen.layout(text,opts,function(glyph,dx,dy,code)
+        if code then Font.drawCode(code,x+dx,y+dy)else Font.draw(glyph,x+dx,y+dy)end
+      end)end
       local max,lineY,count=0,y,0
       for line in(tostring(text or'')..'\n'):gmatch('(.-)\n')do
         local xx=x

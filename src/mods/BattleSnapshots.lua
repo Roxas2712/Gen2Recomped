@@ -1,5 +1,7 @@
 -- Detached Gen 1-5 snapshots and revision-bound native command admission.
 -- Snapshot building stays data-only; submit validates before native dispatch.
+local Pokemon = require("src.pokemon.Pokemon")
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Ids = require("src.mods.UnifiedIds")
 local Intents = require("src.mods.BattleIntents")
@@ -126,13 +128,13 @@ end
 local function moveView(move, slot, data, ids)
   local id = type(move) == "table" and move.id or move
   local def = (data.moves or {})[id] or {}
-  local ups = type(move) == "table" and math.min(3, math.max(0, math.floor(tonumber(move.ppUps) or 0))) or 0
+  local ups = Pokemon.ppUps(def, move)
   return {
     slot = slot,
     id = ids:read("moves", id),
     name = def.name,
     pp = type(move) == "table" and move.pp or nil,
-    maxPp = def.pp and (def.pp + ups * math.floor(def.pp / 5)) or nil,
+    maxPp = def.pp and Pokemon.maxPP(def, move) or nil,
     ppUps = ups,
     type = def.type,
     power = def.power,
@@ -234,7 +236,7 @@ local function prompt(b, covered, actor)
     return "mimic"
   end
   if
-    b.phase == "messages"
+    BattleQueuePhase.active(b)
     and b.current
     and not b.current.choice
     and ((b.msgWaiting and (b.msgPreWait or 0) <= 0) or (b.msgPrompt and (b.msgPromptWait or 0) <= 0))
@@ -247,7 +249,7 @@ end
 -- Decode only glyphs already revealed by the native message clock. Unknown
 -- glyphs leave the optional visible message unavailable, never reveal ahead.
 local function visibleMessage(battle, covered, data)
-  if covered or battle.phase ~= "messages" or not battle.shown then
+  if covered or not BattleQueuePhase.active(battle) or not battle.shown then
     return nil
   end
   local reverse = {}

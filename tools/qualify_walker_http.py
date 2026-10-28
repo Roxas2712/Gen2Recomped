@@ -24,6 +24,7 @@ def main():
     for name in ('server', 'php', 'love'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--label', required=True)
+    parser.add_argument('--native-import', type=Path, help='Read-only authenticated Ruby QA import for native cross-device Pokémon delivery')
     args = parser.parse_args()
     assert args.label.replace('-', '').isalnum()
     import qa_storage as qa
@@ -31,6 +32,8 @@ def main():
     atexit.register(qa._storage.close, collect=False)
     for source in (ROOT, args.server, args.php, args.love, Path(sys.executable)):
         qa.qa_source(source.resolve())
+    if args.native_import:
+        qa.qa_source(args.native_import.resolve())
     output = ROOT / '.local/qa' / ('walker-http-' + args.label)
     qa.qa_cache(output)
     output.mkdir(parents=True, exist_ok=True)
@@ -80,12 +83,18 @@ def main():
                 (host / 'main.lua').write_bytes((ROOT / 'tests/fixtures/walker_http.lua').read_bytes())
                 (host / 'conf.lua').write_text('function love.conf(t) love.filesystem.setSymlinksEnabled(true);t.identity=' + json.dumps(identity) + ';t.version="12.0";t.window=false;t.modules.audio=false;t.modules.physics=false end\n')
                 hosts[device] = host
-            for index, (device, phase) in enumerate((('a', 'seed'), ('b', 'advance200'), ('a', 'pull'), ('b', 'advance300'), ('a', 'conflict'), ('foreign', 'foreign'), ('b', 'revision'))):
+            phases=[('a','seed'),('b','advance200'),('a','pull'),('b','advance300'),('a','conflict'),('foreign','foreign'),('b','revision'),
+                    ('a','resolve-local'),('b','resolve-cloud'),('a','stale-choice')]
+            if args.native_import:
+                phases += [('a','native-seed'),('b','native-receive'),('a','native-resume')]
+            for index, (device, phase) in enumerate(phases):
                 account = accounts[1 if device == 'foreign' else 0]
                 report = output / (str(index) + '-' + phase + '.json')
                 with (output / (str(index) + '-' + phase + '.log')).open('w') as client_log:
-                    qa.qa_run([str(args.love), str(hosts[device])], cwd=ROOT,
-                              env=os.environ | {'WALKER_HTTP_URL': url, 'WALKER_HTTP_ACCOUNT': account['account'], 'WALKER_HTTP_TOKEN': account['token'], 'WALKER_HTTP_PHASE': phase, 'WALKER_HTTP_REPORT': str(report)},
+                    phase_env=os.environ | {'WALKER_HTTP_URL': url, 'WALKER_HTTP_ACCOUNT': account['account'], 'WALKER_HTTP_TOKEN': account['token'], 'WALKER_HTTP_PHASE': phase, 'WALKER_HTTP_REPORT': str(report)}
+                    if args.native_import:
+                        phase_env['NATIVE_WALKER_IMPORT']=str(args.native_import.resolve())
+                    qa.qa_run([str(args.love), str(hosts[device])], cwd=ROOT, env=phase_env,
                               stdout=client_log, stderr=client_log, timeout=75, check=True)
                 results.append(json.loads(report.read_text()))
         finally:

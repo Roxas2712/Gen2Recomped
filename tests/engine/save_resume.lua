@@ -32,7 +32,13 @@ options.modInstallSources.one.sha256=string.rep('a',64)
 local wrong=S.decode(S.encode(contract));wrong.version='blue'
 check(R.assess({version='red',meta={resume=wrong}},'red',installed,options).blocked,'a requirement document for another game cannot authorize a launch')
 wrong=S.decode(S.encode(contract));wrong.saveFormat=V.saveFormat+1
-check(R.assess({meta={resume=wrong}},'red',installed,options).blocked,'a newer save format requires an engine update')
+local futureFormat=R.assess({meta={resume=wrong}},'red',installed,options)
+check(futureFormat.blocked,'an unsupported save format cannot be opened')
+check(futureFormat.problems[1]:find('save format '..(V.saveFormat+1),1,true)
+  and futureFormat.problems[1]:find('supports format '..V.saveFormat,1,true),'format refusal names the exact required and supported formats')
+wrong=S.decode(S.encode(contract));wrong.modApi=V.modApi+1
+local futureApi=R.assess({meta={resume=wrong}},'red',installed,options)
+check(futureApi.blocked and futureApi.problems[1]:find('mod API '..(V.modApi+1),1,true),'API incompatibility is distinguished from save format')
 wrong=S.decode(S.encode(contract));wrong.engine='99.0.0'
 local changed=R.assess({meta={resume=wrong}},'red',installed,options)
 check(changed.engineMismatch and changed.needsReview,'an engine version difference is disclosed before continuing')
@@ -43,6 +49,8 @@ check(not S.encode(assert(R.decode(wrong))):find('PRIVATE',1,true) and not S.enc
 check(not R.capture('red',{{id='..',version='1.0.0',api=3}},{}),'unstable package identities cannot be stamped as a reproducible save')
 local legacy=R.assess({meta={mods={{id='localmod',version='development',api=3}},engine=V.engine}},'red',{{id='localmod',version='development'}},options)
 check(legacy.legacy and not legacy.needsReview,'matching older save metadata remains playable without a mandatory conversion')
+local oldEngine=R.assess({meta={mods={},engine='0.3.95',format=V.saveFormat}},'crystal',{}, {})
+check(oldEngine.engineMismatch and oldEngine.needsReview and not oldEngine.blocked,'an older engine release alone does not hide the copy/continue action')
 check(R.assess({meta={mods='bad'}},'red',{},options).blocked,'invalid legacy metadata cannot be treated as vanilla')
 options.mods={};local new=P.plan({engine=V.engine,mods={}}, {}, {generation=2,required={'new'}})
 check(P.accept(new) and G.active(options.mods.new,2)==true and G.active(options.mods.new,1)==false,'a newly installed package activates only for the restored game generation')
@@ -51,6 +59,12 @@ check(not R.assess({meta={resume=assert(R.capture('red',{loaded[1]},options))}},
 local missingAssets={id='one',version='1.0.0',github='author/one',missingImports={{id='base'}}}
 local portableSave={meta={resume=assert(R.capture('red',{loaded[1]},options))}}
 check(not R.assess(portableSave,'red',{missingAssets},options).plan,'required private asset imports are never treated as downloadable mod packages')
+missingAssets.missingRequiredImports={}
+missingAssets.missingOptionalImports=missingAssets.missingImports
+check(R.assess(portableSave,'red',{missingAssets},options).plan,'optional sprite imports cannot block restoring a matching mod package')
+missingAssets.missingRequiredImports={{id='base'}}
+check(not R.assess(portableSave,'red',{missingAssets},options).plan,'a required import still blocks when optional imports also exist')
+missingAssets.missingRequiredImports=nil;missingAssets.missingOptionalImports=nil
 missingAssets.missingImports=nil;missingAssets.game_version='>=99.0.0'
 check(not R.assess(portableSave,'red',{missingAssets},options).plan,'an incompatible installed package cannot be silently enabled for resume')
 options.mods={};local experimental=P.plan({engine=V.engine,mods={}},{{id='experimental',version='1.0.0',experimental=true}}, {generation=1,required={}})

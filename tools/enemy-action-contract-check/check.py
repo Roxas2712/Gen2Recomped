@@ -8,6 +8,12 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from cartridge_secondary import expected_observations
+from cartridge_completion import expected_completion
+
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
+from qa_report_storage import write_report
 
 GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
@@ -167,13 +173,27 @@ def main():
                 else:
                     values[backend] = rows[0]
             equal = len(values) == 2 and same_observations(values["gen1"], values["gen2"])
-            failed |= not equal
+            accepted, corrections = equal, []
+            oracle = None
+            if len(values) == 2 and mode in ("secondary", "secondary_execution"):
+                expected, corrections = expected_observations(values["gen1"], version, mode)
+                accepted = same_observations(expected, values["gen2"])
+                oracle = "cartridge-secondary-v1"
+            elif len(values) == 2 and mode in ("post_hit_items_execution", "spit_up"):
+                expected, corrections = expected_completion(values["gen1"], version, mode)
+                accepted = same_observations(expected, values["gen2"])
+                oracle = "cartridge-completion-v1"
+            failed |= not accepted
             report["comparisons"].append({"version": version, "api": api, "mode": mode, "equal": equal,
-                                           "observations": values})
-            print(f"{'PASS' if equal else 'FAIL'} {version}/API {api}/{mode}: identical complete contract observations")
+                                           "accepted": accepted, "oracle": oracle,
+                                           "corrected_rows": corrections, "observations": values})
+            label = "cartridge secondary oracle" if oracle == "cartridge-secondary-v1" else "cartridge completion oracle"
+            description = (f"{label} ({len(corrections)} corrected reference rows)"
+                           if oracle else "identical complete contract observations")
+            print(f"{'PASS' if accepted else 'FAIL'} {version}/API {api}/{mode}: {description}")
     report["passed"] = not failed
     args.report.parent.mkdir(parents=True, exist_ok=True)
-    args.report.write_text(json.dumps(report, indent=2) + "\n")
+    write_report(report,args.report)
     if git(source, "status", "--porcelain"):
         raise RuntimeError("reference checkout changed during the comparison")
     return int(failed)

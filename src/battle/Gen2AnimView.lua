@@ -1,8 +1,11 @@
--- Native object drawing over Gen2AnimPlayer's actual OAM projection.
+-- Native object drawing over the genuine GSC VM's emitted OAM.
 -- Object layout/flip math retains Gen2AnimPlayer provenance (Cedric);
 -- public owner integration by Roxas2712, see NOTICE.md and contribution licence.
+-- GSC BG/OBJ register integration follows Gen1Recomp535a5ec0 under
+-- compat/gen1-gsc/LICENSE.MD; inherited object-drawing rights remain intact.
 local Palette = require('src.render.Gen2PaletteDraw')
 local PaletteFX = require('src.render.PaletteFX')
+local BattlerRows = require('src.battle.Gen2BattlerRows')
 local View = {}
 View.__index = View
 local slots = {
@@ -11,7 +14,14 @@ local slots = {
   PAL_BATTLE_OB_BLUE=6, PAL_BATTLE_OB_BROWN=7,
 }
 function View.new(anims, data)
-  return setmetatable({data=anims or {}, gameData=data or {}, images={}, quads={}}, View)
+  return setmetatable({data=anims or {}, gameData=data or {}, images={}, quads={},
+    battlerRows=setmetatable({},{__mode='k'})}, View)
+end
+function View:loadBattlerRows(screen,...)
+  if not(screen and screen.gen2ObjectPictureSource)then return end
+  for _,entry in ipairs({...})do
+    self.battlerRows[entry]=BattlerRows.snapshot(screen:gen2ObjectPictureSource(entry.battler),entry)
+  end
 end
 function View:image(path)
   if not path then return nil end
@@ -27,6 +37,11 @@ function View:release()
     if image and image.release then image:release() end
   end
   self.images, self.quads = {}, {}
+  for _,snapshot in pairs(self.battlerRows)do
+    if snapshot.image.release then snapshot.image:release()end
+  end
+  self.battlerRows=setmetatable({},{__mode='k'})
+  self:releaseBg()
 end
 function View:objPalette(name, battle)
   local index = slots[name] or tonumber(name)
@@ -46,7 +61,7 @@ function View:quad(gfx, tile, image)
   local bySheet = self.quads[gfx] or {}; self.quads[gfx] = bySheet
   if not bySheet[tile] then
     local w,h = image:getDimensions()
-    local cols = sheet.cols or 16
+    local cols = sheet.cols or sheet.wide or 16
     bySheet[tile] = love.graphics.newQuad((tile%cols)*8, math.floor(tile/cols)*8, 8,8,w,h)
   end
   return bySheet[tile]
@@ -55,18 +70,30 @@ function View:drawObjects(runner, battle)
   local g = love and love.graphics
   if not g then return end
   g.push('all')
-  local ok, err = pcall(function()
+  local ok, err = pcall(Palette.preserving,function()
     g.setColor(1,1,1,1)
-    local active
+    local active,activeByte,activeRaw
     for _, obj in ipairs(runner:oam()) do
-      local sheet = self.data.gfx and self.data.gfx[obj.gfx]
-      local image = sheet and self:image(sheet.image)
-      local quad = image and self:quad(obj.gfx, obj.tile, image)
+      local entry,index
+      for i=#runner.loaded,1,-1 do
+        local loaded=runner.loaded[i]
+        if obj.tile>=loaded.tile and obj.tile<loaded.tile+math.max(loaded.tiles,1)then
+          entry,index=loaded,obj.tile-loaded.tile
+          break
+        end
+      end
+      local sheet=entry and not entry.battler and self.data.gfx and self.data.gfx[entry.gfx]
+      local snapshot=entry and self.battlerRows[entry]
+      local image=snapshot and snapshot.image or sheet and self:image(sheet.image)
+      local quad=snapshot and BattlerRows.quad(snapshot,index)or image and self:quad(entry.gfx,index,image)
       if quad then
         local colors = self:objPalette(obj.palette, battle)
-        if colors ~= active then
-          if not Palette.useRaw(Palette.resolve(colors)) then g.setShader() end
-          active = colors
+        local slot=slots[obj.palette]or tonumber(obj.palette)
+        local byte=(slot==2 or slot==3)and runner.bg and runner.bg.obp0 or nil
+        local raw=snapshot and snapshot.trueColor or false
+        if colors~=active or byte~=activeByte or raw~=activeRaw then
+          if raw or not Palette.useRaw(Palette.remap(Palette.resolve(colors),byte))then g.setShader()end
+          active,activeByte,activeRaw=colors,byte,raw
         end
         local attr = obj.attr or 0
         local sx = math.floor(attr/32)%2 == 1 and -1 or 1
@@ -79,43 +106,9 @@ function View:drawObjects(runner, battle)
   if not ok then error(err,0) end
 end
 
--- Stable per-animation observations of the native VM, including its real
--- object state machine and frame clock. Filtered OAM proxies still delegate
--- to this same draw owner. Restarting the VM retires the old observation.
-function View.runner(player)
-  local selected, frozen
-  local function objects()
-    local structs = {}
-    for _, obj in ipairs(selected or player.objects) do
-      local fn = obj.fn and ('BATTLE_ANIM_FUNC_'..obj.fn:gsub('(%l)(%u)','%1_%2'):upper())
-      if obj.fn == 'PokeBall' then fn = 'BATTLE_ANIM_FUNC_POKEBALL' end
-      if obj.fn == 'PokeBallBlocked' then fn = 'BATTLE_ANIM_FUNC_POKEBALL_BLOCKED' end
-      structs[#structs+1] = {index=obj.index,func=fn,jt=obj.state}
-    end
-    return {structs=structs}
-  end
-  local function state()
-    return {animId=player.presentationId or player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
-      stopped=player:isDone(),keepSprites=player.keepSprites,
-      objects=objects(), oam=player:oam(selected)}
-  end
-  local runner = {}
-  function runner:oam() return frozen and frozen.oam or player:oam(selected) end
-  function runner.selectObjects(objects) selected=objects end
-  function runner.retire() if not frozen then frozen=state(); player=nil end end
-  return setmetatable(runner, {
-    -- Scalar observations are hot in render/camera callbacks. Do not project
-    -- OAM and allocate all object records just to read a name or frame count.
-    __index=function(_,key)
-      if frozen then return frozen[key] end
-      if key=='animId'then return player.presentationId or player.moveId end
-      if key=='frames'then return player.frames or 0 end
-      if key=='var'then return player.vars and player.vars.var or 0 end
-      if key=='stopped'then return player:isDone()end
-      if key=='keepSprites'then return player.keepSprites end
-      if key=='objects'then return objects()end
-    end,
-    __newindex=function() error('native Gen2 animation observation is read-only',2) end,
-  })
-end
+-- The public runner is now the actual command/object/BG owner. A restart
+-- creates a fresh runner, so retained consumers never rebind to another move.
+function View.runner(player)return player.runtime end
+-- BG methods use the same concrete view object as native OAM drawing.
+for name,method in pairs(require('src.battle.Gen2BgView'))do View[name]=method end
 return View

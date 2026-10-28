@@ -295,10 +295,12 @@ function Game:newGame()
   if newGameScreen == nil and not gen2 then
     newGameScreen = "OakSpeech"
   end
-  -- GSC creates its world after the clock/name introduction. Exposing the
-  -- home map earlier makes preparation clients wait for a destination draw
-  -- while their cover still owns input over that introduction.
-  local deferWorld = gen2 and newGameScreen
+  -- These native introductions choose player state before the field starts.
+  -- FR/LG must not publish a field beneath Oak: source boot decorators wait
+  -- for its renderer and would otherwise hold the still-active introduction.
+  local gbaIntro = newGameScreen == "Gen3RsBirchSpeech" or newGameScreen == "Gen3OakSpeechFRLG"
+  local deferWorld = (gen2 and newGameScreen) or gbaIntro
+  if gbaIntro then self.overworld = nil end
   if not deferWorld then startWorld() end
   if newGameScreen then
     Screens.push(self, newGameScreen, deferWorld and startWorld or function() end)
@@ -1143,87 +1145,17 @@ local function viewportSnapshot(viewport)
   }
 end
 
-function Game:_draw()
-  local scene = self.stack.sceneStack and self.stack:sceneStack() or self.stack
-  -- the UI canvas clears transparent when the overworld's world pass
-  -- shows through beneath it; opaque full-screen states get the classic
-  -- white clear
-  local base = scene:visibleBase()
-  local worldBelow = scene.states[base] == self.overworld
-    and renderVisible(self.stack, self.overworld)
-  -- a world-bg battle keeps the map drawing under whatever it opened, so the
-  -- world pass can run for a frame whose CLEAR is still an opaque menu's
-  local drawFrom = Game.drawBaseInStack(scene, base)
-  local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
-  local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
-  local windowUIOverlay = false
-  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
-  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
-    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
-  local worldDrawn = scene.states[drawFrom] == self.overworld
-    and renderVisible(self.stack, self.overworld)
-  -- A wide battle holds its 304px surface through every menu or prompt it
-  -- opens. States that do not draw the wide battle composition are centred
-  -- in that surface below, so their classic coordinates and hit testing stay
-  -- unchanged. Outside a battle, including the title screen, the option is
-  -- intentionally inactive because it is a battle-layout setting.
-  local wideBattle = Game.wideBattleInStack(self.stack)
-  -- ...and a Gen 3 battle that widened its own screen holds it the same way,
-  -- ahead of the topmost-uiSize pick (see Game.heldSurfaceInStack).
-  local held = not wideBattle and Game.heldSurfaceInStack(self.stack) or nil
-  local native = not wideBattle
-    and (held or Game.nativeSurfaceInStack(self.stack)) or nil
-  local classicOffset, classicOffsetY = 0, 0
-  if wideBattle and wideBattle.uiSize then
-    Renderer:setUISize(wideBattle:uiSize())
-    classicOffset = math.floor((select(1, Renderer:uiSize()) - Renderer.WIDTH) / 2)
-  elseif native then
-    Renderer:setUISize(native:uiSize())
-    -- ...and a state that did NOT ask for the bigger surface is centred in
-    -- it, the way the wide battle centres its menus: its layout is in Game
-    -- Boy coordinates and must land in the middle rather than in a corner.
-    local uw, uh = Renderer:uiSize()
-    classicOffset = math.floor((uw - Renderer.WIDTH) / 2)
-    classicOffsetY = math.floor((uh - Renderer.HEIGHT) / 2)
-  else
-    Renderer:setUISize(Renderer.WIDTH, Renderer.HEIGHT)
-  end
-  -- the surface every state below is either drawing in or being centred
-  -- inside, resolved before any of them draws
-  local surfW, surfH = Renderer:uiSize()
-  -- BATTLE SIZE: scale the battle surface to the window instead of the
-  -- classic integer letterbox.  Read from the whole stack, not just the top,
-  -- so a party menu or text box opened mid-battle keeps the same surface.
-  Renderer.uiFill = Game.fillScaleInStack(self.stack)
-  -- BATTLE BG "world": dim the overworld the battle is drawn over.  Read off
-  -- the stack for the same reason as uiFill above -- a prompt opened during
-  -- the battle must not drop the dim for a frame.
-  Renderer.battleDim = Game.worldBgBattleDim(self.stack)
-  -- ...and for the same reason the UI's own scale has to know the world is
-  -- still the backdrop while an opaque menu covers it.  Renderer:uiScale
-  -- steps the UI down with the survey zoom only while a world is behind it,
-  -- gated on this frame's world pass -- which the party menu and the bag end
-  -- by being opaque.  Without this hold they lose the step-down and blit at
-  -- full fit scale over a battle drawn at the zoomed-out one.
-  Renderer.uiWorldHold = Renderer.battleDim ~= nil
-  -- ...and a battle keeps its dialogue box and YES/NO inside its own screen
-  -- instead of letting them dock to the window edge.
-  -- UI LAYOUT: CENTERED (the default) is a fixed letterbox -- every element
-  -- stays inside the 160x144 canvas and the UI does not follow the survey
-  -- zoom, so the screen furniture never moves or resizes under the player.
-  -- That is the composition the port shipped with.  DYNAMIC opts into both
-  -- halves: the dialogue box docks to the window's bottom edge, the START
-  -- menu to its top right, and the whole UI steps down with the zoom.
-  Renderer.uiCentered = not Game.dynamicUI(self.save)
-  Renderer.uiAnchorHold = Game.uiAnchorsHeldInStack(self.stack)
+local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
   Renderer:beginFrame(worldBelow)
+  local presentation=package.loaded['src.render.NativePresentation']
+  if presentation then presentation._nativeBegin(self,Renderer:uiSize())end
   -- SINGLE-SCREEN DS PLAY: an opaque DS screen at the bottom of what is
   -- drawn (a menu, the bag, the box -- no world pass under it) is drawn with
   -- everything over it at the window's scale, letters smoothed, rather than
   -- blown up afterwards (src/render/SuperSample.lua). The battle does the
   -- same for itself when it is drawn over the world.
-  local function drawStates()
-    for i = drawFrom, #scene.states do
+  local function drawStates(first, last)
+    for i = first or drawFrom, last or #scene.states do
       local state = scene.states[i]
       local wideState = state and state.isWideBattleLayout
         and state:isWideBattleLayout()
@@ -1266,21 +1198,27 @@ function Game:_draw()
         if ox ~= 0 or oy ~= 0 then
           love.graphics.push()
           love.graphics.translate(ox, oy)
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
           love.graphics.pop()
         else
-          state:draw()
+          HotModules.get("src.render.NativeScreenOverlay").screen(state)
         end
       end
     end
+  end
+  local paintStates=drawStates
+  local uiPass=HotModules.get('src.core.GameVersion').isGen3()
+    and package.loaded['src.ui.game3.ui_pass']
+  if uiPass and (uiPass._wrapped()or presentation and presentation._active())then
+    paintStates=function()return uiPass._nativeStates(self,scene,drawFrom,drawStates)end
   end
   local baseState = scene.states[drawFrom]
   local SuperSample = HotModules.get("src.render.SuperSample")
   if not windowUI and not worldDrawn and baseState and HotModules.get("src.core.GameVersion").isNds()
      and SuperSample.singleScreen(self) and not SuperSample.active then
-    SuperSample.draw(self, self.stack:top(), drawStates)
+    SuperSample.draw(self, self.stack:top(), paintStates)
   else
-    drawStates()
+    paintStates()
   end
   -- SGB colorization: the topmost state that knows its palette owns the
   -- screen (overlays like text boxes inherit from what's beneath them);
@@ -1382,6 +1320,87 @@ function Game:_draw()
   end
   -- on-screen mobile controls: pure screen-space, over the finished frame
   -- OS-window controls draw after GameViewport.finish in Game:draw.
+end
+
+function Game:_draw()
+  local scene = self.stack.sceneStack and self.stack:sceneStack() or self.stack
+  -- the UI canvas clears transparent when the overworld's world pass
+  -- shows through beneath it; opaque full-screen states get the classic
+  -- white clear
+  local base = scene:visibleBase()
+  local worldBelow = scene.states[base] == self.overworld
+    and renderVisible(self.stack, self.overworld)
+  -- a world-bg battle keeps the map drawing under whatever it opened, so the
+  -- world pass can run for a frame whose CLEAR is still an opaque menu's
+  local drawFrom = Game.drawBaseInStack(scene, base)
+  local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
+  local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
+  local windowUIOverlay = false
+  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
+  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
+    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
+  local worldDrawn = scene.states[drawFrom] == self.overworld
+    and renderVisible(self.stack, self.overworld)
+  -- A wide battle holds its 304px surface through every menu or prompt it
+  -- opens. States that do not draw the wide battle composition are centred
+  -- in that surface below, so their classic coordinates and hit testing stay
+  -- unchanged. Outside a battle, including the title screen, the option is
+  -- intentionally inactive because it is a battle-layout setting.
+  local wideBattle = Game.wideBattleInStack(self.stack)
+  -- ...and a Gen 3 battle that widened its own screen holds it the same way,
+  -- ahead of the topmost-uiSize pick (see Game.heldSurfaceInStack).
+  local held = not wideBattle and Game.heldSurfaceInStack(self.stack) or nil
+  local native = not wideBattle
+    and (held or Game.nativeSurfaceInStack(self.stack)) or nil
+  local classicOffset, classicOffsetY = 0, 0
+  if wideBattle and wideBattle.uiSize then
+    Renderer:setUISize(wideBattle:uiSize())
+    classicOffset = math.floor((select(1, Renderer:uiSize()) - Renderer.WIDTH) / 2)
+  elseif native then
+    Renderer:setUISize(native:uiSize())
+    -- ...and a state that did NOT ask for the bigger surface is centred in
+    -- it, the way the wide battle centres its menus: its layout is in Game
+    -- Boy coordinates and must land in the middle rather than in a corner.
+    local uw, uh = Renderer:uiSize()
+    classicOffset = math.floor((uw - Renderer.WIDTH) / 2)
+    classicOffsetY = math.floor((uh - Renderer.HEIGHT) / 2)
+  else
+    Renderer:setUISize(Renderer.WIDTH, Renderer.HEIGHT)
+  end
+  -- the surface every state below is either drawing in or being centred
+  -- inside, resolved before any of them draws
+  local surfW, surfH = Renderer:uiSize()
+  -- BATTLE SIZE: scale the battle surface to the window instead of the
+  -- classic integer letterbox.  Read from the whole stack, not just the top,
+  -- so a party menu or text box opened mid-battle keeps the same surface.
+  Renderer.uiFill = Game.fillScaleInStack(self.stack)
+  -- BATTLE BG "world": dim the overworld the battle is drawn over.  Read off
+  -- the stack for the same reason as uiFill above -- a prompt opened during
+  -- the battle must not drop the dim for a frame.
+  Renderer.battleDim = Game.worldBgBattleDim(self.stack)
+  -- ...and for the same reason the UI's own scale has to know the world is
+  -- still the backdrop while an opaque menu covers it.  Renderer:uiScale
+  -- steps the UI down with the survey zoom only while a world is behind it,
+  -- gated on this frame's world pass -- which the party menu and the bag end
+  -- by being opaque.  Without this hold they lose the step-down and blit at
+  -- full fit scale over a battle drawn at the zoomed-out one.
+  Renderer.uiWorldHold = Renderer.battleDim ~= nil
+  -- ...and a battle keeps its dialogue box and YES/NO inside its own screen
+  -- instead of letting them dock to the window edge.
+  -- UI LAYOUT: CENTERED (the default) is a fixed letterbox -- every element
+  -- stays inside the 160x144 canvas and the UI does not follow the survey
+  -- zoom, so the screen furniture never moves or resizes under the player.
+  -- That is the composition the port shipped with.  DYNAMIC opts into both
+  -- halves: the dialogue box docks to the window's bottom edge, the START
+  -- menu to its top right, and the whole UI steps down with the zoom.
+  Renderer.uiCentered = not Game.dynamicUI(self.save)
+  Renderer.uiAnchorHold = Game.uiAnchorsHeldInStack(self.stack)
+  local display = HotModules.get('src.core.GameVersion').generation() == 3
+    and package.loaded['src.core.game3.display']
+  if display then
+    return display._nativePresent(self, paintResolvedFrame, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
+  end
+  return paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
 end
 
 -- overworld survey zoom: wheel up / '=' zooms in, wheel down / '-' out
@@ -2108,6 +2127,7 @@ end
 -- entry chunks wrote before any save existed, while NEW GAME and
 -- CONTINUE replace the backing outright.
 function Game:adoptSave(save, seedBuckets)
+  require('src.compat.gen2.SaveFields').bind(save,self.data)
   -- species-name nicknames show in the player's language (see the function)
   pcall(require("src.translation.Service").normalizeNicknames, self.data, save)
   -- Platinum Pokemon made before they carried friendship get their base value
@@ -2188,6 +2208,7 @@ function Game:applyOptions(opts)
   local Sound = require("src.core.Sound")
   if Music.applyOptions then Music.applyOptions(opts, self.data or Data) end
   if Sound.applyOptions then Sound.applyOptions(opts) end
+  require('src.render.Font').setFrame(opts.frame or 1)
   -- EMERALD'S BUTTON MODE, which decides what L and R do.  Applied here
   -- rather than read at the input site so that a mode set on the OPTION
   -- screen takes effect the moment it is chosen, like every other row.
@@ -2291,12 +2312,18 @@ function Game:restoreSave(loaded, recovered)
   -- Emerald's CHAMPION_SAVEWARP (special 343): the Hall of Fame saved with
   -- the player standing in a room that has no exit, and this is the load
   -- that spends the bit and puts them back in their own bedroom.
-  if SaveData.hasChampionSaveWarp(loaded) then
+  require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
+  local frlgHallWarp=require('src.core.Gen3FrlgEndingSave').apply(loaded,self.data)
+  if not frlgHallWarp and SaveData.hasChampionSaveWarp(loaded) then
     local home = SaveData.applyChampionSaveWarp(loaded, self:bootConfig())
     Logger.info("champion save warp: resuming at %s",
                 home and tostring(loaded.player and loaded.player.map)
                      or "the saved spot (this dataset has no start map)")
   end
+  -- RS's League autosave resumes in the gender's ROM-derived bedroom.
+  -- Only our versioned return marker can spend the RS bit; legacy flags
+  -- and other editions continue through their existing paths.
+  require('src.core.Gen3RsEndingSave').apply(loaded,self.data)
   local modsDiff = SaveData.modsDiff(loaded, activeMods)
   local report = SaveData.validate(loaded, self.data)
   report.recovered = recovered

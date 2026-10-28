@@ -169,6 +169,8 @@ function Gen3BoxMenu.word(game, key)
 end
 
 function Gen3BoxMenu.new(game, opts)
+  local Native=require('src.ui.Gen3RsStorage')
+  if Native.available(game)then return Native.new(game,opts,false) end
   local self = setmetatable({ game = game, opts = opts or {}, t = 0 },
                             Gen3BoxMenu)
   Boxes.ensure(game.save)
@@ -336,6 +338,7 @@ function Gen3BoxMenu:openSlotMenu(slot)
         local box = self:box()
         require("src.ui.Screens").push(game, "Gen3SummaryMenu", {
           mon = mon,
+          context = "box",
           party = box,
           partyIndex = slot,
           onMonChange = function(index)

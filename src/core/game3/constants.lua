@@ -36,10 +36,32 @@ function C.of(edition)
   if type(name)=='string'then sections['MAPSEC_'..name:upper():gsub('[^%w]+','_')]=id end
  end
  local out={game=edition,trainer_classes=enum(rows),region_map_sections=enum(sections)}
+ local labels=require('src.import.gba.field_label_facts').metatileLabels(edition)
+ if labels then out.metatile_labels=enum(labels)end
+ local refs=setmetatable({g,data,g.save,g.mods},{__mode='v'})
+ local hadMods=g.mods~=nil
+ function out:require(kind,name)
+  local owner=refs[1]
+  assert(owner and Native.game()==owner and Version.get()==edition and owner.data==refs[2]
+   and owner.save==refs[3]and owner.mods==refs[4]and hadMods==(owner.mods~=nil),
+   'native constant query retired')
+  assert(type(kind)=='string'and type(name)=='string','invalid native constant name')
+  local value=self:id(kind,name)
+  assert(value~=nil,'missing native constant '..kind..'.'..name)
+  return value
+ end
  function out:raw(kind)local row=self[kind];return row and require('src.mods.Merge').deepCopy(row)end
  function out:id(kind,name)local row=self[kind];return row and row.byName[name]end
  function out:name(kind,id)local row=self[kind];return row and row.byId[id]end
  return out
 end
-C.active=function()return C.of()end
+C.active=function(session)
+ if session~=nil then
+  local record=require('src.compat.gen1.SessionView').record(session)
+  local game=Native.game()
+  assert(record and record:valid()and record.owner==game
+   and session==require('src.core.Game3').forNative(game).session,'foreign or retired native constant session')
+ end
+ return C.of()
+end
 return C

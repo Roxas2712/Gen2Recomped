@@ -37,7 +37,9 @@ extern "C" {
  * Check.REPO -- the cross-language half of this port's recurring bug (the
  * same thing spelled differently in two places that never meet).
  */
-#define OTA_REPO_SLUG "UNDERdecoded/Gen2Recomped"
+/* Temporary fork route, matching src/update/Repository.lua. The native OTA
+ * asset protocol remains unchanged; preview packages are installed manually. */
+#define OTA_REPO_SLUG "Roxas2712/Gen2Recomped"
 #define OTA_RELEASES_API \
   "https://api.github.com/repos/" OTA_REPO_SLUG "/releases/latest"
 /* Takes the release tag ("v0.8.3"). */

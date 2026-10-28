@@ -231,7 +231,7 @@ local function resolveBreedSprite(sprites, spriteId)
   local save = require("src.core.Game").save
   local mon = require("src.pokemon.DayCare").mon(save, tonumber(slot))
     or (save and save.daycare and save.daycare.mon)
-  local species = mon and tonumber(tostring(mon.species):match("(%d+)$"))
+  local species = mon and require('src.core.Gen2SpeciesNames').number(require('src.core.Game').data,mon)
   return (species and sprites[string.format("SPRITE_MON_%03d", species)])
     or spriteByIndex(sprites, 1)
 end
@@ -533,6 +533,10 @@ function NPC.new(data, mapId, objDef)
     self.hidden = true
     self.gen3Hidden = true
   end
+  local buriedType = data and data.constants and data.constants.gen3BuriedMovement
+  if buriedType and objDef.movementType == buriedType then
+    self.buried, self.hidden = true, true
+  end
 
   -- WHICH LEVEL IT IS STANDING ON, seeded from its own template.
   --
@@ -692,6 +696,16 @@ function NPC:setMovementType(data, movementType)
   elseif self.gen3Hidden then
     self.hidden, self.gen3Hidden = false, nil
   end
+  -- Lavaridge assigns BURIED in its transition script, after templates have
+  -- spawned on this host. Retain the reason so trainer sight can reveal it.
+  local wasBuried = self.buried
+  local buriedType = c and c.gen3BuriedMovement
+  self.buried = buriedType and id == buriedType and true or nil
+  if self.buried then
+    self.hidden = true
+  elseif wasBuried and not self.gen3Hidden then
+    self.hidden = nil
+  end
   if not g3 then return false end
   self.facing = g3.facing or self.facing
   self.wanders = g3.wanders == true
@@ -788,7 +802,8 @@ function NPC:update(map, entities)
   -- either field, so every other object keeps the constant (#410, #409).
   -- scriptStepLen: a Black / White movement action's own step length
   -- (src/script/Gen5MoveExec.lua), only while that movement runs
-  local stepLen = self.scriptStepLen or self.stepFrames or STEP_FRAMES
+  -- scriptMoveFrames: this queued scriptMove's own pace, cleared on landing.
+  local stepLen = self.scriptStepLen or self.scriptMoveFrames or self.stepFrames or STEP_FRAMES
   local span = self.hopStep and 2 or 1
   if self.moving then
     self.progress = self.progress + 1
@@ -817,6 +832,7 @@ function NPC:update(map, entities)
       self.targetX, self.targetY = nil, nil
       self.px, self.py = self.cellX * 16, self.cellY * 16
       self.moving = false
+      self.scriptMoveFrames = nil
       self.hopStep = nil
       self.stepFlip = not self.stepFlip
       self:updateElevation(map)

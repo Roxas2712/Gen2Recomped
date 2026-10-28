@@ -2,6 +2,7 @@
 local Abilities = require("src.battle.Abilities")
 local StatusRegistry = require("src.battle.StatusRegistry")
 local Strings = require("src.core.Strings")
+local Version = require("src.core.GameVersion")
 local S = {}
 local effects = {
   [2] = { status = "PSN" },
@@ -71,9 +72,14 @@ function S.withChance(ctx, spec)
     chance = chance * 2
   end
   -- The native command draws before checking Substitute, fainting or abilities;
-  -- explicit zero stays zero and its inclusive comparison remains observable.
-  if not spec.certain and battle.rng(0, 99) > chance then
-    return false, {}
+  -- RS/FRLG use <=; Emerald corrected this command to <. Probability does
+  -- not supply ChangeStatBuffs' separate cannot-prevent flag.
+  if not spec.certain then
+    local roll = battle.rng(0, 99)
+    local emerald = Version.get() == "emerald"
+    if emerald and roll >= chance or not emerald and roll > chance then
+      return false, {}
+    end
   end
   local target = spec.user and user or ctx.target
   if protected(battle, target, spec) then
@@ -125,12 +131,12 @@ function S.apply(ctx, spec, chance)
       ipairs(spec.allStats and { "attack", "defense", "speed", "spatk", "spdef" } or { spec.stat })
     do
       local delta = spec.delta or 1
-      local blocked = delta < 0
+      local blocked = delta < 0 and target ~= user
         and (
           ability == "SHIELD_DUST"
-          or chance < 100 and (active(target.mist) or ability == "CLEAR_BODY" or ability == "WHITE_SMOKE")
-          or chance < 100
-            and (ability == "KEEN_EYE" and stat == "accuracy" or ability == "HYPER_CUTTER" and stat == "attack")
+          or require("src.battle.Gen3Mist").active(battle,target)
+          or active(target.mist) or ability == "CLEAR_BODY" or ability == "WHITE_SMOKE"
+          or ability == "KEEN_EYE" and stat == "accuracy" or ability == "HYPER_CUTTER" and stat == "attack"
         )
       if not blocked then
         local before = target.stages[stat] or 0
@@ -150,6 +156,7 @@ function S.apply(ctx, spec, chance)
   return false, {}
 end
 function S.run(ctx, record)
+  require('src.battle.Gen3ZeroChance').finish(ctx)
   local spec = effects[tonumber(ctx.move.gen3Effect)]
   if not spec then
     return false

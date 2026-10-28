@@ -11,6 +11,9 @@ function love.load()
  require('src.translation.Service').setLauncher({launcherLanguage='de'})
  local P=require('src.ui.PokewalkerScreen')
  screen=setmetatable({st=require('src.pokewalker.Walker').newState(),t=0,rects={},host={_storageSync=function()error('Preview cannot sync')end}},P)
+ if not guest and os.getenv('WALKER_PREVIEW_CONFLICT')=='1'then
+  screen._walkerConflict={accountId='17',localWatts=125,cloudWatts=300,localWalking='TREECKO',cloudWalking='MUDKIP'}
+ end
  fonts={body=love.graphics.newFont(16),head=love.graphics.newFont(22),small=love.graphics.newFont(13)}
 end
 function love.update()frames=frames+1 end

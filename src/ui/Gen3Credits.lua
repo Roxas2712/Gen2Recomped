@@ -63,6 +63,10 @@ end
 function Gen3Credits.new(game, onDone)
   local record = Gen3Credits.record(game)
   if not record then return nil end
+  local Emerald=require('src.ui.Gen3EmeraldCredits')
+  if Emerald.available(game)then return Emerald.new(game,onDone)end
+  local Rs = require('src.ui.Gen3RsCredits')
+  if Rs.available(game) then return Rs.new(game,onDone) end
   -- FireRed's roll is a scripted scene over its own maps
   if type(record.frlg) == "table" and type(record.frlg.script) == "table" then
     local ok, FRLG = pcall(require, "src.ui.Gen3CreditsFRLG")
@@ -80,8 +84,8 @@ end
 function Gen3Credits:enter()
   -- the credits have their own music where the dataset names one; the
   -- Hall of Fame's is what plays if it does not
-  local ok = pcall(Music.play, self.game.data, "Music_Credits")
-  if not ok then pcall(Music.play, self.game.data, "Music_HallOfFame") end
+  local ok = pcall(Music.play, self.game.data, Music.special(self.game.data, "credits"))
+  if not ok then pcall(Music.play, self.game.data, Music.special(self.game.data, "hallOfFame")) end
 end
 
 function Gen3Credits:finish()

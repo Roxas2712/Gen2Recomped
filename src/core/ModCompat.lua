@@ -29,17 +29,11 @@
 --
 --   src.battle.UIVisibility     no equivalent
 --   src.ui.PartyPanel           no equivalent
---   src.battle.gen2.Battle      AMBIGUOUS, which is the same as absent here.
---                               src.ui.gen2.BattleState is already mapped to
---                               src.battle.BattleState below; a port that
---                               spells BOTH names is not spelling one thing
---                               twice, it is naming the battle CONTROLLER and
---                               the battle STATE.  This engine has one object
---                               for both, so whichever of the two a mod meant
---                               it would get -- and the half of the contract
---                               it did not mean would be missing, somewhere
---                               far away from the require.  It goes in when a
---                               mod that wants it says what it calls on it.
+--
+-- src.battle.gen2.Battle is now a real live model module. It is deliberately
+-- not aliased here: its reads and finish notification are attached to the
+-- native controller by Gen2BattleView/Gen2BattleRead. Unsupported model
+-- constructors/turn APIs are not guessed from similarly named screen methods.
 --
 -- Each of those turns one optional feature off in the mod and says so in the
 -- log, which is the outcome we want.
@@ -49,6 +43,7 @@ local Logger = require("src.core.Logger")
 local ModCompat = {}
 
 ModCompat.ALIASES = {
+  ["src.core.BattleCheckpoint"] = "src.compat.gen1.BattleCheckpoint",
   -- the overworld: the player class the voxel renderers pose every frame,
   -- the state that owns the map, and the tile/collision tables
   ["src.world.gen2.Player"] = "src.world.Player",
@@ -81,6 +76,10 @@ ModCompat.ALIASES = {
   ["src.core.gen2.BugContest"] = "src.world.BugContest",
   ["src.core.gen2.ItemEffects"] = "src.inventory.ItemEffects",
   ["src.core.gen2.Save"] = "src.core.SaveData",
+  ["src.core.gen2.HallOfFame"] = "src.compat.gen2.HallOfFame",
+  ["src.core.gen2.Phone"] = "src.compat.gen2.Phone",
+  ["src.core.gen2.Evolution"] = "src.compat.gen2.Evolution",
+  ["src.battle.gen2.Encounter"] = "src.compat.gen2.Encounter",
 
   -- battle.  Damage is GetDamage/CriticalHitTest/AdjustDamageForMoveType and
   -- MoveEffects is the effect-constant handler table -- one concept each,
@@ -89,7 +88,7 @@ ModCompat.ALIASES = {
   ["src.battle.gen2.Catching"] = "src.battle.Catching",
   ["src.battle.gen2.Damage"] = "src.battle.Damage",
   ["src.battle.gen2.Effects"] = "src.battle.MoveEffects",
-  ["src.battle.gen2.Mon"] = "src.pokemon.Pokemon",
+  ["src.battle.gen2.Mon"] = "src.compat.gen2.Mon",
   ["src.ui.gen2.BattleState"] = "src.battle.BattleState",
   ["src.ui.gen2.Chrome"] = "src.ui.Gen2Chrome",
 

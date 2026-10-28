@@ -1,3 +1,4 @@
+local Pokemon = require("src.pokemon.Pokemon")
 local Api3Records = require("src.mods.Api3Records")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
 -- A call-local transaction. Only known record roles cross this boundary;
@@ -141,7 +142,7 @@ local function array(t, label, max)
   assert(count == n, label .. " must be dense")
 end
 
-function R.new(loader, name, generation, api3)
+function R.new(loader, name, generation, api3, source)
   local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
   local identityRoll = name == "shiny.roll" or name == "gender.roll"
   local portableEnemyAction = api3 and generation == 3 and name == "battle.enemy_action"
@@ -166,6 +167,8 @@ function R.new(loader, name, generation, api3)
   local byRaw, byView, entries = {}, {}, {}
   local view, restore, commit, refresh
   local open = true
+  local sourceRecords=source and api3 and generation==3
+  local Lease,lease
   local function read(kind, id)
     return ids:read(kind, id)
   end
@@ -198,11 +201,11 @@ function R.new(loader, name, generation, api3)
     for i, m in ipairs(raw or {}) do
       local id = type(m) == "table" and m.id or m
       local def = moveDef(id)
-      local ups = type(m) == "table" and (m.ppUps or 0) or 0
+      local ups = Pokemon.ppUps(def, m, generation)
       out[i] = {
         id = read("moves", id),
         pp = type(m) == "table" and m.pp or nil,
-        maxPp = def and math.floor((def.pp or 0) + ups * math.floor((def.pp or 0) / 5)) or nil,
+        maxPp = def and Pokemon.maxPP(def, m, generation) or nil,
         ppUps = ups,
       }
     end
@@ -220,6 +223,14 @@ function R.new(loader, name, generation, api3)
     end
     return out
   end
+  local function pokemonName(raw)
+    if raw.nickname and raw.nickname ~= "" then return raw.nickname end
+    if raw.name ~= nil then return raw.name end
+    local id = read("pokemon", raw.species)
+    local entry = id and ids:resolve("pokemon", id)
+    local def = entry and loader.content.pokemon:get(entry.key)
+    return def and def.name or id
+  end
   local function fields(raw, kind)
     if kind == "mail" then
       local out=copy(raw)
@@ -234,7 +245,8 @@ function R.new(loader, name, generation, api3)
         species = read("pokemon", raw.species),
         item = read("items", raw.item),
         nickname = raw.nickname,
-        name = portable and raw.nickname and raw.nickname ~= "" and raw.nickname or raw.name,
+        name = api3 and pokemonName(raw)
+          or (portable and raw.nickname and raw.nickname ~= "" and raw.nickname or raw.name),
         level = raw.level,
         hp = raw.hp,
         maxHp = raw.stats and raw.stats.hp,
@@ -247,12 +259,28 @@ function R.new(loader, name, generation, api3)
         native = copy(raw),
       }
     elseif kind == "battler" then
-      return {
+      -- Gen1's Gen2 callback producer passes the Pokemon itself. Its
+      -- optional metadata must not be inferred from Gen2Recomped's actor.
+      local identity = api3 and generation == 2 and raw.mon or raw
+      local out = {
         mon = view(raw.mon, "mon"),
-        id = raw.id,
-        side = raw.isPlayer == true and "player" or raw.isPlayer == false and "enemy" or nil,
+        id = lease and(raw.position~=nil and raw.position or raw.id)or identity.id,
+        side = api3 and identity.side
+          or identity.isPlayer == true and "player" or identity.isPlayer == false and "enemy" or nil,
         native = copy({ name = raw.name, species = raw.species, stages = raw.stages }),
       }
+      if api3 then
+        -- Native GBA actors retain their local slot, including after fainting
+        -- or switching. Do not remap guest IDs or invent an absent position.
+        local pos = raw.position
+        if generation == 3 and type(pos) == "number" and pos % 1 == 0 and pos >= 0 and pos <= 3 then
+          out.id = pos
+        end
+        for k, v in pairs(out.mon or {}) do
+          if k ~= "native" then out[k] = v end
+        end
+      end
+      return out
     elseif kind == "heldItem" then
       local out = { native = copy(raw) }
       for k, v in pairs(raw) do
@@ -346,7 +374,11 @@ function R.new(loader, name, generation, api3)
       if name == "pokemon.before_give" and k == "ctx" then
         role = nil
       end
-      if nativeAction and k == "move" then
+      if lease and k=='battle'and type(v)=='table'then
+        out[k]=Lease.battle(lease,v)
+      elseif lease and k=='rng'and type(v)=='function'then
+        out[k]=Lease.rng(lease,v)
+      elseif nativeAction and k == "move" then
         out[k] = v
       elseif k == "status" then
         out[k] = readStatus(v)
@@ -381,6 +413,9 @@ function R.new(loader, name, generation, api3)
         end
       end
     end
+    if lease and kind=='context'and type(raw.move)=='table'and raw.moveNum==nil then
+      out.moveNum=tonumber(raw.move.index or raw.move.numId)
+    end
     if portableEnemyAction and kind == "action" then
       for _, key in ipairs({ "move", "id" }) do
         local authored, unchanged, known = EnemyMoveChoice.publicReference(raw, key)
@@ -393,12 +428,22 @@ function R.new(loader, name, generation, api3)
     end
     return out
   end
+  local function remember(e)
+    local kind = e.kind
+    e.before = (kind == "action" or kind == "gift" or kind == "context"
+      or kind == "encounter" or kind == "party" or kind == "trainerParty" or kind == "candidates")
+      and shallow(e.public) or copy(e.public)
+    if api3 and kind == "battler" then e.aliasBefore = shallow(e.public) end
+  end
   view = function(raw, kind)
     if type(raw) ~= "table" then
       return raw
     end
+    if sourceRecords and not lease then
+      Lease=require('src.mods.CallbackLease');lease=Lease.new(loader)
+    end
     byRaw[raw] = byRaw[raw] or {}
-    if byRaw[raw][kind] then
+    if byRaw[raw][kind] and not (api3 and kind == "battler") then
       return byRaw[raw][kind].public
     end
     local e = { raw = raw, kind = kind, public = {} }
@@ -408,17 +453,7 @@ function R.new(loader, name, generation, api3)
     for k, v in pairs(fields(raw, kind)) do
       e.public[k] = v
     end
-    e.before = (
-      kind == "action"
-      or kind == "gift"
-      or kind == "context"
-      or kind == "encounter"
-      or kind == "party"
-      or kind == "trainerParty"
-      or kind == "candidates"
-    )
-        and shallow(e.public)
-      or copy(e.public)
+    remember(e)
     return e.public
   end
   local function statChanges(public, old, baseline, ops)
@@ -491,7 +526,8 @@ function R.new(loader, name, generation, api3)
   local function stage(raw, key, value)
     assert(type(raw) == "table", "native record is missing")
     pending[#pending + 1] = function()
-      raw[key] = value
+      if lease and key=='rng'and type(value)=='function'then Lease.writeRng(lease,raw,value)
+      else raw[key] = value end
     end
   end
   local function movesNative(public, old, baseline)
@@ -510,11 +546,27 @@ function R.new(loader, name, generation, api3)
       assert(row.id, "move ID is required")
       row.ppUps = integer(m.ppUps or 0, 0, 3, "ppUps")
       local def = moveDef(row.id)
-      local max = def and math.floor((def.pp or 0) + row.ppUps * math.floor((def.pp or 0) / 5)) or 0
+      local max = def and Pokemon.maxPP(def, row, generation) or 0
       row.pp = integer(m.pp, 0, max, "pp")
       out[i] = row
     end
     return out
+  end
+  local function prepareBattler(e)
+    local value, before = e.public, e.before
+    assert(value.id == before.id and value.side == before.side and equal(value.native, before.native),
+      "battler metadata is read-only")
+    assert(byView[value.mon] and byView[value.mon].raw == e.raw.mon, "battler.mon identity is read-only")
+    for k, v in pairs(value) do
+      local alias = k ~= "native" and (monFields[k] or k == "dvs" or k == "shiny")
+      assert(alias or k == "mon" or k == "id" or k == "side" or k == "native", "unknown battler field")
+      -- The reference compares top-level identity. Mutating a shared stats
+      -- table already edits mon.stats; a detached old alias must not win.
+      if alias and v ~= e.aliasBefore[k] then value.mon[k] = v end
+    end
+    for _, key in ipairs({ "item", "status" }) do
+      if value[key] == nil and e.aliasBefore[key] ~= nil then value.mon[key] = false end
+    end
   end
   restore = function(value, kind, original)
     -- GBA enemy-action normalization accepts scalar move choices and false
@@ -532,16 +584,19 @@ function R.new(loader, name, generation, api3)
     end
     local e = byView[value]
     if not e then
+      local sourceContext=lease and kind=='context'and type(original)=='table'
+        and byRaw[original]and byRaw[original].context
       assert(
         kind == "action"
           or kind == "encounter"
           or kind == "trainerMon"
           or kind == "candidates"
           or kind == "trainerParty"
+          or sourceContext
           or (identityRoll and (kind == "context" or kind == "rollIvs" or kind == "identitySpecies")),
         "replacement " .. tostring(kind) .. " must be a bound record"
       )
-      local target = identityRoll and api3 and type(original) == "table" and original or nil
+      local target = sourceContext and original or identityRoll and api3 and type(original) == "table" and original or nil
       local previous = target and byRaw[target] and byRaw[target][kind]
       e = { public = value, kind = kind, raw = target or {},
         before = previous and previous.before or {}, replacement = true }
@@ -556,6 +611,10 @@ function R.new(loader, name, generation, api3)
     visiting[e] = true
     local raw, before = e.raw, e.before
     kind = e.kind
+    if lease and kind=='context'then
+      assert(value.battle==before.battle,'native callback battle identity is read-only')
+      assert(value.moveNum==before.moveNum,'native callback move number is read-only')
+    end
     if kind == "heldItem" then
       local keys = shallow(before)
       for k in pairs(value) do keys[k] = true end
@@ -589,13 +648,17 @@ function R.new(loader, name, generation, api3)
       end
     elseif kind == "move" or kind == "species" or kind == "item" or kind == "battler" then
       if kind == "battler" then
-        assert(
-          value.id == before.id and value.side == before.side and equal(value.native, before.native),
-          "battler metadata is read-only"
-        )
-        assert(byView[value.mon] and byView[value.mon].raw == raw.mon, "battler.mon identity is read-only")
-        for k in pairs(value) do
-          assert(k == "mon" or k == "id" or k == "side" or k == "native", "unknown battler field")
+        if api3 then
+          prepareBattler(e)
+        else
+          assert(
+            value.id == before.id and value.side == before.side and equal(value.native, before.native),
+            "battler metadata is read-only"
+          )
+          assert(byView[value.mon] and byView[value.mon].raw == raw.mon, "battler.mon identity is read-only")
+          for k in pairs(value) do
+            assert(k == "mon" or k == "id" or k == "side" or k == "native", "unknown battler field")
+          end
         end
         restore(value.mon, "mon")
       else
@@ -756,6 +819,7 @@ function R.new(loader, name, generation, api3)
       for k in pairs(keys) do
         local v = value[k]
         local old = raw[k]
+        if lease and k=='rng'and v~=before[k]then assert(type(v)=='function','native callback RNG must be callable')end
         if type(v) == "table" and byView[v] then
           local restored = restore(v)
           if v ~= before[k] then
@@ -807,7 +871,15 @@ function R.new(loader, name, generation, api3)
   end
   commit = function(extra)
     assert(open, "callback transaction is closed")
+    if lease then Lease.check(lease)end
     pending, visiting = {}, {}
+    -- Merge every flat view before any shared Pokemon is staged. Context
+    -- traversal may have bound that Pokemon before its battler.
+    if api3 then
+      for _, e in ipairs(entries) do
+        if e.kind == "battler" then prepareBattler(e) end
+      end
+    end
     for _, e in ipairs(entries) do
       restore(e.public, e.kind)
     end
@@ -815,39 +887,40 @@ function R.new(loader, name, generation, api3)
     if extra then
       result = extra()
     end
+    if lease then Lease.check(lease)end
     for _, op in ipairs(pending) do
       op()
     end
+    if api3 then for _, e in ipairs(entries) do remember(e) end end
     return result
   end
-  refresh = function()
+  refresh = function(reason)
+    if lease then Lease.check(lease)end
+    -- API3 uses call-local snapshots like Gen1. Remember committed edits so
+    -- an unchanged view cannot overwrite a downstream mod/native mutation.
+    if api3 and reason == "next" then return end
     -- Reuse public identities, but refresh after vanilla mutates native data.
     for _, e in ipairs(entries) do
-      local nextValue = fields(e.raw, e.kind)
-      for k in pairs(e.public) do
-        e.public[k] = nil
-      end
-      for k, v in pairs(nextValue) do
-        e.public[k] = v
+      -- The explicit EXP helper refreshes bound Pokemon on the reference,
+      -- retaining its caller's flattened battler/context snapshots.
+      if not api3 or e.kind == "mon" then
+        local nextValue = fields(e.raw, e.kind)
+        for k in pairs(e.public) do
+          e.public[k] = nil
+        end
+        for k, v in pairs(nextValue) do
+          e.public[k] = v
+        end
       end
     end
     for _, e in ipairs(entries) do
-      e.before = (
-        e.kind == "action"
-        or e.kind == "gift"
-        or e.kind == "context"
-        or e.kind == "encounter"
-        or e.kind == "party"
-        or e.kind == "trainerParty"
-        or e.kind == "candidates"
-      )
-          and shallow(e.public)
-        or copy(e.public)
+      if not api3 or e.kind == "mon" then remember(e) end
     end
   end
   return {
     close = function()
       open = false
+      if lease then Lease.close(lease)end
     end,
     view = view,
     restore = function(v, kind, original)

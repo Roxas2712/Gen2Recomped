@@ -1,0 +1,34 @@
+name: Native action observations
+on:
+  pull_request:
+    paths:
+      - 'src/battle/Gen3ActionPlan.lua'
+      - 'src/core/game3/battle/anim_seq.lua'
+      - 'tests/engine/native_action_presentation.lua'
+      - 'src/battle/BattleState.lua'
+      - 'src/core/game3/battle.lua'
+      - 'tests/engine/native_action_observations.lua'
+      - 'tests/native_action_plan/**'
+      - '.github/workflows/native-action-facts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Actual native turn rows and unchanged HP/PP/RNG/frame behavior
+        run: |
+          luajit tests/engine/native_action_observations.lua
+          luajit tests/engine/native_action_presentation.lua
+      - name: Existing native command, scope and Gen2 queue ownership
+        run: |
+          luajit tests/engine/native_battle_command_phase.lua
+          luajit tests/engine/native_coroutine_phase_scopes.lua
+          luajit tests/engine/native_game_coroutine_scopes.lua
+          luajit tests/engine/gen2_battle_queue_view.lua
+          luajit tests/engine/gen2_battle_scene.lua
+          luajit tests/engine/checkpoint_battle_continuation.lua

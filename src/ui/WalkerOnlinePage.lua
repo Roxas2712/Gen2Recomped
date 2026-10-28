@@ -16,6 +16,34 @@ function M.openAccount(screen,view,peer)
 end
 function M.install(P)
  P.TILES[#P.TILES+1]={id='online',label='Friends & cloud'}
+ local update=P.update
+ function P:reviewWalkerConflict(choice)
+  if self._walkerConflictTask then return end
+  local preview=self._walkerConflict
+  self._walkerConflictTask=require('src.cloud.Task').new(function()
+   local store,why=Auth.open();if not store then return nil,why end
+   local cloud=require('src.pokewalker.WalkerCloud')
+   if not choice then return cloud.review(store)end
+   local resolved,err=cloud.resolve(store,preview,choice)
+   return resolved and{resolved=resolved}or nil,err
+  end)
+ end
+ function P:update(dt)
+  if self._walkerConflict and self._walkerConflict.accountId~=Auth.accountId()then self._walkerConflict=nil end
+  update(self,dt)
+  if self._walkerConflictTask then
+   local result=self._walkerConflictTask:poll()
+   if result then
+    self._walkerConflictTask=nil
+    if result.kind=='done'and result.first then
+     if result.first.resolved then
+      self._walkerConflict=nil;self.st=require('src.pokewalker.Walker').load()
+      self:say(Strings('Pokéwalker: %s',Strings(result.first.resolved)))
+     elseif result.first.accountId==Auth.accountId()then self._walkerConflict=result.first end
+    else self._walkerConflict=nil;self:say(Strings(result.error or result.second or'Pokéwalker progress changed. Review both versions again.'))end
+   end
+  end
+ end
  function P:pageOnline(x,y,w,h,f)
   local top=y;local g=love.graphics
   local function line(value)
@@ -43,6 +71,16 @@ function M.install(P)
   button('SYNC POKÉWALKER & SAVES',function()
    if self.host and self.host._storageSync then self.host:_storageSync()end
   end)
+  button('REVIEW CONFLICTING PROGRESS',function()self:reviewWalkerConflict()end)
+  local choice=self._walkerConflict
+  if choice and choice.accountId~=Auth.accountId()then choice=nil;self._walkerConflict=nil end
+  if choice then
+   line(Strings('Choose one complete version. Both copies are kept for recovery; rewards are never added together.'))
+   line(Strings('This device: %d W · Walking: %s',choice.localWatts,choice.localWalking or Strings('None')))
+   line(Strings('Cloud: %d W · Walking: %s',choice.cloudWatts,choice.cloudWalking or Strings('None')))
+   button('KEEP THIS DEVICE VERSION',function()self:reviewWalkerConflict('local')end)
+   button('USE THE CLOUD VERSION',function()self:reviewWalkerConflict('cloud')end)
+  end
   button('FRIENDS',function()M.openAccount(self,'friends')end)
   button('INBOX',function()M.openAccount(self,'inbox')end)
   button('WITHDRAW MINIGAME ACCEPTANCE',function()
