@@ -6,7 +6,7 @@ The skin service and touch hotbar remain prerequisite increments (#311/#318).
 
 The studio includes creation/selection/deletion, native/RetroArch/Delta
 archive import/export, real image import, idle/pressed art, bind editing,
-native DS X/Y binds, viewport placement, page/orientation and device presets,
+native Gen4 X/Y binds, viewport placement, page/orientation and device presets,
 undo/redo, test input and deferred Play. Archive drops ask before discarding
 unsaved edits. The desktop picker and file-drop paths are supported; native
 mobile document-picker admission remains a separate qualification requirement.
@@ -46,6 +46,18 @@ size buttons and focus cancellation.
   the actual mock-device pixels while retaining complete frame screenshots;
   held native Input and the pressed PNG change, then release restores them.
   The visible missing minus glyph was replaced with portable ASCII labels.
+- The first full studio run passed897/898 engine suites and all four SDK
+  suites. Its sole failure was the copied GB-only format expectation that Y
+  must always be decorative. The native parser retains Gen4 declarations;
+  actual input capability gates keep DS-only contacts inert and pass them
+  through on Crystal, while mixed X/A bindings activate only A. The revised
+  format contract passes243; the expanded actual native host contract passes50.
+  Test input also scopes the selected cartridge and restores the outer context;
+  preview reset/menu/speed actions cannot call a suspended game's handlers.
+- The Windows picker staging command now retains the selected extension, so
+  an image/archive picked through a non-ASCII path is not mislabeled `.bin`.
+  Command/IO contract tests cover this path; interactive Windows and complete
+  Unicode native-path handling remain separate acceptance requirements.
 - Existing hotbar273 and quit-to-launcher86 native contracts pass after the
   studio integration. Full current-tree CI and packaged/OS-window acceptance
   remain separate gates. No full Gen1 GUI pixel identity, mobile hardware,
