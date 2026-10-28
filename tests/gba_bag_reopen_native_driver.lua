@@ -52,6 +52,30 @@ return function(game)
   press('a',50);bag=game.stack:top();assert(getmetatable(bag)==Menu)
   shot('native-battle-bag-balls-after-cancel');assert(bag.pockets[bag.pocket].key=='BALL')
   press('b',40);menu()
+  -- Native forced entry changes the real Hoenn bag pocket, while FRLG's
+  -- berry pouch remains a separate case. Both cancel paths keep inventory.
+  local canceled=0
+  local fixed=Menu.new(game,{pocket='BERRY',pick=true,onCancel=function()canceled=canceled+1 end})
+  game.stack:push(fixed);U.wait(40)
+  assert(fixed.pockets[fixed.pocket].key=='BERRY')
+  shot('native-fixed-berry-picker');press('b',40);menu();assert(canceled==1)
+  press('a',50);bag=game.stack:top();assert(getmetatable(bag)==Menu)
+  local expected=V.isFRLG()and'BALL'or'BERRY'
+  shot('native-bag-after-fixed-berry-picker');assert(bag.pockets[bag.pocket].key==expected)
+  press('b',40);menu()
+  -- Hoenn item storage opens at the previous pocket; FRLG's native PC
+  -- callback explicitly opens ITEMS and inhibits pocket switching.
+  local pc=Menu.new(game,{store='deposit',itemPc=true,onCancel=function()canceled=canceled+1 end})
+  game.stack:push(pc);U.wait(40)
+  expected=V.isFRLG()and'ITEM'or'BERRY'
+  assert(pc.pockets[pc.pocket].key==expected)
+  shot('native-item-pc-bag-entry');press('b',40);menu();assert(canceled==2)
+  press('a',50);bag=game.stack:top();assert(getmetatable(bag)==Menu)
+  shot('native-bag-after-item-pc');assert(bag.pockets[bag.pocket].key==expected)
+  press('b',40);menu()
+  assert(b.turnCount==turns and game.save.inventory.POKE_BALL==balls and love.math.getRandomState()==rng,
+    'Context cancellation spent a turn, ball or RNG')
+  report.fixedBerryAndItemPcContexts=true
   report.cancelPreservesTurnBallRng=true;report.drawPreservesSaveRng=true
   report.status='pass';persist();print('PASS_NATIVE_GBA_BAG_REOPEN');love.event.quit(0)
 end
