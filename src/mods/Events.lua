@@ -1,5 +1,6 @@
 local Logger = require("src.core.Logger")
 local FrameProfile = require("src.core.FrameProfile")
+local Runtime = require("src.mods.Runtime")
 
 local Events = {}
 Events.__index = Events
@@ -79,8 +80,18 @@ function Events:emit(name, payload)
     end
     close()
     if not ok then
-      Logger.error("[%s] event %s: %s",
-        tostring(entry.owner or "?"), name, tostring(err))
+      local message=tostring(err)
+      local feed=Runtime.events==self and Runtime.errors
+      local reportable=feed and entry.owner~=nil and entry.owner~='base'
+      if not reportable or entry._failureFeed~=feed or entry._failureMessage~=message then
+        Logger.error("[%s] event %s: %s",tostring(entry.owner or "?"),name,message)
+        if reportable then
+          Runtime.reportError(entry.owner,'event '..name..': '..message)
+          entry._failureFeed,entry._failureMessage=feed,message
+        end
+      end
+    else
+      entry._failureFeed,entry._failureMessage=nil,nil
     end
   end
 end
