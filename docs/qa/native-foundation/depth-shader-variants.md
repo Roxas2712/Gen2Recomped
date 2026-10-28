@@ -18,22 +18,23 @@ so valid late sampler declarations also compile without moving user code.
 
 Qualification on Apple M3 / native LOVE12 Metal:
 
-- Current fork source22928688 includes maina8833b35. Its actual native contract
-  passes96 checks, including independent explicit-depth pixels, transparent
+- Current fork source 22928688 includes main a8833b35. Its actual native contract
+  passes 96 checks, including independent explicit-depth pixels, transparent
   holes, opaque occlusion, colour/depth/colour reuse, an earlier live shader,
   mutable uniforms, a deliberately wrong-value control, and native lifetime.
-- The foreign-owner fixture passes79 checks on the attested implementation.
+- The foreign-owner fixture passes 79 checks on the attested implementation.
   An owned negative host using the weaker ownership predicate fails the
   original-program ownership assertion. This is an ownership counterexample;
   its preceding pixel comparisons passed, so it is not a pixel counterexample.
-- Focused CPU checks pass: alpha depth69, sampler guard16, planning48 and
-  platform policy40. The existing canvas adapter128 checks also passed.
-- A full current-main native source regression and actual unchanged-consumer
-  Third-Person/rain throughput comparison are recorded separately when terminal.
+- Focused CPU checks pass: alpha depth 69, sampler guard 16, planning 48 and
+  platform policy 40. The existing canvas adapter 128 checks also passed.
+- Full native source regression: all 252 groups pass on combined source
+  22928688 with main a8833b35 (frozen receipt eb45d719ba). The actual
+  unchanged-consumer Third-Person/rain timing is recorded separately.
 
-This change has no60FPS acceptance claim. Before it, the isolated real rainy
-Third-Person view averaged68.409ms per warm frame (about14.6FPS), with roughly
-61.952ms in drawing and5370 indexed native draws. Reflection functionality
+This change has no 60 FPS acceptance claim. Before it, the isolated real rainy
+Third-Person view averaged 68.409 ms per warm frame (about 14.6 FPS), with roughly
+61.952 ms in drawing and 5370 indexed native draws. Reflection functionality
 passed all six clear/rain and normal/third/first cases on the preceding source;
 that does not establish adequate throughput. No graphics quality, native map
 rules, private mod files or player profiles are changed.
