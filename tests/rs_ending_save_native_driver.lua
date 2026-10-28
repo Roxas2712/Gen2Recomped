@@ -137,7 +137,10 @@ return function(game)
   assert(credits.closed and state.mainFunc=='done','Native ending input did not finish exactly once')
   assert(not ow.runner:isRunning()and not game.save.flags.QA_RS_ENDING_FINISHED,'Old League script continued behind title')
   assert(game.stack:top().screenId=='TitleState','THE END did not return to title')
-  U.wait(180);shot('native-rs-after-league-title');press('start')
+  local title=game.stack:top()
+  for _=1,2400 do if title.scene.phase=='phase3'then break end;U.wait(1)end
+  assert(title.scene.phase=='phase3','Native title never became ready for START')
+  shot('native-rs-after-league-title');press('start')
   for _=1,1200 do
     if getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu')then break end
     U.wait(1)
