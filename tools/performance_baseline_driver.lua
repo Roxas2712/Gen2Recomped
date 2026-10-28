@@ -241,6 +241,7 @@ return function(game)
       Cap.apply(spec.fpsCap)
       love.window.setVSync(0)
       U.wait(120)
+      report.nativeFocusBefore=love.window.hasFocus()
       report.variant=spec.variant
       report.pacing={fpsCap=Cap.current,vsync=love.window.getVSync(),backgroundPacing=Cap.backgroundPacing}
       report.switches={idleStream=P.idleStream,gen4ChunkPrebuild=P.gen4ChunkPrebuild}
@@ -258,7 +259,14 @@ return function(game)
       if V then report.switches.voxelIdlePump=V.require("ChunkMesher").idlePump end
       if spec.variant=="adaptive" then assert(Cap.focused~=false,"adaptive observation requires a focused native window") end
       report.measurement=require("tools.performance_baseline_meter")(game,spec.seconds,#report.targets>1 and walk or nil,
-        function()return P.tier,Cap.focused end)
+        function()return P.tier,love.window.hasFocus() end)
+      report.nativeFocusAfter=love.window.hasFocus()
+      if spec.stableFocus then
+        assert(report.nativeFocusAfter==report.nativeFocusBefore,"actual native focus changed during measurement")
+        for _,state in ipairs(report.measurement.tierTrace)do
+          assert(state.focused==report.nativeFocusBefore,"actual native focus changed during measurement")
+        end
+      end
       if atlas then
         report.atlasWorkerAfter=atlas._counters()
         report.atlasCacheAfter=atlas._cacheInfo(nativeAtlas and nativeAtlas._pairs)

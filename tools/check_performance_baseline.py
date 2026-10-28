@@ -2,16 +2,14 @@
 """Qualify native scenes and measure isolated, freshly imported games."""
 import argparse
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
 import shutil
 import sys
-import tarfile
 import time
 
-from qa_storage import qa_source, qa_cache, qa_copy, qa_profile, qa_run
+from qa_storage import qa_source, qa_cache, qa_copy, qa_profile, qa_run, qa_extract_archive
 from check_full_game_performance import BOOTSTRAP
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +40,8 @@ def main():
     parser.add_argument("--backend", choices=("metal", "opengl"), default="metal")
     parser.add_argument("--fps-cap", type=int, choices=(30,60,120,160), default=160)
     parser.add_argument("--atlas-bridge", action="store_true", help="exercise the production Gen-3 source field/atlas presentation")
+    parser.add_argument("--hidden", action="store_true", help="Use an invisible native window for matched unfocused measurements")
+    parser.add_argument("--stable-focus", action="store_true", help="Reject measurements whose actual native focus changes")
     parser.add_argument("--perf", help="Native POKEPORT_PERF overrides, e.g. atlasWorker=0")
     parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
@@ -114,12 +114,12 @@ def main():
     assert diff.returncode in (0,1), "runtime comparison failed"
     assert not qa_run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True,
                       text=True, check=True).stdout.strip(), "Commit the candidate first"
-    archive = qa_run(["git", "archive", head], cwd=ROOT, capture_output=True, check=True).stdout
-    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        for member in tar.getmembers():
-            assert not member.name.startswith("/") and ".." not in Path(member.name).parts
-            assert not member.issym() and not member.islnk()
-        tar.extractall(source)
+    git_dir = Path(qa_run(["git", "rev-parse", "--absolute-git-dir"], cwd=ROOT,
+                          capture_output=True, text=True, check=True).stdout.strip())
+    qa_extract_archive(git_dir, head, source)
+    if args.hidden:
+        conf = source / 'conf.lua'
+        conf.write_text(conf.read_text() + '\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.window.visible=false end\n')
     engine = source / "main.lua"
     engine_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
     adaptations = []
@@ -215,6 +215,7 @@ end
     for version, rom in cartridges.items():
         identity = "oasc-gen2recomp-qa-perf-baseline-" + token + "-" + version
         profiles[version] = identity
+        qa_source(Path.home() / "Library/Application Support/LOVE" / identity)
         qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
         inputs[version] = hashlib.sha1(rom.read_bytes()).hexdigest()
         checkpoint()
@@ -227,13 +228,14 @@ end
         scene = SCENES[name]
         for variant in variants:
             spec = dict(scene, name=name, inventory=not args.measure, measure=args.measure,
-                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant, atlasBridge=args.atlas_bridge,
+                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant, atlasBridge=args.atlas_bridge, stableFocus=args.stable_focus,
                         setupProbe=args.setup_probe or args.walk_probe, walkProbe=args.walk_probe)
             version = spec["version"]
             label = name + ("-" + variant if args.measure else "")
             identity = profiles[version]
             if args.measure:
                 identity += "-" + label
+                qa_source(Path.home() / "Library/Application Support/LOVE" / identity)
                 profile = qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
                 seed_identity=profiles[version]
                 if variant=="voxel-warm-disk":
@@ -273,6 +275,7 @@ end
               "hardware": hardware,
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
                                     "performanceOverrides": args.perf, "atlasBridge": args.atlas_bridge,
+                                    "hiddenWindow": args.hidden, "stableNativeFocus": args.stable_focus,
                                     "nativePacing": args.measure, "vsync": 0 if args.measure else None,
                                     "backgroundCapDisabled": args.measure, "randomSeed": 12345},
               "romSha1": inputs, "results": results}
