@@ -11,7 +11,7 @@ function M.new(game,row,raw)
  function A.newSprite(n)return{species=n,frame=0}end
  function A.run(sprite)current=sprite;return sprite end
  function A.stop(sprite)sprite.stopped=true;if current==sprite then current=nil end end
- function A.doFront(sprite,n,_,opts)
+ function A.doFront(sprite,n,back,pan,opts)
   local key=row(n).id;sprite.motion=Motion.new(game.data,key);sprite.pictures=Pictures.new(game.data,key,raw)
   if sprite.motion then sprite.motion:start()end;if sprite.pictures then sprite.pictures:start()end
   if opts and opts.cry then opts.cry(n)end
