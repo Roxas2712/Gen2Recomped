@@ -92,6 +92,15 @@ for _,key in ipairs{'data','save','mods','stack','edition'}do
  close(f)
 end
 do
+ local f,b=open('emerald');f.game.mods=nil
+ b:resolveTurn(b.player.mon.moves[1]);local view=B._actions[1]
+ f.game.mods=false
+ T.eq(view.kind,nil,'an absent loader and a false loader are distinct cohorts')
+ f.game.mods=nil
+ T.eq(view.kind,nil,'an absent loader cannot revive the previous cohort')
+ close(f)
+end
+do
  local f,b=open('emerald');b:resolveTurn(b.player.mon.moves[1]);local old=B._actions[1]
  B._service.release()
  T.eq(old.kind,nil,'source admission retirement invalidates the old action record')

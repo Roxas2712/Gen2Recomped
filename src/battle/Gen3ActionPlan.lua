@@ -3,12 +3,17 @@
 -- ledger never executes, removes, schedules or reorders an action.
 local Version=require('src.core.GameVersion')
 local M={}
+local ABSENT={}
+local function loader(game)
+  local value=game and game.mods
+  return value==nil and ABSENT or value
+end
 local function valid(b,p)
   if not p or p.retired then return false end
   if not b or b._sourceActionPlan~=p or b.result then p.retired=true;return false end
   local r=p.refs;local game=r[2]
   if r[1]~=b or not game or b.game~=game or b.data~=r[3]or game.data~=r[3]
-    or game.save~=r[4]or(game.mods or false)~=r[5]or game.stack~=r[6]
+    or game.save~=r[4]or loader(game)~=r[5]or game.stack~=r[6]
     or b.queue~=r[7]or Version.get()~=p.edition or not Version.isGen3()then p.retired=true;return false end
   for _,state in ipairs(game.stack and game.stack.states or{})do if state==b then return true end end
   p.retired=true;return false
@@ -18,7 +23,7 @@ function M.begin(b,order)
   M.retire(b)
   local game=b.game
   local p={order=order,rows={},fns={},completed={},byRow=setmetatable({},{__mode='k'}),views=setmetatable({},{__mode='k'}),edition=Version.get(),
-    refs=setmetatable({b,game,b.data,game and game.save,game and(game.mods or false),game and game.stack,b.queue},{__mode='v'})}
+    refs=setmetatable({b,game,b.data,game and game.save,loader(game),game and game.stack,b.queue},{__mode='v'})}
   b._sourceActionPlan=p
   return p
 end

@@ -21,7 +21,7 @@ external stale proxy. Gen2 keeps its native dispatch and constructs no GBA ledge
 
 ## Qualification and limits
 
-Focused qualification passes765 checks, including real native move-used producer
+Focused qualification passes767 checks, including real native move-used producer
 observation, detached arrays, stable identities, read-only records, cohort/source
 retirement, callback replacement, unknown native wrappers and native failure.
 Complete deterministic turns compare HP, PP, every RNG invocation and frame/phase
@@ -37,3 +37,11 @@ installed, and Action Card readiness stays gated. A typed native HP/RNG
 continuation and real resolver/sequence ownership remain required before source
 contact suspension can be admitted. Whole-source, predecessor and unchanged-mod
 qualification follow separately.
+
+
+Frozen source `f0627a735e` (before the additional nil/false loader hardening)
+passes all126 selected CPU groups. Exact predecessor comparison `8c498caaf6`
+executes the identical owned turn probe against that tree and predecessor
+`ddd4035807` without overlaying either native controller. HP, PP, RNG invocations
+and every frame/phase record match across all five editions. Latest source and
+older-public integration qualification are recorded separately.
