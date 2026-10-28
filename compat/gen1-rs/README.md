@@ -182,6 +182,7 @@ The controller, font, windows, PPU and isolated RNG reuse the existing byte-exac
 sources. Each verified cartridge supplies its own original labels, normal/small
 fonts, ten frames, egg/Red/Leaf portraits and separate bands/stripes/confetti.
 `frlg-native-hall-v1` rejects stale approximate FR/LG caches. The native display
-currently retains the existing host induction/ending ownership: enabling the
-original League save transaction and accepting the full reset/CONTINUE flow
-remain separate work.
+retains host induction and atomic IO ownership. The original League saving
+phase, write-failure retry, title reset and native Pallet CONTINUE are now
+covered separately in `docs/qa/frlg-league-save.md`. Ordinary FR/LG stories
+and original credits presentation remain separate work.
