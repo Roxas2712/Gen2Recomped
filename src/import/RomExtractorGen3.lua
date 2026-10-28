@@ -413,16 +413,12 @@ end
 -- the two together: "PROTEIN1,000".  A caller that is reading a menu row
 -- passes { [0x13] = "  " } and gets the gap back; everything else is
 -- unaffected, because an unlisted command is dropped exactly as before.
--- `structured` additionally retains layout commands and raw placeholder ids
--- for verified named-text consumers; ordinary scan probes keep their arity,
--- allocation policy and strict field-placeholder rejection.
-function RomExtractorGen3:readText(off, maxBytes, spacers, structured, opts)
-  -- Existing RS imports pass dialect options in the fourth slot. That path
-  -- stays unstructured; IR callers can additionally supply fifth-slot options.
-  if type(structured) == 'table' then
-    opts = structured
-    structured = opts.structured == true
-  end
+-- Boolean IR mode and both native option ABIs share one bounded decoder.
+-- Fourth-slot options may opt into IR; a fifth-slot table also preserves the
+-- legacy boolean-plus-options calling convention without rewriting either.
+function RomExtractorGen3:readText(off, maxBytes, spacers, mode, opts)
+  if type(mode)=='table'then opts=mode end
+  local structured=mode==true or type(mode)=='table'and mode.structured==true
 
   local map = self:charmap()
   local out = {}
