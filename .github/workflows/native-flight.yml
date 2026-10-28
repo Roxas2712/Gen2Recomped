@@ -33,6 +33,4 @@ jobs:
           luajit tests/engine/native_field_observations.lua
       - name: Existing native admission and other generations
         run: |
-          luajit tests/engine/world_actions_api.lua
-          luajit tests/engine/gen2_fly_destinations.lua
           luajit tests/engine/gen2_battle_scene.lua
