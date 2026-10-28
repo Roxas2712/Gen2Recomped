@@ -7723,6 +7723,7 @@ function BattleState:executeAction(user, target, action)
   if user.g4Gone then return end
   -- this battler's action is under way (Payback, Sucker Punch, Me First)
   user.actedTurn = self.turnCount
+  if GameVersion.isGen2() then require("src.battle.Gen2Protection").actionStarted(self, user) end
   -- A SWITCH NEEDS NO TARGET.  Everything else does, and with four on the
   -- field the one it was aimed at can already be off it -- the entry's
   -- target is resolved as the entry runs, and there may be nobody left to
