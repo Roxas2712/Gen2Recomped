@@ -18,10 +18,11 @@ local Runtime = require("src.mods.Runtime")
 
 local Fingerprint = {}
 
--- Runtime command semantics are part of native GBA lockstep compatibility,
--- even when both peers load byte-identical data. Keep older game digests.
+-- Runtime command semantics are part of native lockstep compatibility,
+-- even when both peers load byte-identical data. Gen1 keeps its old digest.
 local function nativeBattleRevision()
   if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-1'end
+  if require('src.core.GameVersion').isGen2() then return 'gsc-1' end
   return require("src.core.GameVersion").isGen3() and 27 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
@@ -272,7 +273,10 @@ local function surface(data, mods)
   writeConstants(out, data)
   writeLinkFields(out, data)
   local revision = nativeBattleRevision()
-  if revision then out[#out + 1] = "[native_gba_commands]" .. revision end
+  if revision then
+    local label=require('src.core.GameVersion').isGen2() and "[native_gsc_commands]" or "[native_gba_commands]"
+    out[#out + 1] = label .. revision
+  end
   local secondaryRule = nativeSecondaryRule()
   if secondaryRule then out[#out + 1] = "[native_gba_secondary]" .. secondaryRule end
   local partyRevision = Fingerprint.nativePartyRevision()
