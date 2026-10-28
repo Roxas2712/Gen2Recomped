@@ -9,6 +9,7 @@ local Version=require('src.core.GameVersion')
 local Ids=require('src.compat.gen1.BattleIds')
 local scopes=CoroutineScopes.new()
 local M={}
+local MAIN_CHOICES={}
 local unpack=table.unpack or unpack
 local function pack(...)return {n=select('#',...),...}end
 -- Newer native owners bind action records to a learned PP slot; older
@@ -18,7 +19,7 @@ local function ppOwner(move)
  local resolver=choices and choices.slot
  return resolver and resolver(move)or move,choices,resolver
 end
-local function live(lease)
+local function cohort(lease)
  assert(lease and not lease.closed and not lease.frame.closed and not CoroutineScopes.retired(),
   'native move resolution retired')
  local game,screen=lease.game,lease.screen
@@ -28,6 +29,11 @@ local function live(lease)
   and game.stack:top()==screen and screen.queue==lease.queue and not screen.result
   and (type(game.mods)=='table'and game.mods.content or nil)==lease.content
   and lease.ids:valid(),'native move resolution cohort retired')
+ return lease
+end
+local function live(lease)
+ cohort(lease)
+ local screen=lease.screen
  assert(lease.user.mon==lease.userMon and lease.target.mon==lease.targetMon
   and lease.user.position==lease.userPosition and lease.target.position==lease.targetPosition
   and screen:battlerAt(lease.userPosition)==lease.user
@@ -42,6 +48,32 @@ local function live(lease)
   and (not lease.slot or (lease.user.curMoves or lease.user.mon.moves or{})[lease.slot]==lease.selected),
   'native move resolution PP owner retired')
  return lease
+end
+-- Source choice policy belongs only to this actual native invocation. It
+-- never writes the persistent battle field or survives a suspended phase.
+function M._interactiveChoices(screen,state)
+ local frame=scopes:find('move');local lease=frame and frame.value
+ if lease and lease.screen==screen and(not state or state==lease.state)then
+  cohort(lease)
+  local choice=scopes:find('choices')
+  if choice and choice.value.lease==lease then return choice.value.value end
+ end
+ return screen.interactiveChoices
+end
+function M._setInteractiveChoices(screen,state,value)
+ assert(value==nil or type(value)=='boolean','native interactive choices must be boolean or nil')
+ local frame=scopes:find('move');local lease=frame and frame.value
+ assert(lease and lease.screen==screen and lease.state==state,'interactive choices belong to their native move invocation')
+ cohort(lease)
+ local co,main=coroutine.running();co=main and MAIN_CHOICES or co or MAIN_CHOICES
+ lease.choiceFrames=lease.choiceFrames or{}
+ local choice=lease.choiceFrames[co]
+ if choice then choice.value.value=value
+ else
+  choice=scopes:push('choices',{lease=lease,value=value})
+  lease.choiceFrames[co]=choice
+  if choice.creator==lease.frame.creator then lease.ownChoice=choice end
+ end
 end
 -- Read the same ownership decision used by the native summary, from a
 -- resident of this exact admitted battle. Queries never flush staged PP.
@@ -91,7 +123,10 @@ function M._native(screen,user,target,move,isCalled,suppressAnimation,spreadCont
   end)
  end))
  local retired=frame.closed or CoroutineScopes.retired()
- lease.closed=true;scopes:close(frame)
+ -- A same-thread policy frame is a normal nested scope. Close it first
+ -- so the registry restores its local head before retiring borrowed children.
+ if lease.ownChoice then scopes:close(lease.ownChoice)end
+ lease.closed=true;scopes:close(frame);lease.choiceFrames,lease.ownChoice=nil,nil
  if not result[1]then error(result[2],0)end
  if retired then error('native move resolution retired while suspended',0)end
  return unpack(result,2,result.n)
