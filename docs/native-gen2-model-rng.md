@@ -20,5 +20,12 @@ checkpoint backend is absent here, so its checkpoint result is not inherited.
 
 Native integration/tests by Roxas2712, offered to Cedric / UNDERdecoded under
 the specific PR contribution permission, with existing rights intact.
-Validation is pending independent execution on this offered host; no full
-model/mod/GPU/release acceptance is claimed from static preparation.
+Independent validation on this offered host passes 7951 native RNG checks,
+174 actual host/guest/spectator source-callback checks, model (262), volatile
+(423) and protection-link (66) regressions. A separately executed frozen Gen1
+comparison passes 9471 comparisons / 7020 draw cases over actual seeded native
+LinkBattle backends; reference hashes remain unchanged. The exact official
+whole-host command passes 71/82 engine suites and SDK3/3, with the same eleven
+pre-existing failures as its protection base (69/80). It adds two passing suites
+without adding a whole-host failure; this older prerequisite stack is not
+entirely green. Full model/mod/GPU/release acceptance remains separate.
