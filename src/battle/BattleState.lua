@@ -6123,7 +6123,7 @@ function BattleState:choosingBattler()
   return self:battlerAt(self:choosingSlotNow()) or self.player
 end
 
-function BattleState:resolveTurn(playerAction)
+function BattleState:prepareNativeTurn()
   if GameVersion.isGen3() then
     -- A single-battle constructor can reach the native turn planner before
     -- the ordinary entry path binds its two slots. Command and item phases
@@ -6134,6 +6134,32 @@ function BattleState:resolveTurn(playerAction)
     self._nativeOrderSelectionTurn = (self.turnCount or 0) + 1
     require("src.battle.Gen3AIOrder").prepare(self, self._nativeOrderSelectionTurn)
   end
+end
+
+-- Item, switch and failed escape rounds reach the same round-local cleanup
+-- as move rounds. Selection still reads the previous round before cleanup
+-- (pokeruby battle_main.c: BattleTurnPassed / TurnValuesCleanUp).
+function BattleState:beginTurn(playerAction, enemyAction)
+  self.turnCount = (self.turnCount or 0) + 1
+  if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
+  if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
+  for _, b in activeBattlers(self) do
+    if b then
+      b.hurtThisTurn = nil
+      b.specialDamageTaken, b.physicalDamageTaken = nil, nil
+      b.protecting, b.enduring = nil, nil
+      if GameVersion.isGen3() then b._gen3HelpingHand = nil end
+      b.turnsOut = (b.turnsOut or 0) + 1
+    end
+  end
+  Runtime.emit("battle.turn_started", {
+    battle = self, turn = self.turnCount,
+    playerAction = playerAction, enemyAction = enemyAction,
+  })
+end
+
+function BattleState:resolveTurn(playerAction)
+  self:prepareNativeTurn()
   -- nil in a double battle whose left-hand foe has fainted with nothing on
   -- the bench to replace it; `actionFor` asks each surviving slot for its own
   local enemyAction = self:enemyAction(self:isDouble() and self.enemy or nil)
@@ -6172,26 +6198,7 @@ function BattleState:resolveTurn(playerAction)
       Rage.selected(self, self.enemy, enemyAction)
     end
   end
-  self.turnCount = (self.turnCount or 0) + 1
-  if GameVersion.isGen3() then require("src.battle.Gen3FollowMe").clear(self) end
-  -- BATTLE ARENA: arenaTurnCounter
-  if self.arena then require("src.battle.Gen3Arena").turnStarted(self) end
-  -- TURN-SCOPED FLAGS, cleared before anybody moves.  REVENGE reads
-  -- hurtThisTurn, FAKE OUT reads turnsOut, and PROTECT and ENDURE only stand
-  -- for the turn they were used on.
-  for _, b in activeBattlers(self) do
-    if b then
-      b.hurtThisTurn = nil
-      b.specialDamageTaken, b.physicalDamageTaken = nil, nil
-      b.protecting, b.enduring = nil, nil
-      if GameVersion.isGen3() then b._gen3HelpingHand = nil end
-      b.turnsOut = (b.turnsOut or 0) + 1
-    end
-  end
-  Runtime.emit("battle.turn_started", {
-    battle = self, turn = self.turnCount,
-    playerAction = selectedPlayerAction, enemyAction = selectedEnemyAction,
-  })
+  self:beginTurn(selectedPlayerAction, selectedEnemyAction)
   local pMove = orderMove(playerAction, self.data)
   local eMove = orderMove(enemyAction, self.data)
   -- GBA Quick Claw uses the shared turn word through the native comparator;
@@ -11009,11 +11016,14 @@ end
 function BattleState:nonMoveAction()
   local native, action = GameVersion.isGen3()
   if native then
+    self:prepareNativeTurn()
     action = self:enemyAction()
     action = require("src.battle.Gen3ChoiceBand").plan(self, self.enemy, action)
     local Rage = require("src.battle.Gen3Rage")
     Rage.selected(self, self.player, nil)
     Rage.selected(self, self.enemy, action)
+    self._nativeOrderSelectionTurn = nil
+    self:beginTurn(nil, action)
   end
   return function()
     if not native then action = self:enemyAction() end

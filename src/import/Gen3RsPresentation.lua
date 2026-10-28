@@ -32,6 +32,7 @@ function Bridge.extract(extractor)
     assert(load('src.import.gba.rs.'..name).run(rom, cache))
   end
   require('src.import.Gen3RsBag').extract(extractor, load, rom, cache)
+  require('src.import.Gen3RsPlaceholderAssets').extract(extractor)
   require('src.import.Gen3RsSummaryAssets').extract(extractor, load, rom, cache)
   require('src.import.Gen3RsPartyAssets').extract(extractor, load, rom, cache)
   require('src.import.Gen3RsMapData').presentation(extractor,load,rom,cache)
@@ -57,6 +58,8 @@ function Bridge.extract(extractor)
   require('src.import.Gen3RsMailAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsCableCarAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsWeatherAssets').extract(extractor,load,rom,cache)
+  require('src.import.Gen3RsCreditsAssets').extract(extractor,load,rom,cache)
+  require('src.import.Gen3RsHallAssets').extract(extractor,load,rom,cache)
 
   local audio = assert(extractor._audio)
   local songs = assert(extractor._songs)
@@ -194,6 +197,9 @@ function Bridge.missing(version)
   for _,path in ipairs(require('src.import.Gen3RsMailAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsCableCarAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsWeatherAssets').missing(version))do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3RsCreditsAssets').missing(version))do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3RsHallAssets').missing(version))do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3RsPlaceholderAssets').missing(version))do absent[#absent+1]=path end
   return absent
 end
 

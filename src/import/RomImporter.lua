@@ -1289,8 +1289,8 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
-  if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = "frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -1326,7 +1326,7 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-edition-placeholders-v1:rs-native-hall-v1:rs-native-credits-v1:rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
   if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
@@ -12077,5 +12077,6 @@ require("src.import.NativeLanguageSetup").install(RomImporter)
 
 require("src.import.LauncherPokemonXY").install(RomImporter)
 require("src.import.LauncherPinball").install(RomImporter)
+require("src.import.LauncherGameMods").install(RomImporter)
 
 return RomImporter

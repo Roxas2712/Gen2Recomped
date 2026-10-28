@@ -2312,12 +2312,17 @@ function Game:restoreSave(loaded, recovered)
   -- Emerald's CHAMPION_SAVEWARP (special 343): the Hall of Fame saved with
   -- the player standing in a room that has no exit, and this is the load
   -- that spends the bit and puts them back in their own bedroom.
+  require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
   if SaveData.hasChampionSaveWarp(loaded) then
     local home = SaveData.applyChampionSaveWarp(loaded, self:bootConfig())
     Logger.info("champion save warp: resuming at %s",
                 home and tostring(loaded.player and loaded.player.map)
                      or "the saved spot (this dataset has no start map)")
   end
+  -- RS's League autosave resumes in the gender's ROM-derived bedroom.
+  -- Only our versioned return marker can spend the RS bit; legacy flags
+  -- and other editions continue through their existing paths.
+  require('src.core.Gen3RsEndingSave').apply(loaded,self.data)
   local modsDiff = SaveData.modsDiff(loaded, activeMods)
   local report = SaveData.validate(loaded, self.data)
   report.recovered = recovered
