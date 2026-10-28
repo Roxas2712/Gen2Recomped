@@ -3,8 +3,9 @@
 local Version=require('src.core.GameVersion')
 local Session=require('src.compat.gen1.NativeSession')
 local Scope=require('src.render.GraphicsScope')
-local P={apiVersion=1,features={nativeUiStack=true,windowLayers=true}}
+local P={apiVersion=1,features={nativeUiStack=true,windowLayers=true,frameWidgets=true}}
 local entries,order={},{}
+local nativeDraws,drawKinds={},{}
 local frame,revision,checks=nil,0,0
 local callbackDepth=0
 local unpack=table.unpack or unpack
@@ -116,9 +117,47 @@ function P._nativeBegin(game,w,h)
  return P.begin(game,w,h)
 end
 function P.draw(kind,ctx)
+ if kind==nil or drawKinds[kind]then return false end
  local e=selected(frame);if not e then return false end
+ drawKinds[kind]=true
  local ok,on=callback(e,e.provider.draw,kind,ctx or{})
+ drawKinds[kind]=nil
  return ok and on==true
+end
+function P._inFrame()return frame~=nil end
+-- Native frame helpers can fall back into another helper (e.g. a standard
+-- strip missing from an old cache). That internal path remains ordinary
+-- native drawing; a provider asking for the base borrows it only once.
+function P._nativeDraw(kind,ctx,native,after,...)
+ local active=nativeDraws[kind]
+ if active then
+  if active.painting then return native(...)end
+  local result=pack(active.paint())
+  if active.after then active.after()end
+  return unpack(result,1,result.n)
+ end
+ local f=frame
+ if not selected(f)then return native(...)end
+ local args=pack(...);local record={after=after}
+ local paint,done,check=lease(f,function()
+  record.painting=true
+  local out=pack(pcall(native,unpack(args,1,args.n)))
+  record.painting=false
+  if not out[1]then error(out[2],0)end
+  record.result={n=out.n-1};for i=2,out.n do record.result[i-1]=out[i]end
+  return unpack(record.result,1,record.result.n)
+ end)
+ record.paint=paint;nativeDraws[kind]=record
+ local ok,why=pcall(function()
+  local handled=P.draw(kind,ctx);check()
+  if not handled then paint()end
+ end)
+ local result=record.result
+ local afterPaint=record.after
+ nativeDraws[kind]=nil;record.paint=nil;record.result=nil;record.after=nil;args=nil;done()
+ if not ok then error(why,0)end
+ if afterPaint then afterPaint()end
+ if result then return unpack(result,1,result.n)end
 end
 function P.notify(kind,ctx)
  local e=selected(frame)

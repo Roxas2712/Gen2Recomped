@@ -1104,14 +1104,16 @@ end
 
 -- Dock the full painted ROM frame, including caps beyond the conventional
 -- interior-plus-one-border rectangle. Otherwise only the middle moves.
-function Font.dialogueBoxBounds(tx, ty, tw, th)
-  local rec = Font.hasDialogueFrame() and state.def.dialogueFrame
+local function recordedFrameBounds(rec, tx, ty, tw, th)
   if rec and rec.layout == 'gen4' and tw >= 3 and th >= 3 then
     return (tx-1)*8, ty*8, (tw+3)*8, th*8
   elseif rec and rec.layout ~= 'gen4' and th >= 4 then
     return (tx-1)*8, ty*8, (tw+2)*8, th*8
   end
   return tx*8, ty*8, tw*8, th*8
+end
+function Font.dialogueBoxBounds(tx, ty, tw, th)
+  return recordedFrameBounds(Font.hasDialogueFrame() and state.def.dialogueFrame,tx,ty,tw,th)
 end
 
 local function prepareFrameStrip(rec)
@@ -1193,6 +1195,10 @@ function Font.hasSignpostFrame()
   local def = state and state.def
   return not FALLBACK.enabled and def ~= nil and def.signpostFrame ~= nil
 end
+function Font.signpostBoxBounds(tx, ty, tw, th)
+  if not Font.hasSignpostFrame()then return Font.dialogueBoxBounds(tx,ty,tw,th)end
+  return recordedFrameBounds(state.def.signpostFrame,tx,ty,tw,th)
+end
 
 function Font.drawSignpostBox(tx, ty, tw, th)
   local rec = Font.hasSignpostFrame() and state.def.signpostFrame
@@ -1230,4 +1236,35 @@ function Font.drawStandardBox(tx, ty, tw, th)
   end
 end
 
+-- GBA frame decoration shares the native helper, imported artwork and frame
+-- lifetime. Other generations and frames without a provider take the same
+-- native bodies without constructing presentation contexts.
+local frameUnpack=table.unpack or unpack
+local function framePack(...)return{n=select('#',...),...}end
+for name,style in pairs{drawBox='user',drawStandardBox='standard',drawDialogueBox='dialogue',drawSignpostBox='sign'}do
+  local body=Font[name]
+  Font[name]=function(tx,ty,tw,th,frameOverride)
+    local presentation=package.loaded['src.render.NativePresentation']
+    if not(presentation and presentation._inFrame())then return body(tx,ty,tw,th,frameOverride)end
+    local ctx={style=style,x=tx*8,y=ty*8,width=tw*8,height=th*8,frame=frameOverride}
+    if style=='dialogue'then ctx.x,ctx.y,ctx.width,ctx.height=Font.dialogueBoxBounds(tx,ty,tw,th)
+    elseif style=='sign'then ctx.x,ctx.y,ctx.width,ctx.height=Font.signpostBoxBounds(tx,ty,tw,th)end
+    local postColor,postFont
+    local function paint(...)
+      local result=framePack(body(...))
+      postColor={love.graphics.getColor()}
+      if love.graphics.getFont then postFont=love.graphics.getFont()end
+      return frameUnpack(result,1,result.n)
+    end
+    -- These are the native font helper's documented postconditions, not
+    -- provider state. Subsequent native labels still see its white ink/font.
+    local function restorePost()
+      if postColor then love.graphics.setColor(frameUnpack(postColor))end
+      if postFont then love.graphics.setFont(postFont)end
+    end
+    local result=framePack(presentation._nativeDraw('frame',ctx,paint,restorePost,tx,ty,tw,th,frameOverride))
+    restorePost()
+    return frameUnpack(result,1,result.n)
+  end
+end
 return Font
