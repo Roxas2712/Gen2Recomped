@@ -21,8 +21,8 @@ external stale proxy. Gen2 keeps its native dispatch and constructs no GBA ledge
 
 ## Qualification and limits
 
-Focused qualification passes767 checks, including real native move-used producer
-observation, detached arrays, stable identities, read-only records, cohort/source
+Focused qualification passes782 checks, including real native move-used producer
+observation, typed pairs/next iteration, detached arrays, stable identities, read-only records, cohort/source
 retirement, callback replacement, unknown native wrappers and native failure.
 Complete deterministic turns compare HP, PP, every RNG invocation and frame/phase
 sequences with observation registration off/on across all five GBA editions.
