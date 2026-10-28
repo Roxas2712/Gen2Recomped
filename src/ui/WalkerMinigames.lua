@@ -35,6 +35,8 @@ local Base = require("src.pokewalker.minigames.Base")
 local Gfx = require("src.pokewalker.minigames.Gfx")
 local T=require("src.pokewalker.minigames.Locale")
 local Enrollment=require('src.pokewalker.minigames.Enrollment')
+local Content=require('src.pokewalker.minigames.Content')
+local ContentSetup=require('src.pokewalker.minigames.ContentSetup')
 
 local H = {}
 H.__index = H
@@ -63,6 +65,9 @@ function H.new(screen, st, opts)
   return self
 end
 function H:_initialize()
+  self.contentSelection=Content.current()
+  if not self.contentSelection then ContentSetup.open(self);return end
+  Gfx.contentActive=true;Gfx.contentProvider=Content.provider(self.contentSelection)
   Rewards.state(self.st)
   local A=Gfx.art()
   if A and A.forget then A.forget() end -- imports may have changed since last entry
@@ -90,7 +95,7 @@ end
 
 function H:cycleSource()
   if self.st.walking and self.st.walking.source then return end
-  local A=Gfx.art()
+  local A=require('src.pokewalker.WalkerArt')
   if not (A and A.roster) then return end
   local versions={}
   for _,v in ipairs({"red","blue","yellow","gold","silver","crystal","polishedcrystal","prism","emerald","firered","platinum","heartgold","soulsilver","black","white"})do
@@ -107,6 +112,8 @@ end
 
 function H:play(i, skipIntro)
   if not Enrollment.accepted(H.GAME_MODULES)then Enrollment.open(self);return end
+  if self.settingContent then return end
+  if not Content.current()then ContentSetup.open(self);return end
   if not require('src.pokewalker.Walker').check(self.st)then return end
   local mod = H.games()[i]
   if not mod then return end
@@ -135,6 +142,7 @@ function H:update(dt)
   if not require('src.pokewalker.Walker').check(self.st)then self:close(true);return end
   self.t = self.t + math.min(dt or 0, 0.1)
   if self.enrolling then return end
+  if self.settingContent then ContentSetup.update(self);return end
   if self.session then self.session:update(dt) end
 end
 
@@ -143,12 +151,15 @@ function H:close(discard)
     self.session:finish()
   end
   self.session = nil
+  self.closed=true;ContentSetup.dispose(self)
+  Gfx.contentActive=nil;Gfx.contentProvider=nil
   if self.onClose then self.onClose(self) end
 end
 
 function H:action(a)
   if require('src.pokewalker.Walker').syncing then return true end
   if self.enrolling then return Enrollment.action(self,a)end
+  if self.settingContent then return ContentSetup.action(self,a)end
   if self.view == "game" and self.session then return self.session:action(a) end
   local n = #H.games()
   if self.view == "scores" then
@@ -236,6 +247,7 @@ local function dateOf(t) return t and os.date("%b %d", t) or "" end
 
 function H:draw(x, y, w, h)
   if self.enrolling then return Enrollment.draw(self,x,y,w,h)end
+  if self.settingContent then return ContentSetup.draw(self,x,y,w,h)end
   local g = love.graphics
   Gfx.tick(self.t)
   Gfx.version=self.artVersion
@@ -276,9 +288,14 @@ function H:draw(x, y, w, h)
   top = top + f.small:getHeight() + 10 * s
 
   if self.screen then
-    Gfx.button(self.hits,x+pad,top,w-2*pad,38*s,require('src.translation.Service').launcherLookup('FRIENDS & CLOUD'),function()
+    local half=(w-2*pad-8*s)/2
+    Gfx.button(self.hits,x+pad,top,half,38*s,require('src.translation.Service').launcherLookup('FRIENDS & CLOUD'),function()
       self:close();self.screen.tab='online'
     end,'accent',f.body)
+    Gfx.button(self.hits,x+pad+half+8*s,top,half,38*s,T('CONTENT & GRAPHICS'),function()ContentSetup.open(self)end,nil,f.small)
+    top=top+48*s
+  else
+    Gfx.button(self.hits,x+pad,top,w-2*pad,38*s,T('CONTENT & GRAPHICS'),function()ContentSetup.open(self)end,nil,f.body)
     top=top+48*s
   end
 

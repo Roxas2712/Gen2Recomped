@@ -1338,6 +1338,10 @@ end
 
 function love.filedropped(file)
   if TouchEditor then return touchEditorEvent('filedropped', file) end
+  local hub=package.loaded['src.ui.WalkerMinigames']
+  if hub and hub.active and hub.active.settingContent then
+    if require('src.pokewalker.minigames.ContentSetup').file(hub.active,file)then return end
+  end
   if editorMode and EditorApp and EditorApp.filedropped then
     return EditorApp.filedropped(file)
   end

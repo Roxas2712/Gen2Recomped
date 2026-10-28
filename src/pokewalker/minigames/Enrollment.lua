@@ -31,6 +31,8 @@ end
 function E.revoke()
  local fs=Saves.persistenceFs()
  if not fs or not fs.write then return nil,'The confirmation could not be saved. Minigames remain locked.'end
+ local cleared,reason=require('src.pokewalker.minigames.Content').revoke()
+ if not cleared then return nil,reason end
  local ok,why=Safety.atomicWrite(fs,E.FILE,S.encode({schema=1,accepted=false}),{decode=Safety.decodeAny})
  if ok then
   local H=package.loaded['src.ui.WalkerMinigames']

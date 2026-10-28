@@ -60,4 +60,16 @@ account='29';local taskState=W.load()
 local co=coroutine.create(function()return W.save(taskState)end);P.attachTask(co);account='17'
 local resumed,written=coroutine.resume(co)
 check(resumed and not written and W.load().watts==321,'background storage scope refuses a changed active account')
+-- File handles and both sides of a publication rename must follow the same
+-- profile mapping as getInfo/read/write (no inherited unscoped base methods).
+local renameFrom,renameTo,opened
+local base={read=fs.read,write=fs.write,getInfo=fs.getInfo,createDirectory=fs.createDirectory,
+ rename=function(a,b)renameFrom,renameTo=a,b;files[b]=files[a];files[a]=nil;return true end,
+ newFile=function(p)opened=p;return{}end}
+files['storage_account.lua']=binding
+local scoped=require('src.storage.ProfileFs').wrap(base,'29')
+scoped.write('minigames/content/a.tmp','private');scoped.rename('minigames/content/a.tmp','minigames/content/a.lua')
+check(renameFrom=='profiles/29/minigames/content/a.tmp'and renameTo=='profiles/29/minigames/content/a.lua'and not files['minigames/content/a.lua'],'atomic publication cannot rename outside its account')
+scoped.newFile('minigames/content/a.lua')
+check(opened=='profiles/29/minigames/content/a.lua','bounded file handles cannot bypass profile routing')
 print('Account profiles: '..n..' checks passed')
