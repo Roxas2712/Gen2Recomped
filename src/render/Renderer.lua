@@ -851,7 +851,7 @@ function Renderer:endFrame(zones, worldZones)
   -- GB pixel stops being a whole number of screen pixels, which is the trade
   -- the setting exists to offer.  Clamped on the horizontal too, so a narrow
   -- window scales to fit instead of overflowing off both sides.
-  if self.uiFill or self.splitViewport then
+  if self.uiFill or self.splitViewport or GameViewport.skinFill then
     Up = math.min(ph / uih, pw / uiw)
   end
   local Ux, Uy = Up / dpiX, Up / dpiY
