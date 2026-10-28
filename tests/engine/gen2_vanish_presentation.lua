@@ -62,7 +62,8 @@ local function untilState(s,predicate,label)
   return frames
 end
 local function drained(s)
-  return #s.queue==0 and not s.current and not s.animPlaying and (s.waitFrames or 0)<=0 and not s.draining
+  return #s.queue==0 and not s.current and not s.animPlaying and (s.waitFrames or 0)<=0
+    and not s.draining and s.nextInsert==nil
 end
 local function finish(s)untilState(s,function()return drained(s)end,'native queue and VM release')end
 local function underground(s,side,mon)
@@ -75,18 +76,7 @@ local function release(s,id,side,move)
     T.eq(p and p.phase,'release','actual release retains the preceding cleared box')
     T.eq(p and p.row,s.moveAnimRow,'release latch binds the real native row')
   end
-  local vanish=require('src.battle.Gen2VanishPresentation')
-  local sync=vanish.sync
-  vanish.sync=function(screen)
-    local p=screen._gen2VanishPictures and screen._gen2VanishPictures[screen[side]]
-    local phase=p and p.phase
-    sync(screen)
-    if phase=='release' and not screen._gen2VanishPictures[screen[side]]then
-      print('release removal',p.row,p.runner,p.hidden,screen.animPlayer.runtime.frames,debug.traceback())
-    end
-  end
   untilState(s,function()return s.animPlaying end,'actual release program starts')
-  vanish.sync=sync
   if id~='SOLARBEAM'then
     T.eq(s._gen2VanishPictures[s[side]],p,'release admission retains its original picture latch')
     T.eq(p and p.runner,s.animPlayer.runtime,'release admission binds its actual VM')
