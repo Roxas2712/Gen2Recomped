@@ -155,6 +155,10 @@ for licence in LICENSE LICENSE.MD LICENSE.md; do
   [ -f "$ROOT/$licence" ] && cp "$ROOT/$licence" "$STAGE/" && break
 done
 
+for notice in NOTICE.md LICENSE-ROXAS2712.md; do
+  if [ -f "$ROOT/$notice" ]; then cp "$ROOT/$notice" "$STAGE/"; fi
+done
+
 # Preserve the original licence alongside the actual derived skin runtime.
 if [ -f "$ROOT/src/core/TouchSkin.lua" ]; then
   skin_licence="licenses/GEN1RECOMP-TOUCH-SKINS.md"
