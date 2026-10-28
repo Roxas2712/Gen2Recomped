@@ -47,7 +47,9 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(b.player.mon.moves[1].pp,pp,'clock observation cannot spend PP')
   -- Run the actual two chosen moves; their callback reads must see the same
   -- round as the earlier turn-start callback, not a per-move/frame counter.
-  b:runQueueAction(b.queue[1]);b:runQueueAction(b.queue[2])
+  local first,second=b.queue[1],b.queue[2]
+  T.check(first and second and first.fn and second.fn,'native planner queues both actual actions')
+  b:runQueueAction(first);b:runQueueAction(second)
   T.eq(b.player.mon.moves[1].pp,pp-1,'actual native move spends PP once')
   T.eq(probe.read(model),round,'both actual moves share one round')
   b:endOfTurn()
