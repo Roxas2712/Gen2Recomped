@@ -31,6 +31,14 @@ local function make(edition,format)
   }}
   local anims={gen2=true,moveAnims={FLY=1,DIG=1,SOLARBEAM=1,PROBE=2},scripts={[1]=main,[2]=probe},
     objects={},framesets={},oam={},gfx={}}
+  anims.functions={[0]='Null'}
+  anims.framesets[0]={frames={{oam=0,duration=1}},loop='restart'}
+  anims.oam[0]={tile=0,sprites={{x=0,y=0,tile=0,attr=0}}}
+  for index,name in ipairs(require('src.battle.Gen2AnimObjectIds').battleAnimObjectOrder)do
+    if name=='BATTLE_ANIM_OBJ_PLAYERHEAD_1ROW' or name=='BATTLE_ANIM_OBJ_ENEMYFEET_1ROW'then
+      anims.objects[index-1]={oamFlags=0,fixY=255,fn=0,frameset=0,palette=0,gfx=0}
+    end
+  end
   if format=='native'then
     anims=Catalog.compile(anims,nil,edition)
     anims.gen2,anims.format,anims.moveAnims,anims.indices,anims.misc=nil,nil,nil,nil,nil
@@ -61,8 +69,17 @@ local function underground(s,side,mon)
   return s.isUnderground and s:isUnderground(side,mon) or false
 end
 local function release(s,id,side,move)
+  local p=s._gen2VanishPictures and s._gen2VanishPictures[s[side]]
   s:performMove(s[side],s[side=='player'and'enemy'or'player'],move)
+  if id~='SOLARBEAM'then
+    T.eq(p and p.phase,'release','actual release retains the preceding cleared box')
+    T.eq(p and p.row,s.moveAnimRow,'release latch binds the real native row')
+  end
   untilState(s,function()return s.animPlaying end,'actual release program starts')
+  if id~='SOLARBEAM'then
+    T.eq(s._gen2VanishPictures[s[side]],p,'release admission retains its original picture latch')
+    T.eq(p and p.runner,s.animPlayer.runtime,'release admission binds its actual VM')
+  end
   T.eq(s.animPlayer.moveId,id,'release uses the actual move')
   T.eq(s.animPlayer.vars.param,0,'release uses cartridge param zero')
 end
