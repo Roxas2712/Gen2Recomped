@@ -83,7 +83,7 @@ function M.sync(screen)
     if not current(screen,p)then discard,apply=true,false
     elseif p.runner then
       local value=p.runner.picOverride[side(p.b)]
-      discard=p.runner.stop or value==p.kind
+      discard=p.runner~=screen.animPlayer.runtime or p.runner.stop or value==p.kind
     else
       local queued=false
       for _,row in ipairs(screen.queue or {})do if row==p.row then queued=true;break end end
