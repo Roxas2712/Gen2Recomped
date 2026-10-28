@@ -5939,6 +5939,13 @@ function RomExtractorGen3:extractConstants()
     end
   end
 
+  local helpFacts=require('src.import.Gen3HelpFacts')
+  local helpEdition=type(self.version)=='table'and self.version.id or self.version
+  if helpFacts.supports(helpEdition)then
+    local help,why=helpFacts.extract(self)
+    constants.gen3Help=help
+    if not help then Logger.warn('gen3: native Help unavailable: %s',why)end
+  end
   -- kept on the extractor so later stages share one numbering
   self._speciesIds, self._moveIds = speciesIds, moveIds
   self._constants = constants
