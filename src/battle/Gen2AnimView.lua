@@ -70,7 +70,7 @@ function View:drawObjects(runner, battle)
   local g = love and love.graphics
   if not g then return end
   g.push('all')
-  local ok, err = pcall(function()
+  local ok, err = pcall(Palette.preserving,function()
     g.setColor(1,1,1,1)
     local active,activeByte,activeRaw
     for _, obj in ipairs(runner:oam()) do
