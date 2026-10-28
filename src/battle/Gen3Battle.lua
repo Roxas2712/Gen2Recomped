@@ -1564,6 +1564,13 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
   return not battle.showEnemyTrainer and not battle.enemySendingOut
     and not battle:growInScale(b) and not battle.introBalls
 end
+function Gen3Battle.drawSafariPanel(battle,x,y)
+  if not battle.gen3Safari then return false end
+  if battle.rsBattlePanel then
+    return require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
+  end
+  return require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)
+end
 local function drawHUDs(battle, slide)
   local showStatus = StatusHUDVisibility.forBattle(battle)
   local record = hudRecord(battle)
@@ -1571,9 +1578,7 @@ local function drawHUDs(battle, slide)
   local double = battle.isDouble and battle:isDouble()
   if showStatus and battle.gen3Safari and slide==0 then
     local x,y=healthboxAt(battle,'singlesPlayer',hudImage(images.safari or images.player),112,64)
-    if battle.rsBattlePanel then
-      require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
-    else require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)end
+    Gen3Battle.drawSafariPanel(battle,x,y)
   end
   if not double and Gen3Battle.healthboxVisible(battle,1,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesOpponent",
