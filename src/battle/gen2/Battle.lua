@@ -16,8 +16,82 @@ local function owner(model)
 end
 
 local function active(screen, mon)
+  if screen.player == mon or screen.enemy == mon then return mon end
   if screen.player and screen.player.mon == mon then return screen.player end
   if screen.enemy and screen.enemy.mon == mon then return screen.enemy end
+end
+
+local statNames={specialAttack='spatk',specialDefense='spdef'}
+local stageAliases={__index=function(t,k)local native=statNames[k];if native then return rawget(t,native)end end,
+  __newindex=function(t,k,v)rawset(t,statNames[k]or k,v)end}
+function Model:stageTables()
+  local screen=owner(self)
+  return setmetatable({}, {__index=function(_,side)
+    local b=(side=='player' or side=='enemy')and screen[side]
+    if b and b.stages then
+      if getmetatable(b.stages)==nil then setmetatable(b.stages,stageAliases)end
+      return b.stages
+    end
+  end})
+end
+local volatileViews=setmetatable({}, {__mode='k'})
+local volatileNames={substitute='substituteHP',protect='protecting',mist='mist',
+  confusion='confused',confusionTurns='confusionTurns',flinch='flinched'}
+function Model:volatile(mon)
+  local b=assert(active(owner(self),mon),'volatile state requires an active battler')
+  if not volatileViews[b] then
+    local extensions={}
+    volatileViews[b]=setmetatable({}, {
+      __index=function(_,key)local field=volatileNames[key];if field then return b[field] end;return extensions[key]end,
+      __newindex=function(_,key,value)local field=volatileNames[key];if field then b[field]=value else extensions[key]=value end end,
+    })
+  end
+  return volatileViews[b]
+end
+
+function Model:battlerName(mon)
+  local b=active(owner(self),mon)
+  return b and b.name or mon and (mon.nickname or mon.species) or ''
+end
+function Model:battlerTypes(mon)
+  local b=active(owner(self),mon)
+  return b and b.curTypes or (self:speciesDef(mon)or {}).types or {}
+end
+function Model:effectiveSpeed(mon)
+  return require('src.battle.TurnOrder').effectiveSpeed(assert(active(owner(self),mon)),owner(self))
+end
+function Model:movePriority(id)
+  return (self:moveDef(id)or {}).priority or 0
+end
+function Model:markMissed()
+  return owner(self):markMissed()
+end
+function Model:emit(event)
+  assert(type(event)=='table','battle event must be a table')
+  if event.kind=='message' then return owner(self):sayNext(event.text) end
+  error('unsupported source battle event: '..tostring(event.kind),2)
+end
+function Model:accuracyRoll(move,user,target,raw)
+  local screen=owner(self)
+  return screen:accuracyRoll(move,assert(active(screen,user)),assert(active(screen,target)),raw)
+end
+function Model:changeStage(target,stat,delta)
+  local screen=owner(self)
+  local b=assert(active(screen,target),'stage change requires an active battler')
+  stat=statNames[stat]or stat
+  local before=b.stages[stat]or 0
+  local messages=require('src.battle.MoveEffects').changeStage(screen,b,stat,delta,false)
+  for _,text in ipairs(messages)do screen:sayNext(text)end
+  return (b.stages[stat]or 0)~=before
+end
+function Model:changeStageAgainstMist(user,target,stat,delta)
+  local screen=owner(self)
+  local b=assert(active(screen,target))
+  if user~=target and delta<0 and b.mist then
+    self:emit({kind='message',text=self:battlerName(target).." is protected by MIST."})
+    return false
+  end
+  return self:changeStage(target,stat,delta)
 end
 
 function Model:moveDef(move)
@@ -36,7 +110,7 @@ function Model:battleStat(mon, key)
   local screen = screens[self]
   local battler = screen and active(screen, mon)
   local stats = battler and battler.curStats or mon and mon.stats
-  return stats and stats[key]
+  return stats and stats[statNames[key]or key]
 end
 
 function Model:sideOf(mon)
