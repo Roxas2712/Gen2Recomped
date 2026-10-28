@@ -95,10 +95,12 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     local s=make(edition,format)
     local b,target=s[side],s[side=='player'and'enemy'or'player']
     local move={id=id,pp=10};b.curMoves={move}
+    local expectedPP=not b.isPlayer and s.kind~='link' and s.ruleset
+      and s.ruleset.enemyUnlimitedPP and 10 or 9
     local hp=b.mon.hp
     s:performMove(b,target,move)
     T.eq(b.charging,move,'native first charge retains the original instance')
-    T.eq(move.pp,9,'native first charge spends exactly one PP')
+    T.eq(move.pp,expectedPP,'first charge keeps the native side PP policy')
     T.eq(b.invulnerable==true,id~='SOLARBEAM','only real Fly/Dig charge hides the battler')
     local rows={};for _,row in ipairs(s.queue)do if row.anim then rows[#rows+1]=row end end
     T.eq(#rows,1,'charge has one animation, no legacy extra clock')
@@ -118,12 +120,12 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     for _=1,3 do underground(s,side);s:animPicState(side);if s.pic then s:pic(b.mon,false)end end
     T.eq(s.rngCalls,calls,'picture reads never consume battle RNG')
     T.eq(b.mon.hp,hp,'charge/picture reads retain native HP')
-    T.eq(move.pp,9,'picture reads never spend additional PP')
+    T.eq(move.pp,expectedPP,'picture reads never spend additional PP')
     T.eq(r.env.flying[side],false,'retained first runner keeps its admission snapshot')
     release(s,id,side,move)
     T.eq(b.charging,nil,'native release clears its original charge instance')
     T.eq(b.invulnerable,nil,'native release clears invulnerability before animation')
-    T.eq(move.pp,9,'native second turn spends no extra PP')
+    T.eq(move.pp,expectedPP,'native second turn spends no extra PP')
     T.eq(pictureHidden(s,side),vanished,'release stays absent during pre-SHOW_MON wait')
     T.eq(s.animPlayer.runtime.env.flying[side],false,'release SHOW_MON is admitted after real flag clears')
     local current=s.anim
