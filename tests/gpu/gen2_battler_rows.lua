@@ -88,6 +88,7 @@ function M.run()
       end
       data.battle_anims.oam[id]={tile=0,sprites=sprites}
     end
+    data.battle_anims=require('src.battle.Gen2AnimCatalog').compile(data.battle_anims,data.constants,edition)
     require('src.render.Font').load(data)
     local save=require('src.core.SaveData').newGame()
     save.party={require('src.pokemon.Pokemon').new(data,'FIXMON_A',30)}
