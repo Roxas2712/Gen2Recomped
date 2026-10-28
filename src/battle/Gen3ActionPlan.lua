@@ -56,7 +56,10 @@ function M.run(b,item)
   -- This is the same native fn invocation. An exception must retire its
   -- observation instead of leaving a falsely executing action behind.
   p.current=item
-  local ok,why=pcall(item.fn)
+  local sequence=package.loaded['src.core.game3.battle.anim_seq']
+  local ok,why
+  if sequence then ok,why=pcall(sequence._nativeAction,b,item,item.fn)
+  else ok,why=pcall(item.fn)end
   p.current=nil
   if not ok then M.retire(b);error(why,0)end
   p.completed[index]=true

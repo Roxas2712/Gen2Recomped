@@ -10,6 +10,7 @@
 -- bide, recharge, confusion, screens, substitute, transform, ...) is
 -- ported from engine/battle/core.asm; see docs/behavior-porting-notes.md.
 
+local nativeMoveUsed = {} -- identity of the native announcement producer
 local Assets = require("src.render.Assets")
 local Catching = require("src.battle.Catching")
 local Damage = require("src.battle.Damage")
@@ -2326,9 +2327,12 @@ end
 
 -- insert message right after the currently-executing queue item (the
 -- counter is reset by updateQueue before each fn item runs)
-function BattleState:sayNext(text)
+function BattleState:sayNext(text, provenance)
   self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { text = text })
+  local row = { text = text }
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+  if sequence and provenance==nativeMoveUsed then sequence._nativeMessage(row)end
+  table.insert(self.queue, self.nextInsert, row)
 end
 
 -- insert a UI push right after the current queue item (dex page, the
@@ -8226,7 +8230,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
 
   self.moveAnimRow = nil
   if not (user.thrashTurns and moveInst == user.thrashMove and user.thrashAnnounced) then
-    self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name))
+    self:sayNext(self:romText("_ItemUseText001", "%s\nused %s!", displayName(user), move.name), nativeMoveUsed)
     -- the move's animation plays right after the announcement; the
     -- damage path attaches the target's hit blink to this row so the
     -- blink follows the animation (pokered's order).  Mimic is the
@@ -8238,6 +8242,8 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
                            attackerPosition = user.position,
                            targetPosition = target and target.position,
                            animContext = animContext }
+      local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+      if sequence then sequence._nativeMove(self.moveAnimRow)end
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
