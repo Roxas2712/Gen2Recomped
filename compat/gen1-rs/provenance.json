@@ -190,7 +190,8 @@
     "src/ui/game3/hall_of_fame.lua": "66cc57e11c8a91450c6039a0ac7c2df82b4153de33188c29caf4f335c72f45d0",
     "src/ui/game3/hall_of_fame_gfx.lua": "a43b1823da5b0b3870a5205b08647b70d58162e5046cd5c773feeb88f6938ec8",
     "src/ui/game3/rs/hall_of_fame_policy.lua": "9a4fba687bdab81bae2dbda88f4bfca403d3c566cfefad6ca2a909160fcee72b",
-    "src/import/gba/rs/extract_hall_of_fame.lua": "16cda550a97f86f1e0c88bf5d7bb14acca3981db5f14009d960e829841ad27c3"
+    "src/import/gba/rs/extract_hall_of_fame.lua": "16cda550a97f86f1e0c88bf5d7bb14acca3981db5f14009d960e829841ad27c3",
+    "src/import/gba/text_placeholders_extract.lua": "2491c75195fec21951449e6a153022f2ccbd41a625895e39d24ceb873ca43b60"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison"
 }
