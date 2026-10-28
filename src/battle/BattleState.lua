@@ -9097,7 +9097,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   end
 end
 
-function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+local function nativePerformMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   if not GameVersion.isGen3() then
     return performMove(self, user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
   end
@@ -9130,6 +9130,14 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   end
   self._gbaMoveFrame = parent
   if not isCalled and not parent and not self._gbaActionFrame and not frame.suspended then Schedule.afterAction(self) end
+end
+
+function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  local resolver=GameVersion.isGen3()and package.loaded['src.core.game3.battle.engine']
+  if resolver then
+    return resolver._native(self,user,target,moveInst,isCalled,suppressAnimation,spreadContinuation,nativePerformMove)
+  end
+  return nativePerformMove(self,user,target,moveInst,isCalled,suppressAnimation,spreadContinuation)
 end
 
 function BattleState:continueTrapping(user, target)
