@@ -32,13 +32,14 @@ end
 -- fonts by scale, rebuilt only when the scale moves
 local fontCache = {}
 function G.fonts(s)
-  local key = math.floor(s * 20 + 0.5)
+  local pixelKey = math.floor(s * 20 + 0.5)
+  local key=tostring(require('src.translation.Service').launcherTarget or 'en')..':'..pixelKey
   local hit = fontCache[key]
   if hit then return hit end
   local file
   pcall(function() file = require("src.translation.Service").launcherFont end)
   local function f(px)
-    px = math.max(8, math.floor(px * key / 20 + 0.5))
+    px = math.max(8, math.floor(px * pixelKey / 20 + 0.5))
     local ok, font = pcall(function() return file and love.graphics.newFont(file, px) or love.graphics.newFont(px) end)
     return ok and font or love.graphics.newFont(px)
   end

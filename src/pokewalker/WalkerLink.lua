@@ -44,8 +44,9 @@ end
 local function backup(version, slotId, bytes, why)
   if not (bytes and love and love.filesystem) then return end
   local dir = ("pokewalker_backups/%s"):format(version)
-  love.filesystem.createDirectory(dir)
-  love.filesystem.write(("%s/%s_%s_%s.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S"), why or "walk"), bytes)
+  local fs=SaveData.persistenceFs()
+  fs.createDirectory(dir)
+  fs.write(("%s/%s_%s_%s.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S"), why or "walk"), bytes)
 end
 
 local function norm(s) return (tostring(s or ""):upper():gsub("[^%w]", "")) end
@@ -136,6 +137,7 @@ end
 -- take a box Pokemon out of its save and onto the walker
 function L.send(st, entry, courseId)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   if st.walking then return false, "a Pokemon is already walking -- bring it home first" end
   local src = entry.source
   local save, bytes = readSave(src.version, src.slot)
@@ -245,6 +247,7 @@ L.deliverTo = deliver
 -- RETURN FROM WALK (keep = false) or RECEIVE PRESENT (keep = true)
 function L.bringHome(st, keep)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   local w = st.walking
   if not w then return false, "no Pokemon is walking" end
   local src = w.source
@@ -262,6 +265,7 @@ end
 -- the walker stay. It reaches the PC when that game next loads (the inbox).
 function L.sendCaught(st, index)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   local w = st.walking
   if not w then return false, "no Pokemon is walking" end
   local list = st.caught or {}

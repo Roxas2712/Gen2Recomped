@@ -1659,7 +1659,7 @@ function Sidebar.install(RI)
       -- prompt, popping up once a minute from the launcher itself, took the
       -- place of -- and on Android 10 and older cancelled -- the storage
       -- prompt GAME DATA FOLDER's Browse needs (docs/data-location.md).
-      local walkerUsed = love.filesystem.getInfo(require("src.pokewalker.Walker").FILE) ~= nil
+      local walkerUsed = require("src.pokewalker.Walker").exists()
       local busy = self.pickPending or self.section == "settings" or self.settingsOpen
       if self._walkerPumpT > 60 and (not walkerUsed or busy) then self._walkerPumpT = 0 end
       if self._walkerPumpT > 60 then

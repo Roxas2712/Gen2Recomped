@@ -112,6 +112,10 @@ function P:course() return self.courses[self.st.course] end
 function P:say(text, secs) self.toast = { text = tostring(text), till = self.t + (secs or 3) } end
 
 function P:update(dt)
+  if W.syncing then return end
+  if not W.check(self.st)then
+    self.st=W.load();self.panel=nil;self.radar=nil;self.toast=nil;self.seenNotices=#self.st.notices
+  end
   self.t = self.t + dt
   Steps.pump(self.st, self.courses)
   local n = #self.st.notices
@@ -352,6 +356,14 @@ end
 -- ------------------------------------------------------------- input
 
 function P:mousepressed(mx, my)
+  local allowed,why=W.check(self.st)
+  if not allowed then
+    self:say(why)
+    local policy=require('src.storage.AccountStorage')
+    if not policy.saveCheck()and self.host and self.host._openAccount then self.host:_openAccount('storage')
+    else self.st=W.load();self.panel=nil end
+    return true
+  end
   for i = #self.rects, 1, -1 do
     local r = self.rects[i]
     if mx >= r.x and mx <= r.x + r.w and my >= r.y and my <= r.y + r.h then
@@ -512,10 +524,11 @@ function P:drawTiles(x, y, w, h, f, rows)
     card(tx, y, tw, h, 16, on and (self:shellColor()) or CARD, on and 0.95 or (hot and 0.95 or 0.85))
     tileIcon(t.id, tx + tw / 2, y + h * 0.38, h * 0.22, self.t)
     g.setFont(f.small); setc(on and INK or DIM)
-    local full = t.label .. (t.cost and ("  " .. t.cost .. " W") or "")
+    local label=require('src.translation.Service').launcherLookup(t.label)
+    local full = label .. (t.cost and ("  " .. t.cost .. " W") or "")
     if t.cost and f.small:getWidth(full) > tw - 10 then
       -- eight tiles: the cost on its own line rather than wrapping off the tile
-      g.printf(t.label, tx, y + h * 0.64, tw, "center")
+      g.printf(label, tx, y + h * 0.64, tw, "center")
       setc(GOLD, on and 1 or 0.8)
       g.printf(t.cost .. " W", tx, y + h * 0.64 + f.small:getHeight(), tw, "center")
     else
@@ -1220,7 +1233,7 @@ function P:draw(x, y, w, h, fonts)
     local ph = math.max(220, y + h - py)
     local page = ({ walk = P.pageWalk, radar = P.pageRadar, dowse = P.pageDowse, bag = P.pageBag,
                     card = P.pageCard, settings = P.pageSettings, shop = P.pageShop, awards = P.pageAwards,
-                    leaderboard = P.pageLeaderboard, transfer = P.pageTransfer })[self.tab]
+                    leaderboard = P.pageLeaderboard, transfer = P.pageTransfer, online=P.pageOnline })[self.tab]
     local used = page and page(self, x, py, w, ph, f)
     -- THE HEIGHT ACTUALLY DRAWN, not the height asked for: the launcher
     -- scrolls the page and places its footer on this number, so reporting
@@ -1246,5 +1259,6 @@ end
 require("src.ui.WalkerEconomyPages").install(P)
 -- Pal Park and Poke Transfer, from the launcher (the "Transfer" tile)
 require("src.ui.WalkerTransferPage").install(P)
+require('src.ui.WalkerOnlinePage').install(P)
 
 return P
