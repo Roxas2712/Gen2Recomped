@@ -1,6 +1,7 @@
 -- A source-format pixel projection over the native bank decoder. No ROM/cache
 -- conversion, simulation, graphics allocation or independent clock lives here.
 local Tiles=require('src.render.Gen3Tiles')
+local PaletteCache=require('src.compat.gen1.AtlasPaletteCache')
 local M={COLS=16}
 local floor,concat=math.floor,table.concat
 local component5={}
@@ -47,6 +48,7 @@ function M.new(pair,layout,checkpoint)
     end
   end
   local decoder=Tiles.new(pair,layout)
+  local paletteCache=PaletteCache.new(decoder,layout)
   local self={decoder=decoder,mids={},midToSlot={},indexed={},under={},over={},paletteOverrides={},revision=0,checkpoint=checkpoint,
     background='\0\0\0\255',paletteUsers={},slotPalettes={},indexRevision=0}
   local usedTiles={}
@@ -100,6 +102,8 @@ function M.new(pair,layout,checkpoint)
     return rgb,original
   end
   local function paletteLut()
+    local reused,bgr,key,changes=paletteCache:read(self.paletteOverrides,self.paletteRows)
+    if reused then return reused,bgr,key,changes end
     local lut,bgr,stamp,rows,changed={},{},{},{},{}
     for slot=0,15 do
       local colors=self.paletteOverrides[slot]
@@ -122,7 +126,9 @@ function M.new(pair,layout,checkpoint)
       if not self.paletteRows or self.paletteRows[slot]~=rows[slot]then changed[slot]=true end
     end
     self.paletteRows=rows
-    return lut,bgr,concat(stamp),changed
+    local key=concat(stamp)
+    paletteCache:remember(self.paletteOverrides,rows,lut,bgr,key)
+    return lut,bgr,key,changed
   end
   local function indexed(mid)
     local under,over={},{}
