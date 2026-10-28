@@ -564,6 +564,17 @@ local function buildRows(game)
         return true
       end },
   }
+  if GameVersion.isGen2() and game.data and game.data.font and game.data.font.imageFrames then
+    rows[#rows + 1] = { id = 'frame', label = Strings('FRAME'),
+      value = function(g) return tostring(g.save.options.frame or 1) end,
+      step = function(g, dir)
+        local count = g.data.font.frameCount or 8
+        local value = ((g.save.options.frame or 1) - 1 + (dir or 1)) % count + 1
+        g.save.options.frame = value
+        require('src.render.Font').setFrame(value)
+        return true
+      end }
+  end
   -- GBC response curves do not describe the other generations' displays.
   if not GameVersion.isGen2() then
     local filtered = {}

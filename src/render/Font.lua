@@ -19,6 +19,7 @@ local FALLBACK = { enabled = false, font = nil }
 local state
 local loadedFrom
 local resetTextCache
+local currentFrame = 1
 
 -- the two vanilla pages as the legacy def spells them, so a cache that
 -- predates the pages table still loads and a mod that registers only one
@@ -32,6 +33,11 @@ local function pagesOf(def)
   if def.imageExtra then
     pages.extra = { image = def.imageExtra, base = def.extraBase or 0x60,
                     glyphsPerRow = def.glyphsPerRow or 16 }
+  end
+  if def.imageBattleExtra then
+    pages.battleExtra = { image = def.imageBattleExtra,
+      base = def.extraBase or 0x60, glyphsPerRow = def.glyphsPerRow or 16,
+      inactive = true }
   end
   for id, page in pairs(def.pages or {}) do
     if type(page) == "table" and page.image then pages[id] = page end
@@ -95,7 +101,7 @@ function Font.load(data)
     local ok, img = pcall(Assets.image, page.image)
     if ok then
       local iw, ih = img:getDimensions()
-      local minHeight = id == "extra" and 16 or 64
+      local minHeight = (id == "extra" or id == "battleExtra") and 16 or 64
       if iw < 128 or ih < minHeight or iw % cw ~= 0 or ih % ch ~= 0 then
         ok = false
       end
@@ -138,7 +144,29 @@ function Font.load(data)
         state.faces[faceName] = entry
       else
         state.pages[id] = entry
-        state.order[#state.order + 1] = entry
+        if not page.inactive then state.order[#state.order + 1] = entry end
+      end
+    end
+  end
+  -- GSC LoadFrame replaces six tiles after either extra font is loaded.
+  -- This narrow sheet is separate from GBA's nine-tile box frames below.
+  state.frameBase, state.frameTiles = def.frameBase or 0x79, def.frameTiles or 6
+  if def.imageFrames then
+    local ok, img = pcall(Assets.image, def.imageFrames)
+    if ok and img then
+      local iw, ih = img:getDimensions()
+      if iw >= state.frameTiles * GLYPH and ih >= GLYPH
+          and ih % GLYPH == 0 then
+        state.framePages = {}
+        for row = 0, ih / GLYPH - 1 do
+          local quads = {}
+          for tile = 0, state.frameTiles - 1 do
+            quads[tile] = love.graphics.newQuad(tile * GLYPH, row * GLYPH,
+              GLYPH, GLYPH, iw, ih)
+          end
+          state.framePages[row + 1] = { image = img, quads = quads,
+            base = state.frameBase, advance = GLYPH }
+        end
       end
     end
   end
@@ -239,6 +267,27 @@ end
 
 Assets.register(Font.invalidate)
 
+-- Gen1's public GSC font controls. A caller can restore the prior battle
+-- sheet after its own draw; loading a new dataset resets that sheet choice.
+function Font.useBattleExtra(on)
+  if not state then return false end
+  local previous = state.battleExtra or false
+  state.battleExtra = on and true or false
+  return previous
+end
+
+function Font.battleExtraActive()
+  return state ~= nil and state.battleExtra == true
+end
+
+-- applyOptions can precede Font.load. Keep the selection across a reload;
+-- a missing/out-of-range row still falls through to the ordinary extra page.
+function Font.setFrame(index)
+  currentFrame = math.floor(tonumber(index) or 1)
+end
+
+function Font.frameIndex() return currentFrame end
+
 -- the page a glyph code draws from, or nil when nothing covers it
 -- THE FACE IN FORCE.
 --
@@ -276,6 +325,14 @@ local function pageFor(code)
   if not state then return nil end
   local face = faceStack[#faceStack]
   if face and face.quads[code - face.base] then return face end
+  local frames = state.framePages
+  if frames and code >= state.frameBase and code < state.frameBase + state.frameTiles then
+    if frames[currentFrame] then return frames[currentFrame] end
+  end
+  local battle = state.battleExtra and state.pages.battleExtra
+  -- LoadFontsBattleExtra copies 25 tiles ($60-$78), then restores the
+  -- frame at $79-$7e. The blank at $7f must not turn into a battle glyph.
+  if battle and code >= battle.base and code < battle.base + 25 then return battle end
   for _, page in ipairs(state.order) do
     if code >= page.base then return page end
   end
