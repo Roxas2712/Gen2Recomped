@@ -117,19 +117,7 @@ end
 -- heal-location stage's, and a destination is offered only once it has been
 -- visited -- which is the same gate every other generation's fly uses.
 local function flyTargets(game)
-  local field = (game.data or {}).field or {}
-  local warps = field.flyWarps or {}
-  local visited = (game.save or {}).visited or {}
-  local maps = (game.data or {}).maps or {}
-  local bySection = {}
-  for _, mapId in ipairs(field.flyOrder or {}) do
-    local def = maps[mapId]
-    local sec = def and tonumber(def.regionMapSection)
-    if sec and visited[mapId] and warps[mapId] and not bySection[sec] then
-      bySection[sec] = mapId
-    end
-  end
-  return bySection
+  return require('src.world.Gen3FlyTargets').bySection(game)
 end
 
 -- ---------------------------------------------------------------------------
@@ -192,6 +180,9 @@ function Gen3RegionMap.new(game, opts)
     blink = 0,
   }, Gen3RegionMap)
 
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
+  local ow=game.overworld
+  self.here=ow and ow.map and ow.map.def and tonumber(ow.map.def.regionMapSection)
   self.targets = self.fly and flyTargets(game) or nil
   if require('src.ui.Gen3RsRegionMap').available(game,opts)then
     self.uiSize=function()return 240,160 end
@@ -304,6 +295,29 @@ end
 function Gen3RegionMap:current()
   if self.frlg then return self:frlgPlace(self:frlgSection(1)) end
   return self:sectionAt(self.cx, self.cy)
+end
+
+-- Detached logical atlas metadata from this controller's actual cell lookup.
+-- Metadata-only context: no screen construction, image load or cursor state.
+function Gen3RegionMap.manifest(game)
+  local c=constants(game)
+  local layout=c.gen3RegionMapLayout
+  local grid=layout or c.gen3RegionMapGrid or{width=28,height=15}
+  local width,height=grid.width,grid.height
+  for _,n in ipairs{width,height}do
+    assert(type(n)=='number'and n%1==0 and n>0 and n<=256,'invalid native region atlas dimensions')
+  end
+  assert(width and height,'missing native region atlas dimensions')
+  local context={game=game,places=places(game)}
+  local out={game=require('src.core.GameVersion').get(),nativePicker=true,layout={}}
+  for y=0,height-1 do
+    local row={};out.layout[y+1]=row
+    for x=0,width-1 do
+      local place=Gen3RegionMap.sectionAt(context,x,y)
+      row[x+1]=place and place.section or(layout and layout.none)or false
+    end
+  end
+  return out
 end
 
 function Gen3RegionMap:close()

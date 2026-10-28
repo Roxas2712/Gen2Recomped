@@ -7453,6 +7453,14 @@ function OverworldState:flyTo(mapId, mon,nativeWarp)
   if (GameVersion.get()=='ruby'or GameVersion.get()=='sapphire')and type(nativeWarp)=='table'and nativeWarp.nativeRs
     and nativeWarp.map==mapId and type(nativeWarp.x)=='number'and type(nativeWarp.y)=='number'then spot=nativeWarp end
   if not spot then return end
+  local field=package.loaded['src.core.game3.field']
+  if GameVersion.isGen3()and field then
+    return field._dispatchFly(Game,self,mapId,mon,spot,function()return OverworldState._flyToBody(self,mapId,mon,spot)end)
+  end
+  return OverworldState._flyToBody(self,mapId,mon,spot)
+end
+
+function OverworldState:_flyToBody(mapId,mon,spot)
   require("src.core.Sound").play(Game.data, "Fly")
   Game.save.onBike = false
   self:clearBikeFlags() -- HandleFlyWarpOrDungeonWarp res BIT_ALWAYS_ON_BIKE
@@ -16200,7 +16208,8 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   self.warpArrivalKind = arriveWarp
   local fromId = self.map.id
   local fromSection = self.map.def and self.map.def.regionMapSection
-  local transition = Transition.new(Game, function()
+  local transition
+  transition = Transition.new(Game, function()
     self:setMap(mapId, x, y, facing or "down", opts)
     self:noteGen2Spawn(fromId)
     -- FIRERED'S SIDE STAIRS (ExitStairsMovement): you land ON the stair tile
@@ -16245,7 +16254,14 @@ function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
     -- (player_animations.asm EnterMapAnim).  Blackouts and ordinary
     -- door warps never take this branch.
     if arriveWarp == "fly" then
-      require("src.core.Sound").play(Game.data, "Fly")
+      local effects=package.loaded['src.core.game3.field_effects']
+      if GameVersion.isGen3()and effects then
+        require('src.world.Gen3FlyArrival').begin(Game,self,transition,effects,function()
+          return require('src.core.Sound').play(Game.data,"Fly")
+        end)
+      else
+        require("src.core.Sound").play(Game.data, "Fly")
+      end
     elseif arriveWarp == "teleport" then
       require("src.core.Sound").play(Game.data, "Teleport_Enter1")
       -- ENTER_2 caps the spin-down a moment later

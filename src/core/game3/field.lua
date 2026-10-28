@@ -31,6 +31,33 @@ function F._locked(game,world)
  local c=context();return c~=nil and(not game or game==c.game)and(not world or world==c.world)and next(leases)~=nil
 end
 function F.interact()return Boundary.invoke('field.interact')end
+function F.flyDestination(section)
+ local c=context();if not c then return end
+ local maps=require('src.compat.gen1.NativeRegionMap')
+ if maps.active()then return maps.destination(section)end
+ return require('src.world.Gen3FlyTargets').destination(c.game,section)
+end
+function F.flyTo(section,mon,info)
+ if Boundary.active('field.flyTo')then return Boundary.invoke('field.flyTo')end
+ local c=context();if not c then return nil,'no active native field'end
+ -- Standalone requests retain the public native badge/move/visited/input
+ -- admission. A source caller cannot turn an observation into a teleport.
+ local dest=F.flyDestination(section)
+ if not dest then return nil,'destination unavailable'end
+ return require('src.world.WorldActions').flyTo(c.game,c.world,dest.map)
+end
+function F._dispatchFly(game,world,mapId,mon,spot,body)
+ local c=context();if not c or c.game~=game or c.world~=world then return body()end
+ local G=require('src.core.Game3');local view=G.forNative(game)
+ local sourceMon
+ if mon then for i,raw in ipairs(game.save.party or{})do if raw==mon then sourceMon=view.session.party[i];break end end end
+ local def=game.data.maps[mapId]
+ local section=def and tonumber(def.regionMapSection)
+ local dest=require('src.world.Gen3FlyTargets').detached(game,mapId,spot)
+ return Boundary.dispatch('field.flyTo',body,function()
+  return require('src.compat.gen1.SourceCall').call(F,'flyTo',section,sourceMon,{dest=dest})
+ end)
+end
 function F._dispatch(game,world,body)
  local c=context();if not c or c.game~=game or c.world~=world then return body()end
  return Boundary.dispatch('field.interact',body,function(...)return require('src.compat.gen1.SourceCall').call(F,'interact',...)end,require('src.core.Game3').forNative(game))
@@ -40,7 +67,13 @@ local service={release=function()cohort,leases=nil,nil end,
  poll=function()if cohort then context()end end}
 require('src.core.game3.asset_stream').register(service)
 F._service=service
-setmetatable(F,{__index=function(_,k)if k=='locked'then return F._locked()end end,
+setmetatable(F,{__index=function(_,k)
+ if k=='locked'then return F._locked()end
+ if k=='_game'then local c=context();return c and require('src.core.Game3').forNative(c.game)end
+ if k=='_flyLanding'then
+  local arrival=package.loaded['src.world.Gen3FlyArrival'];return arrival and arrival.landing()or false
+ end
+ end,
  __newindex=function(t,key,value)
   if key=='locked'then
    assert(type(value)=='boolean','invalid field lock')

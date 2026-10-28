@@ -5,6 +5,9 @@ on:
       - 'src/battle/Gen3SafariText.lua'
       - 'src/battle/Gen3Battle.lua'
       - 'src/core/game3/mb.lua'
+      - 'src/core/game3/constants.lua'
+      - 'src/import/gba/field_label_facts.lua'
+      - 'tests/engine/native_constant_queries.lua'
       - 'src/core/game3/rom_text.lua'
       - 'src/core/game3/battle/profile.lua'
       - 'src/core/game3/battle/healthbox.lua'
@@ -28,6 +31,7 @@ jobs:
       - name: Native authority and retired-view boundaries
         run: |
           luajit tests/engine/native_safari_text_views.lua
+          luajit tests/engine/native_constant_queries.lua
           luajit tests/engine/compatibility_cell_semantics.lua
           luajit tests/engine/native_rom_text_ir.lua
           luajit tests/engine/native_battle_chrome.lua

@@ -92,6 +92,10 @@ function Transition:finish()
 end
 
 function Transition:update(dt)
+  if self.nativeFlyArrivalHold then
+    local arrival=package.loaded['src.world.Gen3FlyArrival'];if arrival then arrival.poll()end
+    if self.nativeFlyArrivalHold then return end
+  end
   self.t = self.t + 1
   local len = (self.phase == "out") and self.frames or self.framesIn
   if self.t >= len then
@@ -101,7 +105,7 @@ function Transition:update(dt)
       if self.onMidpoint then self.onMidpoint() end
       -- LoadGBPal restores the palettes in one write, so with no fade in the
       -- map is simply there on the next frame
-      if (self.framesIn or 0) <= 0 then self:finish() end
+      if (self.framesIn or 0) <= 0 and not self.nativeFlyArrivalHold then self:finish() end
     else
       self:finish()
     end
@@ -111,10 +115,15 @@ end
 -- The veil alpha for this frame, exposed the way BattleReturn:alpha is so
 -- the staircase can be asserted without stubbing love.graphics.
 function Transition:alpha()
+  if self.nativeFlyArrivalHold then return 1 end
   local len = (self.phase == "out") and self.frames or self.framesIn
   local a = fadeAlpha(self.t, len)
   if self.phase == "in" then a = 1 - a end
   return a
+end
+
+function Transition:exit()
+  local arrival=package.loaded['src.world.Gen3FlyArrival'];if arrival then arrival.retireState(self)end
 end
 
 function Transition:draw()

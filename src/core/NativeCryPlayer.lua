@@ -81,7 +81,7 @@ function Player.play(data, species, options, legacy, volumeScale, mono)
   end
   if not (audio.gen3 and audio.gen3Cries and audio.gen3Cries.table and nativeIndex ~= nil) then
     if not options.isolated then
-      untilFrame = clock + 64
+      source, untilFrame = nil, clock + 64
     end
     return nil
   end
@@ -122,7 +122,7 @@ function Player.play(data, species, options, legacy, volumeScale, mono)
   end
   if not ok or not info then
     if not options.isolated then
-      untilFrame = clock + 64
+      source, untilFrame = nil, clock + 64
     end
     return nil
   end
