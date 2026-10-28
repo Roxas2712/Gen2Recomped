@@ -1,5 +1,7 @@
 -- Adapted from Gen1Recomp535a5ec0, Copyright(C)2026 BOIS CLUB GAMES, LLC.
 -- GPLv3 + Section7; licenses/GEN1RECOMP-TOUCH-SKINS.md.
+-- Historical performance figures below describe the original Gen1 kit;
+-- this native integration makes no corresponding FPS/latency claim.
 -- Immediate-mode widget kit shared by the launcher and the save editor.
 --
 -- This is the replacement for the vendored FlexLove tree that the launcher
