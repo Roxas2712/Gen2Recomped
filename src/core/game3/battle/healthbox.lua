@@ -26,7 +26,9 @@ local function paint(screen,b,id,opts)
  for _,key in ipairs{'ox','oy'}do
   local n=opts[key];assert(n==nil or type(n)=='number'and n==n and math.abs(n)<math.huge,'invalid healthbox offset')
  end
- return Native.drawStatusPanel(screen,b,x+(opts.ox or 0),y+(opts.oy or 0),id%2==0)
+ x,y=x+(opts.ox or 0),y+(opts.oy or 0)
+ if id==0 and screen.gen3Safari and Native.drawSafariPanel then return Native.drawSafariPanel(screen,x,y)end
+ return Native.drawStatusPanel(screen,b,x,y,id%2==0)
 end
 function H.draw(side,view,opts)
  local screen,b,id=resident(opts and opts.st,side,view)

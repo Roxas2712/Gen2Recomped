@@ -41,6 +41,19 @@ if nativeFile then
   local ir=Text.ir(key);T.eq(ir[1].cmd,1);T.eq(ir[3].t,'ph');T.eq(ir[3].code,playerCode)
   ir[1].args[1]=99;T.eq(spec.textIR.prompt[1].args[1],2,'native Safari IR stays private')
   T.eq(spec.textIR.prompt[3].t,'bph','metadata cannot rewrite native interpreter operands')
+  local Hud=require('src.core.game3.battle.healthbox');local Painter=require('src.battle.Gen3Battle')
+  local safariPaint,statusPaint=Painter.drawSafariPanel,Painter.drawStatusPanel
+  local safariCalls,statusCalls=0,0;local hx,hy=Painter.healthboxGeometry(b,0)
+  Painter.drawSafariPanel=function(screen,x,y)
+   T.eq(screen,b);T.eq(x,hx+3);T.eq(y,hy-2);safariCalls=safariCalls+1;return true
+  end
+  Painter.drawStatusPanel=function(screen,who,x,y,player)
+   T.eq(screen,b);T.eq(who,b.enemy);T.eq(player,false);statusCalls=statusCalls+1;return true
+  end
+  T.eq(Hud.draw(0,state.player,{st=state,ox=3,oy=-2}),true)
+  T.eq(safariCalls,1);T.eq(statusCalls,0,'Safari player uses the native ball counter, not a Pokemon HP panel')
+  T.eq(Hud.draw(1,state.enemy,{st=state}),true);T.eq(statusCalls,1,'native opponent panel remains visible')
+  Painter.drawSafariPanel,Painter.drawStatusPanel=safariPaint,statusPaint
   T.raises(function()view.strings.safariPrompt='bad'end,'read-only')
   game.data.text=game.data.text or{};game.data.text[key]='Explicit native label'
   T.eq(BattleText.get(key),'Explicit native label');game.data.text[key]=nil

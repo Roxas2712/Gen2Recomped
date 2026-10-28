@@ -1505,6 +1505,13 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
   return not battle.showEnemyTrainer and not battle.enemySendingOut
     and not battle:growInScale(b) and not battle.introBalls
 end
+function Gen3Battle.drawSafariPanel(battle,x,y)
+  if not battle.gen3Safari then return false end
+  if battle.rsBattlePanel then
+    return require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
+  end
+  return require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)
+end
 local function drawHUDs(battle, slide)
   local record = hudRecord(battle)
   local images = record and record.images or {}
