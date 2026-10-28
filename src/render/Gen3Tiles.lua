@@ -35,6 +35,7 @@
 
 local Gen3Tiles = {}
 Gen3Tiles.__index = Gen3Tiles
+local AnimationFrameSlices = require('src.render.Gen3AnimationFrameSlices')
 
 -- Defaults matching Emerald, overridden from the manifest's layout block.
 local DEFAULTS = {
@@ -358,15 +359,29 @@ function Gen3Tiles:setAnimationTicks(ticks)
   assert(type(ticks) == "number" and ticks >= 0 and ticks % 1 == 0
     and ticks <= 9007199254740991, "invalid terrain animation ticks")
   local nextOverrides = {}
-  for _, a in ipairs(self:animations()) do
+  -- Immutable frame slices are owned by this decoder. Every call still
+  -- selects live metadata and compares overrides, including external writes.
+  local cached = self.reuseAnimationSlices ~= false
+  local cache = cached and (self._animationFrameSlices or {})
+  self._animationFrameSlices = cache or nil
+  local animations = self:animations()
+  for index, a in ipairs(animations) do
     local frame = a.frames[(math.floor(ticks / math.max(1, a.step)) % #a.frames) + 1]
     if type(frame) == "string" then
+      if cached then
+        local pieces = AnimationFrameSlices.get(cache, index, frame, a.count)
+        for tile, bytes in ipairs(pieces) do nextOverrides[a.tile + (tile - 1)] = bytes end
+      else
       for k = 0, a.count - 1 do
         local at = k * 32
         if at + 32 <= #frame then nextOverrides[a.tile + k] = frame:sub(at + 1, at + 32) end
       end
+      end
+    elseif cache then
+      cache[index] = nil
     end
   end
+  if cache then AnimationFrameSlices.trim(cache, #animations) end
   local previous, dirty = self.tileOverride or {}, {}
   for tile, bytes in pairs(nextOverrides) do
     if previous[tile] ~= bytes then dirty[tile] = true; self.tileCache[tile] = nil end
