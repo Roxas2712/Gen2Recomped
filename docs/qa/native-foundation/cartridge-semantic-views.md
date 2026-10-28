@@ -26,14 +26,27 @@ native counter painter used by the ordinary native HUD. The opponent panel and
 source offsets retain their existing behavior. No second layout or ball counter
 is maintained.
 
-Fork source `cb02fe24a7` on main `4e481a9c` passes 79 CPU groups, including
-196 Safari text/profile/HUD checks, 807 existing collision semantics checks,
-639 native text IR checks and the current native Safari rules/runtime suites.
-Exact older-public composition `30716ff9f5` passes 44 groups: 807 collision,
-576 IR checks and 8 import/unsupported-owner/generation boundary checks. It retains
-its older native bodies and does not contain the later native Safari owner;
-positive Safari controller/HUD qualification is not claimed for that baseline.
-The narrow callback and shared helper remain dormant without that native owner.
+Fork source `555f68f87d` on main `c5766c86` passes 79 CPU groups, including
+211 Safari text/profile/HUD checks, 225 shared text-pen checks, 807 collision
+checks and 664 native text IR checks. Exact older-public composition
+`f86529998d` passes 45 groups, including 659 IR checks and 8 negative
+import/unsupported-owner/generation checks. That baseline lacks the later
+native Safari owner; positive Safari controller/HUD qualification is not claimed.
+The narrow helper remains dormant without that owner.
+
+Untouched native Safari menu records retain the cartridge's compound word tag;
+explicit record/prose changes and tombstones still take precedence. The shared
+font pen renders its five native glyphs through the selected face's advances,
+with an allocation-free exact-label path. Ordinary proportional labels and
+existing text controls retain their behavior. The extractor accepts boolean IR,
+fourth-slot options (including structured mode) and fifth-slot dialect options
+without modifying caller tables. Latest-main cleanup and late provider writes
+remain owned by their existing native stages.
+
+Owned-output probes `1822c7cc9f` (fork) and `4fdd21da36` (older public) each pass
+562 pixel checks across 240 frames on each of Metal and OpenGL. They cover
+selected main/small faces, HD off/on, DPI1/2, scale1/2, indexed glyph identities,
+pen controls, compound glyph order/positions and malformed input rejection.
 
 The late-text fixture models required native UI stages' text writes rather
 than trying to read absent stat/Safari ROM tables from a short synthetic string.
@@ -47,8 +60,13 @@ where Safari balls should appear; that failure is retained as evidence and led
 to the shared native-counter delegation. Corrected source `cb02fe24a7` run `69041aad74-firered` exits0 after all five
 paper/native/terrarium/native/paper views and idle cleanup. Its inspected paper
 frame shows the native Safari counter with30 balls instead of player HP.
-An actual Ruby Safari recheck is in progress. Full Safari throw/reaction/capture parity, all-edition/all-map
-visual acceptance and sustained60FPS are not inferred.
+The earlier Ruby `6e31b9e81d` completed five views but exposed clipped ordinary
+lettering. Corrected Ruby `07392e9db4`, frozen from `555f68f87d`, exits0 after all
+five paper/native/terrarium/native/paper views and idle cleanup. Inspected paper
+and native images show the complete native compound glyphs within the menu and
+the 30-ball counter; HP/AP remain unchanged through presentation switches.
+Native throwing/reaction/capture parity, all-edition/all-map visual acceptance
+and sustained60FPS are not inferred.
 
 QA uses owned profiles, preserves player saves and enforces20GiB free, above
 the requested8GiB minimum. Private mods and private runtime files are unchanged.
