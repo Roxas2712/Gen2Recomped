@@ -6,7 +6,7 @@ local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
 local S={}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -102,7 +102,14 @@ local function remember(record,method,args)
  if record.leaves>limits.leaves then error('uniform bank cap')end
  bank[#bank+1]=row
  if record.plan.kinds[name]then
-  local literal=row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
+  -- A float observed between endpoints remains dynamic thereafter.
+  -- Keep later endpoints dynamic too, so a completed fade/camera tween does
+  -- not synchronously manufacture another endpoint-specific GPU program.
+  if record.plan.kinds[name]=='float'and row.n==1 and type(args[2])=='number'
+   and args[2]>0 and args[2]<1 and not record.continuous[name]then
+   record.continuous[name]=true;stats.continuousUniforms=stats.continuousUniforms+1
+  end
+  local literal=not record.continuous[name]and row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
   if record.scalars[name]~=literal then record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1 end
  end
  -- Eager writes keep existing variant textures current, release their old C
@@ -242,7 +249,7 @@ local function admit(shader,source,second,third,n)
  local plan=Branches.plan(source)
  if not plan or #plan.order==0 or plan.clean:find('void%s+[vp]ertexmain%s*%(')or plan.clean:find('void%s+pixelmain%s*%(')then return end
  local h=hook(shader);local lease=love.thread.newChannel();lease:push(shader)
- local record={plan=plan,lease=lease,hook=h,aliases=setmetatable({},{__mode='k'}),variants={},bank={},scalars={},uniformCount=0,leaves=0,count=0,scalarRevision=0,bankRevision=0,gamma=love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()}
+ local record={plan=plan,lease=lease,hook=h,aliases=setmetatable({},{__mode='k'}),variants={},bank={},scalars={},continuous={},uniformCount=0,leaves=0,count=0,scalarRevision=0,bankRevision=0,gamma=love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()}
  local alpha=package.loaded['src.render.AlphaDepthCompat']
  if alpha and type(alpha.compileNative)=='function'and type(alpha.fragmentDepthTarget)=='function'then
   local _,eligible=alpha.source(source)
