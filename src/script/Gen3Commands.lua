@@ -5298,6 +5298,10 @@ Gen3Commands.SPECIALS[310] = function(ctx)
   return 0
 end
 
+Gen3Commands.SPECIALS[311] = function(ctx)
+  require("src.world.Gen3RsIce").restore(ctx.overworld, ctx.game)
+end
+
 -- 329: ScriptGetPartyMonSpecies.
 --
 -- Writes the species of the slot in 0x8004 where the scripts can compare it.
