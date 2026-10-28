@@ -1291,6 +1291,9 @@ local function markerFor(version)
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
   if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
   if GameVersion.isFRLG(version) then revision = "frlg-native-credits-v1:frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
+  if version=='ruby'or version=='sapphire'or version=='emerald'or version=='firered'or version=='leafgreen'then
+    revision='gba-reference-evolution-v1:'..revision
+  end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -2094,6 +2097,12 @@ function RomImporter.readyReport(version)
     local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
     CacheFs.prefix=savedPrefix
     if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox font is incomplete.'}end
+  end
+  if version=='ruby'or version=='sapphire'or version=='emerald'or version=='firered'or version=='leafgreen'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3EvolutionBackground').missing()
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA evolution presentation is incomplete.'}end
   end
   if version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
