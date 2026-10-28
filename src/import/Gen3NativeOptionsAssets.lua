@@ -34,6 +34,8 @@ function M.extract(x)
  if version=='emerald'then
   local rom={id=version}
   function rom:get(at)return x.rom:u8(at)end
+  function rom:u16(at)return x.rom:u16(at)end
+  function rom:u32(at)return x.rom:u32(at)end
   function rom:readString(at,n)assert(at>=0 and at+n<=x.rom.size);return x.rom.data:sub(at+1,at+n)end
   local cache={write=function(_,path,bytes)local ok,why=require('src.import.CacheFs').write(path,bytes);assert(ok,why);return true end}
   assert(load('src.import.gba.rse.menus_extract').run(rom,cache,{game=version}))

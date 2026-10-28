@@ -61,7 +61,7 @@ function M.new(owner,spec)
     local count=key=='frameType'and 10 or#choices
     native[key]={id=key,label=text.plain(def[2]),value=function()
      local n=read()[key]
-     if key=='frameType'then return text.plain('gText_FrameType')..tostring(n+1)end
+     if key=='frameType'then return text.plain('gText_FrameType')..('%2d'):format(n+1)end
      return text.plain(assert(choices[n+1]))
     end,step=function(_,dir)
      local n=(read()[key]+dir)%count;Values.set(options,key,n)

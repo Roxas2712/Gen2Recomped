@@ -6,7 +6,7 @@ local Writer=require('src.import.LuaWriter');local oldRead,oldExists=Fs.read,Fs.
 -- Isolate the boot fixture and also verify that the aggregate delegates
 -- every available presentation component's missing-resource result.
 local components,delegated={},{}
-for _,name in ipairs{'src.import.Gen3EmeraldCreditsAssets','src.import.Gen3EmeraldHallAssets','src.import.Gen3EmeraldMainMenuAssets'}do
+for _,name in ipairs{'src.import.Gen3EmeraldCreditsAssets','src.import.Gen3EmeraldHallAssets','src.import.Gen3EmeraldMainMenuAssets','src.import.Gen3NativeOptionsAssets'}do
  local ok,module=pcall(require,name)
  if ok then
   components[#components+1]={name=name,module=module,missing=module.missing}

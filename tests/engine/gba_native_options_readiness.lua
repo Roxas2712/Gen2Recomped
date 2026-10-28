@@ -32,6 +32,27 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
  end
 end
 Fs.read,Fs.exists=read,exists;V.set(old)
+-- The original menu decoder reads both window u16 fields and pointer tables.
+-- Exercise its reader interface before a full cartridge/graphics import.
+local Loader=require('compat.gen1-rs.Loader');local oldNew=Loader.new
+local x={version='emerald',_constants={},beginStage=function()end,
+ rom={data=string.rep('\255',16),size=16,u8=function()return 255 end,
+  u16=function(_,at)T.eq(at,2);return 0x1234 end,u32=function(_,at)T.eq(at,4);return 0x12345678 end}}
+Loader.new=function()return function(name)
+ if name=='src.import.gba.syms'then return{of=function()return{off=function()return 0 end}end}end
+ if name=='src.core.game3.scripting.text_ir'then return{decode=function()return{{t='text',s='OWNED'}}end}end
+ if name=='src.import.gba.rse.menus_extract'then return{run=function(rom)
+  T.eq(rom:get(0),255);T.eq(rom:u16(2),0x1234);T.eq(rom:u32(4),0x12345678)
+  T.eq(rom:readString(0,3),string.rep('\255',3));return true
+ end}end
+ if name=='src.import.gba.rse.boot_gfx'then return{context=function()return{
+  lz=function()end,pal=function()end,strip=function()return{png='data/generated/gba/native_options/arrows.png',w=16,h=16}end}
+ end}end
+ error('Unexpected extractor dependency '..name)
+end end
+local ok,why=pcall(Assets.extract,x);Loader.new=oldNew
+T.eq(ok,true,why or'original decoder reader interface is complete')
+T.eq(Assets.valid(x._constants.gen3NativeOptions,'emerald'),true,'extracted own-edition record passes admission')
 local Rows=require('src.ui.Gen3OptionRows');local host={};local step,activate=0,0;local page
 local owner={game=host,rows={{label='OWN STEP',engine={step=function(g,d)T.eq(g,host);step=step+d;return true end}},
  {label='OWN ACTION',engine={activate=function(g)T.eq(g,host);activate=activate+1 end}}},valueText=function()return'VALUE'end}
