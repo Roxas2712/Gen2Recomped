@@ -31,3 +31,11 @@ imported cartridge data. It checks exact item/PP consumption, the enemy
 reply, round counts and final-renderer save/RNG immutability. These are
 prepared battle fixtures, not ordinary story or full-game acceptance.
 Cartridges, generated art/audio, screenshots and saves remain private.
+
+Native fixtures passed in all five editions on runtime
+`cd9401be7064d72af5189da23eca6d4d0d884726` (the later head changes only
+documentation and protocol expectations), with three captures each. The
+ordinary Sapphire Drake fight also witnessed HYPER POTION advancing round
+5 to 6 and one Salamence reply before the battle was won. Protocol tests
+retain fixed audited digests and reject both previous command revisions
+23 and 22, symmetrically, through the actual link controller.
