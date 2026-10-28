@@ -27,8 +27,12 @@ the actual GameClear special, Hall of Fame, all 52 native pages, five bike
 scenes, 68 Pokémon slides, THE END music, ordinary final input and resumed
 script. It records eleven final-renderer captures and checks draw-time
 save/RNG immutability. Both Ruby and Sapphire passed on component runtime
-`bf807e5a4362d0030a91d297406b1c34a1a0c717`; the merged current-main runtime
-is verified separately before delivery.
+`bf807e5a4362d0030a91d297406b1c34a1a0c717`. Fresh full imports and the same
+complete native checks also passed on integrated runtime
+`7fcf9e76367b806a88105d235e86da2cec773bcf`, based on public main
+`87b90834558c8dfced863bd45aa5c93ce79edfaa`. The final head adds documentation
+only. Five focused integrated contract groups pass 690 assertions, including
+the current native battle revision 27 and the existing item-round regression.
 
 This is credits presentation acceptance in prepared fixtures. The ordinary
 Sapphire story test reached its first Champion win, Hall of Fame, complete
