@@ -57,6 +57,18 @@ T.eq(B.plan('uniform float gate; /* unfinished'),nil)
 T.eq(B.plan('uniform float gate; void f(){if(gate'),nil)
 T.eq(B.plan('uniform float gate; uniform bool gate;'),nil)
 T.eq(B.plan({}),nil)
+for _,body in ipairs{
+ 'float x=0.0,gate=1.0;if(gate>.5){}',
+ 'for(float x=0.0,gate=0.0;x<1.0;x++){if(gate>.5){}}',
+ 'float named(float x,float gate){if(gate>.5){}return gate;}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(other,gate);if(gate>.5){}}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(gate,other);if(gate>.5){}}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(other,nested(gate));if(gate>.5){}}',
+}do
+ local p=assert(B.plan('uniform float gate;\n'..body))
+ T.eq(#p.order,0,'declarations, loop headers and macro expansion retain the original branch')
+end
+T.eq(B.plan('#define LOCAL(a,b) float a##b;\nuniform float gate;void f(){LOCAL(ga,te);if(gate>.5){}}'),nil,'token-pasted shadow names cannot be proven')
 T.check(not pcall(B.rewrite,plan,{enabled='malicious code'}),'only qualified literal bytes can enter output')
 local large,expected={},{}
 for i=1,64 do
