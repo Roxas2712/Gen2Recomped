@@ -8304,9 +8304,12 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   -- FURY CUTTER and ROLLOUT double for each consecutive LANDING and reset
   -- the same way.  Both counters live on the user and are cleared here,
   -- which is the one place every move passes through.
-  if move.id ~= "PROTECT" and move.id ~= "DETECT" and move.id ~= "ENDURE" then
-    user.protectRun = nil
+  local keepsProtection = move.id == "PROTECT" or move.id == "DETECT" or move.id == "ENDURE"
+  if GameVersion.isGen2() then
+    -- The GSC counter follows the effect, including renamed source moves.
+    keepsProtection = move.effect == "PROTECT_EFFECT" or move.effect == "ENDURE_EFFECT"
   end
+  if not keepsProtection then user.protectRun = nil end
   if user.rampMove and user.rampMove ~= move.id then
     user.rampRun, user.rampMove = nil, nil
   end

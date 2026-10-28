@@ -16,9 +16,38 @@ local function owner(model)
 end
 
 local function active(screen, mon)
+  if screen.player == mon or screen.enemy == mon then return mon end
   if screen.player and screen.player.mon == mon then return screen.player end
   if screen.enemy and screen.enemy.mon == mon then return screen.enemy end
 end
+
+local volatileNames={substitute='substituteHP',protect='protecting',mist='mist',
+  confusion='confused',confusionTurns='confusionTurns',flinch='flinched',
+  -- Canonical source GSC fields must drive the actual shared controller.
+  confuseCount='confusedTurns',flinched='flinched',endure='enduring',
+  recharge='mustRecharge',protectCount='protectRun',
+  focusEnergy='focusEnergy',xAccuracy='xAccuracy'}
+function Model:volatile(mon)
+  local screen=owner(self)
+  local b=assert(active(screen,mon),'volatile state requires an active battler')
+  -- A global weak-key cache still roots its battlers on LuaJIT when the
+  -- value's closures retain their key. Keep views on the transient model,
+  -- never on a serialized battler or party mon, and retire withdrawn owners.
+  local views=rawget(self,'_nativeVolatileViews')
+  if not views then views={};rawset(self,'_nativeVolatileViews',views)end
+  for previous in pairs(views)do
+    if previous~=screen.player and previous~=screen.enemy then views[previous]=nil end
+  end
+  if not views[b] then
+    local extensions={}
+    views[b]=setmetatable({}, {
+      __index=function(_,key)local field=volatileNames[key];if field then return b[field] end;return extensions[key]end,
+      __newindex=function(_,key,value)local field=volatileNames[key];if field then b[field]=value else extensions[key]=value end end,
+    })
+  end
+  return views[b]
+end
+
 
 function Model:moveDef(move)
   -- Older native screens take a move instance; scalar catalog queries belong
