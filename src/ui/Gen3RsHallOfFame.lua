@@ -99,7 +99,7 @@ function M:finish()
   assert(self.game.stack:top()==self,'Hall of Fame lost its host owner')
   self.game.stack:pop()
   assert(not self.saveEnding or self.saved,'Cannot leave an unsaved League ending')
-  local function done()if cb then cb(self.saveEnding and{nativeRsSaved=true}or nil)end end
+  local function done()if cb then cb(self.saveEnding and(self.endingResult or{nativeRsSaved=true})or nil)end end
   local credits=require('src.ui.Gen3Credits').new(self.game,done)
   if credits then self.game.stack:push(credits)else done()end
 end
