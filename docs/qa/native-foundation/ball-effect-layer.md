@@ -34,9 +34,22 @@ Validation:
   the existing ball painter boundary from the public presentation component
   (unchanged preimage of #329), then applies only the component split.
 
-A fresh rendered FireRed/LeafGreen flight comparison is still pending and must
-check both actual fitted draw rows and zero raw native ball cells. CPU command
-checks alone are not complete visual flight, trainer-pose or FPS acceptance.
-The earlier capture and failed QA probes remain preserved. Hosted CI is
-separate. Only owned profiles/copies are used with the20GiB free-space floor;
-private files and player saves/profiles are untouched.
+Fresh Metal FireRed run `368069098b` on frozen `53b81840c4` completes
+native new-game and both actual send-outs without loader errors. It records69
+native clock/position/draw frames, five captured player-flight frames and412
+source opening-effect calls with zero duplicate native ball cells in those
+calls. The entire69-frame native ball trace equals pre-split run `b3d97aa123`.
+Images show one ball moving from hand to landing point. Actual closed artwork
+is12x12 inside its16x16 cell; fitted scale grows0.296745 to0.65. Cell extent is
+reported in logical canvas units, not claimed as physical opaque pixel width.
+
+Earlier fresh run `49a837bef7` also showed the corrected single ball and equal
+clock, but its broad all-target asset counter rejected legitimate native draws.
+That failed receipt is retained. The scoped probe distinguishes the actual
+source opening pass from other native drawing; it does not suppress native
+painting to satisfy the counter. LeafGreen comparison is pending. The focused
+hosted ball workflow succeeds on `dd5a507d`; other CI and full trainer-pose,
+other-view or FPS acceptance remain separate.
+
+Only owned profiles/copies are used with the20GiB free-space floor; private
+files and player saves/profiles are untouched.
