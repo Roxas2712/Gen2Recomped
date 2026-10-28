@@ -47,7 +47,12 @@ Earlier fresh run `49a837bef7` also showed the corrected single ball and equal
 clock, but its broad all-target asset counter rejected legitimate native draws.
 That failed receipt is retained. The scoped probe distinguishes the actual
 source opening pass from other native drawing; it does not suppress native
-painting to satisfy the counter. LeafGreen comparison is pending. The focused
+painting to satisfy the counter. LeafGreen run `0237101bb2` also passes both
+actual starts and69 clock/position/draw rows, five captures, and469 opening
+passes with zero duplicate cells and no loader errors. Its scale likewise
+grows0.296745 to0.65. Earlier `1d183dc241` did not enter game code: a relative
+QA input path failed in host configuration. That receipt is retained and both
+starter boundaries now normalize their input paths. The focused
 hosted ball workflow succeeds on `dd5a507d`; other CI and full trainer-pose,
 other-view or FPS acceptance remain separate.
 
