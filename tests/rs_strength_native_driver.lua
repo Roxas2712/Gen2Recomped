@@ -8,6 +8,17 @@ return function(game)
   local report={edition=edition,status='running',preparedFixture=true,continuousStory=false,captures={}}
   local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
   local function press(key,wait)game.input:overlayPressed(key);U.wait(1);game.input:overlayReleased(key);U.wait(wait or 16)end
+  local function step(key)
+    local world=game.overworld;local p=world.player;local x,y=p.cellX,p.cellY
+    game.input:overlayPressed(key)
+    for _=1,60 do
+      U.wait(1)
+      local moving=p.moving or p.cellX~=x or p.cellY~=y
+      for _,e in ipairs(world.entities)do moving=moving or e.moving end
+      if moving then break end
+    end
+    game.input:overlayReleased(key);U.wait(120)
+  end
   local function shot(name)
     local S=require('src.core.SaveSerializer');local saved=S.encode(game.save);local rng=love.math.getRandomState()
     local b=game.stack:top();assert(require('src.render.GraphicsScope').call(b.draw,b))
@@ -47,7 +58,7 @@ return function(game)
     local boulder
     for _,e in ipairs(world.entities)do if e.def and e.def.localId==1 then boulder=e end end
     assert(boulder and boulder.cellX==5 and boulder.cellY==11)
-    press('left',30);press('up',30);press('right',90)
+    step('left');step('up');step('right')
     assert(boulder.cellX==6 and boulder.cellY==11,'Ordinary push did not move the boulder')
   end
   report.drawPreservesSaveRng=true;report.originalStrengthFlagAndPush=true
