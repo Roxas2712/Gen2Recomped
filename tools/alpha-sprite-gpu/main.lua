@@ -59,17 +59,36 @@ function love.draw()
   local authored=ar>.95 and ag<.2 and ab<.3
   local fr,fg,fb=image:getPixel(27,30);local foreground=fb>.95 and fr<.05 and fg<.05
   -- Draw the same cutout before foliage into a real persistent depth target.
-  g.push('all');g.setCanvas({canvas,depth=true});g.origin();g.setScissor();g.clear(0,0,0,1,true,true)
+  g.push('all');g.setCanvas({canvas,depthstencil=g.newCanvas(32,32,{format='depth24',readable=true,dpiscale=1})});g.origin();g.setScissor();g.clear(0,0,0,1,true,true)
   g.setDepthMode('less',true);g.setShader(shader);g.setColor(1,1,1,1);g.draw(mesh)
   g.setShader();g.draw(opaque);g.setDepthMode();g.setCanvas();g.pop()
   local depth=g.readbackTexture(canvas);save('depth.png',depth:encode('png'):getString())
+  -- The same program must also remain usable on a colour-only target.
+  local colourOnly=g.newCanvas(32,32,{format='rgba8',dpiscale=1,msaa=0})
+  g.push('all');g.setCanvas({canvas,depth=true});g.setDepthMode('less',true);g.setCanvas(colourOnly);g.origin();g.setScissor();g.clear(0,0,0,0)
+  g.setShader(shader);g.setColor(1,1,1,1);g.draw(mesh);g.setCanvas();g.pop()
+  local colour=g.readbackTexture(colourOnly)
+  local _,_,_,empty=colour:getPixel(2,2);local rr,rg,rb,ra=colour:getPixel(15,2)
+  local colourTarget=empty<.01 and rr>.95 and rg<.2 and rb<.3 and ra>.95
+
   local dr,dg,db=depth:getPixel(2,2);local br,bg,bb=depth:getPixel(15,2)
   local cutout=dg>.95 and dr<.05 and db<.05
   local body=br>.95 and bg<.2 and bb<.3
-  local result={renderer={g.getRendererInfo()},version=os.getenv('ALPHA_VERSION')or'red',transparentBackground=same,authoredColor=authored,foregroundGrass=foreground,depthCutout=cutout,depthBody=body,background={r,a,b},control={cr,cg,cb}}
+  -- Drop the Lua Shader handle while a raw native graphics frame owns it.
+  -- The companion must survive that frame, and a later alias must recover it.
+  g.push('all');g.setCanvas({canvas,depthstencil=g.newCanvas(32,32,{format='depth24',readable=true,dpiscale=1})})
+  g.origin();g.setScissor();g.clear(0,0,0,1,true,true);g.setDepthMode('less',true);g.setColor(1,1,1,1)
+  g.setShader(shader);g.push('all');g.setShader();shader=nil;collectgarbage('collect');g.pop()
+  g.draw(mesh);g.setShader();g.draw(opaque);g.setDepthMode();g.setCanvas();g.pop()
+  local recovered=g.readbackTexture(canvas)
+  local er,eg,eb=recovered:getPixel(2,2);local pr,pg,pb=recovered:getPixel(15,2)
+  local nativeStackLifetime=eg>.95 and er<.05 and eb<.05 and pr>.95 and pg<.2 and pb<.3
+  local adapter=require('src.render.AlphaDepthCompat').status()
+  local selected=g.getRendererInfo():lower():find('metal',1,true)==nil or adapter.lateDraws>0
+  local result={adapter=adapter,depthAdapterSelected=selected,nativeStackLifetime=nativeStackLifetime,renderer={g.getRendererInfo()},version=os.getenv('ALPHA_VERSION')or'red',transparentBackground=same,authoredColor=authored,foregroundGrass=foreground,depthCutout=cutout,depthBody=body,colourOnlyTarget=colourTarget,background={r,a,b},control={cr,cg,cb}}
   save('report.json',require('src.link.Json').encode(result))
   print('ALPHA_PIXELS',require('src.link.Json').encode(result))
-  love.event.quit(same and authored and foreground and cutout and body and 0 or 1)
+  love.event.quit(same and authored and foreground and cutout and body and colourTarget and selected and nativeStackLifetime and 0 or 1)
  end)
  captured=true
 end

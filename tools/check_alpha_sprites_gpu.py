@@ -55,8 +55,8 @@ def main():
     for name in ('conf.lua', 'main.lua'):
         (host / name).write_bytes((ROOT / 'tools/alpha-sprite-gpu' / name).read_bytes())
     provenance = {'engine': str(source), 'backend': args.backend, 'version': args.version, 'sources': {}}
-    for name in ('src/render/SpriteRenderer.lua', 'src/render/TileRenderer.lua', 'src/world/OverworldController.lua', 'src/render/Renderer.lua'):
-        provenance['sources'][name] = hashlib.sha256((source / name).read_bytes()).hexdigest()
+    for name in ('src/render/SpriteRenderer.lua', 'src/render/TileRenderer.lua', 'src/world/OverworldController.lua', 'src/render/Renderer.lua', 'src/render/AlphaDepthCompat.lua', 'src/render/LegacyShaderCompat.lua'):
+        provenance['sources'][name] = hashlib.sha256((source / name).read_bytes()).hexdigest() if (source / name).is_file() else None
     (out / 'sources.json').write_text(json.dumps(provenance, indent=2) + '\n')
     env = {k: v for k, v in os.environ.items() if not k.startswith(('POKEPORT_', 'ALPHA_'))}
     env.update(POKEPORT_IDENTITY=identity, POKEPORT_GRAPHICS_BACKEND=args.backend,
@@ -69,7 +69,7 @@ def main():
     if result.returncode:
         return result.returncode
     report = json.loads((out / 'report.json').read_text())
-    assert all(report[key] for key in ('transparentBackground', 'authoredColor', 'foregroundGrass', 'depthCutout', 'depthBody'))
+    assert all(report[key] for key in ('transparentBackground', 'authoredColor', 'foregroundGrass', 'depthCutout', 'depthBody', 'colourOnlyTarget', 'depthAdapterSelected', 'nativeStackLifetime'))
     return 0
 
 
