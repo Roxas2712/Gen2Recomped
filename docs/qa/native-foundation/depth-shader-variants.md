@@ -30,7 +30,13 @@ Qualification on Apple M3 / native LOVE12 Metal:
   platform policy 40. The existing canvas adapter 128 checks also passed.
 - Full native source regression: all 252 groups pass on combined source
   22928688 with main a8833b35 (frozen receipt eb45d719ba). The actual
-  unchanged-consumer Third-Person/rain timing is recorded separately.
+  unchanged-consumer Third-Person/rain run (receipt 9ab9ec7c4a, unchanged private
+  bddb51819c) completes 120 sampled and 120 unprofiled warm frames. Warm mean:
+  59.712 ms (about 16.7 FPS), draw 53.697 ms, update 4.555 ms. A cold frame still
+  takes 3133.971 ms during native shader compilation; this hitch is unresolved.
+  The real field program is active, but the paper-surface option is false,
+  fieldIndexSourceBytes is 0 and packed ranges are not active. There are still
+  5370 indexed native draws. No competing test children ran in this window.
 
 This change has no 60 FPS acceptance claim. Before it, the isolated real rainy
 Third-Person view averaged 68.409 ms per warm frame (about 14.6 FPS), with roughly
