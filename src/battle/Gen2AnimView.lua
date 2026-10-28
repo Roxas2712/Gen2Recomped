@@ -1,6 +1,8 @@
 -- Native object drawing over Gen2AnimPlayer's actual OAM projection.
 -- Object layout/flip math retains Gen2AnimPlayer provenance (Cedric);
 -- public owner integration by Roxas2712, see NOTICE.md and contribution licence.
+-- GSC BG/OBJ register integration follows Gen1Recomp535a5ec0 under
+-- compat/gen1-gsc/LICENSE.MD; inherited object-drawing rights remain intact.
 local Palette = require('src.render.Gen2PaletteDraw')
 local PaletteFX = require('src.render.PaletteFX')
 local View = {}
