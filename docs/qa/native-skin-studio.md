@@ -35,7 +35,9 @@ Evidence:
   plus all62 native vector icons. Later changes add explicit generation gates,
   scoped preview actions and command/format contracts, verified separately.
 - Native host and picker91/skin65 focused tests pass on c23c6627. The complete
-  available official scripts/test.sh run on that offered tree is in progress.
+  available official c23c6627 run is terminal:117/127 engine suites and3/3 SDK
+  pass. The ten failing engine suites need trace/baseline attribution; this
+  is not a green upstream-stack acceptance.
   There is no current upstream-main mergeability, full Gen1 GUI pixel identity,
   OS-window/mobile/FPS/full-mod or release qualification claim.
 
