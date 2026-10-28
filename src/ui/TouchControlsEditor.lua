@@ -140,7 +140,7 @@ function Editor.draw()
   -- column between the two shoulders.
   local Lay = TouchControls:layout()
   local side = 0
-  for _, k in ipairs({ "l", "r", "hotbar" }) do
+  for _, k in ipairs({ "l", "r" }) do
     local z = Lay[k]
     if z then
       local reach = (k == "l") and (z.cx + z.w * 0.7 - ox) or (ox + ww - (z.cx - z.w * 0.7))
@@ -150,7 +150,7 @@ function Editor.draw()
   side = math.min(side, ww * 0.3)
   -- ...and where the shoulders end: the cards below them take the full width
   local shoulderBottom = oy
-  for _, k in ipairs({ "l", "r", "hotbar" }) do
+  for _, k in ipairs({ "l", "r" }) do
     local z = Lay[k]
     if z then shoulderBottom = math.max(shoulderBottom, z.cy + z.w * 0.5) end
   end
@@ -164,7 +164,17 @@ function Editor.draw()
   local titleW = Editor.fonts.title:getWidth("Touch Controls")
   local narrow = colW < titleW + 2 * btnW + 4 * pad
   if narrow then btnW = math.min(btnW, (colW - 2 * pad - 10 * s) / 2) end
-  local rowY = narrow and (oy + pad + barH) or (oy + pad + (barH - btnH) / 2)
+  local inset = 0
+  local toggle = Lay.hotbar
+  if toggle and TouchControls:hotbarShown()
+     and toggle.cx + toggle.w * 0.7 > colX
+     and toggle.cx - toggle.w * 0.7 < colX + colW
+     and toggle.cy - toggle.w * 0.7 < oy + 260 * s then
+    inset = math.max(0, toggle.cy + toggle.w * 0.7 - oy + pad)
+  end
+  local rowY = narrow and (oy + inset + pad + barH)
+    or (oy + inset + pad + (barH - btnH) / 2)
+  barH = barH + inset
   local done = { x = colX + colW - pad - btnW, y = rowY, w = btnW, h = btnH }
   local reset = { x = done.x - 10 * s - btnW, y = done.y, w = btnW, h = btnH }
   if narrow then barH = barH + btnH + 8 * s end
@@ -180,7 +190,7 @@ function Editor.draw()
   col(PAL.white)
   -- shrunk to the column when it is narrower than the heading (portrait)
   local tScale = math.min(1, (colW - 2 * pad) / math.max(1, titleW))
-  love.graphics.print("Touch Controls", colX + pad, oy + pad + 4 * s, 0, tScale, tScale)
+  love.graphics.print("Touch Controls", colX + pad, oy + inset + pad + 4 * s, 0, tScale, tScale)
 
   Editor.rects.done, Editor.rects.reset = done, reset
 

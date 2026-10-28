@@ -6,6 +6,14 @@ package.path = "./?.lua;./?/init.lua;" .. package.path
 local T = require("tests.harness")
 local check, eq = T.check, T.eq
 love = love or require("tests.love_stub")
+-- Native headless Image fixtures expose dimensions; the real runtime also
+-- supports filters. Record that call locally without changing other suites.
+local newImage = love.graphics.newImage
+love.graphics.newImage = function(...)
+  local image = newImage(...)
+  function image:setFilter(min, mag) self.filter = {min, mag} end
+  return image
+end
 
 local TC = require("src.core.TouchControls")
 

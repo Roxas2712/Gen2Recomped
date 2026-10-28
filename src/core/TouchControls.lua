@@ -244,9 +244,8 @@ function TouchControls.defaultLayout(ww, wh, ox, oy, scale)
     b = { cx = ox + ww - margin - abW * 1.60, cy = oy + wh - margin - abW * 0.55, w = abW },
     start = { cx = ox + ww / 2 + ssW * 0.60, cy = oy + wh - margin - ssW * 0.95, w = ssW },
     select = { cx = ox + ww / 2 - ssW * 0.60, cy = oy + wh - margin - ssW * 0.95, w = ssW },
-    -- Below the native shoulder's hit slop, so neither control steals it.
-    hotbar = {cx=ox + ww - margin - ssW * 0.70,
-      cy=oy + margin + lrW * 0.95 + ssW * 0.80, w=ssW},
+    -- Between the native shoulders, above the thumb clusters.
+    hotbar = {cx=ox + ww * 0.50, cy=oy + margin + ssW * 0.70, w=ssW},
     -- THE SHOULDERS GO AT THE TOP CORNERS, where the hardware puts them and
     -- where a hand already holding the phone can reach without covering the
     -- screen. Sized off `dpadW` like everything else here, so the size slider
