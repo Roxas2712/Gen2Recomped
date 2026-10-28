@@ -3931,6 +3931,19 @@ function BattleState:battleKind()
   return self.kind
 end
 
+-- Semantic checkpoint continuation seam used by source presentation mods.
+-- Gen1Recomp BattleState.lua blob 41dafe8802a8db99f1b3f7b944e38502b72b6013
+-- rearms presentation without replaying enter(), cries, RNG or battle.started.
+function BattleState:resumeCheckpoint()
+  self.isOpaque = self:bgMode() ~= "world"
+  -- The shared native transaction commits music only after verification;
+  -- defer it here so a rejecting source validator can roll back cleanly.
+  if not require("src.core.CheckpointWorld").busy(self.game) then
+    require("src.core.Music").playBattle(self.data,
+      self.musicKind or self:computeMusicKind())
+  end
+end
+
 function BattleState:enter()
   if self:gen3Layout()then self.rsBattlePanel=require('src.battle.Gen3RsBattlePanel').new(self)end
   -- Out of useable POKéMON before the battle even starts.  pokered does not
