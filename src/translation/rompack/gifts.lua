@@ -3,6 +3,7 @@
 -- Keep gift identities at the script boundary where they become save data.
 -- Calls the installed host handlers; no engine implementation is duplicated.
 local G={}
+local Species=require('src.core.Gen2SpeciesNames')
 local function field(rule,name,original)
  local r=rule and rule[name]
  return type(r)=='table'and(type(r.to)=='string'and r.to or r.from)or type(r)=='string'and r or original
@@ -55,7 +56,7 @@ function G.give(next,ctx,op,args,rule,kind)
  if not ok then error(result,0)end
  local mon=G.newMon(ctx.save,before)
  if not mon then return result end
- if kind=='shuckle'and(mon.species~='SPECIES_213'or mon.nickname~='SHUCKIE'or mon.ot~='MANIA'or mon.otId~=0x0206)then return result end
+ if kind=='shuckle'and(not Species.same(ctx.game and ctx.game.data,mon.species,'SPECIES_213')or mon.nickname~='SHUCKIE'or mon.ot~='MANIA'or mon.otId~=0x0206)then return result end
  if kind=='oddEgg'and(not mon.isEgg or mon.nickname~='EGG')then return result end
  mon.nickname=field(rule,'nickname',mon.nickname)
  local ot=field(rule,'otName',mon.ot);mon.ot=ot;mon.otName=ot
@@ -72,7 +73,7 @@ function G.returnMon(next,ctx,op,args,known)
  proxy.yield=function(_,...)
   runner:yield(...)
   for _,mon in ipairs(ctx.save.party or{})do
-   if mon.species=='SPECIES_213'and mon.otId==0x0206 and mon.ot~='MANIA'and known[mon.ot]then
+   if Species.same(ctx.game and ctx.game.data,mon.species,'SPECIES_213')and mon.otId==0x0206 and mon.ot~='MANIA'and known[mon.ot]then
     restored[#restored+1]={mon,mon.ot};mon.ot='MANIA'
    end
   end
