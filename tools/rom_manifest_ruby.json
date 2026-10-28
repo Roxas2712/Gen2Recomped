@@ -329,6 +329,13 @@
         "caught": 371
       },
       "SOURCE": "ROM:matching RS sBallSpriteSheets 020A92C, palettes 020A98C, shared open 0D030D0, colors 040B4D4, particles 0D1A7F4; verified RS Thumb send-out and release sites"
+    },
+    "FORCED_MOVEMENT": {
+      "DISPATCH": 362820,
+      "TESTS": 3210072,
+      "FUNCS": 3210144,
+      "WALK_DRIVER": 362988,
+      "SLIDE_DRIVER": 363372
     }
   },
   "scenes": [],
