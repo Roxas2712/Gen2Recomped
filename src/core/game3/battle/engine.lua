@@ -56,7 +56,10 @@ function M._interactiveChoices(screen,state)
  if lease and lease.screen==screen and(not state or state==lease.state)then
   cohort(lease)
   local choice=scopes:find('choices')
-  if choice and choice.value.lease==lease then return choice.value.value end
+  if choice and choice.value.lease.screen==screen and choice.value.lease.state==lease.state then
+   cohort(choice.value.lease)
+   return choice.value.value
+  end
  end
  return screen.interactiveChoices
 end

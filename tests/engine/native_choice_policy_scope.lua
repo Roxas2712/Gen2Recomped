@@ -78,15 +78,18 @@ do
  end)
  Probe.close(f)
 end
--- Nested real invocations do not inherit a surrounding override implicitly.
+-- A called move borrows its live ancestor policy; its own override is local.
 do
  local f,b=open('emerald');b.interactiveChoices=true;local st=B.getState();local depth=0
  E.resolveMove=function(...)
   depth=depth+1
   if depth==1 then
    st.interactiveChoices=false
-   native(b,function()T.eq(E._interactiveChoices(b),true,'nested move uses its own native default')end)
+   native(b,function()T.eq(E._interactiveChoices(b),nil,'nested override can restore a nil native choice')end)
    T.eq(st.interactiveChoices,false,'nested completion retains the outer dynamic policy')
+  else
+   T.eq(st.interactiveChoices,false,'called move inherits its visible ancestor policy')
+   st.interactiveChoices=nil
   end
   local result=base(...);depth=depth-1;return result
  end
