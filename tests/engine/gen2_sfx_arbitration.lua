@@ -101,7 +101,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   end
   -- The actual native player/command VM must use PlayStereoSFX too.
   Sound.invalidate();high=Sound.play(d,'HIGH')
-  d.battle_anims={scripts={probe={{'sound',0,9},{'wait',1},{'sound',0,5},{'ret'}}},moves={PROBE='probe'}}
+  d.battle_anims={generation=2,oamsets={},scripts={probe={{'sound',0,9},{'wait',1},{'sound',0,5},{'ret'}}},moves={PROBE='probe'}}
   local p=Player.new(d)
   T.check(p:start('PROBE',true))
   local steps=0
