@@ -16,6 +16,7 @@ function A.drawParticles(lo,hi)
  return require('src.core.game3.battle.particle_pass').draw(lo,hi,require('src.compat.gen1.SourceCall').owner(A,'drawParticles'))
 end
 local current
+local tweenOffers=require('src.compat.gen1.CoroutineScopes').new()
 local numeric={ox=true,oy=true,alpha=true,scale=true,sx=true,sy=true,rotation=true,
   darken=true,flash=true,displayHp=true,displayMaxHp=true,displayLevel=true,displayExp=true}
 local function retire()
@@ -164,18 +165,36 @@ function A.beginScreenEffect()local e=effect();return e and e:begin()or false en
 function A.endScreenEffect()local e=effect();return e and e:finish()or false end
 function A.busy()
   local d,screen=context()
+  local sendout=package.loaded['src.core.game3.battle.sendout_tween']
   return d~=nil and(screen.gen3AnimPlaying==true or screen.gen3BallPlaying==true
-    or A.hpTweening()or screen.expFilling==true or next(d.tasks)~=nil)or false
+    or A.hpTweening()or screen.expFilling==true or next(d.tasks)~=nil
+    or sendout and sendout._busy(screen))or false
 end
 function A.setSeqBusy(value)local d=context();if d then d.seqBusy=value==true end end
 function A.seqBusy()local d=context();return d and d.seqBusy==true or false end
-function A.tweenStage(frames,onStep,onComplete)
+local function tweenStage(frames,onStep,onComplete)
+  local offer=tweenOffers:find('native.sendout.tween')
+  if offer then return offer.value(frames,onStep,onComplete)end
   local d=context();if not d then return nil,'no admitted native battle'end
   assert(number(frames)and frames>=0,'invalid presentation duration')
   d.nextTask=d.nextTask+1
   local task={id=d.nextTask,frames=0,total=math.max(1,math.ceil(frames)),step=owned(onStep),done=owned(onComplete)}
   d.tasks[task.id]=task
   return task
+end
+A.tweenStage=tweenStage
+function A._nativeSendOut(screen,anim,row)
+  if A.tweenStage==tweenStage then return false end
+  local _,actual=context();if actual~=screen then return false end
+  return require('src.core.game3.battle.sendout_tween')._begin(screen,anim,row,A.tweenStage,
+    function()return A.tweenStage end,function(configure,frames,step,complete)
+      local offer=tweenOffers:push('native.sendout.tween',configure)
+      local values={pcall(Call.call,A,'tweenStage',frames,step,complete)}
+      local retired=offer.closed;tweenOffers:close(offer)
+      if retired then error('native send-out tween offer retired',0)end
+      if not values[1]then error(values[2],0)end
+      return values[2]
+    end)
 end
 function A._nativeStep(screen,dt)
   if not Clock.active(screen)then return false,'animation update belongs to its native battle phase'end
@@ -210,6 +229,8 @@ function A._nativeStep(screen,dt)
   end)
 end
 function A._holdsNativeQueue(screen)
+  local sendout=package.loaded['src.core.game3.battle.sendout_tween']
+  if sendout and sendout._holds(screen)then return true end
   local d,actual=context();local clip=d and d.clip
   return actual==screen and clip~=nil and clip.player==screen.gen3Anim
     and clip.serial==screen.gen3Anim.presentationSerial and screen.gen3AnimPlaying==true
@@ -263,6 +284,8 @@ function A.launchMove(moveId,opts)
   return true
 end
 function A.reset()
+  local sendout=package.loaded['src.core.game3.battle.sendout_tween']
+  if sendout then sendout._cancel()end
   retire();Coords._service.release();return true
 end
 function A._nativeExit(screen)

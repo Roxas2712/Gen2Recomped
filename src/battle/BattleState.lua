@@ -2787,7 +2787,9 @@ function BattleState:updateMovePresentation()
   -- ...and the ball's own timeline, ticked in the same place and for the same
   -- reason: its frames are counted where the hold is counted, or it would
   -- stand still for exactly as long as it is meant to be moving.
-  if self.gen3BallPlaying and self.gen3Ball then
+  local sendout=GameVersion.isGen3()and package.loaded['src.core.game3.battle.sendout_tween']
+  local borrowed=sendout and sendout._step(self,self.gen3Ball,BattleState.stepGen3Ball)
+  if self.gen3BallPlaying and self.gen3Ball and not borrowed then
     local capture=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
     if capture then capture._nativeBallStep(self,self.gen3Ball,BattleState.stepGen3Ball)
     else self:stepGen3Ball(self.gen3Ball)end
@@ -11318,7 +11320,10 @@ function BattleState:gen3SendOut(battler)
     end
   end
   self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { wait = anim:estimate() })
+  local waitRow={wait=anim:estimate()}
+  table.insert(self.queue,self.nextInsert,waitRow)
+  local source=package.loaded['src.core.game3.battle.anim']
+  if source then source._nativeSendOut(self,anim,waitRow)end
   return true
 end
 

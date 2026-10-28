@@ -16,6 +16,9 @@ local function synchronize(screen,token)
  -- The native send-out inserts its own wait after the original entry was
  -- bound. That dynamic row is not in token.rows; looking ahead through it
  -- would expose the following message while the actual ball is still active.
+ local sendout=package.loaded['src.core.game3.battle.sendout_tween']
+ local held=sendout and sendout._phase(screen,token)
+ if held then token.index=held;return end
  local ball=screen.gen3Ball
  if screen.gen3BallPlaying and ball then
   local kind=ball.sendOut=='player'and ball.battler==screen.player and'player_throw'
@@ -141,8 +144,11 @@ setmetatable(M,{__index=function(_,key)
  if key=='_steps'then return token.steps end
  if key=='_i'then return token.index end
  if key=='_waitingMsg'then return screen.current~=nil and screen.current.text~=nil end
- if key=='_waiting'then return screen.current~=nil or screen.waitingUI==true
-  or screen.gen3BallPlaying==true or(screen.waitFrames or 0)>0 end
+ if key=='_waiting'then
+  local sendout=package.loaded['src.core.game3.battle.sendout_tween']
+  return screen.current~=nil or screen.waitingUI==true or screen.gen3BallPlaying==true
+   or(screen.waitFrames or 0)>0 or sendout and sendout._busy(screen)or false
+ end
 end,__newindex=function(t,key,value)
  if not observed[key]then rawset(t,key,value);return end
  local screen,token=current()
