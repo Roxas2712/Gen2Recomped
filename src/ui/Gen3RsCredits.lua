@@ -7,45 +7,11 @@ function M.available(game)
 end
 function M.new(game,onDone)
   assert(M.available(game))
-  local data,save=game.data,game.save
-  local byNumber,byNational={},{}
-  for id,row in pairs(data.pokemon)do
-    if row.index then byNumber[row.index]={id=id,def=row}end
-    if row.dex and row.dex>=1 and row.dex<=386 and row.index
-      and(not byNational[row.dex]or row.index<byNational[row.dex])then byNational[row.dex]=row.index end
-  end
-  local function row(n)return assert(byNumber[tonumber(n)],'Unknown native credits species '..tostring(n))end
-  local hostDex=save.pokedex or{}
-  local player=save.player or{}
-  local session={version=require('src.core.GameVersion').get(),
-    gender=(player.gender=='girl'or player.gender=='female'or player.gender==1 or player.female==true)and 1 or 0,
-    dex={unownPersonality=hostDex.unownPersonality,spindaPersonality=hostDex.spindaPersonality}}
-  for _,kind in ipairs{'caught','owned'}do
-    local bits=hostDex[kind]or(kind=='caught'and hostDex.owned)or{}
-    session.dex[kind]=setmetatable({},{__index=function(_,n)
-      local r=byNumber[n];return r and(bits[r.id]==true or bits[r.id]==1)or false
-    end})
-  end
-  local basic=require('compat.gen1-rs.Loader').new(session.version)
+  local save=game.save
+  local basic=require('compat.gen1-rs.Loader').new(require('src.core.GameVersion').get())
   local native=require('compat.gen1-rs.Constants').new(basic)
-  local starter=(save.gen3Vars or{})[assert(native:var('VAR_STARTER_MON'))]or 0
+  local session,bindings=require('src.ui.Gen3CreditsSession').new(game,assert(native:var('VAR_STARTER_MON')))
   local self
-  local bindings={
-    ['src.core.game3.dataset']={cache=function()return{read=function(_,path)return love.filesystem.read(path)end}end},
-    ['src.core.game3.rse.init']={var=function(name)assert(name=='VAR_STARTER_MON');return starter end},
-    ['src.core.game3.dex']={isCaught=function(d,n)return d.caught[n]==true or d.owned[n]==true end,
-      defaultPersonality=function(d,n)
-        local nat=row(n).def.dex
-        return tonumber(nat==201 and d.unownPersonality or nat==327 and d.spindaPersonality)or 0
-      end},
-    ['src.core.game3.pokemon']={speciesFromNational=function(n)return byNational[n]end,
-      national=function(n)return row(n).def.dex end,
-      dexFrontPic=function(n,pid)
-        local r=row(n);local path=require('src.pokemon.Sprites').path(data,r.id,'front',{
-          kind='dex',mon={species=r.id,personality=pid or 0,shiny=false}})
-        return path and{image=require('src.render.Assets').image(path)}or nil
-      end},
-  }
   self=setmetatable(require('src.ui.Gen3RsSceneContext').new(game,{bindings=bindings}),M)
   self.onDone,self.session=onDone,session
   self.scene=self.load('src.ui.game3.rs.credits')
