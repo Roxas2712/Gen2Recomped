@@ -1,4 +1,5 @@
 -- Shared-window Pinball player. Contributions by Roxas2712.
+local Strings=require('src.core.Strings')
 local M={};local live=setmetatable({},{__mode='k'});local serial=0
 local Json=require('src.link.Json')
 local FrameCap=require('src.core.FrameCap')
@@ -20,7 +21,7 @@ local function free(v)if v and v.release then v:release()end end
 function M.shutdown()for p in pairs(live)do p:stop();p.thread:wait();p:dispose()end end
 function M.new(session,options)
  options=options or {};serial=serial+1
- local self={session=session,options=options,seats=options.seats==2 and 2 or 1,images={},stats={},notice='Pinball wird geladen …',
+ local self={session=session,options=options,seats=options.seats==2 and 2 or 1,images={},stats={},notice=Strings("Loading Pinball …"),
   settings={filter='pixels',integer=false,audioSeat=1,full_table=false,opponentView=true},font=love.graphics.newFont(16),small=love.graphics.newFont(12)}
  local saved=love.filesystem.read('pinball-display.json')
  if saved then local ok,v=pcall(Json.decode,saved);if ok and type(v)=='table'then for _,k in ipairs{'filter','integer','audioSeat','full_table','opponentView'}do if v[k]~=nil then self.settings[k]=v[k]end end end end
@@ -61,7 +62,7 @@ function M.new(session,options)
    elseif msg.event=='error'then self.error=msg.message;self.closed=true
    elseif msg.event=='prepared'then
     self.checkpoint=msg.checkpoints[1]
-    if self.seats==2 and self.checkpoint~=msg.checkpoints[2]then self.error='Die Startzustände unterscheiden sich.';self:stop()
+    if self.seats==2 and self.checkpoint~=msg.checkpoints[2]then self.error=Strings("The initial states do not match.");self:stop()
     elseif not self.duel then self.countdown=3 end
    elseif msg.event=='closed'then self.closed=true
    elseif msg.event=='notice'then self.notice=msg.message end
@@ -80,7 +81,7 @@ function M.new(session,options)
    self.stats=msg.stats;self.frame=msg.frame;self.frameMs=msg.seconds*1000;self.phase=msg.phase;self.diagnostics=msg.diagnostics
    if msg.audio then self.audioRestarts=msg.audio.restarts;self.audioRestartHistory=msg.audio.history;self.audioRate=msg.audio.rate;self.audioDropped=msg.audio.dropped end
    if self.seats==2 and self.phase=='finished'then
-    self.result=self.stats[1].score==self.stats[2].score and 'Unentschieden' or self.stats[1].score>self.stats[2].score and 'Spieler 1 gewinnt' or 'Spieler 2 gewinnt'
+    self.result=self.stats[1].score==self.stats[2].score and Strings("Draw") or self.stats[1].score>self.stats[2].score and Strings("Player 1 wins") or Strings("Player 2 wins")
    end
   end
   if self.duel then
@@ -109,7 +110,7 @@ function M.new(session,options)
     end
     if self.liveView.error then self.viewFailed=self.liveView.error end
    end
-   if self.viewFailed then free(self.images[2]);self.images[2]=nil;self.notice='Live-Ansicht nicht verfügbar · dein Punkteduell läuft weiter.'end
+   if self.viewFailed then free(self.images[2]);self.images[2]=nil;self.notice=Strings("Live view unavailable · your score duel continues.")end
    if self.checkpoint and self.duel.state=='lobby' and not self.duel.localReady then self.duel:ready(self.checkpoint)end
    if self.duel.started and not self.duelStarted then self.duelStarted=true;self.countdown=3 end
    local st=self.stats[1]
@@ -121,10 +122,10 @@ function M.new(session,options)
     if self.peerView then self.peerView:stop()end
     self.duelCancelled=true;self:command{action='pause',value=true};self.notice=self.duel.error
    elseif self.duel.state=='finished'then
-    self.result=({win='Du gewinnst',loss='Dein Gegner gewinnt',draw='Unentschieden'})[self.duel.result]
+    self.result=({win=Strings("You win"),loss=Strings("Your opponent wins"),draw=Strings("Draw")})[self.duel.result]
     if self.activity then self.activity:release()end
-   elseif not self.checkpoint then self.notice='Punkteduell: gemeinsame Startpartie wird vorbereitet …'
-   elseif not self.duel.started then self.notice='Warte auf den anderen Spieler … '..(self.duel.net.code and ('Raum '..self.duel.net.code)or '')end
+   elseif not self.checkpoint then self.notice=Strings("Score duel: preparing the shared starting game …")
+   elseif not self.duel.started then self.notice=Strings("Waiting for the other player … ")..(self.duel.net.code and (Strings("Room ")..self.duel.net.code)or '')end
   end
   if self.countdown and not self.duelCancelled then
    self.countdown=self.countdown-dt
@@ -156,26 +157,26 @@ function M.new(session,options)
     g.setColor(1,1,1);g.draw(image,x+(slot-image:getWidth()*scale)/2,header+(h-header-footer-image:getHeight()*scale)/2,0,scale,scale);g.setShader()
    end
    if not image and self.duel and i==2 then
-    g.setColor(.63,.71,.76);g.printf(self.viewFailed and 'Gegneransicht nicht verfügbar' or self.duel.viewEnabled and 'Gegneransicht wird vorbereitet …' or 'Dieser Freund nutzt noch eine Version ohne Live-Ansicht.',x+16,h*.5,slot-32,'center')
+    g.setColor(.63,.71,.76);g.printf(self.viewFailed and Strings("Opponent view unavailable") or self.duel.viewEnabled and Strings("Preparing opponent view …") or Strings("This friend is using a version without live view."),x+16,h*.5,slot-32,'center')
    end
    if not preview then
     local title=self.duel and (i==1 and 'DU' or self.options.opponent or 'DEIN FREUND')or self.seats>1 and ('SPIELER '..i)or 'POKÉMON PINBALL · RUBY & SAPPHIRE'
     g.setColor(.44,.83,.89);g.printf(title,x+12,12,slot-24,'left')
     local points=self.duel and i==2 and self.duel.remoteScore or self.stats[i]and self.stats[i].score
-    if points then g.setColor(1,1,1);g.printf(string.format('%.0f Punkte',points),x+12,self.duel and 36 or 12,slot-24,'right')end
+    if points then g.setColor(1,1,1);g.printf(Strings("%.0f points",points),x+12,self.duel and 36 or 12,slot-24,'right')end
     if self.duel and i==2 then
      local path=self.peerView and not self.peerView.error and self.peerView.path
      g.setFont(self.small);g.setColor(.63,.71,.76)
-     g.print(path=='p2p'and 'LIVE · DIREKT' or path=='relay'and 'LIVE · RELAY' or 'LIVE · HTTPS',x+12,64)
+     g.print(path=='p2p'and Strings("LIVE · DIRECT") or path=='relay'and 'LIVE · RELAY' or 'LIVE · HTTPS',x+12,64)
      g.setFont(self.font)
     end
    end
   end
   if not preview then
    g.setFont(self.small);g.setColor(.63,.71,.76)
-   g.print(self.duel and 'Esc: Menü   F6: Tischansicht   F7: Gegneransicht   F9: Bildfilter   F10: Pixelmaßstab   F11: Vollbild' or 'Esc: Menü   F5/F8: Schnellstand   F6: Tischansicht   F9: Bildfilter   F10: Pixelmaßstab   F11: Vollbild',12,h-27)
+   g.print(self.duel and Strings("Esc: menu   F6: table view   F7: opponent view   F9: filter   F10: pixel scale   F11: fullscreen") or Strings("Esc: menu   F5/F8: quick state   F6: table view   F9: filter   F10: pixel scale   F11: fullscreen"),12,h-27)
    if self.duel and views==1 and self.duel.state=='playing'then
-    g.setColor(.44,.83,.89);g.printf(string.format('GEGNER: %.0f Punkte',self.duel.remoteScore),12,36,w-24,'left')
+    g.setColor(.44,.83,.89);g.printf(Strings("OPPONENT: %.0f points",self.duel.remoteScore),12,36,w-24,'left')
    end
    if self.countdown or self.result then
     g.setFont(self.font);g.setColor(.025,.04,.06,.9);g.rectangle('fill',w*.25,h*.43,w*.5,70,12,12)
@@ -185,7 +186,7 @@ function M.new(session,options)
    if self.paused then
     g.setColor(.02,.03,.05,.94);g.rectangle('fill',w*.15,h*.2,w*.7,h*.6,15,15)
     g.setFont(self.font);g.setColor(.44,.83,.89);g.printf('RECOMPILED ASCENDANT · PINBALL',w*.18,h*.24,w*.64,'center')
-    g.setColor(1,1,1);g.printf('Esc / Controller Back: Weiter\nF5: Schnellstand speichern · F8: laden\nF6: Volltisch (Beta) / Original\nF9: Bildfilter · F10: Pixelmaßstab\nF11: Vollbild · Q: Zur Bibliothek\n\nSpieler 1: Pfeile · X/Z · Enter · Q/E: L/R\nBackspace: Select · Spieler 2: WASD / F/G / Tab\nController: Schultern = Flipper · Trigger = L/R\nLinken Stick drücken = Select · Start = Spielpause\nMaus: links/rechts Flipper · Mitte Abschuss',w*.2,h*.32,w*.6,'center')
+    g.setColor(1,1,1);g.printf(Strings("Esc / Controller Back: resume\nF5: save quick state · F8: load\nF6: full table (Beta) / original\nF9: image filter · F10: pixel scale\nF11: fullscreen · Q: back to library\n\nPlayer 1: arrows · X/Z · Enter · Q/E: L/R\nBackspace: Select · Player 2: WASD / F/G / Tab\nController: shoulders = flippers · triggers = L/R\nLeft stick click = Select · Start = pause\nMouse: left/right flippers · middle launch"),w*.2,h*.32,w*.6,'center')
    end
   end
   g.pop()
@@ -203,7 +204,7 @@ function M.new(session,options)
   local changed=false
   if key=='escape'then self:togglePause()
   elseif self.paused and key=='q'then self:stop()
-  elseif key=='f6'then changed=true;self.settings.full_table=not self.settings.full_table;self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and 'Volltisch · Beta: Standardfelder; Menüs bleiben in Originalansicht.'or 'Originalansicht'
+  elseif key=='f6'then changed=true;self.settings.full_table=not self.settings.full_table;self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and Strings("Full table · Beta: standard fields; menus keep their original view.")or Strings("Original view")
   elseif key=='f7'and self.duel then changed=true;self.settings.opponentView=not self.settings.opponentView
   elseif key=='f5'or key=='f8'then self:command{action='state',load=key=='f8'}
   elseif key=='f9'then

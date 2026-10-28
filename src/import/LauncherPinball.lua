@@ -129,18 +129,18 @@ function M.install(RI)
     self:_sbOpenGame('pinballrs')
     local required=M.session(self._pinLocale)
     if required and invite and invite.rules.rom==required.rom_sha1 and invite.rules.backend~=required.backend then
-     self._pinNotice='Für dieses Duell müssen beide dieselbe aktuelle App- und Pinball-Version verwenden.'
+     self._pinNotice=Strings('Both players need the same current app and Pinball version for this duel.')
      self._pinPendingInvite=nil;return
     end
     if required and invite and require('src.pinball.Friends').new(required):compatible(invite.rules)then
      self._pinSwitchLocale=self._pinLocale
     else
-     self._pinNotice='Passenden eigenen Pinball-Import auswählen. Die Freundesanfrage bleibt vorgemerkt.'
+     self._pinNotice=Strings('Choose your matching Pinball import. The friend invitation will be kept.')
      self:_pinChooseImport()
     end
    end,
    start=function(net,host,rules,opponent)
-    if self._pinPlayer or self._pinIntro or self._launcherSequence then return false,'Pinball ist beschäftigt.'end
+    if self._pinPlayer or self._pinIntro or self._launcherSequence then return false,Strings('Pinball is busy.')end
     require('src.import.AccountWorkspace').close(self)
     self._pinField=rules.field;self._pinFriends.options.field=rules.field;self:_sbOpenGame('pinballrs')
     return start(self,1,net,host,opponent)
@@ -166,7 +166,7 @@ function M.install(RI)
    return net
   end)
   self._pinConnectHost=host
-  self._pinNotice=self._pinConnectJob and 'Verbindung wird vorbereitet …'or 'Hintergrundverbindung nicht verfügbar.'
+  self._pinNotice=Strings(self._pinConnectJob and 'Preparing connection …'or 'Background connections are unavailable.')
  end
  local textinput=RI.textinput
  RI.textinput=function(self,text,...)
@@ -252,7 +252,7 @@ function M.install(RI)
      elseif self._pinPendingPeer and self._pinFriends.session then
       self._pinFriends:action('pinball:inviteaccount:'..self._pinPendingPeer);self._pinResumeInvite=nil;self._pinPendingPeer=nil
      elseif invite then
-      self._pinNotice='Der Import passt noch nicht zur Anfrage. Sprache, Cartridge und App-Build müssen übereinstimmen.';self._pinResumeInvite=nil
+      self._pinNotice=Strings('This import does not match the invitation. Language, cartridge and app build must match.');self._pinResumeInvite=nil
      end
     else self._pinResumeInvite=nil;self._pinPendingInvite=nil;self._pinPendingPeer=nil end
    end
@@ -382,10 +382,10 @@ function M.install(RI)
    if self._pinNotice then text(self._pinNotice,self.hintFont,RI.palette().warning)end
    return y-top
   end
-  text('USA-Basis · getrennte Spielstände · Tastatur / Maus / Controller')
+  text('USA base · separate saves · keyboard / mouse / controller')
   local localeName='English · USA'
   for _,lang in ipairs(LANGUAGES)do if lang.id==self._pinLocale then localeName=lang.name end end
-  button('SPRACHE: '..localeName,function()
+  button(Strings('LANGUAGE: %s',localeName),function()
    local at=1;for i,lang in ipairs(LANGUAGES)do if lang.id==self._pinLocale then at=i end end
    for n=1,#LANGUAGES do
     local candidate=LANGUAGES[(at+n-1)%#LANGUAGES+1]
@@ -393,14 +393,14 @@ function M.install(RI)
     if session then self._pinLocale=candidate.id;self._pinProfiles=nil;love.filesystem.write('pinball-locale.txt',candidate.id);friends(self,session);break end
    end
   end)
-  button((self._pinField or 0)==0 and 'DUELL-TISCH: RUBY' or 'DUELL-TISCH: SAPPHIRE',function()self._pinField=1-(self._pinField or 0);if self._pinFriends then self._pinFriends.options.field=self._pinField end end)
-  button('LOKAL · 2 SPIELER',function()start(self,2)end)
-  button('MODCOMPASS · MIT FREUNDEN',function()
+  button((self._pinField or 0)==0 and 'DUEL TABLE: RUBY' or 'DUEL TABLE: SAPPHIRE',function()self._pinField=1-(self._pinField or 0);if self._pinFriends then self._pinFriends.options.field=self._pinField end end)
+  button('LOCAL · 2 PLAYERS',function()start(self,2)end)
+  button('MODCOMPASS · WITH FRIENDS',function()
    local Account=require('src.import.AccountWorkspace');Account.open(self)
    if require('src.cloud.RetroCloud').signedIn()then Account.action(self,'friends')end
   end)
-  text('Freundesduelle benötigen ModCompass mit Pinball-Unterstützung.')
-  text('Punkteduell: 5 Minuten oder bis Spielende · identischer frischer Start')
+  text('Friend duels require ModCompass with Pinball support.')
+  text('Score duel: 5 minutes or until game over · identical fresh start')
   if self._pinFriends then
    for _,entry in ipairs(self._pinFriends:rows())do
     if entry.id=='noop'then text(entry.label)else button(entry.label,function()self._pinFriends:action(entry.id)end)end
@@ -409,23 +409,23 @@ function M.install(RI)
   end
   local function edit(label,key,default)
    if self[key]==nil then self[key]=default end
-   button(label..': '..self[key]..(self._pinEdit==key and ' |'or ''),function()self._pinEdit=key;love.keyboard.setTextInput(true)end)
+   button(Strings(label)..': '..self[key]..(self._pinEdit==key and ' |'or ''),function()self._pinEdit=key;love.keyboard.setTextInput(true)end)
   end
-  button(self._pinAdvanced and 'ERWEITERTE VERBINDUNG AUSBLENDEN' or 'ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY',function()self._pinAdvanced=not self._pinAdvanced end)
+  button(self._pinAdvanced and 'HIDE ADVANCED CONNECTION' or 'ADVANCED CONNECTION · LAN / CUSTOM RELAY',function()self._pinAdvanced=not self._pinAdvanced end)
   if self._pinAdvanced then
   edit('IP / Port','_pinAddress','127.0.0.1:7777')
-  button('ONLINE / LAN · DIREKT HOSTEN',function()online(self,true,false)end)
-  button('ONLINE / LAN · VERBINDEN',function()online(self,false,false)end)
-  text('Direkt über UDP 7777. Im Internet muss der Host den Port freigeben.')
-  edit('Eigener Relay-Server','_pinRelay','127.0.0.1:7781')
-  edit('Raumcode','_pinCode','')
-  button('ONLINE · RAUM ERSTELLEN',function()online(self,true,true)end)
-  button('ONLINE · RAUM BEITRETEN',function()online(self,false,true)end)
-  text('Eigener Relay: ausgehende Verbindung · aktives ModCompass-Konto nötig.')
+  button('ONLINE / LAN · HOST DIRECTLY',function()online(self,true,false)end)
+  button('ONLINE / LAN · CONNECT',function()online(self,false,false)end)
+  text('Direct UDP on port 7777. Internet hosts must forward this port.')
+  edit('Custom relay server','_pinRelay','127.0.0.1:7781')
+  edit('Room code','_pinCode','')
+  button('ONLINE · CREATE ROOM',function()online(self,true,true)end)
+  button('ONLINE · JOIN ROOM',function()online(self,false,true)end)
+  text('Custom relay: outgoing connection · active ModCompass account required.')
   end
-  text('Bildfilter, Pixelmaßstab und Schnellstände: Esc im Spiel.')
-  text('Spieler 1: Pfeile / X / Z / Enter · Spieler 2: WASD / F / G / Tab')
-  text('Controller bleiben ihrem Spieler fest zugeordnet.')
+  text('Image filters, pixel scale and quick states: Esc during play.')
+  text('Player 1: arrows / X / Z / Enter · Player 2: WASD / F / G / Tab')
+  text('Controllers stay assigned to their player.')
   if self._pinNotice then text(self._pinNotice,self.hintFont,RI.palette().warning)end
   return y-top
  end

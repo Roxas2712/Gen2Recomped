@@ -23,9 +23,9 @@ function M.install(RI)
   local info=Versions.info(version)
   self._gameModsActions={};self._gameModsDrawn=version
   self._gameModsTop=y
-  local function text(value,xx,yy,ww,font,color)
+  local function text(value,xx,yy,ww,font,color,raw)
    g.setFont(font or self.hintFont);U.col(color or P.detail)
-   g.print(U.ellipsize(font or self.hintFont,L(value),ww),xx,yy)
+   g.print(U.ellipsize(font or self.hintFont,raw and value or L(value),ww),xx,yy)
   end
   local function paragraph(value,yy,color)
    g.setFont(self.hintFont);U.col(color or P.detail)
@@ -65,7 +65,7 @@ function M.install(RI)
   local installed,available=cache.installed,cache.available
   self._gameModsShown=self._gameModsShown or {}
   local shown=self._gameModsShown[version]or 3
-  text(Strings('Installed for this game · %d',#installed),x,y,w,self.stateFont,P.green)
+  text(Strings('Installed for this game · %d',#installed),x,y,w,self.stateFont,P.green,true)
   y=y+self.stateFont:getHeight()+10*s
   if #installed==0 then y=y+paragraph('No mods installed for this game yet.',y)
   else
@@ -75,8 +75,8 @@ function M.install(RI)
      U.roundedCard(x,y,w,hh,10*s)
      local toggleLabel=row.enabled and'DISABLE'or'ENABLE'
      local bw=math.min(w*.42,math.max(110*s,self.hintFont:getWidth(L(toggleLabel))+24*s));local tw=w-bw-38*s
-     text(mod.name or mod.id,x+12*s,y+10*s,tw,self.stateFont,P.ink)
-     text('v'..tostring(mod.version or '?')..' · '..L(row.enabled and 'ENABLED HERE'or'DISABLED HERE'),x+12*s,y+40*s,tw,self.hintFont,row.enabled and P.green or P.warning)
+     text(mod.name or mod.id,x+12*s,y+10*s,tw,self.stateFont,P.ink,true)
+     text('v'..tostring(mod.version or '?')..' · '..L(row.enabled and 'ENABLED HERE'or'DISABLED HERE'),x+12*s,y+40*s,tw,self.hintFont,row.enabled and P.green or P.warning,true)
      action('toggle',toggleLabel,x+w-bw-12*s,y+20*s,bw,mod)
     end
     y=y+hh+8*s
@@ -94,7 +94,7 @@ function M.install(RI)
   if state then
    local value=Strings(state.phase=='install'and'Installing %s…'or'Downloading %s…',state.title or state.id)
    if state.phase~='install'then value=value..string.format(' · %.1f MB',(state.bytes or 0)/1048576)end
-   text(value,x,y,w-110*s,self.hintFont,P.link)
+   text(value,x,y,w-110*s,self.hintFont,P.link,true)
    action('cancel','CANCEL',x+w-math.min(w,100*s),y,math.min(w,100*s));y=y+44*s
   end
   local busy=self._communityLatestJob or self._communityDownload or self._profileApplying
@@ -112,8 +112,8 @@ function M.install(RI)
      -- This also queues the existing bounded original-manifest resolution.
      require('src.import.ModCatalogue').cover(self,entry,xx,yy,cw,coverH,.8)
      text(row.weekly and'MOD OF THE WEEK'or'FOR THIS GAME',xx+12*s,yy+coverH+8*s,cw-24*s,self.hintFont,row.weekly and P.gold or P.link)
-     text(entry.title or entry.id,xx+12*s,yy+coverH+30*s,cw-24*s,self.stateFont,P.ink)
-     text(entry.summary or'',xx+12*s,yy+coverH+36*s+self.stateFont:getHeight(),cw-24*s)
+     text(entry.title or entry.id,xx+12*s,yy+coverH+30*s,cw-24*s,self.stateFont,P.ink,true)
+     text(entry.summary or'',xx+12*s,yy+coverH+36*s+self.stateFont:getHeight(),cw-24*s,nil,nil,true)
      local status=Community.compatibility(entry,version)
      local badge=status=='MANIFEST MATCH'and'GAME SUPPORT DECLARED'or entry.catalogueId and not entry._communityResolved and'CHECKING COMPATIBILITY'or'COMPATIBILITY NOT VERIFIED'
      text(badge,xx+12*s,yy+cardH-86*s,cw-24*s,self.hintFont,P.warning)
