@@ -31,8 +31,8 @@ bytes when returning its width.
   identical checksums. Graphics calls were no-ops; this measures text
   processing and dispatch, **not GPU performance, frame rate or visual parity**.
 
-No mod files change. This work does not supply Gen1's separate TTF font
-configuration contract or qualify all fonts, menus or final release packages.
+No mod files change. These CPU checks do not qualify all fonts, menus or
+final release packages.
 
 ## Source text commands
 
@@ -54,3 +54,30 @@ native typewriter ticks and line wrapping. The private real-Crystal-font
 comparison reproduces the `#MON` mismatch on main `6b164d96` and matches Gen1
 after the change for eight sampled labels. This remains CPU glyph-dispatch
 evidence, not final-window acceptance.
+
+## Optional Gen1 TTF records
+
+The engine accepts `mod.content.font:register("ttf", {})` and routes its
+merged `data.font.ttf` record through the native Font and TextBox pipeline.
+Supported fields match Gen1: `file`, `size`, `spacing`, `yOffset`, `bold`
+and `tiles` (UTF-8 characters or a list of charmap sequences). The all-optional
+schema branch is closed so malformed pages cannot pass as TTF records.
+
+The default is the same unmodified Plain Pixel 0.009 font pinned by the Gen1
+reference. It rasterizes at DPI 1 with monochrome hinting and nearest
+filtering; native atlas text stays the default. Unicode characters use
+`Font.TTF_BASE + codepoint`, multi-character charmap ligatures retain tiles,
+and explicit `tiles` entries preserve single-character tile mappings.
+Direct border-code drawing remains on the atlas. Measurements, wrapping and
+typewriter glyphs use the selected font's advances. Reload/removal retires
+its glyph and metric caches; a failed font load logs and retains atlas text.
+
+The native style and translation paths remain available. A selected TTF owns
+its text glyphs; without it, the existing translation-service fallback still
+handles characters missing from the atlas. `Font.ttfActive()` reports the
+actual successful load, rather than the presence of a configuration table.
+
+`tests/engine/font_ttf_contract.lua` exercises the actual Font/TextBox and SDK
+merge with synthetic font I/O. Real raster and final-window checks are
+separate acceptance requirements; passing this contract alone is not a
+claim of complete visual parity.

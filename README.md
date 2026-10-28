@@ -646,6 +646,10 @@ Upstream Gen2Recomped is by **Cedric / UNDERdecodedHD**, based on
 and development work. Other contributors retain their applicable credits
 and rights. See [NOTICE.md](NOTICE.md) for the ownership distinction.
 
+The bundled "Plain Pixel Font" by Douglas Vautour (Burpy Fresh) is licensed
+under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+See its [source and version notice](assets/fonts/plainpixel/README.md).
+
 ## Licence in one paragraph
 
 Licensing depends on the provenance and existing grants for each component.
