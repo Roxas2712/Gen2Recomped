@@ -1,5 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
--- Borrow the native ball painter/timeline; source artwork has its own shader.
+-- Borrow native opening effects; source renderers paint their own ball cell.
+-- A base call inside the native whole-layer boundary still borrows that layer.
 local Battle=require('src.core.game3.battle')
 local Coords=require('src.core.game3.battle.anim_coords')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
@@ -65,7 +66,7 @@ end
 local function draw()
  if Boundary.active('battle.ball.draw')then return Boundary.invoke('battle.ball.draw')end
  local screen=Battle._screen();if not screen then return false,'no admitted native battle'end
- return require('src.battle.Gen3Battle').drawBall(screen)
+ return require('src.battle.Gen3Battle').drawBallEffects(screen)
 end
 M.draw=draw
 function M._nativeDraw(screen,body)
