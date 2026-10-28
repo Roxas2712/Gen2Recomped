@@ -29,6 +29,10 @@ function View.bind(screen)
     enemyIndex = function() return indexOf(screen.enemyParty, screen.enemy and screen.enemy.mon) end,
     over = function() return screen.result ~= nil or screen.dead == true or screen._gen2Complete == true end,
     outcome = function() return screen.result end,
+    -- The controller increments once per actual round, before turn-start
+    -- observers, including link participants and spectators. A source query
+    -- must not start a round or initialize checkpoint/persistent state.
+    turn = function() return screen.turnCount or 0 end,
     battleType = function() return screen.battleType end,
     trainer = function() return screen.trainer end,
     tutorial = function() return screen.demo or screen.dudeDemo or screen.pokedudeDemo end,

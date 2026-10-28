@@ -20,7 +20,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     local model=c.battle.battle
     local rows=mod.exports.rows[c.battle]
     if not rows then rows={};mod.exports.rows[c.battle]=rows end
-    rows[#rows+1]={name=c.user.mon.nickname,love=model.rng(16),
+    rows[#rows+1]={name=c.user.mon.nickname,turn=model.turn,love=model.rng(16),
      cart=model.random(256),roller=Model.roller(model)(255)}
    end)
   ]],
@@ -61,7 +61,8 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  T.same(rows[a],rows[s],'spectator observes the same source RNG results')
  for _,battle in ipairs(roles)do
   T.eq(#(rows[battle]or{}),4,'every actual move callback reads all three source RNG domains')
-  for _,row in ipairs(rows[battle]or{})do
+  for index,row in ipairs(rows[battle]or{})do
+   T.eq(row.turn,math.floor((index-1)/2)+1,'actual participant/spectator moves observe the same native round')
    T.check(row.love>=1 and row.love<=16,'source LOVE call retains its positive range')
    T.check(row.cart>=0 and row.cart<256,'source random retains its byte range')
    T.check(row.roller>=0 and row.roller<255,'source roller retains its nonzero-byte-index range')
