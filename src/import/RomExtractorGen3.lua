@@ -419,7 +419,10 @@ end
 function RomExtractorGen3:readText(off, maxBytes, spacers, structured, opts)
   -- Existing RS imports pass dialect options in the fourth slot. That path
   -- stays unstructured; IR callers can additionally supply fifth-slot options.
-  if type(structured) == 'table' then opts, structured = structured, false end
+  if type(structured) == 'table' then
+    opts = structured
+    structured = opts.structured == true
+  end
   local map = self:charmap()
   local out = {}
   local ir, pending, flush, node
@@ -5939,6 +5942,13 @@ function RomExtractorGen3:extractConstants()
     end
   end
 
+  local helpFacts=require('src.import.Gen3HelpFacts')
+  local helpEdition=type(self.version)=='table'and self.version.id or self.version
+  if helpFacts.supports(helpEdition)then
+    local help,why=helpFacts.extract(self)
+    constants.gen3Help=help
+    if not help then Logger.warn('gen3: native Help unavailable: %s',why)end
+  end
   -- kept on the extractor so later stages share one numbering
   self._speciesIds, self._moveIds = speciesIds, moveIds
   self._constants = constants
@@ -36584,7 +36594,8 @@ function RomExtractorGen3:animScriptRead(entry, branchCtx, visualLife)
               if v >= 32768 then v = v - 65536 end
               args[i] = v
             end
-            local task = { fn = fn - 0x08000000, args = args, at = t, site = p }
+            local task = { fn = fn - 0x08000000, args = args, at = t, site = p,
+                           priority = rom:u8(p + 5), order = #tasks + 1 }
             tasks[#tasks + 1] = task
             visualStarted("task", task, t)
           end
@@ -39519,6 +39530,7 @@ function RomExtractorGen3:extractMoveAnimations()
       local one = {
         kind = kind, at = t.at or 0, selector = selector,
         task = taskFn(t),
+        visualTask = require('src.import.Gen3VisualTaskFacts').fromTask(kind,t),
         source = ("ROM:createvisualtask %07X (%s)")
                  :format(taskFn(t) or 0, kind),
       }
@@ -39803,9 +39815,15 @@ function RomExtractorGen3:extractMoveAnimations()
           local fn = t.fn and (t.fn - (t.fn % 2)) or -1
           if fn == (surfTask or S.TASK)
              or fn == (surfTask or S.TASK) + 0x08000000 then
-            local moveShape = self:surfWave(surfTask,
+            local decoded = self:surfWave(surfTask,
                                              t.args and (t.args[1] or 0) ~= 0)
-            if not moveShape then break end
+            if not decoded then break end
+            -- The decoder caches by function/palette. Script timestamps and
+            -- operands belong to this invocation, not that shared template.
+            local moveShape={}
+            for key,value in pairs(decoded)do moveShape[key]=value end
+            moveShape.at=t.at or 0
+            moveShape.visualTask=require('src.import.Gen3VisualTaskFacts').fromTask('surf',t)
             local record = row.record or {}
             record.surf = moveShape
             -- the coarse pass has already been past and given this move a
@@ -39813,7 +39831,7 @@ function RomExtractorGen3:extractMoveAnimations()
             -- consolation goes
             if record.shake or record.flash then coarse = coarse - 1 end
             record.shake, record.flash = nil, nil
-            record.duration = math.max(record.duration or 0, moveShape.life)
+            record.duration = math.max(record.duration or 0, moveShape.at+moveShape.life)
             row.def.anim = record
             row.record = record
             marked = marked + 1
@@ -54838,6 +54856,9 @@ RomExtractorGen3.BATTLE_TEXTBOX = {
   -- gBattleWindowTextPalette, which is BG palette 5 and is where the menu's
   -- own text colours live
   MENU_PALETTE = 0xD85600, MENU_PALETTE_BYTES = 0x20,
+  -- Emerald battle_interface.c: the four PP ink/shadow pairs are in a
+  -- separate raw sixteen-colour table, not in the compressed window palette.
+  PP_TEXT_PALETTE = 0xD85620,
   COLS = 32, ROWS = 64, WIDTH = 30,
   -- the three panels, by their first map row
   PANELS = { { key = "message", row = 14 }, { key = "action", row = 34 },
@@ -55074,7 +55095,28 @@ function RomExtractorGen3:extractBattleTextbox()
   end
 
   local constants = self._constants or {}
+  -- Preserve the cartridge's first bank for indexed presentation text.
+  -- RGB role triples alone cannot answer arbitrary foreground/shadow pairs.
+  local textboxPalette, windowPalette = {}, {}
+  for i = 0, 15 do
+    textboxPalette[i + 1] = palRaw[i * 2 + 1] + palRaw[i * 2 + 2] * 256
+    windowPalette[i + 1] = menuRaw[i * 2 + 1] + menuRaw[i * 2 + 2] * 256
+  end
+  local ppPalette, ppSource
+  local edition = type(self.version) == 'table' and self.version.id or self.version
+  if edition == 'emerald' then
+    local at = self:symbol('gPPTextPalette') or T.PP_TEXT_PALETTE
+    if type(at) == 'number' and at % 1 == 0 and at >= 0 and at + 32 <= rom.size then
+      local values = {}
+      for i = 0, 15 do values[i + 1] = rom:u16(at + i * 2) end
+      ppPalette, ppSource = values, ('ROM:gPPTextPalette %07X'):format(at)
+    end
+  end
   constants.gen3BattleTextbox = {
+    palette = textboxPalette,
+    windowPalette = windowPalette,
+    ppPalette = ppPalette,
+    ppSource = ppSource,
     images = images,
     frameImages = frameImages,
     y = T.SCREEN_Y,
@@ -55385,7 +55427,7 @@ function RomExtractorGen3:extractBallAnims(config, source)
     sounds = B.SOUNDS,
     cases = B.CASES,
     particleFrames = B.PARTICLE_FRAMES,
-    source = source or ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
+    source = source or B.SOURCE or ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
               .. "sBallColors %07X, particles %07X; the send-out off "
               .. "SpriteCB_PlayerMonSendOut_1 %07X and "
               .. "SpriteCB_ReleaseMonFromBall %07X")

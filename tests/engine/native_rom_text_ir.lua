@@ -22,6 +22,24 @@ T.eq(select('#',e:readText(0,4096,nil,true)),3)
 T.eq(nodes[1].s,'A');T.eq(nodes[2].t,'ext');T.eq(nodes[2].cmd,19);T.eq(nodes[2].args[1],72)
 T.eq(nodes[3].s,'B');T.eq(nodes[4].t,'nl');T.eq(nodes[5].s,'é');T.eq(nodes[6].code,1)
 T.eq(nodes[7].t,'para');T.eq(nodes[9].t,'scroll');T.eq(nodes[#nodes].t,'eos')
+-- Keep both native text-reader ABIs across all cartridge dialects.
+for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
+ local test=reader(source);test.version=edition
+ local a,n=test:readText(0,#source)
+ local b,m,nodes=test:readText(0,#source,nil,{structured=true})
+ T.eq(a,b);T.eq(n,m);T.eq(nodes[2].cmd,19)
+ T.eq(select('#',test:readText(0,#source,nil,{})),2)
+ local name=reader(bytes(0xBB,0xFC,0,0xBC,0xFF));name.version=edition
+ T.eq(name:readText(0,5),nil);T.eq(name:readText(0,5,nil,true),nil)
+ local allowed=edition=='ruby'or edition=='sapphire'
+ local text,used,ir=name:readText(0,5,nil,{structured=true,rsNameEnd=true})
+ T.eq(text,allowed and 'AB'or nil)
+ if allowed then
+  T.eq(used,5);T.eq(ir[2].cmd,0);T.eq(#ir[2].args,0)
+  T.eq(name:readText(0,5,nil,{rsNameEnd=true}),'AB')
+ end
+ for limit=1,4 do T.eq(name:readText(0,limit,nil,{structured=true,rsNameEnd=true}),nil)end
+end
 for _,edition in ipairs{'ruby','sapphire'}do
  local named=reader(bytes(0xBB,0xFC,0,0xBC,0xFF));named.version=edition
  local options={rsNameEnd=true}
@@ -66,11 +84,23 @@ for _,invalid in ipairs{bytes(0xFD),bytes(0xFC),bytes(0xFC,4,1,2),bytes(0xFC,0xF
  T.eq(ok,true,'malformed input is rejected without an out-of-range operand read');T.eq(value,nil)
 end
 T.eq(reader(bytes(0x53,0x54,0xFF)):readText(0,3,nil,true),'PKMN','native ligatures remain native glyphs')
-for _,glyph in ipairs{{0xF8,0,'{A_BUTTON}'},{0xF8,11,'{DPAD_LEFTRIGHT}'},{0xF9,5,'Lv'},{0xF9,6,'PP'},{0xF9,7,'ID'},{0xF9,8,'№'}}do
+for _,glyph in ipairs{{0xF8,0,'{A_BUTTON}'},{0xF8,2,'{L_BUTTON}'},{0xF8,3,'{R_BUTTON}'},
+ {0xF8,4,'{START_BUTTON}'},{0xF8,5,'{SELECT_BUTTON}'},{0xF8,11,'{DPAD_LEFTRIGHT}'},
+ {0xF9,0,'↑'},{0xF9,1,'↓'},{0xF9,2,'←'},{0xF9,3,'→'},{0xF9,4,'+'},
+ {0xF9,5,'Lv'},{0xF9,6,'PP'},{0xF9,7,'ID'},{0xF9,8,'№'},{0xF9,9,'_'},
+ {0xF9,10,'①'},{0xF9,11,'②'},{0xF9,12,'③'},{0xF9,13,'④'},{0xF9,14,'⑤'},
+ {0xF9,15,'⑥'},{0xF9,16,'⑦'},{0xF9,17,'⑧'},{0xF9,18,'⑨'},
+ {0xF9,19,'('},{0xF9,20,')'},{0xF9,21,'◎'},{0xF9,22,'△'},{0xF9,23,'✕'}}do
  local test=reader(bytes(glyph[1],glyph[2],0xFF))
  local value,_,ir=test:readText(0,3,nil,true)
  T.eq(value,glyph[3]);T.eq(ir[1].t,'tag');T.eq(ir[1].code,glyph[2]);T.eq(test:readText(0,1,nil,true),nil)
 end
+for _,code in ipairs{13,255}do
+ T.eq(reader(bytes(0xF8,code,0xFF)):readText(0,3,nil,true),nil,'unknown button control stays rejected')
+end
+T.eq(reader(bytes(0xF9,24,0xFF)):readText(0,3,nil,true),nil,'unsupported extended bank cells stay rejected')
+local header,count=Catalog.bind(e,{}, {gString_Help=0,gString_NotText=0})
+T.eq(count,1);T.neq(header.named.gString_Help,nil);T.eq(header.named.gString_NotText,nil)
 local dataStages,assetStages=Extractor.DATA_STAGES,Extractor.ASSET_STAGES
 Extractor.DATA_STAGES={'initial','later'};Extractor.ASSET_STAGES={}
 local finish=reader(source);local emitted
@@ -115,6 +145,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  catalog.edition=edition
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')))
  T.eq(Text.plain('gText_Greeting',{playerName='SOURCE'}),(plain:gsub('{PLAYER}','SOURCE')))
+ T.eq(Text._expand('{PLAYER}/{VAR1}/{RIVAL}',{stringVars={'BUFFER'}}),'NATIVE/BUFFER/RIVAL')
  data._portableScriptText={gText_Greeting={value='private VM prose'}}
  T.eq(Text.plain('gText_Greeting'),(plain:gsub('{PLAYER}','NATIVE')),'VM text does not replace native prose')
  data._romTextGeneration=3;data.romText={gText_Greeting='Native prose override'}

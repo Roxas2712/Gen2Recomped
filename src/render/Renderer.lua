@@ -1129,6 +1129,8 @@ local function endFrame(self, zones, worldZones, privateViewport)
       secondScreen = HotModules.get("src.render.SecondScreen"),
     }
     if Runtime.call("render.compose", function() return false end, self, ctx) == true then
+      local presentation=package.loaded['src.render.NativePresentation']
+      if presentation then presentation._nativeFlush(ww,wh)end
       self.worldActive = false
       self.uprightActive = false
       self.uiOverride = nil
@@ -1608,6 +1610,8 @@ local function endFrame(self, zones, worldZones, privateViewport)
   if self.gen2FrameManaged and self.gen2WindowDraw then
     self.gen2WindowDraw(viewportResult(false, ww, wh, ox, oy, vpw, vph, Sp, dpiX, dpiY))
   end
+  local presentation=package.loaded['src.render.NativePresentation']
+  if presentation then presentation._nativeFlush(ww,wh)end
 
   if battleNeedsSource and present then
     -- Snapshot the untouched finished frame into a second screen-sized canvas.

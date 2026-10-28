@@ -979,6 +979,7 @@ function StatBox.new(game, mon, onDone, change)
     screen.uiSize=function()return 240,160 end
     screen.wantsFillScale=function()return true end
   end
+  if GameVersion.isGen3()then require('src.compat.gen1.NativeModalObservation').capture(screen,game)end
   return screen
 end
 
@@ -2709,6 +2710,29 @@ end
 
 -- Only display controllers live here. Command holds, HP awards, turn rows
 -- and completion remain in updateQueue, even while a mod holds presentation.
+function BattleState:stepGen3Ball(anim)
+  anim:update()
+  if anim.sound then
+    require("src.core.Sound").playId(self.data, anim.sound)
+  end
+  -- the trainer is gone by the time his Pokemon is out of the ball
+  -- ...unless the trainer's own walk-off is still running (#407): the
+  -- cartridge frees that sprite at the end of the fifty frames, not when
+  -- the ball opens, and cutting it short hides most of the throw
+  if anim.sendOut == "player" and self.showPlayerBack
+      and anim.phase ~= "throw"
+      and not (self.backWalkOff and self.backWalkOff > 0) then
+    self.showPlayerBack = false
+    self:slidePic("back")
+  end
+  if anim:isDone() then
+    self.gen3BallPlaying = false
+    -- a caught Pokemon leaves the ball resting on screen through the text,
+    -- exactly as the Game Boy chain does
+    if not anim.caught then self.gen3Ball = nil end
+  end
+end
+
 function BattleState:updateMovePresentation()
   -- HOENN'S PARTICLES TICK BEFORE THE QUEUE'S OWN HOLD, and the whole
   -- reason the animations looked broken is that they used to tick after it.
@@ -2738,27 +2762,9 @@ function BattleState:updateMovePresentation()
   -- reason: its frames are counted where the hold is counted, or it would
   -- stand still for exactly as long as it is meant to be moving.
   if self.gen3BallPlaying and self.gen3Ball then
-    local anim = self.gen3Ball
-    anim:update()
-    if anim.sound then
-      require("src.core.Sound").playId(self.data, anim.sound)
-    end
-    -- the trainer is gone by the time his Pokemon is out of the ball
-    -- ...unless the trainer's own walk-off is still running (#407): the
-    -- cartridge frees that sprite at the end of the fifty frames, not when
-    -- the ball opens, and cutting it short hides most of the throw
-    if anim.sendOut == "player" and self.showPlayerBack
-        and anim.phase ~= "throw"
-        and not (self.backWalkOff and self.backWalkOff > 0) then
-      self.showPlayerBack = false
-      self:slidePic("back")
-    end
-    if anim:isDone() then
-      self.gen3BallPlaying = false
-      -- a caught Pokemon leaves the ball resting on screen through the text,
-      -- exactly as the Game Boy chain does
-      if not anim.caught then self.gen3Ball = nil end
-    end
+    local capture=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+    if capture then capture._nativeBallStep(self,self.gen3Ball,BattleState.stepGen3Ball)
+    else self:stepGen3Ball(self.gen3Ball)end
   end
 end
 
@@ -2772,6 +2778,8 @@ function BattleState:updateQueuePresentation(textOnly)
   if self._gbaEffectPresentation
       and require("src.battle.Gen3EffectPresentation").update(self) then return true end
   self:updateMovePresentation()
+  local capture=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+  if capture and capture._holdsNativeQueue(self)then return true end
   local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
   if source and source._holdsNativeQueue(self) then return true end
   -- a queued hold (faint slide, hit blink) counts down before the next row
@@ -2813,6 +2821,15 @@ function BattleState:updateQueuePresentation(textOnly)
     self.expFilling = nil
   end
   return false
+end
+
+function BattleState:runQueueAction(item)
+  self.nextInsert=0
+  item.fn()
+  self.nextInsert=nil
+  self.current=nil
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeFinish(self,item)end
 end
 
 -- Queue completion is part of the Gen2 admission boundary: observers see the
@@ -2858,10 +2875,19 @@ function BattleState:advanceQueue()
     return false
   end
   if item.fn then
-    self.nextInsert = 0 -- sayNext inserts right after this item
-    item.fn()
-    self.nextInsert = nil
-    self.current = nil
+    local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+    if item._sourceCatchStep and GameVersion.isGen3()then sequence=package.loaded['src.core.game3.battle.catch_seq']end
+    if sequence and(item._sourceSwitchStep or item._sourceCatchStep)then
+      local consumed=false
+      local ok,why=pcall(sequence._nativeStep,self,item,function()
+        consumed=true
+        self:runQueueAction(item)
+        return true
+      end)
+      -- A held or failing source callback cannot discard a native action.
+      if not consumed then table.insert(self.queue,1,item)end
+      if not ok then error(why,0)end
+    else self:runQueueAction(item)end
     return true
   end
   if item.ui then
@@ -3131,6 +3157,7 @@ function BattleState:updateQueue()
   end
   local typing=Gen2Queue.typing(self)
   if self:updateQueuePresentation(typing) then return true end
+  if GameVersion.isGen3() and require('src.battle.Gen3VoiceoverPresentation').gate(self) then return true end
   if self.animPlaying and not typing then
     self.animPlayer:update()
     if self.animPlayer.pollEffects and self.applyAnimEffect then
@@ -4070,6 +4097,7 @@ function BattleState:enter()
       self.enemySendingOut = false
       self:startGrowIn(self.enemy)
     end)
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='opponent_sendout'end
     self:shinyAnimAppend(self.enemy, true)
     queueEnemyCry()
   elseif self.kind == "link" then
@@ -4083,6 +4111,7 @@ function BattleState:enter()
       self.enemySendingOut = false
       self:startGrowIn(self.enemy)
     end)
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='opponent_sendout'end
     self:shinyAnimAppend(self.enemy, true)
     queueEnemyCry()
   end
@@ -4122,6 +4151,7 @@ function BattleState:enter()
     -- then the POOF plays and the mon appears with its cry
     -- (SendOutMon: message -> AnimateSendingOutMon -> PlayCry)
     table.insert(self.queue, { anim = "POOF_ANIM", attackerIsPlayer = false })
+    if GameVersion.isGen3()then self.queue[#self.queue]._sourceIntroKind='player_throw'end
     self:shinyAnimAppend(self.player, false)
     self:act(function()
       self.sendingOut = false
@@ -4148,6 +4178,8 @@ function BattleState:enter()
       self:abilitySwitchIn(self.player)
     end })
   end
+  local intro=GameVersion.isGen3()and package.loaded['src.core.game3.battle.intro_seq']
+  if intro then intro._nativeBind(self)end
   Runtime.emit("battle.started", {
     battle = self, kind = self:battleKind(),
     trainerId = self.trainer and self.trainer.id,
@@ -4159,6 +4191,14 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  local intro=package.loaded['src.core.game3.battle.intro_seq']
+  if intro then intro._nativeRelease(self)end
+  local tasks=package.loaded['src.core.game3.battle.anim_tasks']
+  if tasks then tasks._nativeExit(self)end
+  local capture=package.loaded['src.core.game3.battle.catch_seq']
+  if capture then capture._nativeRelease(self)end
+  local sequence=package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeRelease(self)end
   require('src.battle.Gen3LevelUpStreaks').release(self)
   if self.rsBattlePanel then self.rsBattlePanel:release();self.rsBattlePanel=nil end
   -- Teachy TV temporarily replaces the player's party exactly like
@@ -4370,6 +4410,10 @@ end
 -- simply stayed gone -- for as long as the opponent took to choose.
 function BattleState:tickFx()
   self.frame = self.frame + 1
+  if GameVersion.isGen3() then
+    require('src.battle.Gen3SelectionPresentation').update(self)
+    require('src.battle.Gen3VoiceoverPresentation').update(self)
+  end
   self:updateFx()
 end
 
@@ -5206,7 +5250,7 @@ function BattleState:queuePokedudeVoices(indices)
       pd.voiceDone[index] = true
       local text = self:pokedudeVoice(index)
       if type(text) == "string" and text ~= "" then
-        self:say(text)
+        require('src.battle.Gen3VoiceoverPresentation').queue(self,text,pd.lesson=='status'and index==2)
         queued = true
       end
     end
@@ -6305,6 +6349,7 @@ function BattleState:switchPlayerInto(pos, newMon)
   self:markParticipant()
   self.sendingOut = true
   self:sayNext(self:sendOutText(incoming.name))
+  local sendMessage=self.queue[self.nextInsert]
   self:animNext("POOF_ANIM", false)
   self:shinyAnim(incoming, false)
   self:actNext(function()
@@ -6314,9 +6359,12 @@ function BattleState:switchPlayerInto(pos, newMon)
     require("src.core.Sound").playCry(self.data, incoming.mon.species)
     HeldItems.onEntry(self, incoming)
   end)
+  local sendEntry=self.queue[self.nextInsert]
   -- ABILITYEFFECT_ON_SWITCHIN, after the send-out and its cry: an
   -- INTIMIDATE drops the foe's attack now, before the free move below
   self:actNext(function() self:abilitySwitchIn(incoming) end)
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeBind(self,pos,sendMessage,sendEntry,self.queue[self.nextInsert])end
   return incoming
 end
 
@@ -8910,7 +8958,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
 
   -- fully custom resolution (Bide, Roar/Teleport, Mimic)
   if record and record.perform then
-    record.perform(ctx)
+    EffectRegistry.callEffect(ctx,'perform',record.perform)
     return
   end
 
@@ -8933,7 +8981,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       self:sayNext(self:romText("_AttackMissedText", "%s's\nattack missed!", displayName(user)))
       return
     end
-    local msgs = record.run(ctx)
+    local msgs = EffectRegistry.callEffect(ctx,'primary',record.run)
     -- SLEEP TALK names a move rather than doing something itself: the record
     -- picks one of the user's OTHER moves and this is where it is used.  The
     -- call is `isCalled`, so it costs no PP and cannot recurse into another
@@ -11560,7 +11608,7 @@ function BattleState:finish()
     local text = index and self:pokedudeVoice(index)
     if type(text) == "string" and text ~= "" then
       pd.voiceDone[index] = true
-      self:say(text)
+      require('src.battle.Gen3VoiceoverPresentation').queue(self,text,false)
       self.phase = BattleQueuePhase.name()
       self.afterQueue = "finish"
       return
@@ -12335,6 +12383,11 @@ function BattleState:gen3AnimSquash(battler)
 end
 
 function BattleState:drawBattlerPic(battler, x, y, scale)
+  if GameVersion.isGen3() then
+    local selection=require('src.battle.Gen3SelectionPresentation')
+    if selection.hidden(self,battler) then return end
+    y=y+selection.offset(self,'mon',battler)
+  end
   if self:gen3AnimMonBgHidden(battler) then return end
   local angle, rise = self:gen3AnimRotate(battler)
   local sqx, sqy = self:gen3AnimSquash(battler)
@@ -13784,6 +13837,8 @@ Gen2Queue.install(BattleState)
 -- Source wrappers observe the real GBA owner. Unrequested modules and other
 -- generations keep the direct native path; there is no additional clock.
 do
+  local unpack_=table.unpack or unpack
+  local function pack(...)return{n=select('#',...),...}end
   local update, draw, field, exit, enter = BattleState.update, BattleState.draw,
     BattleState.drawBattleField, BattleState.exit, BattleState.enter
   local Clock = require('src.battle.PresentationClock')
@@ -13817,7 +13872,9 @@ do
     local anim = source and package.loaded['src.core.game3.battle.anim']
     if anim then
       return Clock.run(self, dt, function()
-        return source._nativeUpdate(self, dt, update)
+        local result=pack(source._nativeUpdate(self, dt, update))
+        anim._nativeAfterUpdate(self)
+        return unpack_(result,1,result.n)
       end)
     end
     if source then return source._nativeUpdate(self, dt, update) end
@@ -13838,6 +13895,14 @@ do
     if source then source._nativeExit(self) end
     return exit(self)
   end
+end
+
+-- Source capture callbacks borrow the actual native request builder.
+local throwBallNative=BattleState.throwBall
+function BattleState:throwBall(ball)
+  local source=GameVersion.isGen3()and package.loaded['src.core.game3.battle.catch_seq']
+  if source then return source._nativeBegin(self,throwBallNative,ball)end
+  return throwBallNative(self,ball)
 end
 
 return BattleState

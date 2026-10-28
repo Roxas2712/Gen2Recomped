@@ -189,6 +189,7 @@ function Gen3BagMenu.new(game, opts)
   opts = opts or {}
   local self = setmetatable({}, Gen3BagMenu)
   self.game = game
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.onCancel = opts.onCancel
   self.onSell = opts.onSell
   -- opened mid-battle: the pick USES the item there and then, against the

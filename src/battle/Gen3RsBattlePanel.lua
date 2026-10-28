@@ -16,7 +16,7 @@ function M.new(battle)
   local self=setmetatable({context=context,spec=M.available(battle)},M)
   self.font=context.load('src.ui.game3.frlg_font')
   self.chrome=context.load('src.ui.game3.chrome')
-  self.cursor=context.load('src.ui.game3.rs.menu_cursor')
+  self.cursor=require('src.ui.Gen3RsMenuCursor').forGame(battle.game)
   self.menuColors={fg=color(0x2529),shadow=color(0x675a),bg={0,0,0,0}}
   self.messageColors={fg=color(self.spec.palette[2]),shadow=color(self.spec.palette[9]),bg={0,0,0,0}}
   self.images={};for k,path in pairs(self.spec.images)do self.images[k]=require('src.render.Assets').image(path)end
@@ -33,13 +33,12 @@ function M:draw(battle)
   if not M.handles(battle)then return false end
   local mode=battle.phase=='menu'and'action'or(battle.phase=='moveSelect'or battle.phase=='mimicSelect')and'moves'or'message'
   local g=love.graphics;local F=self.font
-  g.setColor(1,1,1,1);g.draw(self.images[mode],0,112)
-  self.chrome.setFrameType(math.max(0,((battle.game.save.options or {}).gen3Frame or 1)-1))
+  require('src.battle.Gen3BattleFrames').panel(battle,mode)
+  require('src.battle.Gen3BattleFrames').rsFrames(battle,mode,self)
   local function text(value,x,y,colors,opts)
     opts=opts or {};opts.colors=colors or self.menuColors;F.draw(tostring(value or ''),x,y,opts)
   end
   if mode=='action'then
-    self.chrome.userFrame(self.chrome._frameType or 0,18,15,11,4)
     if battle.gen3Safari then
       local G=require('src.battle.Gen3Safari')
       local i=0;for line in G.text(battle,'prompt'):gmatch('[^\n]+')do text(line,16,120+i*16,self.messageColors);i=i+1 end
@@ -61,8 +60,6 @@ function M:draw(battle)
     self.cursor.draw(144+46*(cursor%2),120+16*math.floor(cursor/2),42)
     for i=1,4 do local c=(i-1)%2;local r=math.floor((i-1)/2);text(labels[r+1][c+1],144+46*c,120+16*r)end
   elseif mode=='moves'then
-    self.chrome.userFrame(self.chrome._frameType or 0,1,15,20,4)
-    self.chrome.userFrame(self.chrome._frameType or 0,23,15,6,4)
     local chooser=(battle.menuBattler and battle:menuBattler())or battle.player
     local moves=battle.phase=='mimicSelect'and battle.mimicMoves or chooser and chooser.curMoves or {}
     local selected=battle.phase=='mimicSelect'and battle.mimicIndex or battle.moveIndex or 1

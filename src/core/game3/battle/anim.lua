@@ -5,8 +5,16 @@ local Battle=require('src.core.game3.battle')
 local Coords=require('src.core.game3.battle.anim_coords')
 local Clock=require('src.battle.PresentationClock')
 local Scope=require('src.render.GraphicsScope')
+local Boundary=require('src.compat.gen1.ScriptBoundary')
+local Call=require('src.compat.gen1.SourceCall')
 local Ids=require('src.compat.gen1.BattleIds')
 local A={Coords=Coords,ENEMY_MON={x=176,y=40},PLAYER_MON={x=72,y=80}}
+function A.stage()
+ return require('src.core.game3.battle.stage').current(require('src.compat.gen1.SourceCall').owner(A,'stage'))
+end
+function A.drawParticles(lo,hi)
+ return require('src.core.game3.battle.particle_pass').draw(lo,hi,require('src.compat.gen1.SourceCall').owner(A,'drawParticles'))
+end
 local current
 local numeric={ox=true,oy=true,alpha=true,scale=true,sx=true,sy=true,rotation=true,
   darken=true,flash=true,displayHp=true,displayMaxHp=true,displayLevel=true,displayExp=true}
@@ -206,16 +214,35 @@ function A._holdsNativeQueue(screen)
   return actual==screen and clip~=nil and clip.player==screen.gen3Anim
     and clip.serial==screen.gen3Anim.presentationSerial and screen.gen3AnimPlaying==true
 end
-function A.update(dt)
+local publicUpdateStep='source.animation.public'
+local function update(dt)
+  if Boundary.active('battle.animation.update')then return Boundary.invoke('battle.animation.update')end
   local _,screen=context()
   if not screen or not Clock.active(screen)then return false,'animation update belongs to its native battle phase'end
   if screen.game.stack:top()~=screen then return false,'native battle is covered by another state'end
-  A._nativeStep(screen,dt)
-  if Battle._screen()~=screen or screen.game.stack:top()~=screen then return false,'native battle admission retired'end
-  -- Use the owner's dt, not a second caller-provided clock. The original
-  -- native update and this hold consume the same once-only display steps.
-  require('src.core.Game3')._withCallbackOwner(nil,screen.updatePresentation,screen,Clock.delta(screen))
-  return true
+  return Clock.once(screen,publicUpdateStep,function()
+    A._nativeStep(screen,Clock.delta(screen))
+    if Battle._screen()~=screen or screen.game.stack:top()~=screen then return false,'native battle admission retired'end
+    -- Explicit source holds and the native body share the same display steps.
+    require('src.core.Game3')._withCallbackOwner(nil,screen.updatePresentation,screen,Clock.delta(screen))
+    return true
+  end)
+end
+A.update=update
+-- Native frames also notify decoration-only wrappers. If a source update
+-- already called its base, do not invoke the public wrapper a second time.
+-- A wrapper's base here borrows completed presentation work, never another
+-- native frame or command queue.
+function A._nativeAfterUpdate(screen)
+  if A.update==update or not Clock.active(screen)or Clock.called(screen,publicUpdateStep)then return end
+  local _,actual=context()
+  if actual~=screen or screen.game.stack:top()~=screen then return end
+  return Clock.once(screen,publicUpdateStep,function()
+    return Boundary.dispatch('battle.animation.update',function()
+      if Battle._screen()~=screen or screen.game.stack:top()~=screen then return false,'native battle admission retired'end
+      A._nativeStep(screen,Clock.delta(screen));return true
+    end,function()return Call.call(A,'update',Clock.delta(screen))end)
+  end)
 end
 function A.launchMove(moveId,opts)
   opts=opts or{};local d,screen=context()
