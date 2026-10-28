@@ -63,6 +63,8 @@ end
 function Gen3Credits.new(game, onDone)
   local record = Gen3Credits.record(game)
   if not record then return nil end
+  local Emerald=require('src.ui.Gen3EmeraldCredits')
+  if Emerald.available(game)then return Emerald.new(game,onDone)end
   local Rs = require('src.ui.Gen3RsCredits')
   if Rs.available(game) then return Rs.new(game,onDone) end
   -- FireRed's roll is a scripted scene over its own maps

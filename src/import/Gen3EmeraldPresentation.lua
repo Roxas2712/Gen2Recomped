@@ -34,6 +34,7 @@ function Bridge.missing()
     or type(s.speciesIds)~='table'or not s.speciesIds.SPECIES_GROUDON or not s.speciesIds.SPECIES_KYOGRE then
     absent[#absent+1]='<emerald:native-boot-identities>'
   end
+  for _,path in ipairs(require('src.import.Gen3EmeraldCreditsAssets').missing())do absent[#absent+1]=path end
   return absent
 end
 
@@ -67,6 +68,7 @@ function Bridge.extract(extractor)
   constants.gen3EmeraldPresentation={version='emerald',format=1,songIds=songs,
     speciesIds={SPECIES_GROUDON=assert(species.SPECIES_GROUDON),SPECIES_KYOGRE=assert(species.SPECIES_KYOGRE)},
     title=paths[1],intro=paths[2]}
+  require('src.import.Gen3EmeraldCreditsAssets').extract(extractor)
   local audio=assert(extractor._audio)
   audio.special=audio.special or {}
   for role,name in pairs({intro='MUS_INTRO',introBattle='MUS_INTRO_BATTLE',title='MUS_TITLE'})do
