@@ -1349,7 +1349,9 @@ local function markerFor(version)
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:rs-forced-floors-v1:rs-battler-coords-v1:'
   end
-  if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  if GameVersion.generation(version)==3 then
+    revision=revision..'gba-field-move-art-v1:gba-door-metadata-v'..require('src.import.Gen3DoorMetadata').REVISION..':'
+  end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then
     revision=revision..'frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'
