@@ -13,7 +13,48 @@ major update through fork PR61, preserving the fork's native interfaces.
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
-Current public preview: `ed564cb54fb42f1ea5c977ceb38fe883f3ceae07`, merged
+## Current checkpoint, 29 October 2026
+
+The fetched fork main is `43abf33ddbe5e04b2043d21a2816c32eb5a6b4c9`,
+including native RNG PR336. That merge has 88 successful/skipped exact-head
+checks and an independently qualified identical tree: 934/934 engine suites,
+4/4 SDK suites and all available official ROM-free tiers. It is integrated
+into the current native battler development branch.
+
+The newest release by publication time observed through GitHub's release
+API is `desktop-test-20261028.3`, RetroRecomped 0.8.57, published
+28 October at 20:02:55 UTC from `90a3b093e62d85440d0a1b8288e30e0caf3cc358`.
+`native-preview-20261028.2` is a separate earlier preview. Neither release
+is qualified here as containing all subsequent main/development changes.
+No release assets were updated during this checkpoint.
+
+Friendship PR341 and round-clock PR346 remain development work pending
+their complete current-tree merge gates. The public live round clock has
+400 focused checks, actual native link observations have 210 and semantic
+checkpoint observations have 57. The
+[battler data/presentation extraction](native-battler-construction.md),
+PR349, has 691 plain-Lua checks without LÖVE and 972 checks through actual
+wild constructors and switches across the 18 registered editions.
+Full source-model `Battle.new`, the standalone turn/event API and arbitrary
+writable model fields remain open; these foundations do not close them.
+
+Recent unchanged-VASC evidence includes a real 80,842,206-byte sprite-pack
+download, native save/restart, verified mount and decoding all 120 images
+in that pack. The drawn Cyndaquil follower selected the mod's bundled
+flame-card runtime, so this does not prove downloaded-pack actor selection
+or every package. A Metal native victory spent three PP and awarded EXP
+135 to 151; a later image was already another encounter, so stable world
+return still needs visible proof. The latest OpenGL attempt reached both
+camera selections and battle admission but exceeded its story deadline
+before an accepted attack. It is retained as a failed attempt.
+
+Matched Gen1/fork visual and conditional menu coverage, every relevant
+download path, full native source-model semantics, and exact Windows/macOS
+package acceptance remain required. The ledger below retains historical
+source-specific evidence; older “remaining” entries are not a fresh audit
+of current main and older previews are not the current release.
+
+Historical public preview: `ed564cb54fb42f1ea5c977ceb38fe883f3ceae07`, merged
 as fork PR97 (`c79921ff`, identical tree `a7122aa5`). The existing
 `native-preview-20261025.1` Windows/macOS assets were updated in place. All
 six served hashes, binary manifest, release text and unchanged original tag
