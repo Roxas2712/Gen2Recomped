@@ -3043,7 +3043,7 @@ local function ballSheet(battle, key)
   return (ok and img) or nil
 end
 
-function Gen3Battle.drawBall(battle)
+local function drawNativeBall(battle)
   local record, anim = Gen3Battle.ballRecord(battle)
   if not anim then return end
   local g = love.graphics
@@ -3151,6 +3151,12 @@ function Gen3Battle.drawBall(battle)
   g.setColor(1, 1, 1, 1)
 end
 
+function Gen3Battle.drawBall(battle)
+  local source=package.loaded['src.core.game3.battle.ball_open']
+  if source then return source._nativeDraw(battle,drawNativeBall) end
+  return drawNativeBall(battle)
+end
+
 function Gen3Battle.draw(battle)
   local g = love.graphics
   battle:drawBattleField()
@@ -3242,6 +3248,11 @@ function Gen3Battle.draw(battle)
   -- over them.  The methods dispatch back here (BattleState:drawHUDs and
   -- friends), so the implementation is still this file's; what changed is
   -- that there is now a door in front of it.
+  shaken(function()
+    local layer=package.loaded['src.core.game3.battle.level_up_streaks']
+    local draw=function()return require('src.battle.Gen3LevelUpStreaks').draw(battle)end
+    if layer then layer._nativeDraw(battle,draw)else draw()end
+  end)
   shaken(function() battle:drawHUDs(slide) end)
   -- the ball rides with the pics rather than with the windows: it is thrown
   -- across the field, and a screen shake moves the field

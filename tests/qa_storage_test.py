@@ -40,6 +40,21 @@ class CacheLifecycle(unittest.TestCase):
         path.write_bytes(b"x" * size)
         return path
 
+    def test_budget_walk_tolerates_import_replacement_between_scan_and_stat(self):
+        manager = self.manager()
+        root = (self.home / 'active-import').resolve()
+        replaced = self.payload(root / 'replaced.png')
+        retained = self.payload(root / 'retained.png')
+        original = Path.lstat
+        def replace_before_stat(path, *args, **kwargs):
+            if path == replaced:
+                path.unlink()
+            return original(path, *args, **kwargs)
+        with patch.object(Path, 'lstat', replace_before_stat):
+            observed = list(manager._walk(root))
+        self.assertEqual([path for path, _ in observed], [retained])
+        self.assertEqual(observed[0][1].st_size, retained.stat().st_size)
+
     def test_budget_walk_tolerates_a_writer_removing_a_temporary_file(self):
         folder = self.root.resolve()
         keep = self.payload(folder / "keep.log", 37)
