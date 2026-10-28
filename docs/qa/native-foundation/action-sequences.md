@@ -33,3 +33,12 @@ five GBA editions with the module absent, default, and no-op decorated. Targeted
 cases exercise actual producers, protected rows, phase/cohort loss, callback
 attribution, malformed/foreign requests and errors before/after the base call.
 Player data and private mod sources are not changed.
+
+Native code `89cc72df`, frozen `d6e85beb74`, passes all134 selected CPU
+groups including168 targeted checks. The later portable test-entry adaptation
+changes no production bytes. Older-public code `821e486e`, exact composition
+`d4055d8093`, passes all56 groups with the older native controller retained;
+only owned constructor provenance is inserted. It has no independent GPU or
+standalone dependency-chain acceptance. Previous unchanged-package Sapphire
+`567f801dd0` and FireRed `a9906a0866` qualify the predecessor action-observation
+packet, not this new sequence filter. Fork CI is pending separately.
