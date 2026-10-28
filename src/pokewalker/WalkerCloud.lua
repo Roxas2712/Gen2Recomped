@@ -152,4 +152,75 @@ function C.sync(store,restoreOnly)
  if not ok then return nil,tostring(result)end
  return result,why
 end
+
+-- Choices bind to both complete snapshots; changed/account-switched previews
+-- must be reviewed again. The normal object-store revision guard still wins.
+local function exclusive(store,fn)
+ if W.syncing then return nil,'Pokéwalker sync is already running.'end
+ local allowed,why=Policy.storeCheck(store);if not allowed then return nil,why end
+ local fs,owner=W.storage(),require('src.cloud.RetroCloud').accountId()
+ if store.kind~='retro'or store.accountId~=owner then return nil,'Connect your ModCompass account to sync the Pokéwalker.'end
+ local hub=package.loaded['src.ui.WalkerMinigames']
+ local run=hub and hub.active and hub.active.session
+ if run and run.phase~='intro'and run.phase~='results'then return nil,'Finish the active minigame before reviewing cloud progress.'end
+ local function current()
+  local yes,err=Policy.storeCheck(store)
+  if not yes or W.storage()~=fs or require('src.cloud.RetroCloud').accountId()~=owner then
+   return nil,err or 'The active account changed.'
+  end
+  return true
+ end
+ W.syncing=true;W.syncTask=coroutine.running()or'main'
+ local ok,value,err=pcall(fn,fs,owner,current)
+ W.syncing=nil;W.syncTask=nil
+ if not ok then return nil,tostring(value)end
+ return value,err
+end
+local function pair(store,current)
+ local localDoc,why=capture(store);if not localDoc then return nil,why or 'No local Pokéwalker progress to review.'end
+ local localBytes=S.encode(localDoc)
+ local raw=store.read(C.PATH);local yes,err=current();if not yes then return nil,err end
+ local remote=raw and decode(raw)
+ if not remote or remote.accountId~=store.accountId then return nil,'Invalid cloud Pokéwalker. Local progress was preserved.'end
+ return{localDoc=localDoc,localBytes=localBytes,localHash=hash(localBytes),
+   remote=remote,raw=raw,remoteHash=hash(S.encode(remote))}
+end
+function C.review(store)
+ return exclusive(store,function(_,owner,current)
+  local p,why=pair(store,current);if not p then return nil,why end
+  if p.localHash==p.remoteHash then return nil,'Pokéwalker progress is already current.'end
+  return{accountId=owner,localHash=p.localHash,remoteHash=p.remoteHash,
+   localWatts=p.localDoc.state.watts,cloudWatts=p.remote.state.watts,
+   localWalking=p.localDoc.state.walking and p.localDoc.state.walking.name,
+   cloudWalking=p.remote.state.walking and p.remote.state.walking.name}
+ end)
+end
+function C.resolve(store,preview,choice)
+ if choice~='local'and choice~='cloud'then return nil,'Choose a complete local or cloud version.'end
+ return exclusive(store,function(fs,owner,current)
+  local p,why=pair(store,current);if not p then return nil,why end
+  if type(preview)~='table'or preview.accountId~=owner
+   or preview.localHash~=p.localHash or preview.remoteHash~=p.remoteHash then
+   return nil,'Pokéwalker progress changed. Review both versions again.'
+  end
+  for _,copy in ipairs{{'local',p.localHash,p.localBytes},{'cloud',p.remoteHash,p.raw}}do
+   local path='walker/conflicts/'..copy[1]..'-'..copy[2]..'.lua'
+   local saved,err=Safety.atomicWrite(fs,path,copy[3],{decode=Safety.decodeAny})
+   if not saved then return nil,err end
+  end
+  local yes,err=current();if not yes then return nil,err end
+  local finalHash
+  if choice=='cloud'then
+   local restored,problem=restore(store,p.remote);if not restored then return nil,problem end
+   finalHash=p.remoteHash
+  else
+   local written,problem=store.write(C.PATH,p.localBytes);if not written then return nil,problem end
+   finalHash=p.localHash
+  end
+  yes,err=current();if not yes then return nil,err end
+  local written,problem=Safety.atomicWrite(fs,C.STATE,S.encode({schema=1,localHash=finalHash,remoteHash=finalHash}),{decode=Safety.decodeAny})
+  if not written then return nil,problem end
+  return choice=='cloud'and'restored'or'uploaded'
+ end)
+end
 return C

@@ -28,6 +28,16 @@ It does not introduce another account service or a ranked multiplayer mode.
   `walker/conflicts/`. No balance, catch or reward lists are merged. The object
   store's existing `If-Match`/`If-None-Match` guards reject competing writes.
   Login restoration never silently discards a locally changed walker.
+- Conflict review binds an explicit choice to the exact account and both
+  complete snapshots. Changed previews are refused. Both versions are backed
+  up before selection; no wallet, catch or reward lists are combined. The
+  native Friends & cloud page exposes review and complete-version choices.
+- Native Pokémon transfers, caught-Pokémon delivery, purchases and queued
+  events use an account-local durable intent (`walker_transfer.lua`) before
+  publishing their source-save and walker writes. A subsequent cold load
+  completes interrupted publication once. Verified source receipts prevent
+  replay over later gameplay and refuse stale cross-device returns. Corrupt
+  or independently changed files fail closed and retain their evidence.
 - Sync pauses walker mutations and is deferred while an active minigame run
   is unfinished. This synchronizes progress and records, not an in-flight
   minigame's frame/input state. Corrupt local files block replacement.
@@ -62,11 +72,22 @@ rolling back. Do not remove guest/account profiles to resolve a conflict.
   private copies and a simulated residual original after interrupted removal.
 - `tools/walker_minigames_check.lua`: the existing five games, daily/run caps,
   scoring, controls, repeated settlement and failed reward persistence.
-- `tools/qualify_walker_http.py`: seven phases using real `RetroCloud`, `Task`,
+- `tests/engine/walker_transfer.lua`: 667 fault/recovery assertions across
+  write boundaries, account changes, stale selections, source receipts and
+  staged purchase debits including the existing first-purchase reward.
+- `tests/native_walker`: five actual LÖVE processes / 28 checks using a fresh
+  own authenticated Ruby import and native save files. Failed walker writes
+  after source publication recover across a cold restart, with exactly one
+  original Pokémon after return. This injects I/O failure; it is not a
+  physical power-cut test.
+- `tools/qualify_walker_http.py`: ten phases (thirteen with `--native-import`) using real `RetroCloud`, `Task`,
   `WalkerCloud` and LÖVE profile processes against the actual Laravel server
   checkout, an isolated SQLite database and disposable fixture accounts.
-  Thirteen assertions passed: upload, restore/advance, resume, conflicting
-  branches, foreign-account isolation and server revision enforcement.
+  Thirteen phases / 27 assertions passed with the optional authenticated Ruby
+  import: upload, restore/advance, resume, conflicting branches, foreign-account
+  isolation, server revision enforcement, explicit local/cloud selection, stale
+  choice refusal, and native Pokémon send/return between two process profiles.
+  The original client cannot duplicate a Pokémon returned by the other client.
   The simulated devices share the test account credential; this does not
   qualify separate device login or public HTTPS operation.
 - `tools/qualify_walker_online.py`: the actual LÖVE page renderer at 360 and
@@ -86,9 +107,14 @@ duel protocol or a server-authoritative public leaderboard. The new page says
 so explicitly. Neither local records nor uploaded snapshots prove fair play
 or make walker rewards eligible for competitive prizes.
 
-End-to-end native Pokémon return/delivery across devices, interruption between
-writing the source save and walker file, physical step sensors and production
-OAuth/HTTPS remain unqualified by these tests. Existing source-save and walker
-writes are individually protected; they are not a distributed inventory
-transaction. A recovery chooser for concurrent walker branches remains to be
-implemented; the current behavior blocks and preserves both copies.
+Physical step sensors, physical power cuts, separate-device production login
+and public OAuth/HTTPS remain unqualified. The native two-file recovery intent
+and source receipts are local safeguards; this is not a server-authoritative
+distributed inventory transaction. Conflicting whole snapshots require explicit
+review. Preserve pending journals and backups when upgrading or rolling back.
+
+The actual original PR source is a negative control: refusing the walker write
+after the source save was committed returned success while leaving both the PC
+and durable walker empty (four assertions). The journal fixes this loss window.
+No real accounts, credentials, cartridge data or user saves belong in public QA
+reports; all native and HTTP evidence uses disposable profiles and fixture data.

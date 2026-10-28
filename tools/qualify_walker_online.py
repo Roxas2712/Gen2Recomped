@@ -20,10 +20,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--love', type=Path, required=True)
     parser.add_argument('--label', required=True)
+    parser.add_argument('--conflict', action='store_true', help='Render the explicit complete-snapshot conflict chooser.')
     parser.add_argument('--enrollment', action='store_true', help='Render the mandatory minigame notice instead of the social page.')
     parser.add_argument('--content', action='store_true', help='Exercise real ZIP/PNG import, content setup and five basic minigames.')
     args = parser.parse_args()
-    assert not (args.enrollment and args.content)
+    assert sum((args.enrollment, args.content, args.conflict)) <= 1
     assert args.label.replace('-', '').isalnum()
     import qa_storage as qa
     qa._storage = qa.Storage(ROOT)
@@ -68,7 +69,7 @@ def main():
         image = output / (label + '.png')
         with (output / (label + '.log')).open('w') as log:
             child = qa.qa_popen([str(args.love), str(host)], cwd=ROOT,
-                                env=os.environ | {'WALKER_PREVIEW_CAPTURE': str(image), 'WALKER_PREVIEW_PACK': str(pack), 'WALKER_PREVIEW_GUEST': '1' if guest else '0'}, stdout=log, stderr=log)
+                                env=os.environ | {'WALKER_PREVIEW_CAPTURE': str(image), 'WALKER_PREVIEW_PACK': str(pack), 'WALKER_PREVIEW_GUEST': '1' if guest else '0', 'WALKER_PREVIEW_CONFLICT': '1' if args.conflict else '0'}, stdout=log, stderr=log)
             try:
                 deadline = time.monotonic() + 60
                 while child.poll() is None and time.monotonic() < deadline:
