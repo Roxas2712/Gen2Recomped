@@ -1,0 +1,28 @@
+{
+  "python": "3.12.15",
+  "c_toolchain": true,
+  "bridge_abi": true,
+  "vulkan_device": "Apple M2",
+  "physical_gpu": true,
+  "native_game_played": false,
+  "passed": true,
+  "relocated": true,
+  "generated_debug_symbols": false,
+  "system_developer_tools_used": false,
+  "runtime_id": "c38311ec99f012a71208eab874665a84742dde34fd1e571a452af3cd82fdf7ea",
+  "scope": "Relocated macOS Apple Silicon runtime with debug-free generated C objects; native game qualification is separate.",
+  "rust_compiler_tests": 56,
+  "python_tests": 41,
+  "client_import_checks": 25,
+  "client_presentation_checks": 9,
+  "client_controller_layout_checks": 13,
+  "genuine_xy_inputs_preflight_passed": true,
+  "generated_object_comparison": {
+    "before_bytes": 2814776,
+    "after_bytes": 395400,
+    "machine_instructions_identical": true,
+    "scope": "one generated translation unit; debug sections excluded; no game-derived bytes included in this report"
+  },
+  "real_love_worker_failed_build_reports_error": true,
+  "verified_import_progress_keeps_worker_active": true
+}

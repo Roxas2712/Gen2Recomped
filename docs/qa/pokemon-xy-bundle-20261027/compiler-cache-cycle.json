@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "cycles": 2,
+  "object_bytes": [
+    520,
+    520
+  ],
+  "real_bundled_compiler": true,
+  "native_function_result": 42,
+  "native_game_played": false
+}

@@ -182,7 +182,15 @@
     "src/core/game3/battle/healthbox.lua": "0aa674fbfe87065289d8a915b847969349012bdebd86873e433ae314d3e129bb",
     "src/ui/game3/stat_growth.lua": "2d02d2d649c7e88070f311b8f5d0d298023a523f44996e4d40727f21d4a2bbdb",
     "src/core/game3/battle/rules.lua": "a94698c958bcbd31a07f12e0e1dc33ba3cfcfb67b78c2ed91e08aa77b17202e4",
-    "src/import/gba/rse/safari_rse_extract.lua": "504924d713596b2ef23d973845ed4ef8090f5c98999ed6a3bbf4c6af9ada43ed"
+    "src/import/gba/rse/safari_rse_extract.lua": "504924d713596b2ef23d973845ed4ef8090f5c98999ed6a3bbf4c6af9ada43ed",
+    "src/ui/game3/rs/credits.lua": "20fde4a9e8c70638678b5e2e18b526654a2c7a103a7d1b8d2fe38999e0f32af0",
+    "src/ui/game3/rs/credits_scenery.lua": "b9629b5e13d49f64bc7f7f016096d90df0b647e719f31deb8960ea30c88aef5f",
+    "src/ui/game3/rse/credits.lua": "861f980eb4b9e921db1f41fd3f1007bfe8c9cdf7d89a7fd83717a42955e96c3d",
+    "src/import/gba/rs/extract_credits.lua": "90834c67b2e51597725fb446f3291bf9afe39f932fa3c4dd791698cca1344e6a",
+    "src/ui/game3/hall_of_fame.lua": "66cc57e11c8a91450c6039a0ac7c2df82b4153de33188c29caf4f335c72f45d0",
+    "src/ui/game3/hall_of_fame_gfx.lua": "a43b1823da5b0b3870a5205b08647b70d58162e5046cd5c773feeb88f6938ec8",
+    "src/ui/game3/rs/hall_of_fame_policy.lua": "9a4fba687bdab81bae2dbda88f4bfca403d3c566cfefad6ca2a909160fcee72b",
+    "src/import/gba/rs/extract_hall_of_fame.lua": "16cda550a97f86f1e0c88bf5d7bb14acca3981db5f14009d960e829841ad27c3"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison"
 }

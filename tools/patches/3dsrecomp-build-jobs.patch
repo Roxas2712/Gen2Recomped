@@ -1,0 +1,13 @@
+diff --git a/src/compile.rs b/src/compile.rs
+--- a/src/compile.rs
++++ b/src/compile.rs
+@@ -198,6 +198,9 @@
+     let gcc = compiler.is_gcc();
+     let cores = std::thread::available_parallelism().map_or(4, |n| n.get());
+     let jobs = if background { cores.saturating_sub(1).max(1) } else { cores };
++    let jobs = std::env::var("RETRO_3DS_BUILD_JOBS").ok()
++        .and_then(|n| n.parse::<usize>().ok()).filter(|n| (1..=8).contains(n))
++        .map_or(jobs, |limit| jobs.min(limit));
+     let budget = spare_memory().map(|spare| spare.saturating_sub(RESERVE));
+     let needs: Vec<u64> =
+         sources.iter().map(|source| std::fs::metadata(dir.join(source)).map_or(0, |m| m.len()) * MEMORY_PER_BYTE).collect();

@@ -5,7 +5,7 @@ local KEYS={
  {left=32,right=16,up=64,down=128,['return']=8,x=1,z=2,backspace=4,q=512,e=256},
  {a=32,d=16,w=64,s=128,tab=8,f=1,g=2,['`']=4,r=512,t=256},
 }
-local PAD={a=1,b=2,back=4,start=8,dpright=16,dpleft=32,dpup=64,dpdown=128,leftshoulder=32,rightshoulder=1}
+local PAD={a=1,b=2,leftstick=4,start=8,dpright=16,dpleft=32,dpup=64,dpdown=128,leftshoulder=32,rightshoulder=1}
 function M.new(seats,pads)
  local self=setmetatable({seats=seats,pads={}},M)
  for _,p in ipairs(pads or {})do if p:isGamepad()then self:join(p)end end
@@ -27,6 +27,10 @@ function M:buttons(seat,keyboard,mouse,focused)
   local x,y=pad:getGamepadAxis('leftx'),pad:getGamepadAxis('lefty')
   if x<-.35 then buttons=bit.bor(buttons,32)elseif x>.35 then buttons=bit.bor(buttons,16)end
   if y<-.35 then buttons=bit.bor(buttons,64)elseif y>.35 then buttons=bit.bor(buttons,128)end
+  -- Shoulders remain convenient flippers. Triggers expose the original GBA
+  -- L/R inputs too, so custom in-game controls retain all ten GBA buttons.
+  if pad:getGamepadAxis('triggerleft')>.35 then buttons=bit.bor(buttons,512)end
+  if pad:getGamepadAxis('triggerright')>.35 then buttons=bit.bor(buttons,256)end
  end
  if seat==1 and mouse then
   if mouse(1)then buttons=bit.bor(buttons,32)end

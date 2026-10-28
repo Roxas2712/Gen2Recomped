@@ -23,6 +23,7 @@ def main():
     parser.add_argument('--seconds',type=int,default=40)
     parser.add_argument('--seats',type=int,choices=(1,2),default=1)
     parser.add_argument('--full-table',action='store_true')
+    parser.add_argument('--allow-background',action='store_true',help='Measure continued native playback without focus; do not auto-pause.')
     parser.add_argument('--pause-unfocused',action='store_true',help='Pause and exclude background time instead of failing a long run on focus loss.')
     parser.add_argument('--field',type=int,choices=(0,1),default=0)
     parser.add_argument('--locale',choices=('en','fr','de','it','es'),default='en')
@@ -71,7 +72,7 @@ def main():
     report=cache/'report.json'
     env=dict(os.environ,POKEPORT_IDENTITY=identity,OA_QA_IDENTITY=identity,
         ASCENDANT_PINBALL_ROOT=str(ROOT),ASCENDANT_PINBALL_START='1',ASCENDANT_PINBALL_SEATS=str(args.seats),
-        PINBALL_FRAME_PAUSE_UNFOCUSED='1'if args.pause_unfocused else'0',PINBALL_FRAME_FIELD=str(args.field),PINBALL_FRAME_LOCALE=args.locale,PINBALL_FRAME_REPORT=str(report),PINBALL_FRAME_SECONDS=str(args.seconds),PINBALL_FRAME_PLAYER=str(player),
+        PINBALL_FRAME_ALLOW_BACKGROUND='1'if args.allow_background else'0',PINBALL_FRAME_PAUSE_UNFOCUSED='1'if args.pause_unfocused else'0',PINBALL_FRAME_FIELD=str(args.field),PINBALL_FRAME_LOCALE=args.locale,PINBALL_FRAME_REPORT=str(report),PINBALL_FRAME_SECONDS=str(args.seconds),PINBALL_FRAME_PLAYER=str(player),
         PINBALL_FRAME_TABLE='1'if args.full_table else'0')
     started=time.time()
     with(cache/'run.log').open('w')as log:
@@ -79,7 +80,7 @@ def main():
     if report.exists()and report.stat().st_mtime>=started:
         data=json.loads(report.read_text())
         keys=('passed','seconds','wall_seconds','unique_native_presents','focus_lost_frames','focus_excluded_seconds',
-              'display','source_gap','native','simulation','composition','thread_cpu','rounds','scheduler')
+              'allow_background','audio_restarts','display','source_gap','native','simulation','composition','thread_cpu','rounds','scheduler')
         print(json.dumps({key:data[key]for key in keys if key in data},indent=2))
         print('Detailed private report: '+str(report))
     else:

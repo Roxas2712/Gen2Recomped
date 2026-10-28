@@ -149,3 +149,24 @@ ui:update(0)
 check(#ui.findIndex.mods==1 and not ui.findNotice.ok and ui.findNotice.text:find('saved catalogue',1,true),'worker timeouts retain catalogue cards and explain retry instead of reporting an empty search')
 Tasks.new=taskNew
 print('Catalogue timeout recovery: 2 checks passed')
+
+-- Cartridge pages use the same bounded original-manifest resolver as Mods.
+ui.section='games';ui._gameModsVersion='red';ui._communityResolveJob=nil
+options.modCompassReleaseCache={}
+card._communityResolved=nil;card.resolveUrl=C.URL..'/api/launcher/mods/slug'
+ui._communityResolveQueue={card};response=Json.encode({id='GAME_PAGE_MOD',games={'red'},api=3,game_version='>=0.7.0',releases={release('1.0.0','author/mod')}})
+ui:update(0);check(ui._communityResolveJob~=nil,'an active signed-in cartridge page pumps its queued manifest check')
+ui:update(0);check(card.id=='GAME_PAGE_MOD'and card._communityResolved,'cartridge cards receive original manifest identity and edition claims')
+ui._gameModsVersion=nil;ui._communityResolveQueue={card};ui._communityResolveJob=nil
+ui:update(0);check(not ui._communityResolveJob,'ordinary library screens do not resolve offscreen cartridge cards')
+print('Cartridge catalogue resolution: 3 checks passed')
+
+local originalInstall=L.installFromRelease;local attempted=false
+L.installFromRelease=function()attempted=true end
+package.loaded['src.cloud.RetroCloud'].accountId=function()return 'qa-new-account'end
+love.filesystem.write('qa-completed.zip','fixture')
+ui._communityDownload={id='qa-new-mod',phase='install',path='qa-completed.zip',gameAccount='qa-old-account',gameVersion='red',job={cancel=function()end}}
+ui:update(0)
+check(not attempted and not ui._communityDownload and not love.filesystem.getInfo('qa-completed.zip'),'switching signed-in accounts during download cancels before filesystem commit and removes the staged ZIP')
+L.installFromRelease=originalInstall
+print('Cartridge install account binding: 1 check passed')
