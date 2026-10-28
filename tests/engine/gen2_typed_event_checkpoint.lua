@@ -40,6 +40,33 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       restored.enemy.shownStatus='FRZ'
       T.eq(restored.shownStatus.enemy,'FRZ','restored view is live rather than a copied map')
       T.raises(function()restored.shownStatus.enemy='BRN'end,'owned','restored view retains native status owner')
+      restored.queue,restored.current,restored.phase,restored.afterQueue={},nil,'resolving','menu'
+      restored:push({kind='faint',side='enemy',mon=restored.enemy.mon,text='Fainted!'})
+      for _=1,5 do restored:update(1/60)end
+      T.eq(restored.faintSlide and restored.faintSlide.frames,4,'actual native faint is in flight')
+      local faintCheckpoint,code=f.checkpoints:capture(game)
+      T.eq(faintCheckpoint,nil,'native decision-only checkpoint refuses a live faint animation')
+      T.eq(code,'unsupported_battle','live faint keeps the existing refusal protocol')
+      for _=1,10 do restored:update(1/60)end
+      T.eq(restored.faintSlide,nil,'native faint completes at its original owner')
+      T.check(restored.current and restored.current.gen2SourceEvent.kind=='faint',
+        'same source event starts text after the refused mid-animation checkpoint')
+      local wasPressed=game.input.wasPressed
+      game.input.wasPressed=function(_,key)return key=='a'end
+      for _=1,240 do if restored.phase=='menu'then break end;restored:update(1/60)end
+      game.input.wasPressed=wasPressed
+      T.eq(restored.phase,'menu','normal native input reaches a qualified decision again')
+      local ended,reason=f.checkpoints:capture(game)
+      T.check(ended~=nil,'decision checkpoint captures completed faint ownership: '..tostring(reason))
+      if ended then
+        local done,why=f.checkpoints:restore(game,ended)
+        T.check(done,'decision checkpoint restores completed faint ownership: '..tostring(why))
+        if done then
+          local resumed=game.stack:top()
+          T.eq(resumed._gen2FaintHidden.enemy.battler,resumed.enemy,'hidden marker rebinds actual native battler')
+          T.eq(resumed._gen2FaintHidden.enemy.mon,resumed.enemy.mon,'hidden marker rebinds Pokemon identity')
+        end
+      end
     end
   end
   require('src.mods.Loader').teardown();f.close()

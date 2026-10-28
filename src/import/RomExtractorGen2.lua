@@ -15129,11 +15129,14 @@ GEN2_ANIM.BY_HANDLER = {
   IncObj = { "incobj", 1 },
   SetObj = { "setobj", 2 },
   IncBGEffect = { "incbgeffect", 1 },
-  BattlerGFX_1Row = { "battlergfx_1row" },
-  BattlerGFX_2Row = { "battlergfx_2row" },
+  -- Macro names and handler names cross on the cartridge: $d9 is the
+  -- 2row macro but calls _1Row. Keep the decoded macro contract when the
+  -- ROM's actual handler table overrides the baked opcode table.
+  BattlerGFX_1Row = { "battlergfx_2row" },
+  BattlerGFX_2Row = { "battlergfx_1row" },
   -- Prism's names for the same two slots
-  EnemyFeetObj = { "battlergfx_1row" },
-  PlayerHeadObj = { "battlergfx_2row" },
+  EnemyFeetObj = { "battlergfx_2row" },
+  PlayerHeadObj = { "battlergfx_1row" },
   CheckPokeball = { "checkpokeball" },
   Transform = { "transform" },
   RaiseSub = { "raisesub" },
@@ -15452,7 +15455,7 @@ end
 
 -- Name each object `function` slot from DoBattleAnimFrame's jumptable.  The
 -- routines themselves are hand-written asm and cannot be ported as data, but
--- the names tell the player which motion to approximate.
+-- the names resolve the imported IDs to the genuine GSC object routines.
 function RomExtractorGen2:gen2AnimFunctions()
   local out = {}
   -- Resolved from the routine that dispatches through it, never hardcoded:
@@ -15505,6 +15508,7 @@ function RomExtractorGen2:gen2BattleAnims()
   end
   return {
     gen2 = true,
+    commandFormat = "gsc-macro-v1",
     scripts = scripts,
     moveAnims = moveAnims,
     objects = self:gen2AnimObjects(),
