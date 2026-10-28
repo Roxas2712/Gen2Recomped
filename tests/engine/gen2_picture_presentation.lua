@@ -128,11 +128,14 @@ end
 
 -- Missing/disabled/cancelled programs and a real slot replacement cannot
 -- leave a pinned picture hanging or repaint the incoming saved Pokemon.
-for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','replacement'})do
+for _,mode in ipairs({'disabled','missing','cancelled','stopped','no-picture-op','new-program','replacement'})do
  local s,b,target,row=make('crystal','player','transform')
  local species=b.mon.species
  if mode=='disabled'then s.game.save.options.animations=false end
  if mode=='missing'then s.animPlayer.anims.scripts[1]=nil end
+ if mode=='no-picture-op'then
+   s.data.battle_anims.scripts[1].code={{op='delay',frames=2},{op='ret'}}
+ end
  Effects.TRANSFORM_EFFECT(s,b,target)
  if mode=='cancelled'then s:cancelMoveAnim();Pictures.sync(s)
  elseif mode=='replacement'then
@@ -143,7 +146,7 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','
    T.eq(s.player.mon,incoming,'native switch retains actual incoming mon')
    T.eq(Pictures.species(s,s.player),'FIXMON_B','old transform cannot repaint replacement slot')
  elseif mode=='stopped'then
-   s:updateQueue();s.anim.stop=true;s:updateQueue()
+   s:updateQueue();s.anim.stopped=true;s:updateQueue()
  elseif mode=='new-program'then
    s:updateQueue()
    local retired=s.anim
@@ -151,10 +154,38 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','
    T.neq(s.anim,retired,'public start creates a distinct real native runner')
    s:updateQueue()
    T.eq(retired.picOverride.player,nil,'replacing runner does not invent a retired transform opcode')
+ elseif mode=='no-picture-op'then s:updateQueue();endAnim(s)
  else s:updateQueue()end
  T.eq(#(s._gen2PictureChanges or {}),0,mode..' releases native picture pin')
  if mode~='replacement'then T.eq(b.species,target.mon.species,mode..' commits resolved native visual identity')end
  T.eq(b.mon.species,species,mode..' retains saved species')
+end
+-- Crystal loads a transformed actor into vTiles0 first; updateactorpic later
+-- publishes it. Synthetic old caches/GS keep the previous direct command.
+for _,side in ipairs({'player','enemy'})do
+ local s,b,target,row=make('crystal',side,'transform')
+ s.data.battle_anims.pictureArt={version=1,stagedActorPic=true}
+ s.data.battle_anims.scripts[1].code={
+  {op='transform'},{op='delay',frames=3},{op='updateactorpic'},
+  {op='delay',frames=3},{op='ret'},
+ }
+ local old=s:picImage(b.sprite)
+ Effects.TRANSFORM_EFFECT(s,b,target)
+ local replacement=b.sprite
+ s:updateQueue();local r=s.anim
+ s:updateQueue()
+ T.eq(r.actorPic[side],'transform','Crystal stages actual transformed actor tiles')
+ T.eq(r.picOverride[side],nil,'staging has not repainted the real BG slot')
+ T.eq(s:battlerPic(b),old,'native picture pin survives the staging command')
+ local frames=0
+ while r.picOverride[side]~='transform'and frames<100 do
+  T.eq(s:battlerPic(b),old,'all waiting frames retain previous native picture')
+  s:updateQueue();frames=frames+1
+ end
+ T.check(frames>0 and frames<100,'native copy command is reached')
+ T.eq(s:battlerPic(b),s:picImage(replacement),'copy command reveals actual transformed actor')
+ T.eq(b.species,target.mon.species,'shown species commits at actual copy command')
+ T.eq(#s._gen2PictureChanges,0,'copy command retires the pin exactly once')
 end
 for _,disabled in ipairs({false,true})do
  local s,b,target,row=make('crystal','player','transform')

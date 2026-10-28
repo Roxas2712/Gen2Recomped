@@ -3,7 +3,7 @@
 -- plus Additional Terms; see compat/gen1-gsc/. No ROM program is invented.
 local Ids=require('src.battle.Gen2AnimObjectIds')
 local M={}
-M.CACHE_REVISION=1
+M.CACHE_REVISION=2
 local function order(constants,key)
   return constants and constants[key] or Ids[key]
 end
@@ -14,7 +14,8 @@ function M.tables(anims,constants)
       'battleAnimFuncOrder','battleAnimGfxOrder','battleAnimObPaletteOrder'})do c[key]=order(constants,key)end
   c.battleBgEffectOrder=constants and constants.battleBgEffectOrder
     or require('src.battle.Gen2BgEffectIds').forVersion()
-  local data={objects={},framesets={},oamsets={},gfx={},palettes=anims.palettes}
+  local data={objects={},framesets={},oamsets={},gfx={},palettes=anims.palettes,
+    pictureArt=anims.pictureArt}
   for id,row in pairs(anims.objects or {})do
     local name=c.battleAnimObjectOrder[id+1]or id
     local native=anims.functions and anims.functions[row.fn]

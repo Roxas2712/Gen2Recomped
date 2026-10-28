@@ -48,6 +48,8 @@ function M.install(Screen)
       return draw(self,b,x,y,scale)
     end
     local side=b.isPlayer and 'player'or'enemy'
+    local back=b.isPlayer
+    if self._gen2PicBack~=nil then back=self._gen2PicBack end
     local state=self:animPicState(side)
     if state and state.hidden then return end
     if self.liftedPass and not(state and state.lifted)then return end
@@ -56,7 +58,7 @@ function M.install(Screen)
     if size then
       local image=self:battlerPic(b)
       if image then
-        local factor=size/(b.isPlayer and 6 or 7)
+        local factor=size/(back and 6 or 7)
         x=x+math.floor(image:getWidth()*scale*(1-factor)/2)
         y=y+math.floor(image:getHeight()*scale*(1-factor))
         scale=scale*factor
@@ -65,7 +67,7 @@ function M.install(Screen)
     local function paint()withPalette(self,side,function()draw(self,b,x,y,scale)end)end
     local lifted=state and state.lifted
     if not lifted then return paint()end
-    local bandY=(b.isPlayer and 48 or 0)+lifted[1]*8
+    local bandY=(back and 48 or 0)+lifted[1]*8
     local bandH=lifted[2]*8
     local function band(top,height)
       local g=love.graphics
