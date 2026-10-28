@@ -1505,6 +1505,12 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
   return not battle.showEnemyTrainer and not battle.enemySendingOut
     and not battle:growInScale(b) and not battle.introBalls
 end
+function Gen3Battle.drawSafariLabel(label,x,y)
+  local pen=require('src.render.Gen3TextPen')
+  if not pen.isCompound(label)then Font.draw(label,x,y);return Font.width(label)end
+  return pen.layout(label,nil,function(_,dx,dy,code)Font.drawCode(code,x+dx,y+dy)end)
+end
+
 function Gen3Battle.drawSafariPanel(battle,x,y)
   if not battle.gen3Safari then return false end
   if battle.rsBattlePanel then

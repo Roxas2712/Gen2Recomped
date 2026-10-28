@@ -41,6 +41,15 @@ if nativeFile then
   local ir=Text.ir(key);T.eq(ir[1].cmd,1);T.eq(ir[3].t,'ph');T.eq(ir[3].code,playerCode)
   ir[1].args[1]=99;T.eq(spec.textIR.prompt[1].args[1],2,'native Safari IR stays private')
   T.eq(spec.textIR.prompt[3].t,'bph','metadata cannot rewrite native interpreter operands')
+  spec.textIR.menu={{t='text',s='QA BALL'},{t='ext',cmd=19,args={46}},
+   {t='tag',tag='{POKEBLOCK}'},{t='nl'},{t='text',s='QA NEAR'},
+   {t='ext',cmd=19,args={46}},{t='text',s='QA RUN'},{t='eos'}}
+  catalog.named.gText_SafariZoneMenu='MENU';catalog.named.BattleText_MenuOptionsSafari='MENU'
+  catalog.records.MENU={plain='flattened old word',nativePlain='old menu',ir={{t='text',s='flattened old word'},{t='eos'}}}
+  game.data.text=game.data.text or{};game.data.text.MENU='old menu'
+  local menu=Text.ir('gText_SafariZoneMenu');T.eq(menu[3].tag,'{POKEBLOCK}','native menu keeps the original compound glyph identity')
+  menu[3].tag='edited';T.eq(spec.textIR.menu[3].tag,'{POKEBLOCK}')
+  game.data.text.MENU='Explicit menu edit';T.eq(Text.plain('gText_SafariZoneMenu'),'Explicit menu edit');game.data.text.MENU='old menu'
   local Hud=require('src.core.game3.battle.healthbox');local Painter=require('src.battle.Gen3Battle')
   local safariPaint,statusPaint=Painter.drawSafariPanel,Painter.drawStatusPanel
   local safariCalls,statusCalls=0,0;local hx,hy=Painter.healthboxGeometry(b,0)

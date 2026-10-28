@@ -4,7 +4,9 @@
 local Font=require('src.render.Font')
 local M={}
 local codes={[0x0d]=true,[0x0e]=true,[0x11]=true,[0x12]=true,[0x13]=true,[0x14]=true}
-function M.has(text)return type(text)=='string'and text:find(string.char(0xfc),1,true)~=nil end
+local compound='{POKEBLOCK}'
+function M.isCompound(text)return text==compound end
+function M.has(text)return type(text)=='string'and(text:find(string.char(0xfc),1,true)~=nil or text:find(compound,1,true)~=nil)end
 function M.layout(text,opts,paint)
  opts=opts or{}
  -- Validate the entire stream before paint. A missing operand must never be
@@ -20,19 +22,35 @@ function M.layout(text,opts,paint)
  local spacing=opts.letterSpacing or 0
  local trailing=0
  local function lineWidth()return math.max(0,x-trailing)end
- local function segment(value)
+ local function glyph(glyph,code)
+  if opts.limitChars and count>=opts.limitChars then return false end
+  local width=code and Font.advanceOf(code)or Font.width(glyph)
+  if paint and(not opts.maxWidth or x+width<=opts.maxWidth)then paint(glyph,x,y,code)end
+  trailing=minWidth>0 and 0 or spacing
+  x=x+math.max(width,minWidth)+trailing;count=count+1
+  return true
+ end
+ local function ordinary(value)
   for _,span in ipairs(Font.split(value))do
    if opts.limitChars and count>=opts.limitChars then return false end
-   local glyph=value:sub(span.from,span.to)
-   if glyph=='\n'or glyph=='\v'or glyph=='\f'then
+   local symbol=value:sub(span.from,span.to)
+   if symbol=='\n'or symbol=='\v'or symbol=='\f'then
     widest=math.max(widest,lineWidth());x=0;y=y+(opts.linePitch or 15);trailing=0
-   else
-    local width=Font.width(glyph)
-    if paint and(not opts.maxWidth or x+width<=opts.maxWidth)then paint(glyph,x,y)end
-    trailing=minWidth>0 and 0 or spacing
-    x=x+math.max(width,minWidth)+trailing
-   end
-   count=count+1
+    count=count+1
+   elseif not glyph(symbol)then return false end
+  end
+  return true
+ end
+ local function segment(value)
+  local start=1
+  while start<=#value do
+   local first,last=value:find(compound,start,true)
+   if not ordinary(value:sub(start,first and first-1 or #value))then return false end
+   if not first then break end
+   -- These five native cartridge glyphs form one 40px action label. Do not
+   -- re-encode its letters through the ordinary proportional Latin charmap.
+   for code=0x55,0x59 do if not glyph(nil,code)then return false end end
+   start=last+1
   end
   return true
  end
