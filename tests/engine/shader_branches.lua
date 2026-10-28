@@ -57,5 +57,38 @@ T.eq(B.plan('uniform float gate; /* unfinished'),nil)
 T.eq(B.plan('uniform float gate; void f(){if(gate'),nil)
 T.eq(B.plan('uniform float gate; uniform bool gate;'),nil)
 T.eq(B.plan({}),nil)
+for _,body in ipairs{
+ 'float x=0.0,gate=1.0;if(gate>.5){}',
+ 'for(float x=0.0,gate=0.0;x<1.0;x++){if(gate>.5){}}',
+ 'float named(float x,float gate){if(gate>.5){}return gate;}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(other,gate);if(gate>.5){}}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(gate,other);if(gate>.5){}}',
+ '#define DECL(a,b) float a,b;\nvoid f(){DECL(other,nested(gate));if(gate>.5){}}',
+}do
+ local p=assert(B.plan('uniform float gate;\n'..body))
+ T.eq(#p.order,0,'declarations, loop headers and macro expansion retain the original branch')
+end
+T.eq(B.plan('#define LOCAL(a,b) float a##b;\nuniform float gate;void f(){LOCAL(ga,te);if(gate>.5){}}'),nil,'token-pasted shadow names cannot be proven')
 T.check(not pcall(B.rewrite,plan,{enabled='malicious code'}),'only qualified literal bytes can enter output')
+local large,expected={},{}
+for i=1,64 do
+ local line=('uniform float gate%d;\n'):format(i);large[#large+1]=line;expected[#expected+1]=line
+end
+-- Large generated programs must retain comments, arithmetic, nested branches
+-- and complete identifier boundaries while specializing every selected read.
+local values={};for i=1,64 do values['gate'..i]=i%2==0 and'0.0'or'1.0'end
+for i=1,1024 do
+ local name='gate'..((i-1)%64+1)
+ local line=('void f%d(){if(/* %s */%s>.5){if(%s<.5){float v=%s*2.;}}}\n'):format(i,name,name,name,name)
+ large[#large+1]=line
+ expected[#expected+1]=('void f%d(){if(/* %s */%s>.5){if(%s<.5){float v=%s*2.;}}}\n'):format(i,name,values[name],values[name],name)
+end
+large=table.concat(large);expected=table.concat(expected)
+local big=assert(B.plan(large));T.eq(#big.order,64)
+T.eq(B.rewrite(big,values),expected,'large nested shader output is exact, without rebuilding the program per branch')
+T.eq(B.rewrite(big,{}),large,'large dynamic program is byte-identical')
+for _,prefix in ipairs{'word ','word\n','word\t',',',' ,\n','.',' .\t'}do
+ local p=assert(B.plan('uniform float gate;void f(){'..prefix..'gate;if(gate>.5){}}'))
+ T.eq(#p.order,0,'token predecessor retains shadow/member rejection: '..prefix)
+end
 T.finish('shader branch planning, unchanged arithmetic and conservative source guards')

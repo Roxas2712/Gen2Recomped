@@ -535,6 +535,7 @@ function love.load(args)
   BootTrace.mark("love.load enter")
   GraphicsStack.install()
   require("src.render.LegacyShaderCompat").install()
+  require("src.render.AlphaDepthCompat").install()
   require("src.render.ShaderSpecialization").install()
   pcall(function() require('src.core.SwitchAudioCheck').run() end)
 
