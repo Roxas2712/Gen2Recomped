@@ -181,6 +181,12 @@ done
 for notice in LICENSE-ROXAS2712.md NOTICE.md; do
   if [ -f "$ROOT/$notice" ]; then cp "$ROOT/$notice" "$STAGE/"; fi
 done
+if [ -f "$ROOT/src/core/TouchSkin.lua" ]; then
+  skin_licence="licenses/GEN1RECOMP-TOUCH-SKINS.md"
+  [ -f "$ROOT/$skin_licence" ] || fail "missing Gen1 touch-skin licence"
+  mkdir -p "$STAGE/licenses"
+  cp "$ROOT/$skin_licence" "$STAGE/$skin_licence"
+fi
 
 # ---------------------------------------------------------------- excludes
 # Pruned from the STAGE rather than passed to zip as -x patterns: the two
