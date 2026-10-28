@@ -16,5 +16,7 @@ end
 setmetatable(S,{__index=function(_,key)
   if key=='SE_SUCCESS'then return Version.isFRLG()and 25 or 31 end
   if key=='SE_SELECT'then return 5 end
+  -- FR/LG's native song enum; other families bind their own scene tables.
+  if key=='SE_APPLAUSE'and Version.isFRLG()then return 98 end
 end})
 return S
