@@ -26411,6 +26411,26 @@ function RomExtractorGen3:forcedMovementBehaviours(tilesetPairs)
   return rows, keys
 end
 
+-- A successful RS import must include the four arrow and four slide floors.
+-- Otherwise Mossdeep's arrows and Sootopolis's barriers become ordinary floor.
+-- Verify the decoded rules against the existing native behaviour catalogue;
+-- do not manufacture rules when a code/table anchor fails to read.
+function RomExtractorGen3.forcedFloorRulesReady(rows)
+  if type(rows) ~= "table" then return false end
+  local directions = { EAST="right", WEST="left", NORTH="up", SOUTH="down" }
+  local count = 0
+  for behaviour, name in pairs(GEN3_BEHAVIOUR_NAMES) do
+    local kind, compass = name:match("^(%u+)_(%u+)$")
+    if (kind == "WALK" or kind == "SLIDE") and directions[compass] then
+      local row = rows[behaviour]
+      if type(row) ~= "table" or row.way ~= directions[compass]
+        or (row.slide == true) ~= (kind == "SLIDE") then return false end
+      count = count + 1
+    end
+  end
+  return count == 8
+end
+
 function RomExtractorGen3:currentBehaviours(tilesetPairs)
   local maps = self._maps
   if not (type(maps) == "table" and type(tilesetPairs) == "table") then return end
@@ -27723,6 +27743,10 @@ function RomExtractorGen3:extractTilesets()
   local _, escalators = self:escalatorBehaviours(pairs_)
   local _, currentKeys = self:currentBehaviours(pairs_)
   self:forcedMovementBehaviours(pairs_)
+  if self.version == "ruby" or self.version == "sapphire" then
+    assert(RomExtractorGen3.forcedFloorRulesReady((self._constants or {}).gen3ForcedMovement),
+      "Native Ruby/Sapphire arrow and slide-floor rules did not extract")
+  end
   self:lavaridgeWarps(pairs_)
   local noRun = self:noRunBehaviours(pairs_)
   local acroKeys = {}
