@@ -54,7 +54,7 @@ local function untilState(s,predicate,label)
   return frames
 end
 local function drained(s)
-  return #s.queue==0 and not s.current and not s.animPlaying and not s.waitFrames and not s.draining
+  return #s.queue==0 and not s.current and not s.animPlaying and (s.waitFrames or 0)<=0 and not s.draining
 end
 local function finish(s)untilState(s,function()return drained(s)end,'native queue and VM release')end
 local function underground(s,side,mon)
