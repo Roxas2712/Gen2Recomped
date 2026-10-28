@@ -82,6 +82,12 @@ Damage.stageOf = stageOf
 -- (1/16, 1/8, 1/4, 1/3, 1/2).  Speed stops mattering entirely, which is why a
 -- ruleset that sets critStages cannot just tune the Gen 1 numbers.
 local CRIT_STAGE_DEN = { [0] = 16, 8, 4, 3, 2 }
+-- Detached observations share the calculation's authority. Source queries
+-- cannot change native critical rates by mutating a returned table.
+function Damage.gen3CritDenominators()
+  local out={};for stage,den in pairs(CRIT_STAGE_DEN)do out[stage]=den end
+  return out
+end
 
 function Damage.critRoll(ruleset, attacker, moveId, rng, highCrit, data, battle)
   rng = rng or love.math.random
