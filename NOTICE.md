@@ -16,3 +16,6 @@ launcher code or third-party bundled skin art is included.
 Roxas2712's independently owned additions are offered under
 [LICENSE-ROXAS2712.md](LICENSE-ROXAS2712.md), subject to prior grants and
 the preserved Gen1 GPL terms. Existing GPL-covered code is not relicensed.
+
+The identified haptic controls in TouchControls.lua are also adapted from the
+same Gen1Recomp source under the same preserved GPL/Section7 grant.
