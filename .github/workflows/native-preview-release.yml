@@ -1,44 +1,54 @@
-name: Frozen main iOS test package on Intel host
+name: Frozen Android package startup check
 on:
   workflow_dispatch:
 permissions:
   contents: read
-concurrency:
-  group: mobile-ios-intel-test-20261028-3
-  cancel-in-progress: false
+  actions: read
 jobs:
-  ios:
-    runs-on: macos-15-intel
-    timeout-minutes: 90
+  android-startup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v4
         with:
-          ref: 90a3b093e62d85440d0a1b8288e30e0caf3cc358
-          fetch-depth: 1
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - name: Download the published frozen engine payload
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
+          name: frozen-main-test-android
+          run-id: 40763912752
+          github-token: ${{ github.token }}
+          path: package
+      - name: Verify exact package receipt
         run: |
-          set -euo pipefail
-          test "$(git rev-parse HEAD)" = "90a3b093e62d85440d0a1b8288e30e0caf3cc358"
-          gh api repos/Roxas2712/Gen2Recomped/releases/assets/686181921 -H 'Accept: application/octet-stream' > "$RUNNER_TEMP/Gen2Recomped-NativePreview.love"
-          python3 -c 'import hashlib,pathlib,os; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"Gen2Recomped-NativePreview.love"; assert hashlib.file_digest(p.open("rb"),"sha256").hexdigest()=="e4541d2dfff3dc59ad173a466342bb2be3a712f8d59292241a27bac9015df04f"'
-      - name: Build from exact main source and verify embedded bytes
-        run: >-
-          python3 tools/package_native_port.py --platform ios
-          --payload "$RUNNER_TEMP/Gen2Recomped-NativePreview.love"
-          --release-id 20261028.3 --engine-version 0.8.57
-          --out "$RUNNER_TEMP/ios"
-      - uses: actions/upload-artifact@v4
+          python3 - <<'PY'
+          import json,hashlib,pathlib
+          p=pathlib.Path('package');m=json.loads((p/'build.json').read_text())
+          assert m['sourceCommit']=='90a3b093e62d85440d0a1b8288e30e0caf3cc358'
+          assert m['payloadSha256']=='e4541d2dfff3dc59ad173a466342bb2be3a712f8d59292241a27bac9015df04f'
+          assert hashlib.file_digest((p/m['archive']).open('rb'),'sha256').hexdigest()==m['archiveSha256']
+          PY
+      - name: Enable owned emulator KVM access
+        run: sudo chmod a+rw /dev/kvm
+      - name: Start the built preview on an owned emulator
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
-          name: frozen-main-test-ios
-          path: ${{ runner.temp }}/ios/*
+          api-level: 30
+          arch: x86_64
+          target: default
+          avd-name: gen2-preview-20261028-3
+          emulator-port: 5554
+          script: |
+            mkdir -p evidence
+            adb -s emulator-5554 install -g package/Gen2Recomped-NativePreview-20261028.3-android.apk
+            adb -s emulator-5554 logcat -c
+            adb -s emulator-5554 shell am start -W -n de.roxas2712.gen2recomp.nativepreview/org.love2d.android.GameActivity > evidence/start.txt
+            sleep 25
+            adb -s emulator-5554 shell pidof de.roxas2712.gen2recomp.nativepreview > evidence/pid.txt
+            adb -s emulator-5554 exec-out screencap -p > evidence/launcher.png
+            adb -s emulator-5554 logcat -d > evidence/logcat.txt
+            adb -s emulator-5554 shell dumpsys activity activities > evidence/activities.txt
+            test -s evidence/pid.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frozen-main-android-startup
+          path: evidence/*
           if-no-files-found: error
           retention-days: 14
