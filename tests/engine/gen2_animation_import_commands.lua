@@ -44,10 +44,11 @@ for _,edition in ipairs({'gold','silver','crystal'})do
 end
 for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
  local marker=markerFor(edition)
- T.check(marker:find('gen2%-anim%-object%-v2:')~=nil,'generated animation cache has a new contract')
+ T.check(marker:find('gen2%-anim%-object%-v3:')~=nil,'generated animation cache has a new contract')
  Version.set(edition)
- for _,old in ipairs({marker:gsub('gen2%-anim%-object%-v2:',''),
-     (marker:gsub('gen2%-anim%-object%-v2:','gen2-anim-object-v1:'))})do
+ for _,old in ipairs({marker:gsub('gen2%-anim%-object%-v3:',''),
+     (marker:gsub('gen2%-anim%-object%-v3:','gen2-anim-object-v1:')),
+     (marker:gsub('gen2%-anim%-object%-v3:','gen2-anim-object-v2:'))})do
   love.filesystem.write(Version.cachePrefix(edition)..'rom-cache.complete',old)
   local report=Importer.readyReport(edition)
   T.eq(report.ok,false,'old commands or missing-picture cache must be rebuilt')

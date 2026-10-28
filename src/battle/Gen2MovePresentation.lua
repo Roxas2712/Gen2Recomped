@@ -3,11 +3,12 @@
 -- battle decisions, damage, PP, queue consumption and time stay native.
 local Version=require('src.core.GameVersion')
 local View=require('src.battle.Gen2AnimView')
+local Data=require('src.battle.Gen2AnimData')
 local M={}
 
 function M.start(screen,id,isPlayer,opts)
   local player=screen.animPlayer
-  if not (Version.isGen2() and player and player.anims.gen2
+  if not (Version.isGen2() and player and Data.isGen2(player.anims)
       and player:scriptFor(id)) then return false end
   if player:start(id,isPlayer,opts)==false then return false end
   screen.animPlaying=true
@@ -38,7 +39,7 @@ function M.install(Screen)
   function Screen:animForMove(moveId,side,param,effectiveness,afterAnim)
     local player=self.animPlayer
     if not (Version.isGen2() and self:animationsOn() and player
-        and player.anims.moveAnims and player.anims.moveAnims[moveId]) then return false end
+        and Data.isGen2(player.anims) and player:scriptFor(moveId)) then return false end
     local started=M.start(self,moveId,side~='enemy',{param=param or 0})
     if started then
       local name=self:afterAnimFor(side,afterAnim)
