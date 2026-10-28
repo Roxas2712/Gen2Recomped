@@ -79,7 +79,8 @@ def main():
         probe_names = ('tools/mobile-runtime-check/host-main.lua',
                        'tools/runtime-upvalue-check/love-thread.lua',
                        'tools/runtime-upvalue-check/check.lua', 'tools/mobile-runtime-check/host-c-api.lua', 'src/link/Json.lua',
-                       'LICENSE', 'LICENSE.MD', 'LICENSE-ROXAS2712.md')
+                       'LICENSE', 'LICENSE.MD', 'LICENSE-ROXAS2712.md',
+                       'tools/mobile-runtime-check/host-c-api.cpp')
         probes = {name: (ROOT/name).read_bytes() for name in probe_names}
         token = uuid.uuid4().hex
         host = output/'host'
@@ -88,6 +89,7 @@ def main():
             target = host/path.relative_to('mobile/android')
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(engine/path, target)
+        (host/'love/src/jni/love/src/common/runtime_capacity_probe.cpp').write_bytes(probes['tools/mobile-runtime-check/host-c-api.cpp'])
         library_gradle = host/'love/build.gradle'
         text, count = re.subn(r"abiFilters 'armeabi-v7a', 'arm64-v8a'", "abiFilters '"+args.abi+"'", library_gradle.read_text())
         if count != 1:

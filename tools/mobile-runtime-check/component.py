@@ -28,8 +28,12 @@ def child(root,name):
 def closure(result,capacity,arch,jit,interpreter_only=False):
  if not (result.get('passed') is True and result.get('capacity')==capacity and result.get('arch')==arch and result.get('jitActive') is jit):
   raise ValueError('actual host capacity/architecture/mode mismatch')
- for key in ('cApiPassed','ffiCallbackPassed','threadVmPassed','filesystemPassed'):
+ for key in ('cApiPassed','threadVmPassed','filesystemPassed'):
   if result.get(key) is not True:raise ValueError('missing actual host gate: '+key)
+ if interpreter_only:
+  if not (result.get('ffiCallsPassed') is True and result.get('ffiCallbackUnavailable') is True and result.get('ffiCallbackPassed') is False):
+   raise ValueError('iOS FFI calls and explicit stock callback restriction required')
+ elif result.get('ffiCallbackPassed') is not True:raise ValueError('Android FFI callback gate required')
  details=result.get('closureReport',{})
  if details.get('passed') is not True or details.get('minimum')!=capacity:raise ValueError('closure report mismatch')
  boundary=next((x for x in details.get('cases',[]) if x.get('upvalues')==capacity),{})

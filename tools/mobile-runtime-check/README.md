@@ -86,8 +86,11 @@ extended variants have matching public headers. Both explicitly disable JIT,
 including simulator builds, and retain LuaJIT's copyright notice.
 `qualify_ios_love.py` installs them in an owned prepared LÖVE source copy and
 executes both variants in fresh simulator apps. It checks Lua closures, the
-actual exported C API, FFI callbacks, separate LÖVE thread VMs and filesystem
-bindings. Only its explicitly created simulator and applications are removed.
+actual C API through a statically compiled native probe, FFI calls, separate
+LÖVE thread VMs and filesystem bindings. iOS LuaJIT deliberately disables dynamic
+FFI callbacks under `LJ_OS_NOJIT`: both stock and extended probes must explicitly
+confirm that restriction. Android additionally requires successful FFI callbacks.
+Only the explicitly created simulator and applications are removed.
 
 `component.py` stages components from passing, hash-linked candidate receipts.
 Android requires every shipping ABI. iOS requires an actual arm64 simulator

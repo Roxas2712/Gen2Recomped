@@ -53,6 +53,10 @@ def main():
  probes={'main.lua':ROOT/'tools/mobile-runtime-check/host-main.lua','host-c-api.lua':ROOT/'tools/mobile-runtime-check/host-c-api.lua',
          'thread.lua':ROOT/'tools/runtime-upvalue-check/love-thread.lua','check.lua':ROOT/'tools/runtime-upvalue-check/check.lua','src/link/Json.lua':engine/'src/link/Json.lua'}
  probe_hashes={name:sha(path) for name,path in probes.items()}
+ native_probe=ROOT/'tools/mobile-runtime-check/host-c-api.cpp'
+ wrapper=source/'src/modules/love/wrap_love.cpp'
+ wrapper.write_bytes(wrapper.read_bytes()+b'\n'+native_probe.read_bytes())
+ probe_hashes['native-c-api.cpp']=sha(native_probe)
  try:
   sim('boot','boot',udid);sim('booted','bootstatus',udid,'-b',timeout=360)
   for variant,capacity in [('stock',60),('extended',120)]:
@@ -98,7 +102,8 @@ def main():
     raise RuntimeError('iOS app host gate failed: '+str(result)+'\n'+(out/(variant+'-console.log')).read_text()[-9000:])
    assert result['capacity']==capacity and result['identity']==identity and result['arch']==lua_arch
    assert result['jitActive'] is False and result['closureReport']['interpreterOnly'] is True
-   for key in ('cApiPassed','ffiCallbackPassed','threadVmPassed','filesystemPassed'):assert result.get(key) is True,key
+   for key in ('cApiPassed','ffiCallsPassed','ffiCallbackUnavailable','threadVmPassed','filesystemPassed'):assert result.get(key) is True,key
+   assert result.get('ffiCallbackPassed') is False
    boundary=next(x for x in result['closureReport']['cases'] if x['upvalues']==capacity)
    assert boundary['compiles'] and boundary['interpreter'] and 'jit' not in boundary
    results[variant]={'result':result,'runtimeLibrarySha256':report['results'][variant+'-sim-'+arch]['librarySha256'],
@@ -108,7 +113,8 @@ def main():
  finally:
   sim('shutdown','shutdown',udid);sim('delete','delete',udid)
  assert sha(manifest)==manifest_hash
- assert all(sha(probes[name])==h for name,h in probe_hashes.items())
+ assert all(sha(path)==probe_hashes[name] for name,path in probes.items())
+ assert sha(native_probe)==probe_hashes['native-c-api.cpp']
  tree={name:subprocess.check_output(['git','rev-parse','HEAD:'+name],cwd=engine,text=True).strip() for name in ('main.lua','conf.lua','src','assets','data')}
  (out/'report.json').write_text(json.dumps({'platform':'ios','passed':True,'loveHostAbiQualified':True,
    'simulator':True,'architecture':arch,'physicalDevice':False,'engineTree':tree,'baseLoveCommit':LOVE,

@@ -2,7 +2,7 @@
 local config = require('config')
 local Json = require('src.link.Json')
 local function publish(value)
-  value.capacity, value.identity, value.schema = config.capacity, config.identity, 1
+  value.capacity, value.identity, value.schema = config.capacity, config.identity, 2
   assert(love.filesystem.write('runtime-capacity-result.json', Json.encode(value)))
 end
 function love.load()
@@ -32,9 +32,18 @@ function love.load()
   if callbackJit then jit.off(); jit.flush() end
   assert(love.filesystem.load('host-c-api.lua'))()(config.capacity, config.platform)
   local ffi = require('ffi')
-  local callback = ffi.cast('double(*)(double)', function(value) return value + .5 end)
-  assert(callback(2.25) == 2.75, 'actual host FFI callback failed')
-  callback:free()
+  local callbackPassed,callbackUnavailable=false,false
+  if config.platform == 'ios' then
+    local available, why = pcall(ffi.cast, 'double(*)(double)', function(value) return value + .5 end)
+    if available then why:free() end
+    assert(not available and tostring(why):find('callbacks',1,true), 'iOS callback restriction changed')
+    callbackUnavailable=true
+  else
+    local callback = ffi.cast('double(*)(double)', function(value) return value + .5 end)
+    assert(callback(2.25) == 2.75, 'actual host FFI callback failed')
+    callback:free()
+    callbackPassed=true
+  end
   if callbackJit then jit.on() end
   print('MOBILE_RUNTIME_PHASE', 'thread')
   local channel = love.thread.newChannel()
@@ -49,7 +58,8 @@ function love.load()
   assert(love.filesystem.write('filesystem-probe.txt', config.identity))
   assert(love.filesystem.read('filesystem-probe.txt') == config.identity)
   publish({passed=true, loveVersion={major,minor}, arch=jit.arch, jitActive=jit.status(),
-    cApiPassed=true, ffiCallbackPassed=true, threadVmPassed=true,
+    cApiPassed=true, ffiCallsPassed=true, ffiCallbackPassed=callbackPassed,
+    ffiCallbackUnavailable=callbackUnavailable, threadVmPassed=true,
     filesystemPassed=true, closureReport=closureReport})
   print('MOBILE_LOVE_RUNTIME_ABI_PASS', config.capacity, jit.arch)
   love.event.quit(0)

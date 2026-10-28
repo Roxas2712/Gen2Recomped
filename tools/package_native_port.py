@@ -232,6 +232,7 @@ def main():
         runtime = switch(payload, target, args.engine_version)
     verify_embedded(target, args.platform, payload)
     metadata = dict(**runtime, platform=args.platform, engineVersion=args.engine_version, sourceCommit=source,
+                    buildToolsCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=TOOLS_ROOT,text=True).strip(),
                     previewIdentity=identity, payloadSha256=digest(payload), archiveSha256=digest(target),
                     archive=target.name, buildVerified=True, launchVerified=False, realDeviceVerified=False,
                     extendedUpvaluesQualified=bool(runtime.get('qualifiedRuntime')), modsIncluded=False, automaticInstallation=False)

@@ -14,7 +14,7 @@ def result(capacity=120,arch='arm64',jit=False,interpreter=True):
  boundary={'upvalues':capacity,'compiles':True,'interpreter':True}
  if not interpreter:boundary['jit']=True
  return dict(passed=True,capacity=capacity,arch=arch,jitActive=jit,cApiPassed=True,
-   ffiCallbackPassed=True,threadVmPassed=True,filesystemPassed=True,
+   ffiCallsPassed=True,ffiCallbackPassed=not interpreter,ffiCallbackUnavailable=interpreter,threadVmPassed=True,filesystemPassed=True,
    closureReport=dict(passed=True,minimum=capacity,interpreterOnly=interpreter,cases=[boundary]))
 def archive(cpu):
  # Synthetic Mach-O prefix, sufficient only for architecture/bounds contracts.
@@ -37,9 +37,12 @@ class MobileGates(unittest.TestCase):
  def test_android_rejects_missing_jit_execution(self):
   with self.assertRaises(ValueError):c.closure(result(),120,'arm64',False)
  def test_all_host_boundaries_required(self):
-  for key in ('cApiPassed','ffiCallbackPassed','threadVmPassed','filesystemPassed'):
+  for key in ('cApiPassed','ffiCallsPassed','ffiCallbackUnavailable','threadVmPassed','filesystemPassed'):
    r=result();r[key]=False
    with self.subTest(key=key),self.assertRaises(ValueError):c.closure(r,120,'arm64',False,True)
+ def test_ios_cannot_silently_skip_callback_availability_check(self):
+  r=result();r.pop('ffiCallbackUnavailable')
+  with self.assertRaises(ValueError):c.closure(r,120,'arm64',False,True)
  def test_receipt_cannot_escape_component(self):
   for name in ('../foreign','/absolute','C:\\foreign','reports/../../foreign'):
    with self.subTest(name=name),self.assertRaises(ValueError):c.child(ROOT,name)

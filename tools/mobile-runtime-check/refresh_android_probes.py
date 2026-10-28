@@ -21,6 +21,9 @@ def main():
  a=p.parse_args();source=a.build.resolve(strict=True);out=a.output.resolve()
  if out.exists() or out.is_relative_to(source) or source.is_relative_to(out):p.error('choose a new owned output separate from the input')
  report=json.loads((source/'report.json').read_text());abi=report['abi']
+ native='tools/mobile-runtime-check/host-c-api.cpp'
+ if report.get('probeSha256',{}).get(native)!=sha(ROOT/native):
+  raise ValueError('Native QA probe changed; build fresh app candidates instead of refreshing payloads')
  if abi not in ('arm64-v8a','armeabi-v7a','x86_64'):p.error('unsupported ABI')
  run=subprocess.run
  if not os.getenv('GITHUB_ACTIONS'):
