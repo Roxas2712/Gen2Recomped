@@ -192,7 +192,10 @@ function Gen3Options.new(game, opts)
 
   self.scroll = 0
   local Rs=require('src.ui.Gen3RsOptions');local rsRecord=Rs.record(game)
-  if rsRecord then self.rsNative=Rs.new(self,rsRecord)end
+  if rsRecord then self.rsNative=Rs.new(self,rsRecord)
+  else local Native=require('src.ui.Gen3NativeOptions');local spec=Native.record(game)
+    if spec then self.rsNative=Native.new(self,spec)end
+  end
   if #self.rows == 0 then
     Logger.warn("gen3 options: this dataset carries no OPTION vocabulary")
   end
