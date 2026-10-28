@@ -25,8 +25,8 @@ There is no frame-global validity cache or additional retained frame history.
   options and Hall contracts. The PR branch's runtime, assets, compatibility,
   tests and tools are byte-identical to that validated composition.
 - Native Metal / Apple M3, fresh disposable field session directly in
-  Cerulean rain, High Third Person, 1024x768: the four full-scene repeated
-  image comparisons pass exactly (0e0a51dfb2). The test independently toggles
+  Cerulean rain, High Third Person, 1024x768: four full-scene captures pass all
+  three exact comparisons (0e0a51dfb2). The test independently toggles
   an optional consumer reflection shader; animation slice reuse is enabled
   in all four images. This establishes current-scene compatibility, not an
   isolated native speedup from the slice cache.
