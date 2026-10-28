@@ -43,4 +43,15 @@ for _,value in ipairs{0,1,'ok'}do
   T.eq(M.write({data=data,save=save,writeSave=function()return value end}),false,'truthy non-success is refused')
   T.eq(S.encode(save),before,'non-success restores flags')
 end
+for _,gender in ipairs{'boy','girl'}do
+  local missing={maps={BOY={},GIRL={}},constants={gen3PlayerRoom={x=4,y=2}}}
+  missing.constants.gen3PlayerRoom[gender=='girl'and'boy'or'girl']=gender=='girl'and'BOY'or'GIRL'
+  local save={version='emerald',player={gender=gender,map='HALL'},specialSaveWarpFlags=0x80}
+  local before=S.encode(save);local writes=0
+  T.eq(M.home(missing,save),nil,'missing selected bedroom cannot borrow the other gender room')
+  T.eq(M.write({data=missing,save=save,writeSave=function()writes=writes+1;return true end}),false,'incomplete gender metadata blocks League IO')
+  T.eq(writes,0,'incomplete selected room never reaches the durable writer')
+  T.eq(M.apply(save,missing),false,'CONTINUE retains its return bit when selected bedroom is absent')
+  T.eq(S.encode(save),before,'missing selected bedroom preserves the complete loaded save')
+end
 T.finish('Emerald atomic League save retry, native bit, ROM gender home and one-shot CONTINUE')
