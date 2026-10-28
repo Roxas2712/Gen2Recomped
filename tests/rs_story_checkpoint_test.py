@@ -128,6 +128,8 @@ class CheckpointTests(unittest.TestCase):
             with self.assertRaises(AssertionError,msg=change):qualify(*f)
         for key in('continuousOpeningToFirstBadge','newGameThroughUI','initialPartyEmpty','pokedexObtained'):
             f=self.first_badge_fixture();f[3][key]=False;self.assertRaises(AssertionError,qualify,*f)
+        for key in('nativeStarterThroughRescueScript','naturalStarterAccepted'):
+            f=self.first_badge_fixture();f[3][key]=False;self.assertRaises(AssertionError,qualify,*f)
         f=self.first_badge_fixture();f[3]['status']='running';self.assertRaises(AssertionError,qualify,*f)
 
 if __name__=='__main__':

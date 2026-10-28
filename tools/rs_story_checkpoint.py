@@ -13,6 +13,8 @@ def first_badge_starter_proof(report):
             and report.get('initialPartyEmpty') is True
             and report.get('pokedexObtained') is True):
         return False
+    if any(report.get(key)is False for key in('nativeStarterThroughRescueScript','naturalStarterAccepted')):
+        return False
     starter=report.get('starter',{})
     if starter.get('level')!=5 or starter.get('species')not in('TREECKO','TORCHIC','MUDKIP'):
         return False
