@@ -13047,6 +13047,8 @@ end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
 require('src.battle.Gen2BattleScene').install(BattleState)
+
+-- Compose after native/source view installers, retaining their real draw owners.
 require('src.battle.Gen2BgPictures').install(BattleState)
 
 return BattleState
