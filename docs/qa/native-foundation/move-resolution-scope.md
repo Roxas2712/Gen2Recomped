@@ -41,3 +41,5 @@ move body, which remains intact. No newer controller/AI body was copied.
 
 Only public engine and owned QA files change. QA uses fresh owned profiles and
 a20GiB free-space floor. Player saves and private mod bytes are untouched.
+
+Merged current main `73b2c0f8` as `80b4cc2f`: exact frozen `269e87ae07` passes164 selected CPU groups, including the new GSC sleep/status/SFX, native audio shutdown and five-edition field-return/weather battle groups. Exact actual-main predecessor `aff668b6b2` compares the unmodified `73b2c0f8` native source with this merged candidate, both module-absent and module-loaded: full HP/PP/every-RNG/frame-phase traces match in all five GBA editions.
