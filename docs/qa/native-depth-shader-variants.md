@@ -11,12 +11,10 @@ lifetime and native stack owners are retained. Lazy native method interposition
 is admitted only after exact predecessor attestation; foreign value owners keep
 the original-program fallback. Valid late sampler declarations are retained.
 
-The actual offered component passes focused CPU contracts69/16/48/40 for
-alpha depth, sampler declaration order, planning and platform policy. Earlier
-real Metal runs passed96 default checks and the fork implementation's foreign
-owner fixture passed79; the final offered-source GPU rerun is recorded when
-terminal. An intentionally weaker owned-host predicate fails the foreign-owner
-ownership assertion, while preceding pixel comparisons pass. No60FPS, complete
+The actual offered component passes focused CPU contracts 69/16/48/40 for
+alpha depth, sampler declaration order, planning and platform policy. The final offered-source Metal contract passes 96 checks (receipt
+ab3c28b2f2); the fork implementation's foreign-owner fixture passes 79. An intentionally weaker owned-host predicate fails the foreign-owner
+ownership assertion, while preceding pixel comparisons pass. No 60 FPS, complete
 mod, current upstream-main composition or release qualification is claimed.
 
 Contributions by Roxas2712 — https://github.com/Roxas2712. Original additions
