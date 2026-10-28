@@ -56,6 +56,11 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
       battle:chooseMenu("fight")
       T.eq(battle.phase, "moves", "Gen2 checkpoint captures the actual native move selector")
     end
+    if require('src.core.GameVersion').isFRLG()then
+      battle.gen3Voiceover={phase='out',coefficient=1,healthboxCoefficient=1,clock=0,cue={text='Native'}}
+      T.raises(function()B.capture(game,battle,copy)end,'special battle has no qualified continuation')
+      battle.gen3Voiceover=nil
+    end
     local cp, code, detail = f.checkpoints:capture(game)
     T.check(
       cp ~= nil,

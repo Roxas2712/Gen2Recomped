@@ -2,6 +2,7 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local P=require('src.core.game3.pokemon')
+local Moves=require('src.core.game3.battle.moves')
 local original=package.loaded['src.core.Game']
 local Host=require('src.mods.Runtime')
 T.eq(P.ready(),false)
@@ -38,6 +39,15 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local moves,pp,max=P.movesAtLevel(4,10)
  T.eq(moves[1],33);T.eq(pp[1],10);T.eq(max[1],10)
  T.eq(P.moveName(33),'TACKLE');T.eq(P.movePp(33),10)
+ T.eq(Moves.displayName(33),'TACKLE');T.eq(Moves.displayName('33'),'TACKLE')
+ T.eq(Moves.displayName({id=f.ids.TACKLE}),'TACKLE')
+ T.eq(Moves.displayName({move=33}),'TACKLE')
+ for _,empty in ipairs{false,0,'','-------'}do T.eq(Moves.displayName(empty),'-------')end
+ T.eq(Moves.displayName(nil),'-------');T.eq(Moves.displayName(999999),nil)
+ data.moves[f.ids.TACKLE].name='CURRENT LABEL'
+ T.eq(Moves.displayName(33),'CURRENT LABEL','current native labels are never copied into a second registry')
+ data.moves[f.ids.TACKLE].name='TACKLE'
+
  T.eq(P.movesLearnedAt(4,7)[1],33)
  T.eq(P.moveIdAt({moves={33}},1),33);T.eq(P.moveIdAt({moves={{id=f.ids.TACKLE}}},1),33)
  T.eq(P.knowsMove({moves={33}},33),true);T.eq(P.knowsMove({moves={33}},34),false)

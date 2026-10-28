@@ -2,6 +2,13 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Ids=require('src.compat.gen1.BattleIds')
 local M={}
+function M.displayName(value)
+ if type(value)=='table'then value=value.id or value.move end
+ if value==nil or value==false or value==0 or value==''or value=='-------'then return '-------'end
+ if type(value)=='string'then value=tonumber(value)or value end
+ local name=require('src.core.game3.pokemon').moveName(value)
+ return name or nil,name==nil and'imported native move name unavailable'or nil
+end
 function M.get(number)
  local g=Native.game();if not g then return nil end
  local ids=Ids.new(g.data);local key=ids:native('moves',number)
