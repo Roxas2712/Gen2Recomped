@@ -70,7 +70,8 @@ check(listed["img/bezel.png"], "the imported bezel joins the image list")
 
 -- -------------------------------------------------------- picker plumbing
 
-local realOpen, realRead = FilePicker.open, FilePicker.read
+local realOpen, realRead, realAvailable = FilePicker.open, FilePicker.read, FilePicker.available
+FilePicker.available=function()return true end
 local asked
 FilePicker.open = function(prompt, kind)
   asked = { prompt = prompt, kind = kind }
@@ -102,6 +103,7 @@ eq(Studio.page().imagePath, nil, "cancelling imports nothing")
 check(not Studio.dirty, "and does not dirty the skin")
 
 FilePicker.open, FilePicker.read = realOpen, realRead
+FilePicker.available=realAvailable
 
 -- --------------------------------------------------------- focus / alt-tab
 
@@ -113,27 +115,8 @@ eq(Studio.drag, nil, "losing focus drops the in-flight drag")
 eq(Studio.clicked, false, "and the queued click")
 check(pcall(Studio.visible, false), "minimizing is survivable too")
 
--- main.lua used to hand focus / visibility / pad events straight to Game while
--- the studio owned the window, and the launcher has no Game -- alt-tab took the
--- app down with "attempt to index a nil value (global 'Game')".
-local f = assert(io.open("main.lua", "r"))
-local src = f:read("*a")
-f:close()
-
-local checked = 0
-for name, body in ("\n" .. src):gmatch("\nfunction love%.([%w_]+)%b()\n(.-)\nend\n") do
-  if body:find("Game:") then
-    checked = checked + 1
-    check(body:find("Studio") ~= nil,
-          "love." .. name .. " checks Studio before dispatching to Game")
-    check(body:find("not Game then") ~= nil
-            or body:find("if Game then") ~= nil
-            or body:find("Game and ") ~= nil,
-          "love." .. name .. " tolerates a nil Game (launcher / studio session)")
-  end
-end
-check(checked >= 10, "the handler scan actually found handlers (" .. checked .. ")")
-check(src:find("Studio.focus", 1, true) ~= nil, "love.focus routes to the studio")
-check(src:find("Studio.visible", 1, true) ~= nil, "so does love.visible")
+-- Actual native main.lua event ownership is exercised by
+-- skin_studio_native_host.lua; a text scan of a different host's variable
+-- names would not prove that this engine dispatches those events.
 
 T.finish("skin_studio_image_import")

@@ -320,7 +320,11 @@ eq(Studio.page().orient, "landscape", "with the page already locked")
 
 -- --------------------------------------------------------------- clone
 
-local source = TouchSkin.load("assets/skins/gb_anim", "gb_anim")
+-- An owned memory-only bundled fixture, rather than excluded reference art.
+local seed=TouchSkin.newSkin('owned_clone')
+seed.pages[1].controls={TouchSkin.newControl('a',.7,.8,.1,.1,'rect')}
+love.filesystem.write('assets/skins/owned_clone/skin.lua',TouchSkin.serialize(seed))
+local source = TouchSkin.load("assets/skins/owned_clone", "owned_clone")
 check(source ~= nil, "bundled skin loads for cloning")
 if source then
   local copy = TouchSkin.clone(source)

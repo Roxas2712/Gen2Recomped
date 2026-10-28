@@ -2937,6 +2937,7 @@ function Studio.wheelmoved(_, dy)
 end
 
 function Studio.focus()
+  PadCursor.reset()
   Studio.drag = nil
   Studio.clicked = false
   Studio.libraryPress = nil
