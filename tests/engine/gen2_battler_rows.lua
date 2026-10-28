@@ -170,7 +170,7 @@ do
   require('src.battle.Gen2PicturePresentation').transform(s,s.player,s.enemy)
   T.eq(s:gen2ObjectPictureSource('player').path,original,
     'queued Transform reads the pinned old picture, not its future resolved sprite')
-  p:start('PROBE',true);p:update()
+  s:animForMove('PROBE','player');p:update()
   local entry=p.runtime.loaded[2]
   T.check(p.view.battlerRows[entry]~=nil,'pending picture snapshot still uses actual command')
   local originalProvider=s.gen2ObjectPictureSource
@@ -180,7 +180,7 @@ do
     if side=='player'then return {path='rgb-live',trueColor=true,crop={index=2,width=48}}end
     return originalProvider(self,side)
   end
-  p:start('PROBE',true);p:update();draws={};p:draw()
+  s:animForMove('PROBE','player');p:update();draws={};p:draw()
   T.eq(#draws,26)
   for i=15,26 do
     T.same(draws[i].colors,{},'actual custom RGB OAM clears preceding indexed shader')
@@ -193,7 +193,7 @@ do
   table.insert(code,1,{op='raisesub'})
   p.anims.pictureArt={version=1,substitute={player='qa-doll-back',enemy='qa-doll-front'}}
   sources['qa-doll-back']=picture(48,48,2);sources['qa-doll-front']=picture(56,56,1)
-  p:start('PROBE',true);p:update()
+  s:animForMove('PROBE','player');p:update()
   T.eq(s:gen2ObjectPictureSource('player').path,'qa-doll-back','source follows real VM replacement state')
   local copied=p.view.battlerRows[p.runtime.loaded[2]].image
   local expected={sources['qa-doll-back']:getPixel(0,0)}
