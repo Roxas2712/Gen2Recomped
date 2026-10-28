@@ -78,12 +78,54 @@ T.neq(queued.payload.pair.primary,f.game.data.map_tilesets.P,'worker bank is det
 T.neq(queued.payload.pair.primary.palettes,f.game.data.map_tilesets.P.palettes,'mod palette data is copied')
 T.eq(Native.resident(),0,'no public pending cache placeholder')
 finish(id);Pool.poll(4)
+T.eq(Native.resident(),0,'CPU completion does not synchronously allocate or publish textures')
+local readyJob=assert(Native._stream.pending[f.pair])
+T.eq(readyJob.ts,nil,'pool callback leaves graphics work to the stream budget')
+Stream.update(1)
+T.check(readyJob.ts and readyJob.ts.image and not readyJob.ts.overImage,'first stream step uploads only the under texture')
+T.eq(Native.resident(),0,'partial upload cannot enter the resident cache')
+Stream.update(1)
+T.check(readyJob.ts.overImage~=nil,'second stream step uploads the over texture')
+T.eq(Native.resident(),0,'publication waits until both texture steps finish')
+Stream.update(1)
 local ts=Native.get(f.pair);local expected=Pixels.new(f.picture.pair,f.picture.layout)
 expected:update(require('src.render.TileRenderer').animFrame())
 T.eq(read(ts.image),expected:rgba(false),'actual native upload receives worker pixels')
 T.eq(read(ts.overImage),expected:rgba(true),'actual native over upload receives worker pixels')
 T.eq(Build._cacheInfo(Native._pairs).worker,1,'published worker provenance')
-T.eq(next(Native._stream.pending),nil,'central callback completes native publication')
+T.eq(next(Native._stream.pending),nil,'budgeted stream completes native publication')
+f=fresh();Native.prefetch(f.pair,1);id=nextId;finish(id);Pool.poll(4)
+Stream.update(1)
+local partial=assert(Native._stream.pending[f.pair]).ts
+f.game.data.map_tilesets.P.palettes[1][2][1]=222
+ts=Native.get(f.pair);expected=Pixels.new(f.picture.pair,f.picture.layout)
+expected:update(require('src.render.TileRenderer').animFrame())
+T.eq(read(ts.image),expected:rgba(false),'source edits between upload slices rebuild from live pixels')
+T.eq(Build._cacheInfo(Native._pairs).worker,0,'stale staged pixels cannot claim worker provenance')
+T.check(partial._retired,'stale unpublished upload is released')
+f=fresh();Native.prefetch(f.pair,1);id=nextId;finish(id);Pool.poll(4)
+Stream.update(1);partial=Native._stream.pending[f.pair].ts
+Native._stream:cancel()
+T.eq(next(Native._stream.pending),nil,'partially uploaded atlas can be cancelled')
+T.check(partial._retired,'cancelling releases a partial worker upload')
+T.eq(Native.resident(),0,'cancelled upload never publishes')
+f=fresh();Native.prefetch(f.pair,1);id=nextId;finish(id);Pool.poll(4)
+local stagedJob=Native._stream.pending[f.pair]
+local stagedCo=stagedJob.co;local wrapperResumes=0
+stagedJob.co=coroutine.create(function()
+  while true do
+    local ok,value=coroutine.resume(stagedCo);assert(ok,value);wrapperResumes=wrapperResumes+1
+    if coroutine.status(stagedCo)=='dead'then return value end
+    coroutine.yield(value)
+  end
+end)
+T.check(Native.get(f.pair).image~=nil and wrapperResumes>0,'a coroutine wrapper installed after CPU acceptance retains completion ownership')
+T.eq(Build._cacheInfo(Native._pairs).worker,0,'late coroutine replacement keeps native provenance')
+f=fresh();Native.prefetch(f.pair,1);id=nextId;finish(id);Pool.poll(4)
+Stream.update(1);P.atlasWorker=false
+T.check(Native.get(f.pair).image~=nil,'disabling workers between texture slices retains immediate admission')
+T.eq(Build._cacheInfo(Native._pairs).worker,0,'disabled worker result cannot publish')
+P.atlasWorker=true
 f=fresh();Native.prefetch(f.pair,1);id=nextId
 local publicJob=assert(Native._stream.pending[f.pair])
 T.check(coroutine.resume(publicJob.co),'a mod can advance the public pending coroutine')

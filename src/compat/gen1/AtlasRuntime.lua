@@ -44,7 +44,7 @@ function M.new(api)
     end
   end
   local function releaseJob(job)
-    Build.cancel(job._worker);job._worker=nil;job._core=nil
+    Build.cancel(job._worker);job._worker=nil;job._core=nil;job._coreCurrent=nil
     if job.ts then Upload.release(job.ts)end
     job.co,job.ts=nil,nil
   end
@@ -106,23 +106,32 @@ function M.new(api)
     local job={key=canonical,stamp=key,priority=priority or 5,order=order}
     job.co=coroutine.create(function()
       job._advanced=true
-      local core=job._core
-      local model
-      if core then model=Pixels.fromCore(core,pair,layout)
-      else model=Pixels.new(pair,layout,function(stage)coroutine.yield(stage)end)end
-      local ts={pair=canonical,midToSlot=model.midToSlot,midCount=#model.mids,cols=model.cols,rows=model.rows,
-        layered=true,quads={},overQuads={},slotPix={},_model=model,_stamp=key,revision=0}
-      job.ts=ts
-      ts.imageData=Upload.data(model.width,model.height,(core and core.rgbaUnder or model:rgba(false)));coroutine.yield('pixels')
-      ts.overImageData=Upload.data(model.width,model.height,(core and core.rgbaOver or model:rgba(true)));coroutine.yield('pixels')
-      ts.image=Upload.image(ts.imageData);coroutine.yield('texture')
-      ts.overImage=Upload.image(ts.overImageData);coroutine.yield('texture')
-      ts.idxBlob,ts.overBlob=core and core.blobUnder or model:blob(false),core and core.blobOver or model:blob(true);ts.bgr=model.bgr
-      return ts
+      while true do
+        local core=job._core
+        if core and not job._coreCurrent()then
+          core=nil;job._core=nil;job._coreCurrent=nil
+        end
+        local model
+        if core then model=Pixels.fromCore(core,pair,layout)
+        else model=Pixels.new(pair,layout,function(stage)coroutine.yield(stage)end)end
+        local ts={pair=canonical,midToSlot=model.midToSlot,midCount=#model.mids,cols=model.cols,rows=model.rows,
+          layered=true,quads={},overQuads={},slotPix={},_model=model,_stamp=key,revision=0}
+        job.ts=ts
+        ts.imageData=Upload.data(model.width,model.height,(core and core.rgbaUnder or model:rgba(false)));coroutine.yield('pixels')
+        ts.overImageData=Upload.data(model.width,model.height,(core and core.rgbaOver or model:rgba(true)));coroutine.yield('pixels')
+        ts.image=Upload.image(ts.imageData);coroutine.yield('texture')
+        ts.overImage=Upload.image(ts.overImageData);coroutine.yield('texture')
+        ts.idxBlob,ts.overBlob=core and core.blobUnder or model:blob(false),core and core.blobOver or model:blob(true);ts.bgr=model.bgr
+        if not core or job._coreCurrent()then return ts end
+        -- A mod can edit banks or replace the public coroutine between slices.
+        -- Retire the unpublished resources and rebuild through the live owner,
+        -- preserving this coroutine and any wrapper installed by that mod.
+        Upload.release(ts);job.ts=nil;job._core=nil;job._coreCurrent=nil
+      end
     end)
     jobs[canonical]=job
     local nativeCo=job.co
-    if not required then job._worker=Build.prepare(pair,layout,function(core)
+    if not required then job._worker=Build.prepare(pair,layout,function(core,current)
       if jobs[canonical]~=job then return end
       job._worker=nil
       if job._advanced or job.co~=nativeCo then return end
@@ -131,8 +140,9 @@ function M.new(api)
         releaseJob(job);if jobs[canonical]==job then jobs[canonical]=nil end;return
       end
       job._core=core
-      local result
-      repeat result=advance(job)until result~=false
+      job._coreCurrent=function()return job.co==nativeCo and current()end
+      -- The central poll only accepts CPU results. The ordinary stream slice
+      -- owns ImageData allocation and at most one texture upload per step.
     end,function()
       if jobs[canonical]==job then job._worker=nil end
     end)end
@@ -155,7 +165,7 @@ function M.new(api)
       else Upload.release(old);owned[old]=nil end
     end
     api._pairs[job.key]=result;owned[result]=true;jobs[job.key]=nil;job.co,job.ts=nil,nil
-    if job._core then Build.published(result);job._core=nil end
+    if job._core then Build.published(result);job._core=nil;job._coreCurrent=nil end
     api._gen=api._gen+1;touch(job.key)
     runtime:sweepRetired()
     return result

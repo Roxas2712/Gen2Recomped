@@ -42,11 +42,17 @@ def main():
     parser.add_argument("--atlas-bridge", action="store_true", help="exercise the production Gen-3 source field/atlas presentation")
     parser.add_argument("--hidden", action="store_true", help="Use an invisible native window for matched unfocused measurements")
     parser.add_argument("--stable-focus", action="store_true", help="Reject measurements whose actual native focus changes")
+    parser.add_argument("--unfocused-sdl3", type=Path, help="SDL3 library for a real non-focusable show/hide transition; requires --hidden --stable-focus")
     parser.add_argument("--perf", help="Native POKEPORT_PERF overrides, e.g. atlasWorker=0")
     parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
+    if args.unfocused_sdl3 and not (args.measure and args.hidden and args.stable_focus):
+        parser.error("--unfocused-sdl3 requires --measure --hidden --stable-focus")
+    if args.unfocused_sdl3:
+        qa_source(args.unfocused_sdl3.resolve())
+        assert args.unfocused_sdl3.is_file(), "SDL3 library is missing"
     if args.atlas_bridge and any(not name.startswith("emerald-") for name in args.scene):
         parser.error("--atlas-bridge requires Gen-3 scenes")
     if args.seconds < 60:
@@ -161,6 +167,23 @@ def main():
             'BaselineSections.call("  gen4: live pass", self.livePass, self, ',3)])
         instrument("src/core/Music.lua",[('require("src.audio.NitroAudio").update()',
             'BaselineSections.call("  audio: Nitro update", require("src.audio.NitroAudio").update)',1)])
+        if args.atlas_bridge:
+            instrument("src/compat/gen1/AtlasRuntime.lua",[],('return M', '''
+local create=M.new
+function M.new(api)
+  local runtime=create(api)
+  for _,name in ipairs({'prefetch','step'})do
+    local original=runtime[name]
+    local label='  atlas: '..name
+    runtime[name]=function(...)return BaselineSections.call(label,original,...)end
+  end
+  return runtime
+end
+return M'''))
+            instrument("src/core/BuildWorker.lua",[],('return BuildWorker', '''
+local poll=BuildWorker.poll
+function BuildWorker.poll(...)return BaselineSections.call('  atlas: pool delivery',poll,...)end
+return BuildWorker'''))
         if any(SCENES[name].get("voxel") for name in planned):
             for module,method,export in (("Structures","forMap","Structures"),("Gen3","prepare","Gen3"),
                                          ("TerrainAtlas","forMap","TerrainAtlas"),("VoxelDiskCache","load","Cache")):
@@ -199,6 +222,10 @@ end
                POKEPORT_GRAPHICS_BACKEND=args.backend)
     if args.perf:
         env["POKEPORT_PERF"] = args.perf
+    if args.unfocused_sdl3:
+        env["PERF_BASELINE_UNFOCUSED_SDL3"] = str(args.unfocused_sdl3.resolve())
+        env["SDL_WINDOW_ACTIVATE_WHEN_SHOWN"] = "0"
+        adaptations.append("Use actual non-focusable SDL3 show/hide; verify unmodified native focus queries")
     token = str(time.time_ns())
     profiles = {}
     inputs = {}
@@ -276,6 +303,7 @@ end
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
                                     "performanceOverrides": args.perf, "atlasBridge": args.atlas_bridge,
                                     "hiddenWindow": args.hidden, "stableNativeFocus": args.stable_focus,
+                                    "unfocusedNativeWindow": bool(args.unfocused_sdl3),
                                     "nativePacing": args.measure, "vsync": 0 if args.measure else None,
                                     "backgroundCapDisabled": args.measure, "randomSeed": 12345},
               "romSha1": inputs, "results": results}

@@ -240,8 +240,11 @@ return function(game)
       Cap.backgroundPacing=false -- owned benchmark keeps its cap outside the foreground
       Cap.apply(spec.fpsCap)
       love.window.setVSync(0)
+      local sdl3=os.getenv('PERF_BASELINE_UNFOCUSED_SDL3')
+      if sdl3 then report.nativeWindowControl=require('tools.performance_native_window')(sdl3)end
       U.wait(120)
       report.nativeFocusBefore=love.window.hasFocus()
+      if sdl3 then assert(report.nativeFocusBefore==false,'native window did not relinquish focus')end
       report.variant=spec.variant
       report.pacing={fpsCap=Cap.current,vsync=love.window.getVSync(),backgroundPacing=Cap.backgroundPacing}
       report.switches={idleStream=P.idleStream,gen4ChunkPrebuild=P.gen4ChunkPrebuild}

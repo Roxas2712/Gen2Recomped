@@ -76,7 +76,9 @@ function M.prepare(pair,layout,done,failed)
     if not pending[job]then return end
     if M.expired(job)then failure();return end
     pending[job]=nil
-    local ok=pcall(done,result)
+    -- Uploads may span several main-thread slices. Keep a read-only source
+    -- validator alive until publication, after this pool handle has retired.
+    local ok=pcall(done,result,function()return current(job)end)
     if not ok then totals.failed=totals.failed+1;failed()end
   end,failure)
   if not accepted or not id then pending[job]=nil;return nil end
