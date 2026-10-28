@@ -11,10 +11,12 @@ return function(game)
  game.input:reset();local backdrop={update=function()end,draw=function()end,isOpaque=true};game.stack:push(backdrop)
  local P=require('src.pokemon.Pokemon');local Save=require('src.core.SaveSerializer')
  local IO=require('src.core.SaveData');local Font=require('src.render.Font');local Music=require('src.core.Music')
- local Sound=require('src.core.Sound');local play=Sound.play;local applause=0
- Sound.play=function(data,name,...)
-  local source=play(data,name,...)
-  if name=='SE_APPLAUSE'then assert(source,'Hall applause has no actual audio source');applause=applause+1 end
+ local Sound=require('src.core.Sound');local play=Sound.playId;local applause=0
+ local applauseId=assert(require('src.core.game3.se_ids').resolve('SE_APPLAUSE'))
+ assert(applauseId==98 and game.data.audio.songs.SONG_062,'Missing FR/LG native applause sequence')
+ Sound.playId=function(data,id,...)
+  local source=play(data,id,...)
+  if id==applauseId then assert(source,'Hall applause has no actual audio source');applause=applause+1 end
   return source
  end
  local report={status='running',edition=edition,preparedFixture=true,continuousStory=false,captures={},cases={}}
@@ -71,7 +73,7 @@ return function(game)
   while game.stack:top()~=backdrop do game.stack:pop()end
   report.cases[gender]={party=count,nativeHallMusic=cue,nativeCreditsMusic=creditsCue,actualCreditsHandoff=true,clock='123:45',derivedFemaleGlyph=true}
  end
- Sound.play=play;assert(applause==2,'Each actual ceremony must play its applause once')
+ Sound.playId=play;assert(applause==2,'Each actual ceremony must play its applause once')
  report.applauseSources=applause;report.drawSaveRngPreserved=true;report.status='pass';persist()
  print('PASS_NATIVE_FRLG_HALL_MUSIC_CLOCK_GENDER '..edition);love.event.quit(0)
 end

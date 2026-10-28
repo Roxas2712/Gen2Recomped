@@ -97,7 +97,7 @@ function HOF:update()
   if self.phase == "fly" then
     local m = self.mons[self.index]
     if not m then self.phase, self.timer = "welcome", 400
-      pcall(Sound.play, self.game.data, "SE_APPLAUSE")
+      pcall(Sound.playId, self.game.data, require("src.core.game3.se_ids").resolve("SE_APPLAUSE"))
       for _, o in ipairs(self.mons) do o.dimTarget = 0 end
       return
     end

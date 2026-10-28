@@ -3,6 +3,8 @@ package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit');local V=require('src.core.GameVersion')
 local H=require('src.ui.Gen3HallOfFameFRLG');local Music=require('src.core.Music')
 local Credits=require('src.ui.Gen3CreditsFRLG')
+local Sound=require('src.core.Sound');local playId=Sound.playId;local applause={}
+Sound.playId=function(data,id)applause[#applause+1]={data=data,id=id}end
 local Assets=require('src.render.Assets');local Font=require('src.render.Font')
 local Sprites=require('src.pokemon.Sprites');local Save=require('src.core.SaveSerializer')
 local oldVersion,play,img,path=V.get(),Music.play,Assets.image,Sprites.path
@@ -22,6 +24,11 @@ for _,version in ipairs{'firered','leafgreen'}do
   save={version=version,player={name='LEAF',gender='girl'},party={mon},playTime={hours=123,minutes=45,seconds=6}}}
  local before=Save.encode(game.save);local h=H.new(game,{text={}},function()end)
  T.eq(kind,'hof','species sprite hook receives its documented ceremony context')
+ game.input={wasPressed=function()return false end}
+ h.phase='fly';h.index=#h.mons+1;h:update()
+ T.eq(applause[#applause].id,98,'ceremony uses its native FR/LG applause ID')
+ T.eq(applause[#applause].data,game.data,'native applause belongs to the ceremony cartridge')
+ T.eq(h.phase,'welcome','applause starts on the actual welcome transition')
  h:enter();T.eq(played[#played],'OWNED_HALL_CUE','Hall uses the selected cartridge/conversion role')
  Credits.enter({game=game});T.eq(played[#played],'OWNED_CREDITS_CUE','credits use their own cartridge role')
  local spy=Music.play
@@ -52,6 +59,7 @@ for _,version in ipairs{'firered','leafgreen'}do
  T.eq(played[#played],'Music_HallOfFame','old-cache fallback remains delegated to Music.special')
 end
 Music.play,Assets.image,Sprites.path=play,img,path
+Sound.playId=playId
 for key,value in pairs(original)do Font[key]=value end
 love.graphics=graphics;V.set(oldVersion)
 T.finish('FRLG Hall cartridge music, canonical clock, native gender and sprite hook ownership')

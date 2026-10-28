@@ -7,6 +7,10 @@ previous song. The ceremony now resolves `hallOfFame` through `Music.special`,
 including conversion overrides and its existing old-cache fallback. The
 following credits had the same legacy-label problem and now resolve their
 own credits role, including the established Hall fallback on raised errors.
+The welcome transition also used an absent `audio.sfx.SE_APPLAUSE` alias.
+It now plays FR/LG's native sequence 98 through the existing numeric sound
+API. The functional ID is verified against the FR/LG song enum in reference
+revision `fb7b0366efcb85e703e9e6d5a8a24d01456a109b`; no audio is distributed.
 
 Player time uses the canonical read-only `SaveData.playSeconds` reader,
 supporting the established scalar and hours/minutes/seconds table shapes.
