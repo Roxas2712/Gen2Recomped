@@ -3,12 +3,13 @@
 -- owns invulnerable/hiddenAs; this latch owns only when that picture is seen.
 local Version=require('src.core.GameVersion')
 local M={}
+local function side(b)return b.isPlayer and 'player' or 'enemy'end
 
 local function vanished(b)
   return b and b.invulnerable and (b.hiddenAs=='air' or b.hiddenAs=='underground') or false
 end
 local function current(screen,b,p)
-  return screen[b.isPlayer and 'player' or 'enemy']==b and b.mon==p.mon
+  return screen[side(b)]==b and b.mon==p.mon
     and not b.fainted and (b.mon.hp or 0)>0
 end
 local function queued(screen,row)
@@ -22,7 +23,7 @@ end
 
 function M.charge(screen,b,row)
   if not (Version.isGen2() and vanished(b))then return end
-  states(screen)[b]={mon=b.mon,row=row,phase=row and 'charge' or 'hidden',hidden=not row}
+  states(screen)[side(b)]={battler=b,mon=b.mon,row=row,phase=row and 'charge' or 'hidden',hidden=not row}
 end
 
 -- Native resolution clears the charge flags before announcing the release.
@@ -30,23 +31,24 @@ end
 function M.releasing(screen,b)
   if not Version.isGen2()then return end
   local all=screen._gen2VanishPictures
-  local p=all and all[b]
+  local p=all and all[side(b)]
   if not p then return end
-  if not (current(screen,b,p) and p.hidden)then all[b]=nil;return end
+  if not (p.battler==b and current(screen,b,p) and p.hidden)then all[side(b)]=nil;return end
   p.phase,p.row,p.runner='release',nil,nil
 end
 function M.releaseRow(screen,b,row)
-  local p=screen._gen2VanishPictures and screen._gen2VanishPictures[b]
-  if p and p.phase=='release'then p.row=row end
+  local p=screen._gen2VanishPictures and screen._gen2VanishPictures[side(b)]
+  if p and p.battler==b and p.phase=='release'then p.row=row end
 end
 
 function M.admitted(screen,row,runner)
-  for b,p in pairs(screen._gen2VanishPictures or {})do
+  for key,p in pairs(screen._gen2VanishPictures or {})do
+    local b=p.battler
     if p.row==row then
       p.row,p.runner=nil,runner
       if not runner then
         if p.phase=='charge' and vanished(b)then p.phase,p.hidden='hidden',true
-        else screen._gen2VanishPictures[b]=nil end
+        else screen._gen2VanishPictures[key]=nil end
       end
     end
   end
@@ -55,7 +57,8 @@ end
 -- One observation after the native VM tick; reads and draws never call this.
 function M.sync(screen)
   local all=screen._gen2VanishPictures
-  for b,p in pairs(all or {})do
+  for key,p in pairs(all or {})do
+    local b=p.battler
     local remove=not current(screen,b,p)
     if p.phase=='hidden'then remove=remove or not vanished(b)
     elseif p.runner then
@@ -66,15 +69,15 @@ function M.sync(screen)
           if vanished(b)then p.phase,p.hidden,p.runner='hidden',true,nil
           else remove=true end
         end
-      elseif ended or r.bg.picSize[b.isPlayer and 'player' or 'enemy']~=nil then remove=true end
+      elseif ended or r.bg.picSize[key]~=nil then remove=true end
     elseif not (p.row and queued(screen,p.row))then remove=true end
-    if remove then all[b]=nil end
+    if remove then all[key]=nil end
   end
 end
 
 function M.hidden(screen,b)
-  local p=screen._gen2VanishPictures and screen._gen2VanishPictures[b]
-  return p and current(screen,b,p) and p.hidden
+  local p=b and screen._gen2VanishPictures and screen._gen2VanishPictures[side(b)]
+  return p and p.battler==b and current(screen,b,p) and p.hidden
     and (p.phase=='release' or vanished(b)) or false
 end
 function M.install(Screen)

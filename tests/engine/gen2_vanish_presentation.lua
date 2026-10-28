@@ -70,7 +70,7 @@ local function underground(s,side,mon)
   return s.isUnderground and s:isUnderground(side,mon) or false
 end
 local function release(s,id,side,move)
-  local p=s._gen2VanishPictures and s._gen2VanishPictures[s[side]]
+  local p=s._gen2VanishPictures and s._gen2VanishPictures[side]
   s:performMove(s[side],s[side=='player'and'enemy'or'player'],move)
   if id~='SOLARBEAM'then
     T.eq(p and p.phase,'release','actual release retains the preceding cleared box')
@@ -78,7 +78,7 @@ local function release(s,id,side,move)
   end
   untilState(s,function()return s.animPlaying end,'actual release program starts')
   if id~='SOLARBEAM'then
-    T.eq(s._gen2VanishPictures[s[side]],p,'release admission retains its original picture latch')
+    T.eq(s._gen2VanishPictures[side],p,'release admission retains its original picture latch')
     T.eq(p and p.runner,s.animPlayer.runtime,'release admission binds its actual VM')
   end
   T.eq(s.animPlayer.moveId,id,'release uses the actual move')
