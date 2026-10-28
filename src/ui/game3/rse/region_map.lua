@@ -5,6 +5,8 @@ local M={}
 local types={NONE=0,ROUTE=1,CITY_CANFLY=2,CITY_CANTFLY=3,BATTLE_FRONTIER=4}
 M.TYPE=setmetatable({},{__index=types,__newindex=function()error('native region map types are read-only',2)end})
 function M.active()return Query.active('hoenn')end
+function M.isOpen()return M.active()~=nil end
+function M.manifest()return Query.manifest()end
 function M.mapSecType(view,section)return Query.kind(view,section)end
 function M.flyWarpDestination(session,section,pos)
  local s=M.active();if not s then return end
