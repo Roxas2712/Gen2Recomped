@@ -33,3 +33,24 @@ bytes when returning its width.
 
 No mod files change. This work does not supply Gen1's separate TTF font
 configuration contract or qualify all fonts, menus or final release packages.
+
+## Source text commands
+
+Gen1 expands `#MON` to `POKéMON` when the active font does not declare a
+`#`-prefixed charmap entry. The native Font now follows that same command
+contract: expanded glyphs retain the original command's byte range and use
+the current font's character mappings, including relocated accents and
+ligatures. Explicit mod charmap entries retain authority; the missing-atlas
+raster fallback retains its existing literal-string policy.
+
+`Font.fit` emits a complete command once, or materializes its visible prefix
+when an ellipsis cuts through the expansion. Native TextBox wrapping keeps a
+shared source-byte group intact, moving it to the next line when needed. An
+individual group wider than the entire box still advances, matching the
+existing oversized-glyph policy.
+
+`luajit tests/engine/font_text_macros.lua` adds 62 checks, including actual
+native typewriter ticks and line wrapping. The private real-Crystal-font
+comparison reproduces the `#MON` mismatch on main `6b164d96` and matches Gen1
+after the change for eight sampled labels. This remains CPU glyph-dispatch
+evidence, not final-window acceptance.

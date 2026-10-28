@@ -309,36 +309,36 @@ function Font.split(text)
       end
       i = i+1
     else
-    local span
-    local candidates = state and state.byFirstByte[text:byte(i)]
-    if candidates then
-      for _, entry in ipairs(candidates) do
-        local len = #entry.seq
-        if text:sub(i, i + len - 1) == entry.seq then
-          span = { from = i, to = i + len - 1, code = entry.code }
-          break
+      local span
+      local candidates = state and state.byFirstByte[text:byte(i)]
+      if candidates then
+        for _, entry in ipairs(candidates) do
+          local len = #entry.seq
+          if text:sub(i, i + len - 1) == entry.seq then
+            span = { from = i, to = i + len - 1, code = entry.code }
+            break
+          end
         end
       end
-    end
-    if not span then
-      -- Nothing matched.  Still keep a UTF-8 sequence whole, so a cut never
-      -- lands mid-character even for a glyph we cannot draw.
-      local last = i
-      if text:byte(i) >= 0xC0 then
-        local k = i + 1
-        while k <= n do
-          local b = text:byte(k)
-          if b < 0x80 or b > 0xBF then break end
-          last, k = k, k + 1
+      if not span then
+        -- Nothing matched. Still keep a UTF-8 sequence whole, so a cut never
+        -- lands mid-character even for a glyph we cannot draw.
+        local last = i
+        if text:byte(i) >= 0xC0 then
+          local k = i + 1
+          while k <= n do
+            local b = text:byte(k)
+            if b < 0x80 or b > 0xBF then break end
+            last, k = k, k + 1
+          end
+        end
+        span = { from = i, to = last }
+        if text:byte(i)>=128 then
+          span.code=require("src.translation.UnicodeFont").code(text:sub(i,last))
         end
       end
-      span = { from = i, to = last }
-      if text:byte(i)>=128 then
-        span.code=require("src.translation.UnicodeFont").code(text:sub(i,last))
-      end
-    end
-    spans[#spans + 1] = span
-    i = span.to + 1
+      spans[#spans + 1] = span
+      i = span.to + 1
     end
   end
   return spans

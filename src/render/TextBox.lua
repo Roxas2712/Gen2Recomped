@@ -295,11 +295,14 @@ function TextBox.paginate(text, maxCols, letterSpacing, maxPixels, softWrap)
       -- byte cut through that group would consume the entire command while
       -- only budgeting part of its width. Move it to the next line intact.
       -- An oversized command at the start still advances, like a wide glyph.
-      if spans[fit+1] and spans[fit+1].from==spans[fit].from then
+      if spans[fit+1] and spans[fit+1].from==spans[fit].from
+          and spans[fit+1].to==spans[fit].to then
         local first=fit
-        while first>1 and spans[first-1].from==spans[fit].from do first=first-1 end
+        while first>1 and spans[first-1].from==spans[fit].from
+            and spans[first-1].to==spans[fit].to do first=first-1 end
         if first>1 then fit=first-1 else
-          while spans[fit+1] and spans[fit+1].from==spans[fit].from do fit=fit+1 end
+          while spans[fit+1] and spans[fit+1].from==spans[fit].from
+              and spans[fit+1].to==spans[fit].to do fit=fit+1 end
         end
       end
       local cut = spans[fit].to
