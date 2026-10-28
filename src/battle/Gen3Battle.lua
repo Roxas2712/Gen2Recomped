@@ -1507,8 +1507,9 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
 end
 function Gen3Battle.drawSafariLabel(label,x,y)
   local pen=require('src.render.Gen3TextPen')
-  if not pen.isCompound(label)then Font.draw(label,x,y);return Font.width(label)end
-  return pen.layout(label,nil,function(_,dx,dy,code)Font.drawCode(code,x+dx,y+dy)end)
+  local width=pen.drawCompound(label,x,y)
+  if width~=nil then return width end
+  Font.draw(label,x,y);return Font.width(label)
 end
 
 function Gen3Battle.drawSafariPanel(battle,x,y)
