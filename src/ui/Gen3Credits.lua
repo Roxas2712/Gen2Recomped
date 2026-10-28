@@ -61,6 +61,8 @@ function Gen3Credits.record(game)
 end
 
 function Gen3Credits.new(game, onDone)
+  local Frlg=require('src.ui.Gen3FrlgCredits')
+  if Frlg.available(game)then return Frlg.new(game,onDone)end
   local record = Gen3Credits.record(game)
   if not record then return nil end
   local Emerald=require('src.ui.Gen3EmeraldCredits')
