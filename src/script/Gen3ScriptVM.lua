@@ -959,6 +959,7 @@ local function contributionFor(data, mapId, entry, mapDef)
        or callback.type == ON_RESUME then
       local rows = Gen3ScriptVM.compile(data, callback.script)
       if rows then onEnter[#onEnter + 1] = {rows=rows,
+        transition=callback.type==ON_TRANSITION,
         setup=callback.type==ON_LOAD or callback.type==ON_TRANSITION}end
     end
   end
@@ -981,9 +982,13 @@ local function contributionFor(data, mapId, entry, mapDef)
       -- map, and a save loaded into the same map has to be asked again
       for _, g in ipairs(onFrame) do g.armed = nil end
       for _, entryScript in ipairs(onEnter) do
+        -- RS InitMapFromSavedGame runs ON_LOAD; CB2_ReturnToField runs
+        -- ON_RESUME. Neither is a fresh-map ON_TRANSITION.
+        if not (overworld.gen3RsContinuing and entryScript.transition) then
         queue(overworld, entryScript.rows, {mapId=mapId,gen3MapSetup=entryScript.setup})
+        end
       end
-      for _, g in ipairs(onWarpIn) do
+      for _, g in ipairs(overworld.gen3RsContinuing and {} or onWarpIn) do
         if Gen3Commands.getVar(game.save, g.var) == g.value then
           queue(overworld, g.rows, { mapId = mapId })
           break
