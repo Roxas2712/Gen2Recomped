@@ -12,6 +12,14 @@ function Image:getDimensions() return self.w, self.h end
 function Image:getWidth() return self.w end
 function Image:getHeight() return self.h end
 
+-- Equal quad records share their API methods just as Image records do.
+-- Per-instance closures make otherwise identical renderer traces unequal.
+local function setQuadViewport(self,a,b,c,d,e,f)
+  self.x,self.y,self.w,self.h=a,b,c,d
+  self.sw,self.sh=e or self.sw,f or self.sh
+end
+local function getQuadViewport(self)return self.x,self.y,self.w,self.h end
+
 -- read PNG dimensions from the file header (no decoder needed)
 local function pngSize(path)
   local f = io.open(path, "rb")
@@ -45,13 +53,8 @@ stub.graphics = {
     return setmetatable({ w = w, h = h, path = path }, Image)
   end,
   newQuad = function(x,y,w,h,sw,sh)
-    local quad={x=x,y=y,w=w,h=h,sw=sw,sh=sh}
-    function quad:setViewport(a,b,c,d,e,f)
-      self.x,self.y,self.w,self.h=a,b,c,d
-      self.sw,self.sh=e or self.sw,f or self.sh
-    end
-    function quad:getViewport()return self.x,self.y,self.w,self.h end
-    return quad
+    return {x=x,y=y,w=w,h=h,sw=sw,sh=sh,
+      setViewport=setQuadViewport,getViewport=getQuadViewport}
   end,
   newCanvas = function(w, h)
     return setmetatable({ w = w, h = h, setFilter = noop }, Image)

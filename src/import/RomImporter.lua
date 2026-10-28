@@ -1347,7 +1347,7 @@ local function markerFor(version)
     if levelArt.supports(version)then revision=revision..'gba-levelup-streaks-v'..levelArt.REVISION..':'end
   end
   if version == 'ruby' or version == 'sapphire' then
-    revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:'
+    revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:rs-forced-floors-v1:rs-battler-coords-v1:'
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if version=='firered'or version=='leafgreen'or version=='emerald'then

@@ -228,7 +228,7 @@
     "gMonBackPicTable": 2004868,
     "gMonPaletteTable": 2008388,
     "gMonShinyPaletteTable": 2011908,
-    "gMonFrontPicCoords": 2003108,
+    "gMonFrontPicCoords": 1997828,
     "gTrainerFrontPicTable": 2016460,
     "gTrainerFrontPicPaletteTable": 2017124,
     "gMonIconTable": 3915128,
@@ -280,7 +280,8 @@
     "sWeatherCycleRoute119": 3779356,
     "sWeatherCycleRoute123": 3779360,
     "sWindowFrames": 3629440,
-    "gMonIconPaletteTable": 3917328
+    "gMonIconPaletteTable": 3917328,
+    "gMonBackPicCoords": 2003108
   },
   "pokedexEntrySize": 36,
   "stageOverrides": {
@@ -329,6 +330,19 @@
         "caught": 371
       },
       "SOURCE": "ROM:matching RS sBallSpriteSheets 020A8BC, palettes 020A91C, shared open 0D030D0, colors 040B52C, particles 0D1A7F4; verified RS Thumb send-out and release sites"
+    },
+    "FORCED_MOVEMENT": {
+      "DISPATCH": 362824,
+      "TESTS": 3209960,
+      "FUNCS": 3210032,
+      "WALK_DRIVER": 362992,
+      "SLIDE_DRIVER": 363376
+    },
+    "BATTLER_COORDS": {
+      "AT": 3667208,
+      "READER": 490176,
+      "POINTER_AT": 100,
+      "HEALTHBOX": {}
     }
   },
   "scenes": [],
