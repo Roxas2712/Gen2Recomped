@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from gen3_mist_compare import compare_rows
 
 ROOT = Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -14,6 +15,7 @@ parser.add_argument('--reference-root', type=Path, required=True)
 parser.add_argument('--output', type=Path, required=True)
 parser.add_argument('--lua', type=Path, default=shutil.which('luajit'))
 parser.add_argument('--qa-tools-root', type=Path, default=ROOT / 'tools')
+parser.add_argument('--qa-project-root', type=Path, default=ROOT)
 parser.add_argument('--effect', choices=('mist','haze','perish'), default='mist')
 parser.add_argument('--edition', action='append', choices=('firered','leafgreen','ruby','sapphire','emerald'))
 parser.add_argument('--mode', action='append', choices=('single','double-left','double-right','double-right-empty-left','double-left-empty-right','double','empty-left','empty-right'))
@@ -30,7 +32,7 @@ if args.effect=='perish' and any(mode not in ('single','double','empty-left','em
 if args.effect=='mist' and any('empty' in mode for mode in args.mode or ()):
     parser.error('empty-flank modes are qualified by the Haze contract only')
 worker = ROOT / ('tests/gen3_' + args.effect + '/worker.lua')
-inputs = [Path(__file__).resolve(), worker, worker.with_name('cases.lua'),
+inputs = [Path(__file__).resolve(), Path(__file__).with_name('gen3_mist_compare.py'), worker, worker.with_name('cases.lua'),
           ROOT / 'tests/charge_required/fixture.lua', *[ROOT / p for p in (
               'src/battle/Gen3Mist.lua', 'src/battle/Gen3Builtins.lua',
               'src/battle/BattleState.lua', 'src/battle/Gen3Secondary.lua',
@@ -52,6 +54,9 @@ run = subprocess.run
 if os.name != 'nt' and not os.getenv('GITHUB_ACTIONS'):
     sys.path.insert(0, str(args.qa_tools_root.resolve()))
     from qa_storage import qa_source, qa_cache, qa_run
+    import atexit, qa_storage
+    qa_storage._storage = qa_storage.Storage(args.qa_project_root.resolve())
+    atexit.register(qa_storage._storage.close)
     for path in [ROOT, ref, args.lua.resolve(), Path(sys.executable), args.qa_tools_root]:
         qa_source(path)
     qa_cache(args.output)
@@ -82,16 +87,6 @@ report_path = args.output / 'report.json'
 
 def save():
     report_path.write_text(json.dumps(report, indent=2) + '\n')
-
-
-def equal(left, right):
-    if type(left) is not type(right):
-        return False
-    if isinstance(left, dict):
-        return left.keys() == right.keys() and all(equal(left[k], right[k]) for k in left)
-    if isinstance(left, list):
-        return len(left) == len(right) and all(equal(a, b) for a, b in zip(left, right))
-    return left == right
 
 
 save()
@@ -129,13 +124,23 @@ for edition in args.edition or ('firered','leafgreen','ruby','sapphire','emerald
             if code:
                 diagnostic='\n'.join(line for line in output.splitlines() if not line.startswith(marker))
                 print(diagnostic[-3000:], flush=True)
-        report['pairs'].append(dict(label=edition + '-' + mode,
-                                    equal=pair[0]['rows'] is not None and equal(pair[0]['rows'], pair[1]['rows'])))
+        comparison=compare_rows(pair[0]['rows'],pair[1]['rows'],args.effect)
+        comparison['label']=edition + '-' + mode
+        report['pairs'].append(comparison)
+        print('PAIR',comparison['label'],'equal',comparison['equal'],
+              'known reference differences',len(comparison['known_reference_differences']),
+              'unclassified differences',len(comparison['unclassified_differences']),flush=True)
         save()
 report.update(status='terminal', inputs_unchanged=all(sha(Path(p)) == h for p, h in hashes.items()),
               reference_clean=not git(ref, 'status', '--porcelain'))
 report['passed'] = (report['inputs_unchanged'] and report['reference_clean']
                     and all(r['exit'] == 0 and r['rows'] for r in report['runs'])
-                    and all(p['equal'] for p in report['pairs']))
+                    and all(p['matching_expected'] for p in report['pairs']))
+report['full_parity']=all(p['equal'] for p in report['pairs'])
+report['known_reference_difference_count']=sum(len(p['known_reference_differences']) for p in report['pairs'])
+report['unclassified_difference_count']=sum(len(p['unclassified_differences']) for p in report['pairs'])
 save()
+print('FINAL',report['passed'],'full parity',report['full_parity'],
+      'known reference differences',report['known_reference_difference_count'],
+      'unclassified differences',report['unclassified_difference_count'],flush=True)
 sys.exit(not report['passed'])

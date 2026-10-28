@@ -37,7 +37,7 @@ function C.run(root,backend,edition,mode)
  end
  f.e.choose(function(next,battle)return next(battle)end)
  local rows={}
- local labels={'guard blocks primary','move blocks primary','move does not refresh','item does not refresh','expires after five rounds','switch preserves side','haze preserves side','chance secondary blocked','certain secondary bypasses','intimidate blocked','other side unprotected','self lowering bypasses','both flanks protected'}
+ local labels={'guard blocks primary','move blocks primary','move does not refresh','item does not refresh','expires after five rounds','switch preserves side','haze preserves side','chance secondary blocked','guaranteed secondary protected','intimidate blocked','other side unprotected','self lowering bypasses','both flanks protected'}
  for _,label in ipairs(labels)do
   local b=f.fresh('TACKLE').battle
   local party={b.enemy.mon,copy(b.enemy.mon),copy(b.enemy.mon)}
@@ -85,8 +85,8 @@ function C.run(root,backend,edition,mode)
   elseif label=='switch preserves side'then
    if backend=='gen1'then Engine.performSwitch(b,Adapter.new(b),id,3)else b:switchTrainerInto(id,3)end
   elseif label=='haze preserves side'then move(114,b.player,at(id))
-  elseif label=='chance secondary blocked'or label=='certain secondary bypasses'then
-   if label=='certain secondary bypasses'then
+  elseif label=='chance secondary blocked'or label=='guaranteed secondary protected'then
+   if label=='guaranteed secondary protected'then
     if backend=='gen1' then f.data.gen3Moves._rom[145].secondaryChance=100
     else f.data.moves.MOVE_145.secondaryChance=100 end
    end
@@ -100,14 +100,18 @@ function C.run(root,backend,edition,mode)
   elseif label=='other side unprotected'then move(45,at(id),b.player)
   elseif label=='self lowering bypasses'then move(315,at(id),b.player)
   end
-  if label~='chance secondary blocked'and label~='certain secondary bypasses'and label~='intimidate blocked'and label~='other side unprotected'and label~='self lowering bypasses'then move(45,b.player,at(id))end
+  if label~='chance secondary blocked'and label~='guaranteed secondary protected'and label~='intimidate blocked'and label~='other side unprotected'and label~='self lowering bypasses'then move(45,b.player,at(id))end
   local other=mode~='single'and at(id==1 and 3 or 1)or nil
   if label=='both flanks protected'and other then move(45,b.player,other)end
   local target=at(id);local stages=target.stages
   local row={label=label,timer=timer(),attack=stages.attack or 0,speed=stages.speed or 0,spatk=stages[backend=='gen1'and'spAtk'or'spatk']or 0,playerAttack=b.player.stages.attack or 0,otherAttack=other and(other.stages.attack or 0)or false}
   f.T.eq(row.timer,label=='expires after five rounds'and 0 or(label=='move does not refresh'or label=='item does not refresh')and 4 or 5,label..': native side duration')
   f.T.eq(row.attack,label=='expires after five rounds'and -1 or 0,label..': native primary protection')
-  f.T.eq(row.speed,label=='certain secondary bypasses'and -1 or 0,label..': native secondary protection')
+  -- Gen1's frozen reference incorrectly turns probability >=100 into the
+  -- separate cannot-prevent flag. Capture that known reference difference;
+  -- native GBA SetMoveEffect passes only affectsUser to ChangeStatBuffs.
+  local expectedSpeed=backend=='gen1'and label=='guaranteed secondary protected'and -1 or 0
+  f.T.eq(row.speed,expectedSpeed,label..': captured reference/native secondary protection')
   f.T.eq(row.playerAttack,label=='other side unprotected'and -1 or 0,label..': other side independent')
   f.T.eq(row.spatk,label=='self lowering bypasses'and -2 or 0,label..': self change independent')
   if other then f.T.eq(row.otherAttack,0,label..': other flank protected')end
