@@ -176,8 +176,9 @@ function Methods.chooseMimic(self, index)
   return true
 end
 
-local SAFARI_INDEX = { ball = 1, bait = 2, rock = 3, run = 4 }
+local SAFARI_INDEX = { ball = 1, bait = 2, pokeblock = 2, rock = 3, go_near = 3, run = 4 }
 function Methods.chooseSafari(self, action)
+  if self.gen3Safari and not require("src.battle.Gen3Safari").allowed(self,action)then return false end
   self.menuIndex = SAFARI_INDEX[action]
   self:safariAction(action)
   return true
@@ -265,6 +266,12 @@ function Commands.reason(b, intent)
   if intent.kind == "safari" then
     if b.phase ~= "menu" or not b.safari then
       return "safari menu is not active"
+    end
+    if b.gen3Safari and not require("src.battle.Gen3Safari").allowed(b,intent.action)then
+      return "action is unavailable in this Safari edition"
+    end
+    if (intent.action=="pokeblock"or intent.action=="go_near")and not b.gen3Safari then
+      return "action is unavailable in this Safari edition"
     end
     if (b.safari.balls or 0) <= 0 then
       return "no safari balls remain"

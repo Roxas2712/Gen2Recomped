@@ -1142,79 +1142,7 @@ local function viewportSnapshot(viewport)
   }
 end
 
-function Game:_draw()
-  local scene = self.stack.sceneStack and self.stack:sceneStack() or self.stack
-  -- the UI canvas clears transparent when the overworld's world pass
-  -- shows through beneath it; opaque full-screen states get the classic
-  -- white clear
-  local base = scene:visibleBase()
-  local worldBelow = scene.states[base] == self.overworld
-    and renderVisible(self.stack, self.overworld)
-  -- a world-bg battle keeps the map drawing under whatever it opened, so the
-  -- world pass can run for a frame whose CLEAR is still an opaque menu's
-  local drawFrom = Game.drawBaseInStack(scene, base)
-  local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
-  local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
-  local windowUIOverlay = false
-  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
-  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
-    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
-  local worldDrawn = scene.states[drawFrom] == self.overworld
-    and renderVisible(self.stack, self.overworld)
-  -- A wide battle holds its 304px surface through every menu or prompt it
-  -- opens. States that do not draw the wide battle composition are centred
-  -- in that surface below, so their classic coordinates and hit testing stay
-  -- unchanged. Outside a battle, including the title screen, the option is
-  -- intentionally inactive because it is a battle-layout setting.
-  local wideBattle = Game.wideBattleInStack(self.stack)
-  -- ...and a Gen 3 battle that widened its own screen holds it the same way,
-  -- ahead of the topmost-uiSize pick (see Game.heldSurfaceInStack).
-  local held = not wideBattle and Game.heldSurfaceInStack(self.stack) or nil
-  local native = not wideBattle
-    and (held or Game.nativeSurfaceInStack(self.stack)) or nil
-  local classicOffset, classicOffsetY = 0, 0
-  if wideBattle and wideBattle.uiSize then
-    Renderer:setUISize(wideBattle:uiSize())
-    classicOffset = math.floor((select(1, Renderer:uiSize()) - Renderer.WIDTH) / 2)
-  elseif native then
-    Renderer:setUISize(native:uiSize())
-    -- ...and a state that did NOT ask for the bigger surface is centred in
-    -- it, the way the wide battle centres its menus: its layout is in Game
-    -- Boy coordinates and must land in the middle rather than in a corner.
-    local uw, uh = Renderer:uiSize()
-    classicOffset = math.floor((uw - Renderer.WIDTH) / 2)
-    classicOffsetY = math.floor((uh - Renderer.HEIGHT) / 2)
-  else
-    Renderer:setUISize(Renderer.WIDTH, Renderer.HEIGHT)
-  end
-  -- the surface every state below is either drawing in or being centred
-  -- inside, resolved before any of them draws
-  local surfW, surfH = Renderer:uiSize()
-  -- BATTLE SIZE: scale the battle surface to the window instead of the
-  -- classic integer letterbox.  Read from the whole stack, not just the top,
-  -- so a party menu or text box opened mid-battle keeps the same surface.
-  Renderer.uiFill = Game.fillScaleInStack(self.stack)
-  -- BATTLE BG "world": dim the overworld the battle is drawn over.  Read off
-  -- the stack for the same reason as uiFill above -- a prompt opened during
-  -- the battle must not drop the dim for a frame.
-  Renderer.battleDim = Game.worldBgBattleDim(self.stack)
-  -- ...and for the same reason the UI's own scale has to know the world is
-  -- still the backdrop while an opaque menu covers it.  Renderer:uiScale
-  -- steps the UI down with the survey zoom only while a world is behind it,
-  -- gated on this frame's world pass -- which the party menu and the bag end
-  -- by being opaque.  Without this hold they lose the step-down and blit at
-  -- full fit scale over a battle drawn at the zoomed-out one.
-  Renderer.uiWorldHold = Renderer.battleDim ~= nil
-  -- ...and a battle keeps its dialogue box and YES/NO inside its own screen
-  -- instead of letting them dock to the window edge.
-  -- UI LAYOUT: CENTERED (the default) is a fixed letterbox -- every element
-  -- stays inside the 160x144 canvas and the UI does not follow the survey
-  -- zoom, so the screen furniture never moves or resizes under the player.
-  -- That is the composition the port shipped with.  DYNAMIC opts into both
-  -- halves: the dialogue box docks to the window's bottom edge, the START
-  -- menu to its top right, and the whole UI steps down with the zoom.
-  Renderer.uiCentered = not Game.dynamicUI(self.save)
-  Renderer.uiAnchorHold = Game.uiAnchorsHeldInStack(self.stack)
+local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
   Renderer:beginFrame(worldBelow)
   -- SINGLE-SCREEN DS PLAY: an opaque DS screen at the bottom of what is
   -- drawn (a menu, the bag, the box -- no world pass under it) is drawn with
@@ -1381,6 +1309,87 @@ function Game:_draw()
   end
   -- on-screen mobile controls: pure screen-space, over the finished frame
   -- OS-window controls draw after GameViewport.finish in Game:draw.
+end
+
+function Game:_draw()
+  local scene = self.stack.sceneStack and self.stack:sceneStack() or self.stack
+  -- the UI canvas clears transparent when the overworld's world pass
+  -- shows through beneath it; opaque full-screen states get the classic
+  -- white clear
+  local base = scene:visibleBase()
+  local worldBelow = scene.states[base] == self.overworld
+    and renderVisible(self.stack, self.overworld)
+  -- a world-bg battle keeps the map drawing under whatever it opened, so the
+  -- world pass can run for a frame whose CLEAR is still an opaque menu's
+  local drawFrom = Game.drawBaseInStack(scene, base)
+  local ScreenSpaceUI = HotModules.get('src.render.ScreenSpaceUI')
+  local windowUI, windowUIIndex = ScreenSpaceUI.select(self.stack, scene, drawFrom)
+  local windowUIOverlay = false
+  local nativeWindowOverlays = windowUI and HotModules.get("src.core.GameVersion").isGen2()
+  local nativeWindowStack = not windowUI and HotModules.get('src.core.GameVersion').isGen2()
+    and ScreenSpaceUI.hasNativeStack(self.stack,scene,drawFrom,self.overworld)
+  local worldDrawn = scene.states[drawFrom] == self.overworld
+    and renderVisible(self.stack, self.overworld)
+  -- A wide battle holds its 304px surface through every menu or prompt it
+  -- opens. States that do not draw the wide battle composition are centred
+  -- in that surface below, so their classic coordinates and hit testing stay
+  -- unchanged. Outside a battle, including the title screen, the option is
+  -- intentionally inactive because it is a battle-layout setting.
+  local wideBattle = Game.wideBattleInStack(self.stack)
+  -- ...and a Gen 3 battle that widened its own screen holds it the same way,
+  -- ahead of the topmost-uiSize pick (see Game.heldSurfaceInStack).
+  local held = not wideBattle and Game.heldSurfaceInStack(self.stack) or nil
+  local native = not wideBattle
+    and (held or Game.nativeSurfaceInStack(self.stack)) or nil
+  local classicOffset, classicOffsetY = 0, 0
+  if wideBattle and wideBattle.uiSize then
+    Renderer:setUISize(wideBattle:uiSize())
+    classicOffset = math.floor((select(1, Renderer:uiSize()) - Renderer.WIDTH) / 2)
+  elseif native then
+    Renderer:setUISize(native:uiSize())
+    -- ...and a state that did NOT ask for the bigger surface is centred in
+    -- it, the way the wide battle centres its menus: its layout is in Game
+    -- Boy coordinates and must land in the middle rather than in a corner.
+    local uw, uh = Renderer:uiSize()
+    classicOffset = math.floor((uw - Renderer.WIDTH) / 2)
+    classicOffsetY = math.floor((uh - Renderer.HEIGHT) / 2)
+  else
+    Renderer:setUISize(Renderer.WIDTH, Renderer.HEIGHT)
+  end
+  -- the surface every state below is either drawing in or being centred
+  -- inside, resolved before any of them draws
+  local surfW, surfH = Renderer:uiSize()
+  -- BATTLE SIZE: scale the battle surface to the window instead of the
+  -- classic integer letterbox.  Read from the whole stack, not just the top,
+  -- so a party menu or text box opened mid-battle keeps the same surface.
+  Renderer.uiFill = Game.fillScaleInStack(self.stack)
+  -- BATTLE BG "world": dim the overworld the battle is drawn over.  Read off
+  -- the stack for the same reason as uiFill above -- a prompt opened during
+  -- the battle must not drop the dim for a frame.
+  Renderer.battleDim = Game.worldBgBattleDim(self.stack)
+  -- ...and for the same reason the UI's own scale has to know the world is
+  -- still the backdrop while an opaque menu covers it.  Renderer:uiScale
+  -- steps the UI down with the survey zoom only while a world is behind it,
+  -- gated on this frame's world pass -- which the party menu and the bag end
+  -- by being opaque.  Without this hold they lose the step-down and blit at
+  -- full fit scale over a battle drawn at the zoomed-out one.
+  Renderer.uiWorldHold = Renderer.battleDim ~= nil
+  -- ...and a battle keeps its dialogue box and YES/NO inside its own screen
+  -- instead of letting them dock to the window edge.
+  -- UI LAYOUT: CENTERED (the default) is a fixed letterbox -- every element
+  -- stays inside the 160x144 canvas and the UI does not follow the survey
+  -- zoom, so the screen furniture never moves or resizes under the player.
+  -- That is the composition the port shipped with.  DYNAMIC opts into both
+  -- halves: the dialogue box docks to the window's bottom edge, the START
+  -- menu to its top right, and the whole UI steps down with the zoom.
+  Renderer.uiCentered = not Game.dynamicUI(self.save)
+  Renderer.uiAnchorHold = Game.uiAnchorsHeldInStack(self.stack)
+  local display = HotModules.get('src.core.GameVersion').generation() == 3
+    and package.loaded['src.core.game3.display']
+  if display then
+    return display._nativePresent(self, paintResolvedFrame, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
+  end
+  return paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn, native, classicOffset, classicOffsetY, ScreenSpaceUI, windowUI, windowUIIndex, windowUIOverlay, nativeWindowOverlays, nativeWindowStack, surfW, surfH)
 end
 
 -- overworld survey zoom: wheel up / '=' zooms in, wheel down / '-' out

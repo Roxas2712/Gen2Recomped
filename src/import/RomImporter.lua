@@ -1339,6 +1339,9 @@ local function markerFor(version)
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
+    revision = revision .. "gba-text-ir-v" .. require("src.import.Gen3TextCatalog").REVISION .. ":"
+    local levelArt=require('src.import.Gen3LevelUpArt')
+    if levelArt.supports(version)then revision=revision..'gba-levelup-streaks-v'..levelArt.REVISION..':'end
   end
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:'
@@ -2065,9 +2068,10 @@ function RomImporter.readyReport(version)
   local missing, gaps = {}, {}
   if GameVersion.generation(version)==3 then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
-    local absent=require('src.import.Gen3StatGrowthAssets').missing(version)
+    local absent=require('src.import.Gen3SafariAssets').missing(version)
+    if #absent==0 then absent=require('src.import.Gen3StatGrowthAssets').missing(version)end
     CacheFs.prefix=savedPrefix
-    if #absent>0 then return{ok=false,missing=absent,why='The native level-up stat window is incomplete.'}end
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA Safari or level-up data is incomplete.'}end
   end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
