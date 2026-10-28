@@ -2883,6 +2883,13 @@ function Commands.g3_field_effect(ctx, id)
   if moveName and runner then
     local mon = Gen3Commands.fieldMoveMon(ctx,
                                           moveName ~= true and moveName or nil)
+    -- FldEff_UseStrength fills STR_VAR_1 in C, before returning to the
+    -- boulder's script. Unlike Rock Smash, that script never buffers it.
+    if moveName == "STRENGTH" and mon then
+      local def = data.pokemon and data.pokemon[mon.species]
+      ctx.game.stringBuffers = ctx.game.stringBuffers or {}
+      ctx.game.stringBuffers[1] = mon.nickname or (def and def.name) or ""
+    end
     local shown = false
     if mon then
       local okShow, result = pcall(function()
