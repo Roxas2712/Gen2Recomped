@@ -25,11 +25,11 @@ g.newCanvas=function(...)
   canvas.release=function()released=released+1 end
   return canvas
 end
-local function native(edition)
+local function native(edition,effect)
   Version.set(edition)
   local data=T.fixtures.fresh();data.constants.gen=2
   data.battle_anims={gen2=true,moveAnims={PROBE=1},scripts={
-    [1]={entry=1,code={{op='bgeffect',args={'BATTLE_BG_EFFECT_BODY_SLAM',0,1,0}},
+    [1]={entry=1,code={{op='bgeffect',args={effect or 'BATTLE_BG_EFFECT_BODY_SLAM',0,1,0}},
       {op='delay',frames=16},{op='ret'}}}},objects={},framesets={},oam={},gfx={}}
   require('src.render.Font').load(data)
   local save=require('src.core.SaveData').newGame()
@@ -68,6 +68,50 @@ for _,edition in ipairs({'gold','silver','crystal'})do
     end
   end
   s.animView:release();s.animPlayer:release()
+end
+-- Paint the actual native battler under picture-size, hide, shade and lifted
+-- states. These are graphics-device records, not fabricated gameplay saves.
+for _,edition in ipairs({'gold','silver','crystal'})do
+  local s=native(edition,'BATTLE_BG_EFFECT_ENTER_MON')
+  local b=s.player
+  local image=s:battlerPic(b);local w,h=image:getDimensions()
+  calls={}
+  s:drawBattlerPic(b,10,20,1)
+  local row=calls[#calls]
+  T.check(row~=nil,'native entry still paints its actual battler')
+  T.eq(row.quad,10+math.floor(w*(1-1/3)/2),'entry picture compensation stays on integer native pixels')
+  T.eq(row.x,20+math.floor(h*(1-1/3)),'entry keeps its bottom edge pinned to the native box')
+  local bg=s.anim.bg;bg.picSize.player=nil
+  bg.monShade.player=0xf8;bg.monShade.enemy=0xfc
+  Palette.setBgp(0x1b);calls={}
+  s:drawPic(b.mon,false)
+  T.check(#calls>0,'front capture of the actual player remains drawable')
+  for _,paint in ipairs(calls)do
+    T.eq(paint.byte,Pictures.paletteByte(0xf8,0x1b),'player front capture uses player shade and composes it once')
+  end
+  T.eq(Palette.bgp,0x1b,'picture capture restores the surrounding BG register')
+  Palette.setBgp(nil)
+  bg.hidden.player=true;calls={}
+  s:drawBattlerPic(b,10,20,1)
+  T.eq(#calls,0,'actual BG hide state suppresses the native battler draw')
+  bg.hidden.player=false;bg.liftedRows.player={0,1}
+  local scissor=g.setScissor;local clips={}
+  g.setScissor=function(...)clips[#clips+1]={...};return scissor(...)end
+  calls={};s:drawBattlerPic(b,10,20,1)
+  T.same(clips[1],{0,0,160,48},'native BG paints only above the lifted player row')
+  T.same(clips[2],{0,56,160,88},'native BG paints only below the lifted player row')
+  T.eq(#calls,2,'lifted row is excluded from the actual BG picture pass')
+  clips={};calls={};s.liftedPass=true;s:drawBattlerPic(b,10,20,1);s.liftedPass=nil
+  T.same(clips[1],{0,48,160,8},'lifted OBJ pass selects the original player tile row')
+  T.eq(#calls,1,'lifted row is restored exactly once outside BG distortion')
+  g.setScissor=scissor
+  local external={};g.setShader(external);Palette.setBgp(0x1b)
+  local record=g.draw;g.draw=function()error('native portrait failure',0)end
+  T.raises(function()s:drawPic(b.mon,false)end,'native portrait failure','picture error remains visible')
+  T.eq(Palette.bgp,0x1b,'failed portrait restores its BG palette owner')
+  T.eq(s._gen2PicPaletteSide,nil,'failed portrait retires its per-side palette context')
+  T.eq(g.getShader(),external,'failed portrait restores caller shader')
+  g.draw=record;g.setShader();Palette.setBgp(nil);s.animPlayer:release()
 end
 T.check(released>=9,'changing surface and releasing native views retires owned canvases')
 Version.set('crystal')

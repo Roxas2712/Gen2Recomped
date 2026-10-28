@@ -44,8 +44,8 @@ function M.install(Screen)
       local image=self:battlerPic(b)
       if image then
         local factor=size/(b.isPlayer and 6 or 7)
-        x=x+image:getWidth()*scale*(1-factor)/2
-        y=y+image:getHeight()*scale*(1-factor)
+        x=x+math.floor(image:getWidth()*scale*(1-factor)/2)
+        y=y+math.floor(image:getHeight()*scale*(1-factor))
         scale=scale*factor
       end
     end
