@@ -33,9 +33,10 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       for _=1,20 do local bg,frames=r.bg,r.frames end
       T.eq(ticks,frame,'repeated consumer observations never run the effect')
     end
-    p:update();T.eq(ticks,14,'the final command frame executes one BG pass')
+    p:update();T.eq(ticks,14,'the last wait frame executes one BG pass')
+    p:update();T.eq(ticks,15,'ret executes on the next native command frame')
     for _=1,20 do p:update()end
-    T.eq(ticks,14,'legacy object-tail drain cannot keep advancing a stopped BG program')
+    T.eq(ticks,15,'a stopped VM has no object-tail clock')
     local old=r.bg
     p:start('PROBE',not playerTurn)
     T.eq(r.bg,old,'retired consumer retains the previous register block')
@@ -62,7 +63,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   p:start('PROBE',true);p:update()
   local active=p.bg.effects[1]
   T.eq(active.jt,1,'native Teleport initializes its running state')
-  p:update()
+  p:update();p:update()
   T.eq(active.func,nil,'increment advances Teleport into its native terminal state')
   T.eq(p.bg.lcdc,nil,'native terminal state retires its LCD window')
   T.eq(p.bg.obp0,0x8c,'native OBJ0 palette command preserves byte semantics')
