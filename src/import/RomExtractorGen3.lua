@@ -402,7 +402,11 @@ end
 -- `structured` additionally retains layout commands and raw placeholder ids
 -- for verified named-text consumers; ordinary scan probes keep their arity,
 -- allocation policy and strict field-placeholder rejection.
-function RomExtractorGen3:readText(off, maxBytes, spacers, structured)
+function RomExtractorGen3:readText(off, maxBytes, spacers, mode, opts)
+  -- Preserve boolean IR calls, native fourth-slot dialect options and
+  -- boolean-plus-fifth-slot options through the same bounded decoder.
+  if type(mode)=='table'then opts=mode end
+  local structured=mode==true or type(mode)=='table'and mode.structured==true
   local map = self:charmap()
   local out = {}
   local ir, pending, flush, node
@@ -459,6 +463,9 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, structured)
       if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local cmd = self.rom:u8(off + i + 1)
       local operands = EXTENDED_OPERANDS[cmd]
+      -- NAME_END is an explicit RS section-name separator, not dialogue.
+      if cmd==0 and opts and opts.rsNameEnd
+        and (self.version=='ruby'or self.version=='sapphire')then operands=0 end
       if not operands then return nil end -- unknown commands reject a text probe
       if i + 2 + operands > limit or self.rom.size and off + i + 2 + operands > self.rom.size then return nil end
       if ir then
