@@ -8,9 +8,11 @@ local base=E.resolveMove
 local function pack(...)return {n=select('#',...),...}end
 local nothing,why=E.resolveMove();T.eq(nothing,nil);T.eq(type(why),'string')
 for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
- local baseline=Probe.turn(edition,true,function()package.loaded['src.core.game3.battle.engine']=nil end)
+ -- The owned probe skips native enter; explicitly run its native slot placement.
+ local baseline=Probe.turn(edition,true,function(_,b)b:syncSides();package.loaded['src.core.game3.battle.engine']=nil end)
  local calls=0
- local decorated=Probe.turn(edition,true,function()
+ local decorated=Probe.turn(edition,true,function(_,b)
+  b:syncSides()
   package.loaded['src.core.game3.battle.engine']=E
   E.resolveMove=function(u,t,m,slot,adapter,st,out,...)
    calls=calls+1
