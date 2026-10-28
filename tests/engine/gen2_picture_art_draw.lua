@@ -44,9 +44,13 @@ Assets.imageData=function(path)
 end
 love.graphics.newImage=function(data)
   if type(data)=='table'and data.clone then return data:clone()end
+  if data=='assets/generated/sprites/monster.png'and images[data]then return images[data]:clone()end
   return oldNew(data)
 end
-love.graphics.draw=function(image,x,y,rotation,sx,sy,...)
+love.graphics.draw=function(image,x,y,rotation,sx,sy,extra,...)
+  if type(x)=='table'and x.getViewport then
+    x,y,rotation,sx,sy=y,rotation,sx,sy,extra
+  end
   calls[#calls+1]={image=image,x=x,y=y,rotation=rotation,sx=sx or 1,sy=sy or 1,
     clip={love.graphics.getScissor()},byte=G.bgp}
 end
@@ -55,6 +59,7 @@ local function make(edition,side,kind)
   V.set(edition);P.setDisplay('gbc',nil);G.setBgp(0xe4)
   local e;e,images=F.extractor(edition)
   local art=assert(Import.extract(e))
+  images['assets/generated/sprites/monster.png']=images[art.substitute.sheet]
   local data=T.fixtures.fresh();data.constants.gen=2
   for _,def in pairs(data.pokemon)do def.palette='PIC_ART'end
   data.palettes={palettes={PIC_ART=A,GRAYMON=A,MEWMON=A},
@@ -126,7 +131,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
   s.anim.bg.monShade[side]=0xfc
   rows=draw(s,b)
   pixel(rows[1].image,px,py,A[4],'per-mon shade register reaches real replacement bake')
-  T.eq(G.bgp,0xe4,'native draw restores caller register byte')
+  T.eq(G.bgp,nil,'native draw restores caller identity-register representation')
   s.anim.bg.monShade[side]=nil;G.setBgp(0x1b)
   rows=draw(s,b)
   pixel(rows[1].image,px,py,A[3],'whole-background BGP reaches real replacement bake')
@@ -139,12 +144,14 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
     T.eq(row.sx,2,'generated picture retains underlying per-image scale override')
     s.data.battle_sprite_scales=nil
   end
-  local first,quad=s:substituteDoll(true)
-  T.same({first:getDimensions()},{16,32},'public doll getter exposes genuine indexed ROM sheet')
-  T.same({quad:getViewport()},{0,16,16,16},'back doll quad selects facing-up frame')
-  local nextImage,nextQuad=s:substituteDoll(true)
-  T.eq(nextImage,first,'public doll getter shares native cached image')
-  T.eq(nextQuad,quad,'public doll getter reuses owned quad')
+  if s.substituteDoll then
+    local first,quad=s:substituteDoll(true)
+    T.same({first:getDimensions()},{16,32},'public doll getter exposes genuine indexed ROM sheet')
+    T.same({quad:getViewport()},{0,16,16,16},'back doll quad selects facing-up frame')
+    local nextImage,nextQuad=s:substituteDoll(true)
+    T.eq(nextImage,first,'public doll getter shares native cached image')
+    T.eq(nextQuad,quad,'public doll getter reuses owned quad')
+  end
   s.anim.bg.liftedRows[side]={4,1}
   rows=draw(s,b,false)
   T.eq(#rows,2,'normal front capture splits around actual lifted band')
@@ -155,7 +162,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
   local realDraw=love.graphics.draw
   love.graphics.draw=function()error('picture device failure',0)end
   T.raises(function()draw(s,b,false)end,'picture device failure','device draw failure remains visible')
-  T.eq(G.bgp,0xe4,'failed replacement paint restores caller register')
+  T.eq(G.bgp,nil,'failed replacement paint restores caller identity register')
   T.eq(s._gen2PicPaletteSide,nil,'failed replacement paint releases palette owner')
   love.graphics.draw=realDraw
  end

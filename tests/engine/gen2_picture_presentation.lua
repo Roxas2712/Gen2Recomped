@@ -128,11 +128,14 @@ end
 
 -- Missing/disabled/cancelled programs and a real slot replacement cannot
 -- leave a pinned picture hanging or repaint the incoming saved Pokemon.
-for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','replacement'})do
+for _,mode in ipairs({'disabled','missing','cancelled','stopped','no-picture-op','new-program','replacement'})do
  local s,b,target,row=make('crystal','player','transform')
  local species=b.mon.species
  if mode=='disabled'then s.game.save.options.animations=false end
  if mode=='missing'then s.animPlayer.anims.scripts[1]=nil end
+ if mode=='no-picture-op'then
+   s.data.battle_anims.scripts[1].code={{op='delay',frames=2},{op='ret'}}
+ end
  Effects.TRANSFORM_EFFECT(s,b,target)
  if mode=='cancelled'then s:cancelMoveAnim();Pictures.sync(s)
  elseif mode=='replacement'then
@@ -151,6 +154,7 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','
    T.neq(s.anim,retired,'public start creates a distinct real native runner')
    s:updateQueue()
    T.eq(retired.picOverride.player,nil,'replacing runner does not invent a retired transform opcode')
+ elseif mode=='no-picture-op'then s:updateQueue();endAnim(s)
  else s:updateQueue()end
  T.eq(#(s._gen2PictureChanges or {}),0,mode..' releases native picture pin')
  if mode~='replacement'then T.eq(b.species,target.mon.species,mode..' commits resolved native visual identity')end
