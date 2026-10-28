@@ -83,7 +83,7 @@ local function make(edition,side,kind)
 end
 local function draw(s,b,back)
   calls={}
-  if back==nil then s:drawPicsLayer(0,0,0,b.isPlayer and'player'or'enemy',true)
+  if back==nil or not s.drawPic then s:drawPicsLayer(0,0,0,b.isPlayer and'player'or'enemy',true)
   else s:drawPic(b.mon,back)end
   return calls
 end
@@ -107,26 +107,30 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
   T.eq(alpha,0,'background shade remains transparent')
   T.eq(b.sprite,original,'replacement does not write native Pokemon image')
   T.eq(s.anim.frames,frame,'native drawing does not advance command VM')
-  local direct=s:pic(b.mon,b.isPlayer)
-  T.neq(direct,row.image,'public indexed Pokemon getter retains its original art')
-  for _,back in ipairs({false,true})do
+  if s.pic then
+   local direct=s:pic(b.mon,b.isPlayer)
+   T.neq(direct,row.image,'public indexed Pokemon getter retains its original art')
+  end
+  if s.drawPic then for _,back in ipairs({false,true})do
     rows=draw(s,b,back);T.eq(#rows,1,'public capture emits actual ROM replacement')
     row=rows[1];local size=back and 48 or 56
     T.same({row.image:getDimensions()},{size,size},'capture selects requested front/back art')
     T.eq(row.x,back and 16 or 96,'public capture correct requested box x')
     T.eq(row.y,back and 48 or 0,'public capture correct requested box y')
     pixel(row.image,px,back and 32 or 40,A[2],'opposite-side capture retains actual owner palette')
-  end
+  end end
   s.anim.bg.slide[side]=5;s.anim.bg.picSize[side]=b.isPlayer and 1 or 4
   rows=draw(s,b);row=rows[1]
   local ratio=b.isPlayer and 4/6 or 5/7
   T.eq(row.sx,ratio,'actual resize register scales whole native box')
   T.eq(row.x,(b.isPlayer and 16 or 96)+5+math.floor(n*(1-ratio)/2),'slide and resize share selected footprint')
   T.eq(row.y,(b.isPlayer and 48 or 0)+math.floor(n*(1-ratio)),'resize retains full picture baseline')
+  if s.drawPic then
   s.anim.bg.picSize[side]=0
   rows=draw(s,b,false);row=rows[1]
   T.eq(row.sx,6/7,'front capture uses seven-tile resize denominator even for native player')
   T.eq(row.y,math.floor(56*(1-6/7)),'opposite front capture resize pins front baseline')
+  end
   s.anim.bg.picSize[side]=nil;s.anim.bg.slide[side]=0
   s.anim.bg.monShade[side]=0xfc
   rows=draw(s,b)
@@ -137,8 +141,10 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
   pixel(rows[1].image,px,py,A[3],'whole-background BGP reaches real replacement bake')
   T.eq(G.bgp,0x1b,'replacement restores caller BGP even when nonidentity')
   G.setBgp(0xe4)
-  if s.pic then
-    local _,_,base=s:pic(b.mon,b.isPlayer)
+  do
+    local base
+    if s.pic then local _,_,path=s:pic(b.mon,b.isPlayer);base=path
+    else base=require('src.pokemon.Sprites').path(s.data,b.mon.species,b.isPlayer and 'back'or'front',{mon=b.mon,kind='battle'})end
     s.data.battle_sprite_scales={OWNED={path=base,scale=2}}
     row=draw(s,b)[1]
     T.eq(row.sx,2,'generated picture retains underlying per-image scale override')
@@ -152,6 +158,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
     T.eq(nextImage,first,'public doll getter shares native cached image')
     T.eq(nextQuad,quad,'public doll getter reuses owned quad')
   end
+  if s.drawPic then
   s.anim.bg.liftedRows[side]={4,1}
   rows=draw(s,b,false)
   T.eq(#rows,2,'normal front capture splits around actual lifted band')
@@ -159,6 +166,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
   T.eq(rows[1].clip[4],32,'front rows above lifted band remain visible')
   T.eq(rows[2].clip[2],40,'front rows below lifted band resume correctly')
   s.anim.bg.liftedRows[side]=nil
+  end
   local realDraw=love.graphics.draw
   love.graphics.draw=function()error('picture device failure',0)end
   T.raises(function()draw(s,b,false)end,'picture device failure','device draw failure remains visible')
