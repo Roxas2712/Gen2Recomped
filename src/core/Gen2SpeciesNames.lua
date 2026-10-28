@@ -90,8 +90,10 @@ function M.canonicalize(data)
       if not literal[key]then
         local target=aliases[key]or key
         local replacement=type(value)=='string'and(aliases[value]or value)or value
-        local existing=target~=key and rawget(row,target)
-        if existing~=nil and existing~=replacement then return false end
+        if target~=key then
+          local existing=rawget(row,target)
+          if existing~=nil and existing~=replacement then return false end
+        end
         if targets[target]~=nil and targets[target]~=replacement then return false end
         targets[target]=replacement
         if target~=key or replacement~=value then

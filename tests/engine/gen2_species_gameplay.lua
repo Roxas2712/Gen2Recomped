@@ -5,7 +5,7 @@ local V=require('src.core.GameVersion');local old=V.get()
 local F=require('tests.gsc_species_fixture')
 local Names=require('src.core.Gen2SpeciesNames')
 local Pokemon=require('src.pokemon.Pokemon')
-local Commands=require('src.script.Gen2Commands')
+local Commands=require('src.script.Commands')
 local VM=require('src.script.Gen2ScriptVM')
 local DC=require('src.pokemon.DayCare')
 for _,edition in ipairs{'gold','silver','crystal'}do
