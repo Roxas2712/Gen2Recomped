@@ -356,8 +356,13 @@ function M.perform(ctx)
     switchContext(ctx, user, index, party, battle._gbaMoveFrame)
     return
   end
+  -- A source override is lent by the actual native move invocation only.
+  -- Ordinary native callers keep the existing battle-owned choice policy.
+  local engine=package.loaded['src.core.game3.battle.engine']
+  local choices=battle.interactiveChoices
+  if engine and engine._interactiveChoices then choices=engine._interactiveChoices(battle)end
   if
-    not battle._gen3BatonRequest and (not user.isPlayer or user.ally or battle.interactiveChoices == false)
+    not battle._gen3BatonRequest and (not user.isPlayer or user.ally or choices == false)
   then
     local index = not user.isPlayer and M.enemyChoice(battle, user, candidates, party) or nil
     local chosen = candidates[1]
