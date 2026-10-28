@@ -15,7 +15,8 @@ function M.compile(imported,constants,version)
   local catalog=Data.tables(imported,constants,version)
   catalog.gen2,catalog.generation,catalog.format=true,2,'gsc-native-v1'
   catalog.commandFormat=imported.commandFormat
-  catalog.source='ROM:BattleAnimations + data/battle_anims/*'
+  catalog.source=imported.source or (imported.bank
+    and 'ROM:BattleAnimations + data/battle_anims/*'or 'Registered GSC animation programs')
   catalog.bank,catalog.gameVersion=imported.bank,version
   catalog.scripts,catalog.scriptOrder,catalog.moves,catalog.ids,catalog.indices={},{},{},{},{}
   catalog.misc,catalog.moveAnims,catalog.move,catalog.effects={},{},{},{}
