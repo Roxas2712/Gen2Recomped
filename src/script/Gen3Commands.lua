@@ -12740,7 +12740,8 @@ Gen3Commands.SPECIALS[275] = function(ctx)
   local ribboned = 0
   if okContest then
     for _, mon in ipairs(save.party or {}) do
-      local ribbons = Contest.ribbons(mon)
+      -- RS/E GameClear and FR/LG EnterHallOfFame exclude eggs from awards.
+      local ribbons = type(mon)=='table'and not(mon.isEgg or mon.egg)and Contest.ribbons(mon)
       if ribbons and not ribbons.champion then
         ribbons.champion = true
         ribboned = ribboned + 1

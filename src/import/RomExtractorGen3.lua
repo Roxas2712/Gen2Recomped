@@ -466,7 +466,7 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, mode, opts)
       -- was dialogue -- the token's own letters satisfied the letter gate.
       if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local id = self.rom:u8(off + i + 1)
-      local name = PLACEHOLDERS[id]
+      local name = require('src.core.Gen3RsTextPlaceholders').token(id,self.version) or PLACEHOLDERS[id]
       if not name and not ir then return nil end
       if ir then node({t='ph',code=id}) end
       name = name or ('{PH:%02X}'):format(id)

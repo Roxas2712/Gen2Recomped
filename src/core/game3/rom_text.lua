@@ -184,7 +184,9 @@ local function expand(value,game,fill)
   local found=fill[key]
   if found==nil then found=fill[token]end
   if found==nil and key=='PLAYER'then found=fill.playerName or player.name end
-  if found==nil and key=='RIVAL'then found=fill.rivalName or player.rival end
+  if found==nil and key=='RIVAL'then found=fill.rivalName or require('src.core.Gen3RsTextPlaceholders').gendered(game,'RIVAL') or player.rival end
+  if found==nil and key=='KUN'then found=require('src.core.Gen3RsTextPlaceholders').gendered(game,'KUN')end
+  if found==nil then found=require('src.core.Gen3RsTextPlaceholders').value(game,key)end
   local slot=key:match('^VAR([123])$')
   if found==nil and slot and fill.stringVars then found=fill.stringVars[tonumber(slot)]end
   return found==nil and token or tostring(found)
