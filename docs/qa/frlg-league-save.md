@@ -3,7 +3,7 @@
 The original Hall now calls the authoritative atomic host writer after its
 saving message is rendered. A refusal/exception freezes the ceremony, keeps
 the prior durable snapshot and restores helper-owned return fields. The
-original failure text is shown; an explicit retry renders saving again.
+original English "Save failed." sentence is shown; an explicit retry renders saving again.
 The save sound starts only after a successful write. Retrying does not add
 another induction, award or Hall statistic.
 
@@ -21,3 +21,10 @@ on failure, one save sound, the original ceremony, the whole imported credit
 script, four credit Pokémon cries, THE END, title and real CONTINUE. The
 existing FR/LG credits controller is still reconstructed; complete original
 credits presentation and ordinary story acceptance remain separate work.
+
+The first visual review rejected an unreadable unused error label despite
+passing IO/continuation checks. The bridge now takes the first sentence of
+the cartridge's English backup-check message. Its hardware diagnostic and
+one-minute wait are not applicable to an atomic host write. Extraction checks
+the admitted English text, and both native error captures assert the actual
+rendered words as well as unchanged durable bytes.

@@ -74,6 +74,10 @@ return function(game)
   if h.saveFailure and h.failureDrawn and not failures[mode]then
    assert(disk()==original and saveSounds==0,'Failed League write altered disk or played save sound')
    assert(h.scene.phase()=='savewait','Failed save advanced ceremony')
+   local font=h.load('src.ui.game3.frlg_font');local draw=font.draw;local words={}
+   font.draw=function(s,...)words[#words+1]=tostring(s);return draw(s,...)end
+   local ok,why=require('src.render.GraphicsScope').call(h.draw,h);font.draw=draw;assert(ok,why)
+   assert(table.concat(words,'|')=='Save failed.','Save failure used unreadable or unrelated cartridge text')
    shot('frlg-league-write-'..mode..'-failure');failures[mode]=true;mode=mode=='false'and'error'or'actual';press('a')
   elseif h.phase=='hold'and not mons[h.index]then mons[h.index]=true;shot('frlg-league-mon-'..h.index)
   elseif h.phase=='applause'and not confetti and#h.scene._confetti>=20 then confetti=true;shot('frlg-league-team-confetti')

@@ -2,7 +2,7 @@
 -- Own-cartridge resources for the exact shared FR/LG Hall controller.
 local M={ROOT='data/generated/gba/'}
 M.LABELS={'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_MainMenuTime',
-  'gText_WelcomeToHOF','gText_SavingDontTurnOffThePower2','gText_EggNickname','gText_LeagueChamp','gText_SaveFailed'}
+  'gText_WelcomeToHOF','gText_SavingDontTurnOffThePower2','gText_EggNickname','gText_LeagueChamp','gText_SaveFailedCheckingBackup'}
 function M.resources()
   local paths={}
   for _,name in ipairs{'manifest.lua','bands.rgba','stripes.rgba','confetti.rgba','egg.rgba'}do paths[#paths+1]=M.ROOT..'hall_of_fame/'..name end
@@ -59,6 +59,8 @@ function M.extract(x)
     for i=0,2047 do local b=rom:get(at+i);raw[#raw+1]=b;if b==255 then break end end
     assert(raw[#raw]==255,'Unterminated original FR/LG Hall label '..name);text[name]=IR.decode(raw,{dialect='frlg'})
   end
+  local failed=text.gText_SaveFailedCheckingBackup[1]
+  assert(failed.t=='text'and failed.s=='Save failed.','FR/LG save-failure label is not the admitted English cartridge text')
   local forms=assert(x._field.playerForms)
   local spec={format=1,version=version,resources=M.resources(),textIR=text,
     trainerPics={boy=assert(forms.boy.card),girl=assert(forms.girl.card)},

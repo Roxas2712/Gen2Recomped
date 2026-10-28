@@ -31,8 +31,11 @@ function M.new(game,onDone,opts)
   function audio.playCry(n)return require('src.core.Sound').playCry(data,row(n).id)end
   audio.isCryFinished=require('src.core.Sound').isCryFinished;audio.fadeOutBgm=require('src.core.Music').fadeOutM4a
   local self;local saveEnding=opts and opts.saveEnding==true
+  -- The cart continues with a hardware backup-memory check. Host IO retries
+  -- use its first sentence, within the original two-line saving window.
+  local failureIR={spec.textIR.gText_SaveFailedCheckingBackup[1],{t='eos'}}
   local text={ir=function(key)
-    if self and self.saveFailure and key=='gText_SavingDontTurnOffThePower2'then key='gText_SaveFailed'end
+    if self and self.saveFailure and key=='gText_SavingDontTurnOffThePower2'then return failureIR end
     return assert(spec.textIR[key],'Missing original FR/LG Hall text '..key)
   end}
   function text.plain(key,ctx)return self.load('src.core.game3.scripting.text_ir').toAscii(text.ir(key),ctx)end
