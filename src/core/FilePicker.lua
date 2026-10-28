@@ -39,7 +39,7 @@ local function windows(value)
  local bytes={};for i=1,#value do bytes[i]=tostring(value:byte(i))end
  return '([Text.Encoding]::UTF8.GetString([byte[]]@('..table.concat(bytes,',')..')))'
 end
-function M.commands(prompt,kind)
+function M.commands(prompt,kind,nativeUTF8)
  local k=kindOf(kind)
  if not k or not promptOk(prompt)then return end
  local os=backend();if not os then return end
@@ -51,6 +51,17 @@ function M.commands(prompt,kind)
  elseif os=='Windows'then
   local patterns=table.concat(globs,';')
   local filter=k.label..' ('..patterns..')|'..patterns..'|All files (*.*)|*.*'
+  -- The skin editor reads through NativeFile's wide API. Other existing
+  -- chooseFileByExt consumers still expect an ANSI-readable staging path.
+  if nativeUTF8 then
+   local command='powershell -NoProfile -STA -Command "'..table.concat({
+    'Add-Type -AssemblyName System.Windows.Forms;',
+    '$d=New-Object System.Windows.Forms.OpenFileDialog;','$d.Title='..windows(prompt)..';',
+    '$d.Filter='..windows(filter)..';',
+    "if($d.ShowDialog() -eq 'OK'){[Console]::OutputEncoding=[Text.Encoding]::UTF8;[Console]::Write($d.FileName)}"})..'"'
+   if #command>7000 then return end
+   return{command}
+  end
   local script=table.concat({'Add-Type -AssemblyName System.Windows.Forms;',
    '$d=New-Object System.Windows.Forms.OpenFileDialog;','$d.Title='..windows(prompt)..';',
    '$d.Filter='..windows(filter)..';',"if($d.ShowDialog() -eq 'OK'){$p=$d.FileName;$ascii=$true;",
@@ -69,16 +80,10 @@ function M.commands(prompt,kind)
 end
 function M.open(prompt,kind)
  local k=kindOf(kind);if not k or not promptOk(prompt)then return end
- return require('src.import.RomImporter').chooseFileByExt(k.exts,nil,{title=prompt,label=k.label})
+ return require('src.import.RomImporter').chooseFileByExt(k.exts,nil,{title=prompt,label=k.label,nativeUTF8=true})
 end
 function M.basename(path)return tostring(path or''):match('([^/\\]+)$')or tostring(path or'')end
 function M.read(path)
- if type(path)~='string'or path:find('%z')then return nil,'invalid native file path'end
- local opened,file,why=pcall(io.open,path,'rb')
- if not opened or not file then return nil,opened and why or file end
- local ok,bytes,err=pcall(file.read,file,'*a');pcall(file.close,file)
- if not ok then return nil,bytes end
- if not bytes or bytes==''then return nil,err or 'empty file'end
- return bytes
+ return require('src.core.NativeFile').read(path)
 end
 return M

@@ -76,3 +76,19 @@ are not copied. Mods and player installations are not modified.
 
 Full Gen1 behavior parity, current unchanged-mod scenarios and the final
 release remain open. Presence of the editor is not completion of that goal.
+# Windows original-path file reads
+
+SkinStudio's `FilePicker.open/read` now keeps the original UTF-8 filename and
+uses `NativeFile`'s readonly Win32 wide-character reader. It does not copy the
+image into `%TEMP%`, whose user-profile path can itself contain non-ASCII
+characters. Existing `chooseFileByExt` callers retain their staging contract
+unless they explicitly select the native UTF-8 reader.
+
+The Windows workflow runs LÖVE/LuaJIT against real binary files under a directory
+containing accented, CJK and non-BMP characters, checks exact multi-block bytes
+and basename preservation, then replaces/removes them to prove handle release.
+It also checks coexistence with the download publisher's FFI declarations,
+missing/empty files and invalid UTF-8. The portable engine suite covers exception
+and close handling. These are file-IO checks, not a Windows GPU or full-mod
+qualification; inspect the exact-head workflow result before claiming Windows
+acceptance.

@@ -33,6 +33,10 @@ for _,os in ipairs{'OS X','Windows','Linux'}do
   T.check(cmds[1]:find('[IO.Path]::GetExtension($p)',1,true)~=nil,
     'non-ASCII staging preserves image/archive extension for the actual importer')
   T.check(cmds[1]:find('-ErrorAction Stop',1,true)~=nil,'failed staging cannot return stale data')
+  local direct=assert(F.commands(prompt,kind,true))[1]
+  T.check(direct:find('[Console]::Write($d.FileName)',1,true)~=nil,'wide-reader caller keeps original selected name')
+  T.eq(direct:find('Copy-Item',1,true),nil,'wide-reader caller never copies into Unicode TEMP')
+  T.eq(direct:find('do-not-run',1,true),nil,'direct picker also encodes untrusted prompt bytes')
  else T.check(cmds[1]:find('zenity ',1,true)==1)end
 end
 osName='Linux';available.zenity=false;T.check(F.commands('QA',kind)[1]:find('kdialog ',1,true)==1)
@@ -56,6 +60,15 @@ T.eq(F.open('QA cancel',kind),nil);T.eq(launches,2,'cancel cannot launch another
 local beforeClose=closed
 Host.popen=function()return{read=function()error('owned dialog read failure')end,close=function()closed=closed+1 end}end
 T.eq(F.open('QA failure',kind),nil);T.eq(closed,beforeClose+1)
+osName='Windows'
+Host.popen=function(command)
+ T.check(command:find('[Console]::Write($d.FileName)',1,true)~=nil,'public FilePicker.open selects wide-readable original path')
+ T.eq(command:find('Copy-Item',1,true),nil)
+ return{read=function()return 'C:\\用户\\Pokémon 🎮.png'end,close=function()end}
+end
+local original=F.open('Pick art',F.IMAGE)
+T.eq(original,'C:\\用户\\Pokémon 🎮.png');T.eq(F.basename(original),'Pokémon 🎮.png')
+osName='Linux'
 love.mouse,love.event,love.timer=mouse,event,timer
 local oldOpen=io.open;local reads,closes=0,0
 io.open=function(path,mode)
