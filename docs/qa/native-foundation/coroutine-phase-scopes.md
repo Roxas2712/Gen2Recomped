@@ -49,3 +49,14 @@ is ready under the opaque transition, then the player reaches Littleroot5,9 with
 free input,355050 vertices and no mod/renderer errors. Its stationary240-frame
 Metal observation averages16.330ms, with p95 24.786ms and max142.098ms. This is
 not a stable-sixty-FPS, all-view, continuous-story or visible-desktop claim.
+
+
+Current-main follow-up: merge `8d532c3f` incorporates main `7d1e243b`, preserving
+its native RS battler positions, double-battle EXP participants and shared quad
+fixture methods. Frozen source `ddd4035807` passes125 selected CPU groups,
+including the four newly selected position/import/EXP/residual groups.
+Unchanged-mod Ruby run `9eff111d1a` completes native Archie trainer entry,
+paper/native/terrarium/native/paper switches and transitions, move swap/cancel
+with unchanged HP/PP, and native dex/list owner retirement. Inspected native and
+terrarium captures are upright. Prepared fresh-profile checks do not establish
+continuous story, stable performance or visible desktop acceptance.
