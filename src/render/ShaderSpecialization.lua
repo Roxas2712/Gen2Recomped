@@ -129,7 +129,7 @@ local function hook(shader)
   -- The depth adapter hooks this native class lazily, on its first cutout.
   -- Rebase only that exact engine-owned interposition. Foreign owners keep
   -- the existing conservative fallback; old closures must forward once.
-  if not(alpha and alpha.ownsShaderMethods and alpha.ownsShaderMethods(methods))then return prior end
+  if not(alpha and alpha.followsShaderMethods and alpha.followsShaderMethods(methods,prior.wrapped,prior.hasUniform))then return prior end
  end
  local h={send=methods.send,sendColor=methods.sendColor,release=methods.release,hasUniform=methods.hasUniform,methods=methods,wrapped={}}
  hooks[methods]=h
