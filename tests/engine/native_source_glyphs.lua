@@ -4,6 +4,8 @@ local T=require('tests.modkit')
 local Font=require('src.render.Font')
 local Source=require('src.ui.game3.frlg_font')
 local V=require('src.core.GameVersion')
+local Window=require('src.ui.game3.window')
+local Theme=require('src.ui.Theme');local originalCursor=Theme.cursor
 local Assets=require('src.render.Assets');local savedImage=Assets.image
 local image={getDimensions=function()return 128,128 end}
 Assets.image=function()return image end
@@ -23,12 +25,20 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(Source.drawGlyph(42,17,23,{small=true}),5)
  T.eq(painted[1],42);T.eq(painted[2],17);T.eq(painted[3],23);T.eq(painted[4],5)
  T.eq(Font.advanceOf(42),9);T.eq(love.graphics.getShader(),shader)
+ Theme.cursor=173
+ T.eq(Window.cursorPx(128,122,{small=true,colors=Source.COLOR.WHITE}),5)
+ T.same(painted,{173,128,122,5},'pixel cursor borrows the current native symbol and selected face')
+ Theme.cursor=174;Window.cursorPx(184,138)
+ T.same(painted,{174,184,138,9},'no cached arrow survives a native theme change')
+ T.eq(Font.advanceOf(42),9);T.eq(love.graphics.getShader(),shader)
+
  local r,g,b,a=love.graphics.getColor();T.eq(r,.2);T.eq(g,.3);T.eq(b,.4);T.eq(a,.5)
  Font.drawCode=function()error('glyph painter failure')end
  T.raises(function()Source.drawGlyph(13,0,0,{small=true})end,'glyph painter failure')
+ T.raises(function()Window.cursorPx(0,0,{small=true})end,'glyph painter failure')
  T.eq(Font.advanceOf(13),9);T.eq(love.graphics.getShader(),shader,'errors restore native shader')
  Font.drawCode=draw
  data.font.charmap[1].code=71;Font.load(data);T.eq(Source.glyphId('A'),71,'no stale glyph cache after native reload')
 end
-Assets.image=savedImage
+Assets.image=savedImage;Theme.cursor=originalCursor
 T.finish('native source glyph IDs, proportional faces and draw ownership')
