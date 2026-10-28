@@ -2387,6 +2387,7 @@ function Game:restoreSave(loaded, recovered)
   -- Emerald's CHAMPION_SAVEWARP (special 343): the Hall of Fame saved with
   -- the player standing in a room that has no exit, and this is the load
   -- that spends the bit and puts them back in their own bedroom.
+  require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
   if SaveData.hasChampionSaveWarp(loaded) then
     local home = SaveData.applyChampionSaveWarp(loaded, self:bootConfig())
     Logger.info("champion save warp: resuming at %s",

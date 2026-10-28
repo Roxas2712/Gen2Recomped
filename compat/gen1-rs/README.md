@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-190 files. Four further byte-exact files supply the native RS credits
+199 files. Four further byte-exact files supply the native RS credits
 controller, scenery selection and exact-edition credits extractor. Four more
 supply Hall of Fame presentation, art decoding and the RS text policy. One more
 supplies the original RS options controller and rendering over host-owned settings. The existing GBA
@@ -17,6 +17,13 @@ M4A synthesizer and preserves native warm attract restart, interruption and
 host menu callbacks. No generated assets or cartridge bytes are vendored.
 Native movie/title acceptance does not imply native parity for the remaining
 Emerald menus, professor sequence or complete story.
+
+The original Emerald common main menu now reuses host callback ownership,
+the read-only shared Hoenn save summary and Emerald's own constants. Its
+sixteen labels, normal font, title palette and twenty frames come from the
+selected ROM. Original panels and dimming display the active save directly;
+CONTINUE has no additional host preview confirmation. Mod-owned custom rows
+keep their existing host menu. Mystery Gift/Events gameplay remains separate.
 
 Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC
 (https://github.com/bryanthaboi/gen1recomp).
@@ -161,3 +168,9 @@ BuildStartMenuActions_Normal/FlagGet instructions: Pokédex 0x801 and PokéNav
 0x802. Emerald's 0x861/0x862 fallbacks must not hide these RS rows.
 
 The private RS save adapter uses the pinned save controller and native dex summary over host-owned flags, variables and species IDs. The host active slot and atomic writer remain authoritative. Native save/overwrite cancellation, false/raised-write failures and successful writes are verified in isolated profiles. Host IO uses the original short RS failure label so the message fits the dialogue window.
+
+The selected RS cartridge now supplies all original dialogue placeholders.
+Raw IDs 8–13 retain opposing-team/leader/legendary roles; their Ruby and
+Sapphire words, version and gendered rival names come from the pinned
+placeholder extractor and that edition's own ROM. Explicit literal team
+names are unchanged. No generated placeholder words are vendored.
