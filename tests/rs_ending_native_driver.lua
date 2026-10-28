@@ -9,7 +9,11 @@ return function(game)
     'touchmoved','mousepressed','mousereleased'} do love[event]=function()end end
   game.input:reset();U.freshSave(game)
   local P=require('src.pokemon.Pokemon')
-  game.save.party={P.new(game.data,'SCEPTILE',49),P.new(game.data,'KYOGRE',45)}
+  game.save.player.gender=edition=='ruby'and'girl'or'boy'
+  game.save.party={}
+  for _,species in ipairs{'SCEPTILE','KYOGRE','WINGULL','CASTFORM','KECLEON','TENTACOOL'}do
+    game.save.party[#game.save.party+1]=P.new(game.data,species,45)
+  end
   game.save.pokedex={seen={TREECKO=true,SCEPTILE=true,KYOGRE=true},caught={TREECKO=true,SCEPTILE=true,KYOGRE=true}}
   require('src.core.SaveData').validate(game.save,game.data)
   for _,mon in ipairs(game.save.party) do require('src.battle.BattleState').stampOT(game.save,mon) end
@@ -35,13 +39,29 @@ return function(game)
   ow.runner:run({{'g3_special',275},{'g3_wait_state'},{'set_flag','QA_RS_ENDING_FINISHED'}},{mapId=ow.map.id})
   U.wait(8)
   local screen=game.stack:top()
-  assert(getmetatable(screen)==Hof and screen.phase=='mon' and screen.index==1)
+  assert(getmetatable(screen)==require('src.ui.Gen3RsHallOfFame'))
   assert(ow.runner:isRunning() and not game.save.flags.QA_RS_ENDING_FINISHED)
+  local mons,confetti={},false
+  for _=1,6000 do
+    assert(game.stack:top()==screen,'Ceremony ended before the native final question')
+    if screen.phase=='hold'and not mons[screen.index]then
+      assert(screen.scene.getCurrentMon()._hostMon==game.save.party[screen.index],'Native ceremony changed party identity/order')
+      shot('native-rs-hall-pokemon-'..screen.index);mons[screen.index]=true
+    elseif screen.phase=='applause'and not confetti and#screen.scene._confetti>=20 then
+      shot('native-rs-hall-team-and-confetti');confetti=true
+    elseif screen.phase=='exitwait'then
+      local C=screen.load('src.core.game3.constants').of()
+      local pic=C:require('trainer_classes',edition=='ruby'and'TRAINER_PIC_MAY'or'TRAINER_PIC_BRENDAN')
+      assert(screen.scene._player.pic==pic,'Native ceremony selected the wrong player portrait')
+      shot('native-rs-hall-player-original-label');break
+    end
+    U.wait(1)
+  end
+  assert(screen.phase=='exitwait'and confetti,'Native confetti/player ceremony did not complete')
+  for i=1,6 do assert(mons[i],'Missing native ceremony party member '..i)end
   assert(require('src.core.Music').current()==game.data.audio.special.hallOfFame,'Wrong Hall of Fame song')
-  shot('native-rs-hall-first-pokemon');press('a')
-  assert(screen.index==2);shot('native-rs-hall-second-pokemon');press('a')
-  assert(screen.phase=='player');shot('native-rs-hall-player-original-label');press('a')
-  assert(screen.phase=='welcome');shot('native-rs-hall-welcome');press('a')
+  press('a')
+  for _=1,1200 do if game.stack:top()~=screen then break end;U.wait(1)end
   local credits=game.stack:top();assert(getmetatable(credits)==require('src.ui.Gen3RsCredits'))
   assert(require('src.core.Music').current()==game.data.audio.special.credits,'Wrong RS credits song')
   local state=credits.state;local man=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
@@ -81,6 +101,8 @@ return function(game)
   assert(game.save.flags.QA_RS_ENDING_FINISHED,'GameClear callback did not resume its script')
   assert(game.save.hallOfFame==1,'Induction must be recorded once')
   report.status='pass';report.actualGameClearSpecial=true;report.fullImportedCreditRoll=true
+  report.nativeHallPartyMembers=6;report.nativeHallConfetti=true;report.nativePlayerPortrait=true
+  report.playerGender=game.save.player.gender
   report.nativeBikeScenes=5;report.nativeMonSlides=state.imgCounter;report.nativeTheEndAndMusic=true
   report.drawPreservesSaveRng=true;persist();print('PASS_NATIVE_RS_ENDING');love.event.quit(0)
 end
