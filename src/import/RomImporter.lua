@@ -2143,8 +2143,9 @@ local function commandOutput(command)
   releasePointerGrab()
   local pipe = HostShell.popen(command)
   if not pipe then return nil end
-  local result = pipe:read("*a")
-  pipe:close()
+  local ok, result = pcall(pipe.read, pipe, "*a")
+  pcall(pipe.close, pipe)
+  if not ok or type(result) ~= 'string' then return nil end
   result = trim(result)
   return result ~= "" and result or nil
 end
