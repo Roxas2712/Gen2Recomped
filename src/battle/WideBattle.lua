@@ -477,7 +477,7 @@ local function drawPanel(battle,withObjects)
   else
     g.setColor(PaletteFX.paperShade(battle.data))
   end
-  if not battle:worldBackdrop()then
+  if not(type(battle.worldBackdrop)=='function'and battle:worldBackdrop())then
     g.rectangle("fill",0,0,WideBattle.WIDTH,WideBattle.HEIGHT)
   end
   -- AskName clears the field the same way the classic layout does
