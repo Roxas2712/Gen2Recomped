@@ -295,9 +295,12 @@ function Game:newGame()
   if newGameScreen == nil and not gen2 then
     newGameScreen = "OakSpeech"
   end
-  -- Both native introductions choose player state before the field starts.
-  local deferWorld = (gen2 and newGameScreen) or newGameScreen == "Gen3RsBirchSpeech"
-  if newGameScreen == "Gen3RsBirchSpeech" then self.overworld = nil end
+  -- These native introductions choose player state before the field starts.
+  -- FR/LG must not publish a field beneath Oak: source boot decorators wait
+  -- for its renderer and would otherwise hold the still-active introduction.
+  local gbaIntro = newGameScreen == "Gen3RsBirchSpeech" or newGameScreen == "Gen3OakSpeechFRLG"
+  local deferWorld = (gen2 and newGameScreen) or gbaIntro
+  if gbaIntro then self.overworld = nil end
   if not deferWorld then startWorld() end
   if newGameScreen then
     Screens.push(self, newGameScreen, deferWorld and startWorld or function() end)
