@@ -23,7 +23,8 @@ The award uses the existing native friendship owner and the battle's ordered
 party view. Living, non-egg members receive +3 below 100, +2 below 200, or +1
 otherwise, clamped to 255. Excluded party members are untouched. API2
 `happiness.changed` callbacks carry the original native mon and the source
-event ID 4. Applied events at saturation (and other zero-delta happiness
+symbolic event (`GYMBATTLE`); the numeric cartridge index remains available
+as `eventId` (4). Applied events at saturation (and other zero-delta happiness
 events) remain observable, as on the reference engine; unchanged walking
 steps remain silent.
 
