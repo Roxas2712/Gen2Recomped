@@ -261,11 +261,14 @@ return function(game)
       report.measurement=require("tools.performance_baseline_meter")(game,spec.seconds,#report.targets>1 and walk or nil,
         function()return P.tier,love.window.hasFocus() end)
       report.nativeFocusAfter=love.window.hasFocus()
-      if spec.stableFocus then
-        assert(report.nativeFocusAfter==report.nativeFocusBefore,"actual native focus changed during measurement")
-        for _,state in ipairs(report.measurement.tierTrace)do
-          assert(state.focused==report.nativeFocusBefore,"actual native focus changed during measurement")
-        end
+      report.nativeFocusStable=report.nativeFocusAfter==report.nativeFocusBefore
+      for _,state in ipairs(report.measurement.tierTrace)do
+        if state.focused~=report.nativeFocusBefore then report.nativeFocusStable=false end
+      end
+      if spec.stableFocus and not report.nativeFocusStable then
+        report.passed=false
+        print('PERF_NATIVE_FOCUS_CHANGED '..Json.encode({before=report.nativeFocusBefore,
+          after=report.nativeFocusAfter,trace=report.measurement.tierTrace}))
       end
       if atlas then
         report.atlasWorkerAfter=atlas._counters()
