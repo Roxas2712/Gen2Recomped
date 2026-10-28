@@ -9,6 +9,30 @@ local G=require('src.render.Gen2PaletteDraw')
 local Assets=require('src.render.Assets')
 local previous=V.get()
 local oldImage,oldData,oldNew,oldDraw=love.image,Assets.imageData,love.graphics.newImage,love.graphics.draw
+local graphics=love.graphics
+local push,pop,setScissor,getScissor,intersect=graphics.push,graphics.pop,graphics.setScissor,
+  graphics.getScissor,graphics.intersectScissor
+local clip,clipStack=nil,{}
+graphics.push=function(...)
+  clipStack[#clipStack+1]=clip or false
+  return push(...)
+end
+graphics.pop=function(...)
+  clip=table.remove(clipStack)or nil
+  return pop(...)
+end
+graphics.getScissor=function()if clip then return unpack(clip)end end
+graphics.setScissor=function(x,y,w,h)
+  clip=x and{x,y,w,h}or nil
+  return setScissor(x,y,w,h)
+end
+graphics.intersectScissor=function(x,y,w,h)
+  if clip then
+    local right,bottom=math.min(x+w,clip[1]+clip[3]),math.min(y+h,clip[2]+clip[4])
+    x,y=math.max(x,clip[1]),math.max(y,clip[2]);w,h=math.max(0,right-x),math.max(0,bottom-y)
+  end
+  graphics.setScissor(x,y,w,h)
+end
 love.image={newImageData=F.image}
 local images,calls={},{}
 Assets.imageData=function(path)
@@ -138,4 +162,6 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
 end end
 V.set(previous);love.image=oldImage;Assets.imageData=oldData
 love.graphics.newImage,love.graphics.draw=oldNew,oldDraw
+graphics.push,graphics.pop,graphics.setScissor,graphics.getScissor,graphics.intersectScissor=
+  push,pop,setScissor,getScissor,intersect
 T.finish('native GSC replacement pixels, actual drawing, capture geometry and palette lifetime')
