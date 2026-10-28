@@ -93,7 +93,7 @@ end
 local function hook(shader)
  local methods=debug.getmetatable(shader).__index
  if hooks[methods]then return hooks[methods]end
- local h={hasUniform=methods.hasUniform,release=methods.release,wrapped={}}
+ local h={hasUniform=methods.hasUniform,release=methods.release,send=methods.send,sendColor=methods.sendColor,wrapped={}}
  hooks[methods]=h
  for _,name in ipairs{'send','sendColor'}do
   local method=methods[name]
@@ -118,6 +118,11 @@ function A.ownsShaderMethods(methods)
  local h=hooks[methods]
  return h and methods.send==h.wrapped.send and methods.sendColor==h.wrapped.sendColor
   and methods.release==h.wrapped.release and methods.hasUniform==h.hasUniform or false
+end
+function A.followsShaderMethods(methods,prior,hasUniform)
+ local h=hooks[methods]
+ return A.ownsShaderMethods(methods)and h.send==prior.send and h.sendColor==prior.sendColor
+  and h.release==prior.release and h.hasUniform==hasUniform or false
 end
 local function depthTarget()
  local target=raw.getCanvas()

@@ -190,6 +190,14 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){if(gate>.5)return tint;return vec4(1.
   local carryReference=g.newShader(carryText)
   carried:send('gate',1);carried:send('tint',{.1,.2,.3,1})
   target=g.newCanvas(8,8,{dpiscale=1});g.setCanvas(target);g.setShader(carried);g.rectangle('fill',0,0,8,8);g.setCanvas();g.setShader()
+  local transformed=os.getenv('QA_SHADER_FOREIGN_BEFORE_DEPTH')=='1'
+  if transformed then
+   local methods=debug.getmetatable(carried).__index;local preceding=methods.send
+   methods.send=function(self,name,value,...)
+    if name=='tint'and type(value)=='table'then value={value[1]*.5,value[2]*.5,value[3]*.5,value[4]}end
+    return preceding(self,name,value,...)
+   end
+  end
   local vertex=[[
 uniform mat4 sceneMatrix;
 #ifdef VERTEX
@@ -255,18 +263,24 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(1.,0.,0.,1.);}
   end
   render(false);render(true);render(false)
   for key,value in pairs(S.status())do print('DEPTH_VARIANT_STATUS',key,value)end
-  check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
-  check(S.status().depthUses>0,'the native depth variant is actually drawn')
+  if transformed then
+   check(S.status().compiled==beforeCompiled,'an intervening foreign owner keeps its original native programs')
+   check(S.status().unsupported>0,'a later native hook cannot hide the earlier foreign value owner')
+  else
+   check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
+   check(S.status().depthUses>0,'the native depth variant is actually drawn')
+  end
   check(alpha.status().compiled==beforeCompanions,'variants do not manufacture duplicate depth companions')
   local cutoutReference=reference;reference=carryReference
   carryReference:send('gate',1);carryReference:send('tint',{.4,.2,.8,1});carried:send('tint',{.4,.2,.8,1})
   check(compare(carried),'an earlier live program retains exact mutable uniforms across the owned hook interposition')
   carried:send('tint',{1,0,0,1});check(not compare(carried),'earlier-program pixel comparison detects a wrong-value control')
   carried:send('tint',{.4,.2,.8,1});check(compare(carried),'earlier native variant remains reusable after the owned interposition')
-  check(S.status().unsupported==0,'the known native depth owner does not retire earlier programs')
+  check(transformed or S.status().unsupported==0,'the known native depth owner does not retire earlier programs')
   reference=cutoutReference
   candidate:release();reference:release();depthReference:release();behind:release();cutout:release();carried:release();carryReference:release();target:release();depth:release();g.present()
   check(S.status().sources==0,'depth variants retire at the actual native empty-stack boundary')
+  if transformed then print('SHADER_ADAPTER_PASS',count);return end
  end
  -- Mutable native Data is a supported source API, but is intentionally not a
  -- replayable adapter value. Its original C send and original pixels survive.

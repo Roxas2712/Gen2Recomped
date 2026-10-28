@@ -38,6 +38,7 @@ for _,backend in ipairs{'OpenGL','Metal'}do
  function methods:send(name,value)assert(value~='bad','invalid native uniform');self.values[name]=value;return 'sent',nil,3 end
  methods.sendColor=methods.send
  function methods:release()self.released=true end
+ local preceding={send=methods.send,sendColor=methods.sendColor,release=methods.release};local precedingHas=methods.hasUniform
  local function compiler(...)
   local shader=setmetatable({values={}},{__index=methods})
   calls[#calls+1]={args={...},shader=shader};return shader
@@ -67,6 +68,8 @@ for _,backend in ipairs{'OpenGL','Metal'}do
  if backend=='Metal'then
   T.eq(compat.compileNative,compiler,'derivative compiler retains the exact preceding constructor')
   T.check(compat.ownsShaderMethods(methods),'only the actual installed depth method owner is recognized')
+  T.check(compat.followsShaderMethods(methods,preceding,precedingHas),'the exact predecessor is attested')
+  T.eq(compat.followsShaderMethods(methods,{send=function()end,sendColor=preceding.sendColor,release=preceding.release},precedingHas),false,'an intervening foreign value owner cannot be hidden by a later engine hook')
   local owned=methods.send;methods.send=function(...)return owned(...)end
   T.eq(compat.ownsShaderMethods(methods),false,'a later foreign owner is not mistaken for an engine hook')
   methods.send=owned;T.check(compat.ownsShaderMethods(methods))
