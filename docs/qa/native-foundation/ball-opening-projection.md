@@ -29,9 +29,11 @@ Validation:
   The ten callback-local checks are absent because the predecessor never
   invokes the provider. The earlier negative run hit a missing fixture error
   description after detecting wrong geometry; its receipt is retained.
-- Older-public composition and real unchanged-consumer image qualification
-  are recorded after their managed runs finish. All views/portraits, capture
-  image acceptance and stable frame rates remain separate.
+- Older-public composition `4402bdd757`: 74 groups pass, including all 460
+  projection assertions, with its existing native controllers retained.
+- Real unchanged-consumer image qualification is recorded after its managed
+  run finishes. All views/portraits, capture image acceptance and stable frame
+  rates remain separate.
 
 Owned QA profiles/copies only, with a 20 GiB free floor. Private sources,
 original ROMs and player saves/profiles are unchanged.
