@@ -12,6 +12,8 @@ import sys
 import os
 import shutil
 import time
+import atexit
+import qa_storage
 from qa_storage import qa_source, qa_cache, qa_run
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -19,7 +21,22 @@ FILES = ['src/import/BankPages.lua', 'src/import/BankWorkspace.lua',
          'src/import/TournamentWorkspace.lua', 'src/import/AccountWorkspace.lua',
          'src/import/ArenaShopView.lua', 'src/import/ArenaPresentation.lua',
          'src/import/GiftDesigner.lua', 'src/ui/RetroOverlay.lua', 'src/ui/FriendsMenu.lua',
-         'src/import/FirstRun.lua', 'src/cloud/BankVerification.lua', 'src/translation/AccountErrors.lua']
+         'src/import/FirstRun.lua', 'src/cloud/BankVerification.lua', 'src/translation/AccountErrors.lua',
+         'src/import/LauncherGameMods.lua', 'src/import/LauncherPinball.lua',
+         'src/import/LauncherPinballPage.lua', 'src/import/LauncherPokemonXY.lua',
+         'src/import/LauncherLibrary.lua', 'src/import/LauncherCommunity.lua']
+LOOKUP_ONLY = ['src/import/RomImporter.lua', 'src/import/LauncherSidebar.lua',
+               'src/import/LauncherStorage.lua', 'src/import/LauncherModProfiles.lua',
+               'src/pinball/Friends.lua', 'src/pinball/Player.lua']
+FILES += LOOKUP_ONLY
+# Helpers have different signatures. Never mistake paths, code or action IDs
+# for visible copy just because their surrounding function is named button.
+OFFSETS = {
+ 'FirstRun.lua': {'button':1},
+ 'LauncherGameMods.lua': {'action':1},
+ 'LauncherPokemonXY.lua': {'text':1,'button':4},
+ 'LauncherLibrary.lua': {'text':2,'label':1},
+}
 TOKEN = re.compile(r'--\[(=*)\[[\s\S]*?\]\1\]|--[^\n]*|\[(=*)\[[\s\S]*?\]\2\]|"(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\'|[A-Za-z_][A-Za-z_0-9]*|==|~=|\.\.|[^\s]')
 
 def decode(token):
@@ -54,8 +71,13 @@ def collect(root=ROOT):
                     rows.setdefault(text, []).append(filename + ':' + str(source.count('\n', 0, position) + 1))
                 previous = token
         for i, (token, _) in enumerate(tokens[:-2]):
-            if token in {'text', 'paragraph', 'para', 'line', 'button', 'row', 'field', 'check', 'L', 'F', 'launcherLookup', 'launcherFormat'} and tokens[i+1][0] == '(':
-                record(i+2,offset=1 if filename.endswith('FirstRun.lua')and token=='button'else 0)
+            if filename in LOOKUP_ONLY:
+                if token in {'Strings','launcherLookup','launcherFormat'} and tokens[i+1][0]=='(':record(i+2)
+                continue
+            if token in {'text', 'paragraph', 'para', 'line', 'button', 'row', 'field', 'check', 'L', 'F', 'Strings', 'launcherLookup', 'launcherFormat', 'action', '_chipButton'} and tokens[i+1][0] == '(':
+                if token=='action' and not filename.endswith('LauncherGameMods.lua'):continue
+                offset=2 if token=='_chipButton'else OFFSETS.get(Path(filename).name,{}).get(token,0)
+                record(i+2,offset=offset)
             elif token == 'label' and tokens[i+1][0] == '(':
                 record(i+2, offset=1)
             elif token in {'notice', 'label', 'note'} and tokens[i+1][0] == '=':
@@ -71,6 +93,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--inventory', action='store_true', help='Print source strings and call sites without executing Lua.')
     args = parser.parse_args()
+    qa_storage._storage=qa_storage.Storage(ROOT)
+    atexit.register(qa_storage._storage.close,collect=False)
     qa_source(ROOT);qa_source(Path(sys.executable))
     if os.environ.get('RETRO_QA_LUA_LIBRARY'):qa_source(Path(os.environ['RETRO_QA_LUA_LIBRARY']))
     lua=shutil.which('luajit')

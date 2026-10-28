@@ -1,11 +1,94 @@
 # Pokémon X/Y · Recompiled Ascendant
 
-Private macOS/arm64 integration by **Roxas2712**. Both own USA dumps have
-compiled ARM-to-native libraries and run through Zakuro inside the fork's
-LÖVE window. This is an embedded native backend, not a Gen-6 reimplementation
-of the older games' Lua engine. Existing native Lua games keep their owners.
+Native integration by **Roxas2712**, using fearkov's separately licensed
+Zakuro and 3dsrecomp (MIT). X/Y use compiled ARM-to-native libraries inside
+the fork's LÖVE window. The earlier private gameplay evidence is retained
+below; it does not qualify each subsequent packaged runtime automatically.
 
 ## Start
+
+Fresh profiles show **3DS · X / Y (Beta)** before an import exists. Open an
+edition and choose **Import game** (`.3ds`, `.cci`, `.cxi`, `.cia`), or drop a
+3DS file onto the library to detect its edition. Import streams the complete
+hash and verifies the decrypted executable/content headers. A wrong edition,
+damaged dump or encrypted content cannot replace an existing entry. Currently
+the supported base-game title IDs are `0004000000055D00` (X) and
+`0004000000055E00` (Y). The archive's region label is not a compatibility check;
+the importer verifies the actual cartridge headers and content hashes.
+The original local file is referenced in place; keep it available at that path.
+Import does not upload it, copy a multi-GB ROM, or mark an unbuilt game playable.
+LÖVE 12 uses its attached asynchronous native file picker for X/Y, so the
+launcher keeps updating while the dialog is open. Cancellation changes no
+import; overlapping selections and callbacks for a different edition are ignored.
+
+The bundled **macOS Apple Silicon** demo includes its native bridge, recompiler,
+Python, Zig/Clang, Vulkan Loader and MoltenVK under
+`Contents/Resources/3ds-runtime`. This 3DS graphics bundle requires macOS 15+.
+End-user imports need no developer checkout, Rust, Homebrew or Xcode.
+With this bundle, **Import game** automatically validates the file, compiles
+the game, runs the existing device qualification and opens it. The first import
+can take a while; the launcher displays compilation counts. Existing imports
+can use **Prepare game** to perform the same preparation and play handoff.
+
+Helpers are extracted into the writable `pokemon-xy-backend` directory under
+the app profile. ROM references, builds, settings and saves remain there or at
+the selected original file path. Python bytecode and compiler caches never
+write into the signed application. A build is reusable only after an atomic
+completion marker records its ROM, compiler identity and library digest;
+interrupted or changed binaries must be rebuilt. Driver updates invalidate the
+device qualification separately from the game compiler cache.
+
+The compiler wrapper suppresses Zig's default generated DWARF with `-g0` while
+retaining the recompiler's `-O2` and precise floating-point flags. This avoids
+large duplicate debug objects in the build and its bounded compiler cache.
+Its wrapper digest participates in the game-build identity. The default is
+two compiler jobs; maintainers may set `RETRO_3DS_BUILD_JOBS` to 1–8 for a
+measured build on their own host. Invalid values fall back to two jobs.
+After a confirmed link, byte-identical compiler-cache object copies can be
+retired. Zig's local manifests are preserved outside its lookup path first, so
+a subsequent compile cannot resolve a removed cached object. The ROM-free
+`tools/qualify_pokemon_xy_cache.py --runtime <sidecar>` exercises this complete
+compile/link/retire/rebuild cycle with the real bundled compiler.
+
+A bare `.love` without the sidecar still supports file import but needs an
+installed backend before playing. Developer overrides are `POKEMON_XY_ROOT`
+(workspace), `POKEMON_XY_RUNTIME_ROOT` (reviewed sidecar), and optionally
+`POKEMON_XY_PYTHON`. No ROMs, generated game libraries, console keys, firmware,
+private player data or private intro artwork are included in the runtime.
+Other 3DS platform binaries remain unqualified.
+
+Maintainer builds use `tools/build_pokemon_xy_runtime.py --fetch-components
+--build --test --out .local/qa/3ds-runtime-package-<run>/source`. Install the
+maintainer Rust 1.95.0 toolchain in `.local/pokemon-x/cargo` and
+`.local/pokemon-x/rustup` first; the output bundles no Rust toolchain. Source
+revisions, patch hashes and dependency archives are pinned in
+`tools/pokemon_xy_source_pins.json` and `tools/pokemon_xy_components.json`.
+Existing unrelated dependency edits are preserved and rejected for release
+builds. `tools/package_pokemon_xy_runtime.py` verifies the complete inventory
+before embedding it in a new app; sign the containing app afterward.
+
+`tools/qualify_pokemon_xy_runtime.py --runtime <sidecar>` relocates the runtime
+into an app-shaped folder with spaces, masks system developer tools, compiles
+and executes a ROM-free C library, checks the bridge ABI, creates a real Vulkan
+instance/device, and verifies the sidecar remains byte-identical. This is
+runtime/toolchain qualification. A genuine X/Y import and played session are
+separate acceptance tests requiring the tester's own decrypted dump.
+
+The 2026-10-27 macOS bundle passed relocation, bundled C compilation, native
+bridge loading and Vulkan device enumeration on Apple M2. The real LÖVE import
+worker also rejected an intentionally non-executable synthetic NCCH file while
+preserving its imported metadata and showing an explicit build error. Worker
+completion uses a terminal protocol record because LuaJIT's process-close
+status alone is insufficient on this host; a missing record fails closed.
+Genuine X/Y dumps were subsequently validated and compiled privately with the
+debug-free bundled compiler. Separate instrumented app copies exercised cached
+import through the normal device gate and visible native gameplay: German
+language selection, intro and prologue. The Y run included five minutes of
+native play. No ROM-derived C, native game libraries or private save profiles
+are distributed. This is a bounded first-run test, not a full-game, battle,
+3DS cloud-transfer or online compatibility certificate. See
+`docs/qa/pokemon-xy-bundle-20261027/native-game-qualification.json` for the final
+scope, and the separate runtime/cache reports for ROM-free qualification.
 
 Open `Start-Recompiled-Ascendant.command` for the shared library, or
 `Start-Pokemon-X.command` / `Start-Pokemon-Y.command` for a direct edition
@@ -13,12 +96,15 @@ start. The private runtime and game libraries live in `.local/pokemon-x/`.
 The 3DS system tile is in the second system row; X/Y use ordinary collection
 cards, favorites, readiness counts, 3DS cartridge shapes and live previews.
 
-Each start prepares/qualifies the backend, plays the usual cartridge launch
-animation, then the full **Recompiled Ascendant · by Roxas2712** intro.
+Each start prepares/qualifies the backend and plays the usual cartridge launch
+animation. Development workspaces with the private intro assets then play
+the full **Recompiled Ascendant · by Roxas2712** intro.
 Rolling Poké Balls and the full opening chime precede Lugia's cry and sweep.
 The scene ends at 13.1 s and hands off to the game in the same window.
 There is no OmegaDias/eye continuation. Input can skip; the existing animation
 preference can disable the sequence. Direct edition starters play it once.
+Packaged runtimes without that private asset pack enter the game after the
+ordinary cartridge sequence.
 
 ## Screens and window usage
 

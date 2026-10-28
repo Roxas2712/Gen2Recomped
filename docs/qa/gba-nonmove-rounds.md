@@ -11,7 +11,7 @@ Enemy selection still precedes cleanup, preserving the previous-round AI
 inputs and the existing shared random word. Committed native item, switch
 and escape actions advance the round once; opening/cancelling BAG and a
 trainer RUN refusal do not. Older generations retain their existing
-non-move ownership. GBA battle fingerprint revision 24 prevents old/new
+non-move ownership. GBA battle fingerprint revision 27 prevents old/new
 simulations from negotiating identical battle rules.
 
 Source contract: [pokeruby battle_main.c](https://github.com/pret/pokeruby/blob/5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f/src/battle_main.c),
@@ -38,4 +38,11 @@ documentation and protocol expectations), with three captures each. The
 ordinary Sapphire Drake fight also witnessed HYPER POTION advancing round
 5 to 6 and one Salamence reply before the battle was won. Protocol tests
 retain fixed audited digests and reject both previous command revisions
-23 and 22, symmetrically, through the actual link controller.
+26, 23 and 22, symmetrically, through the actual link controller.
+
+Current-main integration retains command revision 26 features and advertises
+revision 27. Independent integer FNV auditing yields `78dbbb41ed15c325`
+(FireRed/LeafGreen/Ruby/Sapphire) and `fb32852c3ce04be0` (Emerald);
+legacy and NDS digests remain unchanged. Native fixture results above belong
+to the stated earlier component runtime; current integration qualification
+is recorded separately and does not imply a new graphical story test.

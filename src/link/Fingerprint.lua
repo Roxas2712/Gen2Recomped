@@ -22,7 +22,7 @@ local Fingerprint = {}
 -- even when both peers load byte-identical data. Keep older game digests.
 local function nativeBattleRevision()
   if require('src.core.GameVersion').generation()>=4 then return 'nds-'..require('src.core.GameVersion').generation()..'-1'end
-  return require("src.core.GameVersion").isGen3() and 24 or nil
+  return require("src.core.GameVersion").isGen3() and 27 or nil
 end
 Fingerprint.nativeBattleRevision = nativeBattleRevision
 local function nativeSecondaryRule()
@@ -249,6 +249,13 @@ end
 
 Fingerprint.modKey = modKey
 
+-- Shared callback records can change a mod's battle decisions with identical
+-- content and mod versions. Keep vanilla/translation-only peers compatible;
+-- version the runtime boundary whenever a link-affecting mod is enabled.
+function Fingerprint.modCallbackRevision(mods)
+  return modKey(mods) ~= "" and 1 or nil
+end
+
 -- ------- public API
 
 -- memoized per merged-data identity: the digest is only ever asked for on
@@ -270,6 +277,8 @@ local function surface(data, mods)
   if secondaryRule then out[#out + 1] = "[native_gba_secondary]" .. secondaryRule end
   local partyRevision = Fingerprint.nativePartyRevision()
   if partyRevision then out[#out + 1] = "[native_gba_party]" .. partyRevision end
+  local callbackRevision = Fingerprint.modCallbackRevision(mods)
+  if callbackRevision then out[#out + 1] = "[mod_callback_records]" .. callbackRevision end
   out[#out + 1] = "[mods]" .. modKey(mods)
   return table.concat(out)
 end
@@ -282,6 +291,7 @@ function Fingerprint.compute(data, mods)
   local key = modKey(mods) .. "|native_gba:" .. tostring(nativeBattleRevision())
     .. "|native_secondary:" .. tostring(nativeSecondaryRule())
     .. "|native_party:" .. tostring(Fingerprint.nativePartyRevision())
+    .. "|mod_callbacks:" .. tostring(Fingerprint.modCallbackRevision(mods))
   local hit = cache[data]
   if hit and hit.key == key then return hit.value end
   local value = Runtime.call("link.fingerprint", function(d, m)

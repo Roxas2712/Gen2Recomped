@@ -1354,6 +1354,7 @@ local function markerFor(version)
     revision=revision..'gba-textbox-palette-v2:'
   end
   if GameVersion.generation(version)==2 then
+    revision=revision..'gen2-font-extras-v'..require('src.import.Gen2FontExtras').REVISION..':'
     revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
     -- The genuine animation VM consumes battler-row commands that older
     -- handler-name imports reversed. Rebuild generated data, retain saves.
@@ -12072,5 +12073,6 @@ require("src.import.NativeLanguageSetup").install(RomImporter)
 
 require("src.import.LauncherPokemonXY").install(RomImporter)
 require("src.import.LauncherPinball").install(RomImporter)
+require("src.import.LauncherGameMods").install(RomImporter)
 
 return RomImporter

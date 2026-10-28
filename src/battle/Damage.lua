@@ -237,6 +237,13 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   local attackTypes, defendTypes = Gen2Read.types(attacker), Gen2Read.types(defender)
   opts = opts or {}
   local rng = opts.rng or love.math.random
+  local nativeGba = require("src.core.GameVersion").isGen3()
+  local raw = nativeGba and (opts.gbaRawCalculation or opts.deferAdjustment)
+  local deferred = nativeGba and opts.deferAdjustment
+  if require("src.core.GameVersion").isGen3() then
+    local fixed = require("src.battle.Gen3FixedDamage")
+    if fixed.native(move) then return fixed.calculate(attacker, defender, move, opts) end
+  end
   -- ...and the same field again, because a STATUS move must not roll damage.
   -- Platinum has 170 of them and every one of them carries its class under the
   -- other name; asking only for `category` here would have sent each one into
@@ -265,7 +272,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
     if lift then bwLift = true end
     if grounded then bwLevitate = true end
   end
-  if not opts.typeless and Abilities.blocks(defender, move)
+  if not raw and not opts.typeless and Abilities.blocks(defender, move)
      and not (bwLevitate and Abilities.of(defender) == "LEVITATE") then
     return 0, { crit = false, typeMult = 0, ability = Abilities.of(defender) }
   end
@@ -570,6 +577,7 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if not opts.typeless then d = require("src.battle.Gen3HelpingHand").damage(attacker, d) end
 
   local mult = 10
+  local nativeFlags = { super = false, notVery = false, immune = false }
   -- Native GBA Struggle skips only STAB/type calculation. It still uses
   -- the ordinary base, critical and random-damage commands.
   local gbaStruggle = gbaBase and (move.id == "STRUGGLE" or tonumber(move.index or move.numId) == 165)
@@ -605,13 +613,28 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
         if m ~= 0 then mult = math.floor(mult * m / 10) end
       end
     end
+    if raw then
+      local factor = 1
+      for _, m in ipairs(TypeChart.rows(move.type, defender.curTypes)) do
+        if not (foresight and m == 0) then
+          factor = factor * m / 10
+          nativeFlags.super = nativeFlags.super or m > 10
+          nativeFlags.notVery = nativeFlags.notVery or m > 0 and m < 10
+        end
+      end
+      mult = math.floor(factor * 10 + 0.5)
+    end
     if mult == 0 then
+      if raw then
+        nativeFlags.immune = true
+        return 0, { crit = false, typeMult = 0, physical = not special, typeFlags = nativeFlags }
+      end
       return 0, { crit = false, typeMult = 0 }
     end
     -- WONDER GUARD, which is the one immunity that needs the chart's answer
     -- first: anything that is not super-effective does nothing at all.  It
     -- is SHEDINJA's whole reason to exist.
-    if not opts.gbaSetDamage and Abilities.blocks(defender, move, mult)
+    if not raw and not opts.gbaSetDamage and Abilities.blocks(defender, move, mult)
        and not (bwLevitate and Abilities.of(defender) == "LEVITATE") then
       return 0, { crit = false, typeMult = 0,
                   ability = Abilities.of(defender) }
@@ -621,10 +644,10 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
       -- row a dual-typed Pokemon carries still applies
       if not (foresight and m == 0) then
         d = math.floor(d * m / 10)
-        if opts.gbaSetDamage and m > 0 and d == 0 then d = 1 end
+        if (opts.gbaSetDamage or raw) and m > 0 and d == 0 then d = 1 end
       end
     end
-    if d == 0 and not opts.gbaSetDamage then
+    if d == 0 and not opts.gbaSetDamage and not raw then
       -- a 2-3 damage hit at 0.25x floors to zero: the original flags
       -- the move as missed rather than dealing a minimum 1
       return 0, { crit = false, typeMult = mult, missed = true }
@@ -676,17 +699,25 @@ function Damage.compute(ruleset, attacker, defender, move, opts)
   if crit and ruleset.critMultiplier and not ruleset.critBeforeType then
     d = math.floor(d * ruleset.critMultiplier)
   end
-  if d > 1 and not opts.typeless and not opts.gbaSetDamage then
-    local r = rng(ruleset.randMin, ruleset.randMax)
+  if (d > 1 or raw and d ~= 0) and not opts.typeless and not opts.gbaSetDamage
+      and not deferred and not (raw and opts.noRandom) then
+    local r = raw and tonumber(opts.forceRoll) or nil
+    if r == nil then r = rng(ruleset.randMin, ruleset.randMax) end
     -- randDiv defaults to 255 because that is Gen 1 and Gen 2's denominator
     -- (r runs 217..255).  Gen 3 rolls 85..100 out of 100; dividing that by
     -- 255 would cut every hit to roughly a third.
     d = math.floor(d * r / (ruleset.randDiv or 255))
   end
+  local info = { crit = crit, typeMult = mult }
+  if raw then info.physical, info.typeFlags, info.power = not special, nativeFlags, power end
   if opts.gbaSetDamage then
-    return math.max(d, 0), { crit = false, typeMult = mult, eventTypeMult = 10, gbaSetDamage = true }
+    info.crit, info.eventTypeMult, info.gbaSetDamage = false, 10, true
+    return math.max(d, 0), info
   end
-  return math.max(d, 1), { crit = crit, typeMult = mult }
+  if nativeGba and tonumber(move.gen3Effect) == 101 and not deferred and (defender.substituteHP or 0) <= 0 then
+    return math.max(0, math.min(d, defender.mon.hp - 1)), info
+  end
+  return math.max(d, 1), info
 end
 
 --------------------------------------------------------------------------------

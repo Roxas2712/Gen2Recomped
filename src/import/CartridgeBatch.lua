@@ -3,9 +3,13 @@ local B={ORDER={},CONSENT=1}
 local SaveData=require('src.core.SaveData')
 local Sources=require('src.import.CartridgeSources')
 local function scope() return require('src.storage.AccountStorage').scope() end
-for _,version in ipairs(require('src.core.GameVersion').ORDER)do
+local versions={}
+for _,version in ipairs(require('src.core.GameVersion').ORDER)do versions[#versions+1]=version end
+for _,version in ipairs(Sources.EXTERNAL_ORDER or {})do versions[#versions+1]=version end
+local seen={}
+for _,version in ipairs(versions)do
  local source=Sources.get(version)
- if source and source.sha256 then B.ORDER[#B.ORDER+1]=version end
+ if source and source.sha256 and not seen[version]then B.ORDER[#B.ORDER+1]=version;seen[version]=true end
 end
 local catalogue={}
 for _,version in ipairs(B.ORDER)do catalogue[#catalogue+1]=version..':'..Sources.get(version).sha256 end

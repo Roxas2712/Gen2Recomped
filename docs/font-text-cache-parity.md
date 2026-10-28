@@ -31,8 +31,8 @@ bytes when returning its width.
   identical checksums. Graphics calls were no-ops; this measures text
   processing and dispatch, **not GPU performance, frame rate or visual parity**.
 
-No mod files change. This work does not supply Gen1's separate TTF font
-configuration contract or qualify all fonts, menus or final release packages.
+No mod files change. These CPU checks do not qualify all fonts, menus or
+final release packages.
 
 ## Source text commands
 
@@ -54,3 +54,62 @@ native typewriter ticks and line wrapping. The private real-Crystal-font
 comparison reproduces the `#MON` mismatch on main `6b164d96` and matches Gen1
 after the change for eight sampled labels. This remains CPU glyph-dispatch
 evidence, not final-window acceptance.
+
+## Optional Gen1 TTF records
+
+The engine accepts `mod.content.font:register("ttf", {})` and routes its
+merged `data.font.ttf` record through the native Font and TextBox pipeline.
+Supported fields match Gen1: `file`, `size`, `spacing`, `yOffset`, `bold`
+and `tiles` (UTF-8 characters or a list of charmap sequences). The all-optional
+schema branch is closed so malformed pages cannot pass as TTF records.
+
+The default is the same unmodified Plain Pixel 0.009 font pinned by the Gen1
+reference. It rasterizes at DPI 1 with monochrome hinting and nearest
+filtering; native atlas text stays the default. Unicode characters use
+`Font.TTF_BASE + codepoint`, multi-character charmap ligatures retain tiles,
+and explicit `tiles` entries preserve single-character tile mappings.
+Direct border-code drawing remains on the atlas. Measurements, wrapping and
+typewriter glyphs use the selected font's advances. Reload/removal retires
+its glyph and metric caches; a failed font load logs and retains atlas text.
+
+The native style and translation paths remain available. A selected TTF owns
+its text glyphs; without it, the existing translation-service fallback still
+handles characters missing from the atlas. `Font.ttfActive()` reports the
+actual successful load, rather than the presence of a configuration table.
+
+`tests/engine/font_ttf_contract.lua` exercises the actual Font/TextBox and SDK
+merge with synthetic font I/O. Real raster and final-window checks are
+separate acceptance requirements; passing this contract alone is not a
+claim of complete visual parity.
+
+## Gen2 extra sheets and frame selection
+
+`Font.useBattleExtra(on)` returns the prior sheet selection;
+`Font.battleExtraActive()` reports it. The battle page replaces only the
+25 tiles at `$60-$78`. The selected textbox frame still owns `$79-$7e`
+and the blank at `$7f` remains on the ordinary page. An inactive authored
+`battleExtra` page also survives the public content-registry merge.
+
+`Font.setFrame(index)` and `Font.frameIndex()` retain the selected row
+across font reloads and work before loading the font. Optional missing or
+out-of-range rows fall back to the baked frame. GBA named faces and their
+separate nine-tile frame sheets keep their own lookup path.
+
+The GSC importer emits the actual battle-extra font and eight six-tile
+1bpp frame rows from each mounted ROM. No ROM art is shipped.
+The ordinary extra sheet also follows LoadFontsExtra's three initial
+loads: solid black, up-arrow and Pokegear telephone, replacing unused
+FontExtra bold-letter tiles. Gold/Silver's paired 1bpp source and Crystal's
+separate black/2bpp-arrow sources retain their own ROM symbol addresses.
+
+Custom segmented/compressed font manifests retain their previous extraction;
+other non-retail layouts need an explicit `fontFrameCount` to admit a
+frame sheet. The generated Gen2 cache revision requires an ordinary
+reimport of older font records while retaining saves. The native GRAPHICS
+group offers FRAME when the extracted sheet exists, applies changes
+immediately, and restores the saved selection through `Game:applyOptions`.
+
+The selection, import and options contract fixtures test glyph boundaries,
+all eight rows, missing sheets, named-face isolation, native input, save
+codec and the real cache-readiness gate. These ROM-free checks do not
+replace a mounted-ROM GPU test or establish complete mod/release parity.

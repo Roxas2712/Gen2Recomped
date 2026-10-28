@@ -39,7 +39,7 @@ def main():
     files = list((ROOT / 'src/import').glob('*PokemonXY*.lua')) + list((ROOT / 'src/import').glob('pokemon_xy*worker.lua'))
     syntax = ';'.join('assert(loadfile(' + json.dumps(str(p)) + '))' for p in sorted(files))
     suites.append(('syntax', [runtimes[0], '-e', syntax]))
-    for suite in ['launcher_sequence', 'pokemon_xy_presentation', 'pokemon_xy_language']:
+    for suite in ['launcher_sequence', 'pokemon_xy_presentation', 'pokemon_xy_language', 'pokemon_xy_import']:
         suites.append((suite, [runtimes[0], str(ROOT / 'tests/engine' / (suite + '.lua'))]))
     suites.append(('pokemon_xy_keyboard', [runtimes[1], str(ROOT / 'tests/pokemon_xy/keyboard.lua')]))
     if args.bridge:

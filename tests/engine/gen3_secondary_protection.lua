@@ -31,6 +31,22 @@ for _,version in ipairs({'ruby','sapphire','firered','leafgreen','emerald'})do
       end
     end
   end
+  -- The integrated side condition remains authoritative even without the
+  -- legacy actor mirror. Its expiry, rather than the probability, ends it.
+  local Mist=require('src.battle.Gen3Mist')
+  t.abilityOverride=false;t.mist=nil
+  T.check(Mist.apply(b,t),'actual native side admits Mist')
+  t.mist=nil
+  for _,chance in ipairs{30,100,255}do
+    ctx.move.secondaryChance=chance;t.stages.speed=nil
+    S.withChance(ctx,{stat='speed',delta=-1})
+    T.eq(t.stages.speed or 0,0,'native side Mist protects independently of its legacy mirror')
+  end
+  for turn=1,5 do Mist.tick(b)end
+  T.eq(Mist.active(b,t),false,'native turn owner expires Mist after five turns')
+  ctx.move.secondaryChance=100;t.stages.speed=nil
+  S.withChance(ctx,{stat='speed',delta=-1})
+  T.eq(t.stages.speed,-1,'expired native Mist permits the reached stat loss')
   t.abilityOverride='WHITE_SMOKE';t.mist=nil;ctx.move.secondaryChance=100;u.abilityOverride='WHITE_SMOKE'
   u.stages.attack=nil;S.withChance(ctx,{stat='attack',delta=-1,user=true})
   T.eq(u.stages.attack,-1,'own stat losses remain possible')

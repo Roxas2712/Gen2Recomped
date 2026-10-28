@@ -1,0 +1,21 @@
+{
+  "native_game_played": true,
+  "import_worker_completed": true,
+  "played_seconds": 120.00031187499998,
+  "scope": "Two-minute visible native test using final bundled runtime and a separately compiled genuine ROM; German selection and intro; concurrent X compilation; isolated QA save profile.",
+  "edition": "y",
+  "frame": 6691,
+  "stats": {
+    "recompiled": 17956508141,
+    "readback_ms": 0.098041,
+    "emulation_cpu_ms": 20.67133300000569,
+    "sample_frame": 6626,
+    "resolution": 1,
+    "top_blank": false,
+    "frames": 6626,
+    "interpreted": 103522827,
+    "hardware": true,
+    "emulation_ms": 52.941416
+  },
+  "library_sha256": "5035562c7160afc70b8ad8a8c3613f2671db02cd24546450b9a19a82af27c9e7"
+}
