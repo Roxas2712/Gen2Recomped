@@ -628,9 +628,7 @@ class Storage:
                 try:
                     info = file.lstat()
                 except FileNotFoundError:
-                    # Active importers and journal writers can remove or replace
-                    # a generated file between directory scan and stat. The
-                    # next budget poll sees replacements; other errors remain visible.
+                    # Active writers may remove journal/temporary files after os.walk.
                     continue
                 if stat.S_ISREG(info.st_mode):
                     yield file, info

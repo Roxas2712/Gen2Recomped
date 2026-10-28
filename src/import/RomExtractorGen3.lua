@@ -413,11 +413,12 @@ end
 -- the two together: "PROTEIN1,000".  A caller that is reading a menu row
 -- passes { [0x13] = "  " } and gets the gap back; everything else is
 -- unaffected, because an unlisted command is dropped exactly as before.
--- A boolean retains the structured-reader ABI; an options table also
--- permits native RS NAME_END parsing without weakening other text probes.
-function RomExtractorGen3:readText(off, maxBytes, spacers, mode)
-  local opts=type(mode)=='table'and mode or nil
-  local structured=mode==true or opts and opts.structured==true
+-- Boolean IR mode and both native option ABIs share one bounded decoder.
+-- Fourth-slot options may opt into IR; a fifth-slot table also preserves the
+-- legacy boolean-plus-options calling convention without rewriting either.
+function RomExtractorGen3:readText(off, maxBytes, spacers, mode, opts)
+  if type(mode)=='table'then opts=mode end
+  local structured=mode==true or type(mode)=='table'and mode.structured==true
   local map = self:charmap()
   local out = {}
   local ir, pending, flush, node
@@ -474,10 +475,12 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, mode)
       if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local cmd = self.rom:u8(off + i + 1)
       local operands = EXTENDED_OPERANDS[cmd]
-      -- NAME_END is an RS name separator, not a general text command.
+      -- RS NAME_END separates a town/city stem from its visible suffix.
+      -- pret/pokeruby/charmap.txt: NAME_END = FC 00 (no operands).
+      -- Keep unknown commands rejected in other dialects and scan probes.
       if cmd == 0 and opts and opts.rsNameEnd
         and (self.version == 'ruby' or self.version == 'sapphire') then operands = 0 end
-      if not operands then return nil end
+      if not operands then return nil end -- unknown commands reject a text probe
       if i + 2 + operands > limit or self.rom.size and off + i + 2 + operands > self.rom.size then return nil end
       if ir then
         local args = {}
@@ -59529,12 +59532,15 @@ function RomExtractorGen3:run()
       Logger.warn("gen3 %s failed: %s", stage, tostring(err))
     end
   end
-  -- Complete required native boot stages before snapshotting late prose.
+  -- Required for RS: a failed native boot stage must never be recorded as
+  -- a successful, permanently blank Emerald fallback cache.
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
-  -- Keep the final native pool, including strings added by late UI stages.
+  -- Script and late UI stages can add prose after the initial scan. Snapshot
+  -- that final native pool so readers retain its layout IR until an actual
+  -- registry edit or removal, including strings the scan initially rejected.
   if self._textPointers and self._textPointers.namedIR then
     for id, row in pairs(self._textPointers.namedIR.records) do
       row.nativePlain = self._text and self._text[id]

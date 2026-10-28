@@ -40,6 +40,22 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  end
  for limit=1,4 do T.eq(name:readText(0,limit,nil,{structured=true,rsNameEnd=true}),nil)end
 end
+for _,edition in ipairs{'ruby','sapphire'}do
+ local named=reader(bytes(0xBB,0xFC,0,0xBC,0xFF));named.version=edition
+ local options={rsNameEnd=true}
+ local value,consumed=named:readText(0,5,nil,options)
+ T.eq(value,'AB',edition..' native section-name options survive structured-text integration')
+ T.eq(consumed,5)
+ T.eq(select('#',named:readText(0,5,nil,options)),2,'legacy options retain ordinary return arity')
+ local value2,size2,records=named:readText(0,5,nil,true,options)
+ T.eq(value2,value);T.eq(size2,consumed)
+ T.eq(records[2].cmd,0,'explicit structured name reads retain the cartridge separator')
+ T.eq(#records[2].args,0)
+ T.eq(named:readText(0,5,nil,true),nil,'ordinary named-text probes do not widen their dialect')
+ named.version='firered'
+ T.eq(named:readText(0,5,nil,options),nil,'RS name options cannot authorize another cartridge dialect')
+ T.eq(options.rsNameEnd,true,'caller options are not rewritten')
+end
 local widths={1,1,1,3,1,1,0,1,0,0,2,1,1,1,0,2,1,1,1,1,0,0,0,0}
 for cmd,count in ipairs(widths)do
  local encoded={0xBB,0xFC,cmd}
@@ -93,21 +109,27 @@ function finish:initial()
 end
 function finish:later()self._text.TEXT_000000=plain end
 function finish:write(name,value)if name=='text_pointers'then emitted=value end end
--- This reader intentionally contains only a short text string, not the ROM
--- tables used by newer required UI stages. Model their late text writes while
--- retaining the actual run/final-publication owner and restore every stub.
-local required={}
-for _,name in ipairs{'src.import.Gen3StatGrowthAssets','src.import.Gen3SafariAssets'}do
- local ok,owner=pcall(require,name)
- if ok then
-  required[#required+1]={owner,owner.extract}
-  owner.extract=function(x)x._text.TEXT_000000=x._text.TEXT_000000..'\nQA late native stage'end
+local providers={
+ require('src.import.Gen3RsPresentation'),
+ require('src.import.Gen3EmeraldPresentation'),
+ require('src.import.Gen3StatGrowthAssets'),
+ require('src.import.Gen3SafariAssets'),
+}
+local originalExtract,called={},{}
+local finalPlain=plain..' late native prose'
+for index,provider in ipairs(providers)do
+ originalExtract[index]=provider.extract
+ provider.extract=function(owner)
+  T.eq(owner,finish,'final native extraction uses its original importer')
+  called[#called+1]=index
+  if index==#providers then owner._text.TEXT_000000=finalPlain end
  end
 end
 local completed,why=pcall(finish.run,finish)
-for _,row in ipairs(required)do row[1].extract=row[2]end
+for index,provider in ipairs(providers)do provider.extract=originalExtract[index]end
 Extractor.DATA_STAGES,Extractor.ASSET_STAGES=dataStages,assetStages
-T.eq(completed,true,why);T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finish._text.TEXT_000000,
+T.eq(completed,true,why);T.same(called,{1,2,3,4},'required native providers finish before IR publication')
+T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finalPlain,
  'final cache publication snapshots text added by later native stages')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  Version.set(edition);package.loaded['src.translation.Service']=nil
