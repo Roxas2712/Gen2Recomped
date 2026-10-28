@@ -2388,7 +2388,8 @@ function Game:restoreSave(loaded, recovered)
   -- the player standing in a room that has no exit, and this is the load
   -- that spends the bit and puts them back in their own bedroom.
   require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
-  if SaveData.hasChampionSaveWarp(loaded) then
+  local frlgHallWarp=require('src.core.Gen3FrlgEndingSave').apply(loaded,self.data)
+  if not frlgHallWarp and SaveData.hasChampionSaveWarp(loaded) then
     local home = SaveData.applyChampionSaveWarp(loaded, self:bootConfig())
     Logger.info("champion save warp: resuming at %s",
                 home and tostring(loaded.player and loaded.player.map)

@@ -33,6 +33,7 @@ local Rewards = require("src.pokewalker.minigames.Rewards")
 local Context = require("src.pokewalker.minigames.Context")
 local Base = require("src.pokewalker.minigames.Base")
 local Gfx = require("src.pokewalker.minigames.Gfx")
+local T=require("src.pokewalker.minigames.Locale")
 
 local H = {}
 H.__index = H
@@ -101,6 +102,7 @@ function H:cycleSource()
 end
 
 function H:play(i, skipIntro)
+  if not require('src.pokewalker.Walker').check(self.st)then return end
   local mod = H.games()[i]
   if not mod then return end
   self.sel = i
@@ -124,12 +126,14 @@ end
 -- ------------------------------------------------------------ update / input
 
 function H:update(dt)
+  if require('src.pokewalker.Walker').syncing then return end
+  if not require('src.pokewalker.Walker').check(self.st)then self:close(true);return end
   self.t = self.t + math.min(dt or 0, 0.1)
   if self.session then self.session:update(dt) end
 end
 
-function H:close()
-  if self.session and self.session.phase ~= "results" and self.session.phase ~= "intro" then
+function H:close(discard)
+  if not discard and self.session and self.session.phase ~= "results" and self.session.phase ~= "intro" then
     self.session:finish()
   end
   self.session = nil
@@ -137,6 +141,7 @@ function H:close()
 end
 
 function H:action(a)
+  if require('src.pokewalker.Walker').syncing then return true end
   if self.view == "game" and self.session then return self.session:action(a) end
   local n = #H.games()
   if self.view == "scores" then
@@ -158,6 +163,7 @@ function H:action(a)
 end
 
 function H:pointer(x, y)
+  if require('src.pokewalker.Walker').syncing then return true end
   self.keyed = false
   if self.view == "game" and self.session then return self.session:pointer(x, y) end
   Gfx.press(self.hits, x, y)
@@ -235,8 +241,8 @@ function H:draw(x, y, w, h)
   local pad = math.floor(12 * s)
   -- the header
   local hh = math.floor(math.max(44, f.head:getHeight() + 22 * s))
-  local bw = math.max(hh * 1.6, f.body:getWidth("Back") + 36 * s)
-  Gfx.button(self.hits, x + pad, y + 6, bw, hh - 12, "Back", function()
+  local bw = math.max(hh * 1.6, f.body:getWidth(T("Back")) + 36 * s)
+  Gfx.button(self.hits, x + pad, y + 6, bw, hh - 12, T("Back"), function()
     if self.view == "scores" then self.view = "list" else self:close() end
   end, nil, f.body)
   local wtxt = ("%d W"):format(self.st.watts or 0)
@@ -246,7 +252,7 @@ function H:draw(x, y, w, h)
   Gfx.setc(Gfx.GOLD)
   g.setFont(f.head)
   g.printf(wtxt, x + w - pad - ww, y + (hh - f.head:getHeight()) / 2, ww, "center")
-  local title = self.view == "scores" and (H.games()[self.scoresOf].title .. " -- best runs") or "Minigames"
+  local title = self.view == "scores" and T("%s -- best runs",T(H.games()[self.scoresOf].title)) or T("Minigames")
   Gfx.setc(Gfx.INK)
   Gfx.fit(title, x + pad + bw + 14 * s, y + (hh - f.title:getHeight()) / 2, w - 2 * pad - bw - ww - 28 * s, f.title, "left")
   local top = y + hh + 4
@@ -255,17 +261,24 @@ function H:draw(x, y, w, h)
   -- today's budget
   local left = Rewards.left(self.st)
   local L = Rewards.LIMITS
-  local budget = ("Today's prizes left:  %d / %d W   ·   %d / %d items   ·   %d / %d Pokemon"):format(
+  local budget = T("Today's prizes left:  %d / %d W   ·   %d / %d items   ·   %d / %d Pokemon",
     left.watts, L.WATTS_PER_DAY, left.items, L.ITEMS_PER_DAY, left.pokemon, L.POKEMON_PER_DAY)
   Gfx.setc(Gfx.DIM)
   Gfx.fit(budget, x + pad, top, w - 2 * pad, f.small, "left")
   top = top + f.small:getHeight() + 10 * s
 
+  if self.screen then
+    Gfx.button(self.hits,x+pad,top,w-2*pad,38*s,require('src.translation.Service').launcherLookup('FRIENDS & CLOUD'),function()
+      self:close();self.screen.tab='online'
+    end,'accent',f.body)
+    top=top+48*s
+  end
+
   if self.artVersion then
     local info=require("src.core.GameVersion").info(self.artVersion)
     local fixed=self.st.walking and self.st.walking.source
-    local label=("Pokemon: %s (%d)  %s"):format(info and info.label or self.artVersion,self.rosterCount or 0,
-      fixed and "- walking Pokemon's ROM" or "- Change ROM")
+    local label=T("Pokemon: %s (%d)  %s",T(info and info.label or self.artVersion),self.rosterCount or 0,
+      T(fixed and "- walking Pokemon's ROM" or "- Change ROM"))
     local sh=f.small:getHeight()+20*s
     Gfx.button(self.hits,x+pad,top,w-2*pad,sh,label,function()self:cycleSource()end,nil,f.small)
     top=top+sh+10*s
@@ -312,24 +325,24 @@ function H:draw(x, y, w, h)
     local tx = cx + 28 * s + ir * 2
     local tw = cx + cw - tx - 12 * s
     Gfx.setc(Gfx.INK)
-    Gfx.fit(mod.title, tx, cy + 12 * s, tw, f.head, "left")
+    Gfx.fit(T(mod.title), tx, cy + 12 * s, tw, f.head, "left")
     local rec = Rewards.game(self.st, mod.id)
     g.setFont(f.small)
     Gfx.setc(Gfx.DIM)
     local blurbY = cy + 16 * s + f.head:getHeight()
     local blurbH = cy + ch - btnH - 14 * s - f.small:getHeight() - blurbY
     if blurbH >= f.small:getHeight() then
-      local _, lines = f.small:getWrap(mod.blurb, tw)
+      local _, lines = f.small:getWrap(T(mod.blurb), tw)
       local fitN = math.max(1, math.floor(blurbH / f.small:getHeight()))
       for k = 1, math.min(#lines, fitN) do g.print(lines[k], tx, blurbY + (k - 1) * f.small:getHeight()) end
     end
     Gfx.setc(Gfx.GOLD)
-    Gfx.fit((rec.plays or 0) > 0 and ("Best %d   ·   played %d"):format(rec.best or 0, rec.plays) or "Not played yet",
+    Gfx.fit((rec.plays or 0) > 0 and T("Best %d   ·   played %d",rec.best or 0, rec.plays) or T("Not played yet"),
       tx, cy + ch - btnH - 10 * s - f.small:getHeight(), tw, f.small, "left")
     local bw2 = (cw - 36 * s) / 2
     local idx = i
-    Gfx.button(self.hits, cx + 12 * s, cy + ch - btnH - 10 * s, bw2, btnH, "Play", function() self:play(idx) end, "accent", f.body)
-    Gfx.button(self.hits, cx + 24 * s + bw2, cy + ch - btnH - 10 * s, bw2, btnH, "Scores", function()
+    Gfx.button(self.hits, cx + 12 * s, cy + ch - btnH - 10 * s, bw2, btnH, T("Play"), function() self:play(idx) end, "accent", f.body)
+    Gfx.button(self.hits, cx + 24 * s + bw2, cy + ch - btnH - 10 * s, bw2, btnH, T("Scores"), function()
       self.scoresOf, self.view = idx, "scores"
     end, nil, f.body)
   end
@@ -345,7 +358,7 @@ function H:drawScores(x, y, w, h, s, f)
   local chipW = (w - 8 * s * (#games - 1)) / #games
   for i, m in ipairs(games) do
     local idx = i
-    Gfx.button(self.hits, x + (i - 1) * (chipW + 8 * s), y, chipW, btnH, m.title, function() self.scoresOf = idx end,
+    Gfx.button(self.hits, x + (i - 1) * (chipW + 8 * s), y, chipW, btnH, T(m.title), function() self.scoresOf = idx end,
       i == self.scoresOf and "blue" or nil, f.small)
   end
   local ly = y + btnH + 12 * s
@@ -354,13 +367,13 @@ function H:drawScores(x, y, w, h, s, f)
   local rowH = f.body:getHeight() + 10 * s
   g.setFont(f.small); Gfx.setc(Gfx.DIM)
   local cols = { x + 20 * s, x + 80 * s, x + w * 0.45, x + w * 0.70 }
-  g.print("#", cols[1], ly + 10 * s); g.print("Score", cols[2], ly + 10 * s)
-  g.print("Watts", cols[3], ly + 10 * s); g.print("Day", cols[4], ly + 10 * s)
+  g.print("#", cols[1], ly + 10 * s); g.print(T("Score"), cols[2], ly + 10 * s)
+  g.print(T("Watts"), cols[3], ly + 10 * s); g.print(T("Day"), cols[4], ly + 10 * s)
   local ry = ly + 14 * s + f.small:getHeight()
   local board = Rewards.board(self.st, mod.id)
   if #board == 0 then
     Gfx.setc(Gfx.DIM); g.setFont(f.body)
-    g.printf("No runs yet -- play one!", x, ly + listH / 2 - f.body:getHeight() / 2, w, "center")
+    g.printf(T("No runs yet -- play one!"), x, ly + listH / 2 - f.body:getHeight() / 2, w, "center")
   end
   for i, e in ipairs(board) do
     if ry + rowH > ly + listH - 6 then break end
@@ -375,12 +388,12 @@ function H:drawScores(x, y, w, h, s, f)
     ry = ry + rowH
   end
   local by = y + h - btnH
-  local info = ("Played %d times, %d W earned in all"):format(rec.plays or 0, rec.totalWatts or 0)
+  local info = T("Played %d times, %d W earned in all",rec.plays or 0, rec.totalWatts or 0)
   local bw = math.min(260 * s, w * 0.4)
   Gfx.setc(Gfx.DIM)
   Gfx.fit(info, x, by + (btnH - f.small:getHeight()) / 2, w - bw - 16 * s, f.small, "left")
   local idx = self.scoresOf
-  Gfx.button(self.hits, x + w - bw, by, bw, btnH, "Play " .. mod.title, function() self:play(idx) end, "accent", f.body)
+  Gfx.button(self.hits, x + w - bw, by, bw, btnH, T("Play %s",T(mod.title)), function() self:play(idx) end, "accent", f.body)
 end
 
 -- the whole window, inside the safe area (notch, status and gesture bars)

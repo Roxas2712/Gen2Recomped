@@ -61,6 +61,7 @@ end
 -- Translate the template before inserting names, IDs or other private values.
 function Service.launcherFormat(source,...)
  local translated=Service.launcherLookup(source)
+ if select('#',...)==0 then return translated end
  local ok,value=pcall(string.format,translated,...)
  if ok then return value end
  return string.format(source,...)
