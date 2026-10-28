@@ -25,6 +25,11 @@ Qualification on main cbb552a8 plus the existing shader corrections:
   The comparison baseline is 9f8cc0fb, before this projection cache.
 - The actual native atlas GPU fixture passes 526 checks with 215 texture
   readbacks under each of Metal and OpenGL on the integrated fork source.
+- The actually offered atlas component, composed only with its published
+  palette decoding prerequisite c08f8011 (#259), independently passes the
+  cache 1360, pixel 1748 and palette-word 602 checks. Its resource/clock
+  prerequisites remain those listed in the atlas offer (#260).
 
-Receipts: focused CPU 6413d6b825, benchmark b436937911, GPU a980111c01.
+Receipts: focused CPU 6413d6b825, benchmark b436937911, GPU a980111c01,
+offered component e49fd412c0.
 Contributions by Roxas2712 under LICENSE-ROXAS2712.md; existing rights remain.
