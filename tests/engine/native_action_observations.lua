@@ -4,9 +4,14 @@ local B=require('src.core.game3.battle')
 local Plan=require('src.battle.Gen3ActionPlan')
 local Json=require('src.link.Json')
 local Version=require('src.core.GameVersion')
-local Fixture=require('tools.battle-source-runtime.fixture')
 local Probe=dofile('tests/native_action_plan/turn.lua')
 local open,close=Probe.open,Probe.close
+local function runNativeAction(b,row)
+ if b.runQueueAction then return b:runQueueAction(row)end
+ -- Earlier native owners invoke the same row in updateQueue itself.
+ table.insert(b.queue,1,row)
+ return b:updateQueue()
+end
 T.eq(B._actions,nil,'there is no invented action owner before battle admission')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  local f,b=open(edition)
@@ -48,7 +53,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   end
   return emit(name,payload,...)
  end
- local ran,why=pcall(b.runQueueAction,b,row);Runtime.emit=emit;assert(ran,why)
+ local ran,why=pcall(runNativeAction,b,row);Runtime.emit=emit;assert(ran,why)
  T.eq(observed,true,'cursor is observed at the real native move-used producer')
  T.eq(B._actionI,0,'presentation rows are not reported as an executing action')
  local nextAction=native.rows[2]
@@ -107,7 +112,7 @@ do
  T.neq(B._actions[1],old,'a new source admission owns fresh action views')
  local row=table.remove(b.queue,1);local calls=0
  row.fn=function()calls=calls+1;error('owned native action failure')end
- T.raises(function()b:runQueueAction(row)end,'owned native action failure')
+ T.raises(function()runNativeAction(b,row)end,'owned native action failure')
  T.eq(calls,1);T.eq(B._actions,nil,'a failed native action leaves no executing observation')
  close(f)
 end

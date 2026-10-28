@@ -1,6 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Observations of the native turn order and its actual queue rows. This
--- ledger never executes, removes, schedules or reorders an action.
+-- ledger never starts, removes, schedules or reorders an action on its own.
 local Version=require('src.core.GameVersion')
 local M={}
 local ABSENT={}
