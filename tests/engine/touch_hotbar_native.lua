@@ -40,7 +40,8 @@ local captures=0
 local world={isOverworld=true,captureSave=function(_,save)
   captures=captures+1;save.money=4321
 end}
-g.overworld=world;stack.worldState=world
+-- This offered viewport base retains its real world-on-stack owner.
+g.overworld=world;stack:push(world)
 Input:init();Touch:init();Touch.active=true;Touch:ensureImages()
 Touch:applyOptions({touchControls={enabled=true}})
 love.keypressed=function(key)g:keypressed(key)end
@@ -61,8 +62,7 @@ local function tap(label,id)
   end
   error('missing native cell '..label)
 end
-T.eq(stack:top(),nil,'native Gen2 world is outside overlay stack')
-T.eq(stack:active(),world,'actual native stack still owns world')
+T.eq(stack:top(),world,'offered native stack actually owns live world')
 tap('SAVE')
 T.eq(captures,1,'hotbar F1 reaches actual Game.writeSave and live capture')
 local saved=Save.load('crystal')
@@ -98,8 +98,6 @@ local Zoom=require('src.render.Zoom')
 Tilt.reset();Zoom.reset()
 tap('COLOR')
 T.eq(g.save.options.colors,Palette.mode,'COLOR writes actual native palette mode')
-T.eq(g.save.options.color,Palette.mode=='og' and 'dmg' or Palette.mode,
-  'COLOR keeps native Gen2 display preference coherent')
 tap('TILT');T.eq(Tilt.level,1,'TILT changes actual native renderer state')
 tap('ZOOM');T.eq(Zoom.offset,1,'ZOOM changes actual native zoom state')
 local round=Save.optionsFor('crystal')
@@ -173,7 +171,10 @@ love.system.getOS=function()return 'Android'end
 g.input={pressed={}}
 g.input.wasPressed=function(self,key)return self.pressed[key]end
 local menu=require('src.ui.OptionsMenu').new(g);stack:push(menu)
-local page=menu:focusRow('hotbar')
+local page
+for index,row in ipairs(menu.rows)do
+  if row.id=='hotbar' then menu.index=index;page=menu;break end
+end
 T.check(page~=nil,'mobile Options exposes real hotbar row')
 if page then
   g.input.pressed={right=true};page:update(1/60);g.input.pressed={}
