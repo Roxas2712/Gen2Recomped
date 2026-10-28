@@ -19,7 +19,7 @@ headers. The source-native `sfxOrder` format and `generation=2` headers are
 also accepted. Exact labels take precedence over definition/header aliases;
 no priority is guessed from an effect name. Non-GSC/file definitions retain
 their previous playback path. Accepted playback is registered before public
-sound events, The fork adaptation also revokes borrowed playback on ordinary preemption;
+sound events. The fork adaptation also revokes borrowed playback on ordinary preemption;
 that separate lease API does not exist in this upstream baseline.
 Invalidation and session suspension retire the same source owner.
 
