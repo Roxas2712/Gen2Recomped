@@ -397,7 +397,7 @@ function M.install(RI)
   button('LOCAL · 2 PLAYERS',function()start(self,2)end)
   button('MODCOMPASS · WITH FRIENDS',function()
    local Account=require('src.import.AccountWorkspace');Account.open(self)
-   if require('src.cloud.RetroCloud').signedIn()then Account.action(self,'friends')end
+   if require('src.cloud.RetroCloud').signedIn()and self._accountOverlay then self._accountOverlay.afterView='friends'end
   end)
   text('Friend duels require ModCompass with Pinball support.')
   text('Score duel: 5 minutes or until game over · identical fresh start')

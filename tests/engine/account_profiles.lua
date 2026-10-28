@@ -39,4 +39,23 @@ check(P.check() and Saves.peekSlot('red',slotB).player.name=='Bob','named profil
 account=nil
 check(not Saves.persistenceFs().read('bank/legacy.lua') and not Saves.persistenceFs().read('cloud_google.lua'),'guest routing cannot expose legacy or named-profile data during recovery')
 files[P.FILE]=binding
+account='17'
+local W=require('src.pokewalker.Walker');local wa=W.load();wa.watts=123;assert(W.save(wa))
+check(files['pokewalker.lua']and not files['profiles/29/pokewalker.lua'],'legacy linked owner keeps their existing walker path')
+account='29';local wb=W.load()
+check(wb~=wa and wb.watts==0,'walker live cache changes with the account')
+wb.watts=456;assert(W.save(wb))
+check(not W.save(wa)and W.load().watts==456,'stale account A walker cannot overwrite account B')
+local bbackup=Saves.persistenceFs();bbackup.write('pokewalker_backups/red/test.lua','B backup')
+check(files['profiles/29/pokewalker_backups/red/test.lua']=='B backup','walker transfer backups are account-private')
+account='17';check(W.load().watts==123,'switching back restores account A walker')
+local replacement=W.newState();replacement.watts=321;assert(W.adopt(replacement))
+check(not W.check(wa)and W.load().watts==321,'cloud adoption invalidates stale screen and minigame references')
+account=nil;local guest=W.load();check(guest.watts==0 and not W.check(replacement),'guest cannot see or save account progress')
+guest.watts=9;assert(W.save(guest))
+check(files['profiles/guest/pokewalker.lua']and S.decode(files['pokewalker.lua']).watts==321,'offline guest progress has its own file')
+account='29';local taskState=W.load()
+local co=coroutine.create(function()return W.save(taskState)end);P.attachTask(co);account='17'
+local resumed,written=coroutine.resume(co)
+check(resumed and not written and W.load().watts==321,'background storage scope refuses a changed active account')
 print('Account profiles: '..n..' checks passed')

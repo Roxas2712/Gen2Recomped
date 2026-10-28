@@ -65,12 +65,12 @@ local function call(name, ...)
   local E = R.economy()
   local fn = E and E[name]
   if type(fn) ~= "function" then return false end
-  local ok, a = pcall(fn, ...)
+  local ok, a, b = pcall(fn, ...)
   if not ok then
     pcall(function() require("src.core.Logger").info("walker minigames: economy %s failed: %s", name, tostring(a)) end)
     return false
   end
-  return true, a
+  return true, a, b
 end
 
 local function walker() return require("src.pokewalker.Walker") end
@@ -177,7 +177,14 @@ end
 --   { score, rank, best, newBest, watts, wattsCapped, items = {...},
 --     pokemon = {...}, friendship, lost = { items = n, pokemon = n } }
 function R.settle(p, score, scoreWatts, seconds)
+  if p.settled then return p.settled end
   local st, id, L = p.st, p.game, R.LIMITS
+  local allowed,why=walker().check(st)
+  if not allowed then
+    return {score=score or 0,watts=0,items={},pokemon={},friendship=0,lost={items=0,pokemon=0},error=why,blocked=true}
+  end
+  local Ser=require('src.core.SaveSerializer')
+  local before=Ser.encode(st)
   local m = R.state(st)
   local g = R.game(st, id)
   local source = "minigame:" .. tostring(id)
@@ -277,7 +284,16 @@ function R.settle(p, score, scoreWatts, seconds)
   table.sort(names)
   for _, name in ipairs(names) do call("achievement", st, name, p.events[name]) end
 
-  R.save(st)
+  local saved,saveError=R.save(st)
+  if saved==false then
+    local previous=Ser.decode(before)
+    for key in pairs(st)do st[key]=nil end
+    for key,value in pairs(previous)do st[key]=value end
+    out.watts=0;out.items={};out.pokemon={};out.friendship=0
+    out.error=saveError or 'Pokéwalker rewards could not be saved. Previous progress was preserved.'
+    out.blocked=true
+  end
+  p.settled=out
   return out
 end
 
@@ -306,7 +322,9 @@ function R.board(st, id)
 end
 
 function R.save(st)
-  if not call("save", st) then pcall(function() walker().save(st) end) end
+  local called,ok,why=call("save",st)
+  if called then return ok,why end
+  return walker().save(st)
 end
 
 return R
