@@ -66,6 +66,9 @@ local function drained(s)
     and not s.draining
 end
 local function finish(s)untilState(s,function()return drained(s)end,'native queue and VM release')end
+local function pictureHidden(s,side)
+  local state=s:animPicState(side);return state and state.hidden or false
+end
 local function underground(s,side,mon)
   return s.isUnderground and s:isUnderground(side,mon) or false
 end
@@ -110,9 +113,9 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     finish(s)
     local vanished=id~='SOLARBEAM'
     T.eq(underground(s,side),vanished,'picture disappears only after native charge animation')
-    T.eq(s:animPicState(side).hidden,vanished,'actual public picture state follows the native latch')
+    T.eq(pictureHidden(s,side),vanished,'actual public picture state follows the native latch')
     local calls=s.rngCalls
-    for _=1,3 do underground(s,side);s:animPicState(side);if s.pic then s:pic(b.mon,false)endend
+    for _=1,3 do underground(s,side);s:animPicState(side);if s.pic then s:pic(b.mon,false)end end
     T.eq(s.rngCalls,calls,'picture reads never consume battle RNG')
     T.eq(b.mon.hp,hp,'charge/picture reads retain native HP')
     T.eq(move.pp,9,'picture reads never spend additional PP')
@@ -121,11 +124,11 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     T.eq(b.charging,nil,'native release clears its original charge instance')
     T.eq(b.invulnerable,nil,'native release clears invulnerability before animation')
     T.eq(move.pp,9,'native second turn spends no extra PP')
-    T.eq(s:animPicState(side).hidden,vanished,'release stays absent during pre-SHOW_MON wait')
+    T.eq(pictureHidden(s,side),vanished,'release stays absent during pre-SHOW_MON wait')
     T.eq(s.animPlayer.runtime.env.flying[side],false,'release SHOW_MON is admitted after real flag clears')
     local current=s.anim
     untilState(s,function()return current.bg.picSize[side]~=nil end,'real native SHOW_MON executes')
-    T.eq(s:animPicState(side).hidden,false,'SHOW_MON reveals the same native battler')
+    T.eq(pictureHidden(s,side),false,'SHOW_MON reveals the same native battler')
     T.eq(current.frames,5,'reveal uses the VM wait, no invented presentation clock')
     finish(s)
     T.eq(underground(s,side),false,'release retires cleared picture latch')
