@@ -18,6 +18,7 @@ function love.draw()
  local standard='vec4 position(mat4 transform_projection,vec4 p){return transform_projection*p;}'
  local marked=Clip.shader(manual)
  local rawNative=nativeCompiler(pixel,manual)
+ local markedNative=nativeCompiler(pixel,marked)
  local identity={1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1}
  local rectangles={{2,3,9,7,{1,0,0,1}},{19,21,8,5,{0,0,1,1}}}
  local function mesh(mode)
@@ -59,7 +60,8 @@ function love.draw()
    local expected=g.newCanvas(32,32,{format='rgba8',dpiscale=dpi,msaa=0})
    local reference=render(expected)
    check(render(actual,shaders.standard,meshes.pixel)==reference,'standard 2D pixels API '..api..' DPI '..dpi)
-   check(render(actual,shaders.marked,meshes.up)==reference,'explicit native clip is not normalized twice API '..api..' DPI '..dpi)
+   local nativeReference=render(expected,markedNative,meshes.up)
+   check(render(actual,shaders.marked,meshes.up)==nativeReference,'explicit native clip is not normalized twice API '..api..' DPI '..dpi)
    if api<3 then
     check(render(actual,shaders.raw,meshes.down)==reference,'legacy canvas clip reaches upright native pixels API '..api..' DPI '..dpi)
    else
@@ -70,7 +72,7 @@ function love.draw()
   end
   g.setShader();run.release()
  end
- require('src.mods.LegacyShaderCompat').reset();rawNative:release()
+ require('src.mods.LegacyShaderCompat').reset();rawNative:release();markedNative:release()
  for _,m in pairs(meshes)do m:release()end
  print('LEGACY_MOD_SHADER_GPU_OK',checks,frames);love.event.quit(0)
 end
