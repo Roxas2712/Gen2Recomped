@@ -10,6 +10,9 @@ on:
       - 'src/mods/UnifiedCallbacks.lua'
       - 'src/mods/Hooks.lua'
       - 'tests/engine/native_callback_context_ownership.lua'
+      - 'src/core/game3/battle/engine.lua'
+      - 'src/battle/BattleState.lua'
+      - 'tests/engine/native_move_resolution.lua'
       - 'src/core/game3/battle/effect_ctx.lua'
       - 'tests/engine/native_effect_coroutine_scopes.lua'
       - 'tests/engine/native_coroutine_phase_scopes.lua'
@@ -27,6 +30,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Borrowing, suspension, retirement and callback attribution
         run: |
+          luajit tests/engine/native_move_resolution.lua
           luajit tests/engine/native_coroutine_phase_scopes.lua
           luajit tests/engine/native_callback_context_ownership.lua
           luajit tests/engine/unified_mod_callbacks.lua
