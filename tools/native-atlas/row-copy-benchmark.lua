@@ -1,3 +1,4 @@
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Owned QA CPU comparison; never a game FPS benchmark.
 local ffi=require('ffi')
 local old=assert(loadfile(assert(arg[1])))()
