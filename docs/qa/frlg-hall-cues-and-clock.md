@@ -26,3 +26,13 @@ boy and three-member girl parties, actual Hall music/audio, confetti, each
 member, the player clock, derived gender and real credits handoff. This is
 prepared ceremony acceptance, not an ordinary story completion or a complete
 FR/LG ending/save acceptance claim.
+
+Validation on runtime `54ac31ec3cc2e418db44429053bb0c162d6bfd66`:
+60 focused assertions and five related sound/session/readiness/menu suites
+passed. Fresh full imports of both USA cartridges passed the actual-renderer
+fixture, with 15 captures each and two real applause sources per edition.
+Both genders and six-/three-member layouts reached their own credits song;
+the save/RNG draw checks and frozen-source verification passed. Player-panel,
+member and credits-handoff captures were visually inspected. The existing
+reconstructed ceremony layout still needs the original-controller integration;
+this change fixes music/data, not full visual or ordinary-story parity.
