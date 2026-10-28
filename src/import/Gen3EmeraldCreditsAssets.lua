@@ -17,7 +17,8 @@ function M.extract(x)
     count=function(name,stride)return assert(S.count(name,stride))end}
   basic('src.import.gba.games.emerald.uc')(V)
   assert(V.CREDITS_RSE.pageCount==M.PAGE_COUNT)
-  local load=Loader.new('emerald',{['src.import.gba.versions']=V})
+  local load=Loader.new('emerald',{['src.import.gba.versions']=V,
+    ['src.core.GameVersion']={current='emerald',get=function()return'emerald'end}})
   local rom={id='emerald'}
   function rom:get(off)return x.rom:u8(off)end
   function rom:u16(off)return x.rom:u16(off)end
