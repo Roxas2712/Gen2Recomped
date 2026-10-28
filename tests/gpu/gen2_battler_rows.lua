@@ -38,7 +38,10 @@ function M.run()
         local n=back and 48 or kind=='normal'and frontSize or 56
         local path='qa-row-'..kind..'-'..(back and 'back'or tostring(frontSize))..'.png'
         local pixels=love.image.newImageData(n,n,'rgba8')
-        for y=0,n-1 do for x=0,n-1 do pixels:setPixel(x,y,unpack(sample(kind,back,n,x,y)))end end
+        for y=0,n-1 do for x=0,n-1 do
+          local rgba=sample(kind,back,n,x,y)
+          pixels:setPixel(x,y,unpack(rgba))
+        end end
         pixels:encode('png',path);pixels:release()
         paths[kind][back and 'back'or frontSize]=path
       end
