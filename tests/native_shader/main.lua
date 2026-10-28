@@ -263,20 +263,20 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(1.,0.,0.,1.);}
   end
   render(false);render(true);render(false)
   for key,value in pairs(S.status())do print('DEPTH_VARIANT_STATUS',key,value)end
-  if transformed then
-   check(S.status().compiled==beforeCompiled,'an intervening foreign owner keeps its original native programs')
-   check(S.status().unsupported>0,'a later native hook cannot hide the earlier foreign value owner')
-  else
-   check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
-   check(S.status().depthUses>0,'the native depth variant is actually drawn')
-  end
-  check(alpha.status().compiled==beforeCompanions,'variants do not manufacture duplicate depth companions')
   local cutoutReference=reference;reference=carryReference
   carryReference:send('gate',1);carryReference:send('tint',{.4,.2,.8,1});carried:send('tint',{.4,.2,.8,1})
   check(compare(carried),'an earlier live program retains exact mutable uniforms across the owned hook interposition')
   carried:send('tint',{1,0,0,1});check(not compare(carried),'earlier-program pixel comparison detects a wrong-value control')
   carried:send('tint',{.4,.2,.8,1});check(compare(carried),'earlier native variant remains reusable after the owned interposition')
-  check(transformed or S.status().unsupported==0,'the known native depth owner does not retire earlier programs')
+  if transformed then
+   check(S.status().compiled==beforeCompiled,'an intervening foreign owner keeps its original native programs')
+   check(S.status().unsupported>=2,'a later native hook cannot hide the foreign value owner of either live program')
+  else
+   check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
+   check(S.status().depthUses>0,'the native depth variant is actually drawn')
+   check(S.status().unsupported==0,'the known native depth owner does not retire earlier programs')
+  end
+  check(alpha.status().compiled==beforeCompanions,'variants do not manufacture duplicate depth companions')
   reference=cutoutReference
   candidate:release();reference:release();depthReference:release();behind:release();cutout:release();carried:release();carryReference:release();target:release();depth:release();g.present()
   check(S.status().sources==0,'depth variants retire at the actual native empty-stack boundary')
