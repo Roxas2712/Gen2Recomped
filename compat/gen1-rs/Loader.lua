@@ -27,7 +27,12 @@ function Loader.new(version, bindings)
     assert(name:match('^src%.[%w_%.]+$'), 'Invalid RS module: '..tostring(name))
     local path = ROOT .. name:gsub('%.', '/') .. '.lua'
     local chunk = assert(love.filesystem.load(path), 'Missing pinned RS module: '..name)
-    local env = setmetatable({ require = load, package = bindings.__package or package }, { __index = _G })
+    local env = setmetatable({ require = load, package = bindings.__package or package },
+      { __index = function(_,key)
+        local value=bindings.__globals and bindings.__globals[key]
+        if value~=nil then return value end
+        return _G[key]
+      end })
     setfenv(chunk, env)
     local result = chunk()
     loaded[name] = result

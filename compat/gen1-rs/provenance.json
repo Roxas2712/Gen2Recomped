@@ -207,7 +207,9 @@
     "src/import/gba/league_extract.lua": "be33bcace96ba8fc4eb2c3c31bc52b774090a71e7d8aeb7211f7f09f39f3b2f0",
     "src/core/game3/constants/firered/songs.lua": "bcbaeabca05574e69977db3599a985f4e90782873df89a273b2d37657907ae29",
     "src/import/gba/versions_game.lua": "9b9dc1392aaa9f1dad065ff9f9b5c96ba2c967a49755946bb20aae846dbd4e19",
-    "src/import/gba/versions_text.lua": "1369ec741540e6309c173ea6803a4058c6ad429162d6cc9f652e5f5cb94ddc6b"
+    "src/import/gba/versions_text.lua": "1369ec741540e6309c173ea6803a4058c6ad429162d6cc9f652e5f5cb94ddc6b",
+    "src/ui/game3/credits.lua": "1935de2cb67a5e66d3c383cc5985d6f65c91b6d5629736148a9ccab197ad8966",
+    "src/import/gba/credits_extract.lua": "748ad5f8393f17678730b38dc645c62d78fc01043cff42faa976090f009dc423"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison; original Emerald common main-menu presentation and callback adapter"
 }
