@@ -8,6 +8,7 @@ local World = require("src.core.CheckpointWorld")
 local Spinners = require("src.core.CheckpointSpinners")
 local Actors = require("src.core.CheckpointActors")
 local Battles = require("src.core.CheckpointBattle")
+local SourceBattleCapture = require("src.compat.gen1.BattleCheckpoint")
 local C = {}
 local MAX_NODES, MAX_DEPTH = 250000, 64
 
@@ -160,7 +161,7 @@ function C.inspect(game, internal, fs)
   if active~=world and not battle then
     return refusal("overworld", "screen_busy", "Close the active screen first.")
   end
-  if battle and not pcall(Battles.capture,game,battle,clone) then
+  if battle and not pcall(SourceBattleCapture.capture,game,battle,game.save,clone) then
     return refusal("battle", "unsupported_battle", "This battle has no safe native decision continuation.")
   end
 	if world.transitioning then
@@ -244,7 +245,7 @@ function C.capture(game, internal, fs)
 			save = save,
 			runtime = {
 				actors = Actors.capture(game, clone),
-        battle = capability.kind=="battle" and Battles.capture(game,top(game),clone) or nil,
+        battle = capability.kind=="battle" and SourceBattleCapture.capture(game,top(game),save,clone) or nil,
 				overworld = {
 					map = p.map,
 					x = p.x,

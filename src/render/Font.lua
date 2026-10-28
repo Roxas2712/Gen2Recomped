@@ -16,6 +16,7 @@ local FALLBACK = { enabled = false, font = nil }
 
 local state
 local loadedFrom
+local resetTextCache
 
 -- the two vanilla pages as the legacy def spells them, so a cache that
 -- predates the pages table still loads and a mod that registers only one
@@ -37,6 +38,7 @@ local function pagesOf(def)
 end
 
 function Font.load(data)
+  if resetTextCache then resetTextCache() end
   loadedFrom = data
   -- A CACHE MAY CARRY NO FONT AT ALL, and that has to degrade rather than
   -- stop the boot: `data.font` is nil for any dataset whose extractor does
@@ -289,40 +291,55 @@ local SPACE = 0x7F
 --
 -- Safe before Font.load: with no charmap it falls back to UTF-8 lead-byte
 -- boundaries, which is all a headless paginate needs.
+-- Gen1's # text command writes POKé rather than one font tile. Keep the
+-- original byte range on each expanded glyph so a typewriter/paginator can
+-- consume the command without cutting its source bytes apart. An authored
+-- charmap beginning with # retains authority over this fallback command.
+local MACRO_TEXT = { ["#"] = "POK\xc3\xa9" }
 function Font.split(text)
   local spans = {}
   local i, n = 1, #text
   while i <= n do
-    local span
-    local candidates = state and state.byFirstByte[text:byte(i)]
-    if candidates then
-      for _, entry in ipairs(candidates) do
-        local len = #entry.seq
-        if text:sub(i, i + len - 1) == entry.seq then
-          span = { from = i, to = i + len - 1, code = entry.code }
-          break
+    local macro = not FALLBACK.enabled
+      and not (state and state.byFirstByte[text:byte(i)])
+      and MACRO_TEXT[text:sub(i,i)]
+    if macro then
+      for _, sub in ipairs(Font.split(macro)) do
+        spans[#spans+1] = {from=i,to=i,code=sub.code}
+      end
+      i = i+1
+    else
+      local span
+      local candidates = state and state.byFirstByte[text:byte(i)]
+      if candidates then
+        for _, entry in ipairs(candidates) do
+          local len = #entry.seq
+          if text:sub(i, i + len - 1) == entry.seq then
+            span = { from = i, to = i + len - 1, code = entry.code }
+            break
+          end
         end
       end
-    end
-    if not span then
-      -- Nothing matched.  Still keep a UTF-8 sequence whole, so a cut never
-      -- lands mid-character even for a glyph we cannot draw.
-      local last = i
-      if text:byte(i) >= 0xC0 then
-        local k = i + 1
-        while k <= n do
-          local b = text:byte(k)
-          if b < 0x80 or b > 0xBF then break end
-          last, k = k, k + 1
+      if not span then
+        -- Nothing matched. Still keep a UTF-8 sequence whole, so a cut never
+        -- lands mid-character even for a glyph we cannot draw.
+        local last = i
+        if text:byte(i) >= 0xC0 then
+          local k = i + 1
+          while k <= n do
+            local b = text:byte(k)
+            if b < 0x80 or b > 0xBF then break end
+            last, k = k, k + 1
+          end
+        end
+        span = { from = i, to = last }
+        if text:byte(i)>=128 then
+          span.code=require("src.translation.UnicodeFont").code(text:sub(i,last))
         end
       end
-      span = { from = i, to = last }
-      if text:byte(i)>=128 then
-        span.code=require("src.translation.UnicodeFont").code(text:sub(i,last))
-      end
+      spans[#spans + 1] = span
+      i = span.to + 1
     end
-    spans[#spans + 1] = span
-    i = span.to + 1
   end
   return spans
 end
@@ -342,7 +359,7 @@ end
 -- Convert a text string into a list of glyph codes.  Unknown characters
 -- render as space (and are reported once).
 local reported = {}
-function Font.encode(text)
+local function encodeUncached(text)
   if FALLBACK.enabled then
     local codes = {}
     local i, n = 1, #text
@@ -380,6 +397,48 @@ function Font.encode(text)
     codes[#codes + 1] = code
   end
   return codes
+end
+
+-- Match Gen1's public text contract without sharing mutable typewriter
+-- arrays. Only glyph selection is cached: advances still use the current
+-- native face/widths, styles and translation font on every measurement.
+local CACHE_MAX = 4096
+local encodeCache, encodeCount = {}, 0
+local stockSplit = Font.split
+local unicodePath
+Font.revision = 0
+resetTextCache = function()
+  encodeCache, encodeCount = {}, 0
+  Font.revision = Font.revision + 1
+end
+local function cachedCodes(text)
+  -- UnicodeFont can change without Font.load (translation activation or
+  -- removal); previously unmapped glyphs must not retain their old codes.
+  local unicode = package.loaded['src.translation.UnicodeFont']
+  local path = unicode and unicode.path
+  if path ~= unicodePath then
+    unicodePath = path
+    resetTextCache()
+  end
+  -- A mod replacing the splitter owns selection, including its side effects.
+  if Font.split ~= stockSplit then return encodeUncached(text) end
+  local codes = encodeCache[text]
+  if codes then return codes end
+  codes = encodeUncached(text)
+  if encodeCount >= CACHE_MAX then encodeCache, encodeCount = {}, 0 end
+  encodeCache[text], encodeCount = codes, encodeCount + 1
+  return codes
+end
+
+function Font.encode(text)
+  local source, copy = cachedCodes(text), {}
+  for i = 1, #source do copy[i] = source[i] end
+  return copy
+end
+local stockEncode = Font.encode
+
+function Font.glyphCount(text)
+  return #cachedCodes(text)
 end
 
 -- The glyph atlas is black pixels on a transparent field, so setColor can
@@ -734,7 +793,8 @@ Font.localize = localize
 function Font.width(text)
   text = localize(text)
   local w = 0
-  for _, code in ipairs(Font.encode(text)) do
+  local codes = Font.encode == stockEncode and cachedCodes(text) or Font.encode(text)
+  for _, code in ipairs(codes) do
     w = w + Font.advanceOf(code)
   end
   return w
@@ -753,8 +813,30 @@ function Font.fit(text, pixels)
   local n = Font.spansFitting(spans, pixels)
   if n >= #spans then return text or "" end
   local out = {}
-  for i = 1, math.max(0, n - 1) do
-    out[#out + 1] = (text or ""):sub(spans[i].from, spans[i].to)
+  local i,last = 1,math.max(0,n-1)
+  while i<=last do
+    local span=spans[i]
+    local raw=(text or ""):sub(span.from,span.to)
+    local macro=Font.split==stockSplit and not FALLBACK.enabled
+      and not(state and state.byFirstByte[raw:byte(1)]) and MACRO_TEXT[raw]
+    if macro then
+      local after=i+1
+      while spans[after] and spans[after].from==span.from
+          and spans[after].to==span.to do after=after+1 end
+      if after-1<=last then
+        -- A complete command stays intact, including its glyph boundaries.
+        out[#out+1]=raw
+      else
+        local parts=Font.split(macro)
+        for part=1,last-i+1 do
+          out[#out+1]=macro:sub(parts[part].from,parts[part].to)
+        end
+      end
+      i=after
+    else
+      out[#out+1]=raw
+      i=i+1
+    end
   end
   return table.concat(out) .. "."
 end
@@ -766,9 +848,9 @@ function Font.draw(text, x, y)
   if FALLBACK.enabled and not require("src.translation.UnicodeFont").active() then
     love.graphics.setFont(FALLBACK.font)
     love.graphics.print(text, x, y)
-    return #text * GLYPH
+    return #cachedCodes(text) * GLYPH
   end
-  local codes = Font.encode(text)
+  local codes = Font.encode == stockEncode and cachedCodes(text) or Font.encode(text)
   local pen = x
   for _, code in ipairs(codes) do
     Font.drawCode(code, pen, y)

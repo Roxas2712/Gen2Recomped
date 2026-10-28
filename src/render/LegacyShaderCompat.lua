@@ -120,6 +120,7 @@ function Compat.install()
   if installed or not (love and love.getVersion and love.getVersion() >= 12
       and g and g.newShader and g.getShader and g.getCanvas) then return false end
   installed = true
+  require('src.render.AlphaDepthCompat').install()
   local newShader, validateShader = g.newShader, g.validateShader
   -- Engine-owned derivative programs already use the admitted source's clip
   -- convention. Re-analyzing their modified forwarding entry would adapt it

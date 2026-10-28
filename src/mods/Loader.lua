@@ -807,6 +807,9 @@ function Loader:_contentApi(mod, registry, deprecation)
       value=Names.write(loader,registry.name,value,registry:get(id))
       validate("register", id, value)
       loader:_journal(registry.name)
+      if require('src.mods.LegacyGen1Effects').canRegister(loader,registry,mod,id)then
+        return registry:override(id,value,modId)
+      end
       return registry:register(id, value, modId)
     end,
     override = function(_, id, value)
