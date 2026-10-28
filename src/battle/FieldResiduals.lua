@@ -222,7 +222,9 @@ function M.apply(battle)
       if row.message and row.message ~= "" then
         battle:sayNext(row.message)
       end
+      if gen==3 then require('src.battle.Gen3FaintFriendship').step(battle,b,'field_residual') end
       b.mon.hp = b.mon.hp - math.min(row.amount, b.mon.hp)
+      if gen==3 then require('src.battle.Gen3FaintFriendship').capture(battle,b) end
       battle:drainNext(b, b.mon.hp)
       if b.mon.hp == 0 then
         fainted[b] = true

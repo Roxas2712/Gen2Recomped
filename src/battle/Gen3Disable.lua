@@ -88,7 +88,7 @@ function D.builtin(id, base)
   if not base or not V.isGen3() then
     return base
   end
-  if id ~= "DISABLE_EFFECT" and id ~= "HAZE_EFFECT" and id ~= "TRANSFORM_EFFECT" then
+  if id ~= "DISABLE_EFFECT" and id ~= "TRANSFORM_EFFECT" then
     return base
   end
   if builtins[base] then
@@ -100,25 +100,6 @@ function D.builtin(id, base)
   end
   if id == "DISABLE_EFFECT" then
     out.run = D.run
-  elseif id == "HAZE_EFFECT" then
-    out.run = function(ctx)
-      local saved = {}
-      if V.isGen3() then
-        for pos = 0, 3 do
-          local b = ctx.battle.battlerAt and ctx.battle:battlerAt(pos)
-            or (pos == 0 and ctx.battle.player or pos == 1 and ctx.battle.enemy)
-          if b and b.disabledMove then
-            saved[b] = { b.disabledMove, b.disabledTurns, b.disabledSlot }
-          end
-        end
-      end
-      local result, success = base.run(ctx)
-      -- Native Haze preserves Disable. Other legacy Haze behavior is separate.
-      for b, state in pairs(saved) do
-        b.disabledMove, b.disabledTurns, b.disabledSlot = unpack(state)
-      end
-      return result, success
-    end
   else
     out.run = function(ctx)
       local before = ctx.user.curMoves

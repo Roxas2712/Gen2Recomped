@@ -32,10 +32,10 @@ local entry=[[
   return nextFn(c)
  end)
 ]]
-local function open(edition,body)
+local function open(edition,body,apiVersion)
  local f,b=Probe.open(edition);b:syncSides()
  local files={['mods/source_probe/manifest.json']=Json.encode({id='source_probe',name='Probe',version='1.0.0',
-  api=3,entry='main.lua',games={'gen3'},permissions={'engine_internals'}}),['mods/source_probe/main.lua']=body or entry}
+  api=apiVersion or 3,entry='main.lua',games={'gen3'},permissions={'engine_internals'}}),['mods/source_probe/main.lua']=body or entry}
  local run=T.sdk.loadMods({'mods/source_probe'},{data=f.data,fs=T.sdk.memfs(files)})
  T.eq(#run.errors,0);f.game.mods=run.loader;run.loader.game=f.game
  local e=assert(run.loader.exports.source_probe)
@@ -97,8 +97,9 @@ for _,lean in ipairs(Hooks.callLean and{false,true}or{false})do for _,mode in ip
  T.eq(calls,beforeCalls,'revoked hook fallback cannot execute or retry the native body')
  Probe.close(f)
 end end
--- Native API3 consumers and follower-only attribution keep their raw handles.
-for _,kind in ipairs{'native','follower'}do
+-- Native/follower consumers keep opaque native handles. API3 battler
+-- records use actual local slots; API2 retains its historical ID metadata.
+for _,apiVersion in ipairs{2,3}do for _,kind in ipairs{'native','follower'}do
  local body=(kind=='follower'and"require('src.compat.game3.Follower')\n"or'')..[[
   local mod=...;local e=mod.exports
   mod.events:on('game.ready',function(p)e.event=p end)
@@ -106,17 +107,18 @@ for _,kind in ipairs{'native','follower'}do
    e.battle,e.user,e.rng=c.battle,c.user.id,c.rng;return nextFn(c)
   end)
  ]]
- local f,b,run,e,c,rolls=open('emerald',body)
+ local f,b,run,e,c,rolls=open('emerald',body,apiVersion)
  local nativeRng=c.rng
  run.loader.hooks:call('battle.damage',function(raw)T.eq(raw.battle,b);return raw.rng(0,1)end,c)
- T.eq(e.battle,b);T.eq(e.user,b.player.id,'native consumer battler ID ABI is preserved')
+ T.eq(e.battle,b);T.eq(e.user,apiVersion==3 and b.player.position or b.player.id,
+  'native consumer battler ID follows its declared API contract')
  T.eq(e.rng,nativeRng,'native consumer RNG handle ABI is preserved')
  T.eq(c.rng,nativeRng)
  local payload={game=f.game};run.loader.events:emit('game.ready',payload)
  T.eq(e.event,payload,'native/follower-only event payload identity is preserved')
  T.eq(e.event.game,f.game,'native/follower-only events keep native Game handles')
  Probe.close(f)
-end
+end end
 -- Complete native turns: the same Loader/API3 setup with a native versus
 -- source namespace pass-through must retain every HP/PP/RNG/frame record.
 for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
