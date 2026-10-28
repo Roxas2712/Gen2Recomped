@@ -2,6 +2,7 @@
 -- The screen owns execution, wrappers and presentation clocks; readers of
 -- screen.battle get the actual party Pokemon, including after a queued switch.
 local View = {}
+local Pictures = require('src.battle.Gen2PicturePresentation')
 local Hp = require('src.battle.Gen2HpPresentation')
 local Model = require('src.battle.gen2.Battle')
 
@@ -104,9 +105,10 @@ function View.install(Screen, images)
     if not mon then return nil end
     local b = owner(self, mon)
     if b and b.isPlayer == back then
-      return self:picImage(b.sprite), images.trueColor(b.sprite), images.path(b.sprite)
+      local sprite = Pictures.sprite(self,b)
+      return self:picImage(sprite), images.trueColor(sprite), images.path(sprite)
     end
-    local species = b and b.species or mon.species
+    local species = b and Pictures.species(self,b) or mon.species
     if b and species ~= mon.species then
       local image = self:speciesSprite(species, back)
       return self:picImage(image), images.trueColor(image), images.path(image)
@@ -137,12 +139,17 @@ function View.install(Screen, images)
     local b = battler(self, side)
     if not b then return nil end
     local pf = self.picFx and self.picFx[b]
+    local bg=self.anim and self.anim.bg
     return {
       hidden = (side == "enemy" and (self.enemyHidden or self.enemySendingOut))
         or (side == "player" and self.sendingOut) or self:fxHidden(b)
-        or (b.fainted and not self:fxFaintActive(b)) or (pf and pf.hidden) or false,
+        or (b.fainted and not self:fxFaintActive(b)) or (pf and pf.hidden)
+        or (bg and bg.hidden[side]) or false,
       pic = b.substituteHP and "substitute" or nil,
-      slide = pf and pf.ox or 0,
+      slide = bg and bg.slide[side] or 0,
+      size = bg and bg.picSize[side],
+      shade = bg and bg.monShade[side],
+      lifted = bg and bg.liftedRows[side],
     }
   end
 

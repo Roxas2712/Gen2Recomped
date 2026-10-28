@@ -3,6 +3,7 @@
 -- This module never resolves a command, changes HP/PP, or advances a clock.
 local Version = require('src.core.GameVersion')
 local Hp = require('src.battle.Gen2HpPresentation')
+local Faint = require('src.battle.Gen2FaintPresentation')
 local Queue = {}
 local textKinds = {
   message=true, item=true, weather=true, stage=true, run=true,
@@ -23,10 +24,10 @@ function Queue.validate(event)
   assert(type(event)=='table', 'native Gen2 event must be a table')
   local kind=event.kind
   assert(textKinds[kind] or kind=='move' or kind=='damage' or kind=='heal'
-    or kind=='status' or kind=='text-pause',
+    or kind=='status' or kind=='text-pause' or kind=='faint',
     'unsupported native Gen2 event: '..tostring(kind))
   assert(event.text==nil or type(event.text)=='string', 'invalid native Gen2 event text')
-  if kind=='damage' or kind=='heal' or kind=='status' then
+  if kind=='damage' or kind=='heal' or kind=='status' or kind=='faint' then
     assert(event.side=='player' or event.side=='enemy', 'invalid native Gen2 event side')
   end
   if event.side~=nil then
@@ -46,6 +47,10 @@ function Queue.validate(event)
   end
   assert(event.cry==nil or type(event.cry)=='table' and scalar(event.cry.species),
     'invalid native Gen2 event cry')
+  if kind=='faint' then
+    assert(event.slid==nil or type(event.slid)=='boolean', 'invalid native Gen2 faint slide')
+    assert(event.mon==nil or type(event.mon)=='table', 'invalid native Gen2 faint Pokemon')
+  end
 end
 
 local function check(screen)
@@ -116,6 +121,19 @@ end
 -- snapshots affect its displayed battler; the actual party stays untouched.
 function Queue.activate(screen,event)
   local kind=event.kind
+  if kind=='faint' then
+    local b=side(screen,event.side)
+    assert(not event.mon or event.mon==b.mon, 'stale native Gen2 faint event target')
+    if not event.slid then
+      Faint.start(screen,event)
+      event.slid=true
+      table.insert(screen.queue,1,event)
+      return nil
+    end
+    if event.side=='enemy' and not event.fieldTerminal and screen.kind=='wild' then
+      screen:playVictoryMusic()
+    end
+  end
   if kind=='text-pause' then
     screen:clearQueueMessage()
     screen.shown,screen.msgPrompt,screen.msgWaiting={},nil,nil

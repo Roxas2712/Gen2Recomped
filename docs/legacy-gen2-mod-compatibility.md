@@ -16,16 +16,18 @@ special-cased and no second battle controller, wallet or encounter engine runs.
 - Optional local imports do not block save admission. An engine version change
   alone does not imply an unreadable save; incompatible save formats/API levels
   still block with their specific reason. No unknown format is bypassed.
-- Old custom 3D mod shaders receive their historical Canvas clip convention on
-  LÖVE 12. Standard 2D transforms, native shaders, API 3 and LÖVE 11 retain their
-  coordinate contract. This fixes the upside-down player/world seen with legacy
-  voxel shaders without editing the supplied renderer mod.
+- Old custom 3D mod shaders use the existing engine shader adapter installed
+  before mod loading. That owner already tracks Canvas/window changes. An
+  additional API-specific reflection is unnecessary: it flips OpenGL Canvas
+  output and Metal window output a second time. Keep standard 2D, explicit
+  native sources/options, API 3 and LÖVE 11 on their existing compiler paths.
 
 ## Validation
 
 The targeted contracts cover content/effects, the native battle model, encounter
 views, save admission, imports, launcher requirements, compatibility aliases and
-workspace restore. The shader suite loads actual API 2 and API 3 probe mods.
+workspace restore. The real shader probe loads API 1/2/3 mods after installing
+the same graphics adapter as main.lua.
 
 An imported Crystal GPU run with the supplied KASC and VASC packages plus a
 separate Mega-only overlay exercises the real native battle and renderer:
@@ -47,7 +49,9 @@ API-2 full-value overrides do not acquire a new DELETE exception. Native marts
 retain an empty ordered shelf after removal, as required by the script pool.
 
 `tools/legacy-mod-shader-gpu` compiles through real API-1/2/3 mod environments
-and compares actual canvas pixels at DPI 1/2. It covers legacy clip coordinates,
-explicit native clip coordinates, unchanged standard 2D and API-3 custom sources.
-Compact shader sources without a trailing newline remain valid when the wrapper
-adds its preprocessor directives. The test uses synthetic geometry and no ROM.
+and compares actual Canvas pixels at DPI 1/2 plus real window captures. Nested
+target changes must restore shader/Canvas ownership. Explicit native source and
+compiler-option contracts, standard 2D and API-3 custom programs retain the
+preceding engine compiler's output. Compact native shader sources without a
+trailing newline remain valid when the wrapper adds its preprocessor directives.
+The test uses synthetic geometry and no ROM; it does not replace a full mod run.
