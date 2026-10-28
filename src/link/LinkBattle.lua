@@ -159,7 +159,7 @@ local function toxicSignature(mon)
   return ":toxic=" .. tostring(mon.status == "PSN" and mon.toxic == true)
     .. require("src.link.Gen3Party").signature(mon)
 end
-local function activeStr(b, role)
+local function activeStr(b, role, battle)
   return ("%s:%d:%s:%s:%s:%s"):format(b.mon.species, b.mon.hp,
                                       tostring(b.mon.status), tostring(b.mon.item),
                                       stageStr(b), ppStr(b.mon)) .. toxicSignature(b.mon)
@@ -171,6 +171,9 @@ local function activeStr(b, role)
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3PartialTrap").signature(b,role) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3ChoiceBand").signature(b) or "")
     .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3MirrorMove").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3HitHistory").signature(b, role) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3Faint").signature(b) or "")
+    .. (require("src.core.GameVersion").isGen3() and require("src.battle.Gen3FaintFriendship").signature(battle,b,role) or "")
 end
 
 local function benchStr(party)
@@ -189,7 +192,7 @@ local function stateSig(self, role, myParty, theirParty)
   local hostParty = role == "host" and myParty or theirParty
   local guestParty = role == "host" and theirParty or myParty
   return {
-    actives = Fingerprint.digest(activeStr(host, role) .. "|" .. activeStr(guest, role)),
+    actives = Fingerprint.digest(activeStr(host, role, self) .. "|" .. activeStr(guest, role, self)),
     volatile = Fingerprint.digest(volStr(host) .. "|" .. volStr(guest)),
     bench = Fingerprint.digest(benchStr(hostParty) .. "|" .. benchStr(guestParty)),
   }

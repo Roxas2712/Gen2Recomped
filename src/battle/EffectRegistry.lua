@@ -115,11 +115,13 @@ local function hitCount(ctx, record)
 end
 
 local function ordinaryDamage(battle, ctx, record)
-  return battle:computeDamage(ctx.user, ctx.target, ctx.move,
-    { rng = battle.rng, explode = (record and record.explode) or nil,
-      powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
-      highCrit = record and record.highCrit or nil,
-      power = record and record.gbaTripleKick and 10 * (ctx.gbaHit or 1) or nil })
+  return require("src.battle.Gen3DamageAdjustment").compute(ctx, function()
+    return battle:computeDamage(ctx.user, ctx.target, ctx.move,
+      { rng = battle.rng, explode = (record and record.explode) or nil,
+        powerMultiplier = record and record.powerMultiplier and record.powerMultiplier(ctx) or nil,
+        highCrit = record and record.highCrit or nil,
+        power = record and record.gbaTripleKick and 10 * (ctx.gbaHit or 1) or nil })
+  end)
 end
 
 -- The damaging pipeline, extracted from the performMove monolith: every
@@ -128,12 +130,14 @@ end
 -- older generations retain their pre-accuracy count and shared damage roll.
 local function runDamaging(battle, ctx, record)
   local user, target = ctx.user, ctx.target
+  ctx.record = record
   local move, moveInst = ctx.move, ctx.moveInst
   local neverMiss = record and record.neverMiss
   local gba = require("src.core.GameVersion").isGen3()
   local ordinaryMulti = gba and require("src.battle.Gen3MultiHit").ordinary(move)
   local tripleKick = gba and record and record.gbaTripleKick
   local nativeMulti = ordinaryMulti or tripleKick
+  if tripleKick then require("src.battle.Gen3HitHistory").prepare(battle, move, false, true) end
   if gba and type(target.substituteHP) == "number" and target.substituteHP <= 0 then
     target.substituteHP = nil
   end
@@ -151,6 +155,20 @@ local function runDamaging(battle, ctx, record)
   local nativeAccuracy = gba and (not neverMiss and not alwaysHits
     or move.gen3Effect == 17 or move.gen3Effect == 78 or move.gen3Effect == 152)
 
+  local explosion = require("src.battle.Gen3Explosion").prepare(ctx, record, function()
+    return ordinaryDamage(battle, ctx, record)
+  end)
+  if explosion == false then return end
+  if gba and record and record.gbaGateBeforeProtect and record.gate then
+    local ok, message = record.gate(ctx)
+    ctx.gbaGatePrepared = true
+    if not ok then
+      battle:cancelMoveAnim()
+      if message then battle:sayNext(message) end
+      return
+    end
+  end
+
   -- PROTECT and DETECT, before anything else happens.  Only a move the
   -- cartridge marks PROTECT-affected is stopped, which is the second use the
   -- extracted flags byte is put to; a move with no flags recorded (every Gen
@@ -162,6 +180,8 @@ local function runDamaging(battle, ctx, record)
     battle:cancelMoveAnim()
     if record and record.onProtect and record.onProtect(ctx) then return end
     battle:sayNext(Strings("%s\nprotected itself!", displayName(target)))
+    if ctx.gbaExplosionPrepared and record.onMiss then record.onMiss(ctx, "protected") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'protected') end
     return
   end
 
@@ -185,11 +205,12 @@ local function runDamaging(battle, ctx, record)
     -- missed, its effect still needs to be activated", core.asm:3223),
     -- so the user faints against a mid-Fly/Dig target too (#528)
     if record and record.onMiss then record.onMiss(ctx, "invulnerable") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'invulnerable') end
     return
   end
 
   -- OHKO speed gate, Dream Eater sleep gate
-  if record and record.gate then
+  if record and record.gate and not ctx.gbaExplosionPrepared and not ctx.gbaGatePrepared then
     local ok, failMsg = record.gate(ctx)
     if not ok then
       battle:cancelMoveAnim()
@@ -201,12 +222,18 @@ local function runDamaging(battle, ctx, record)
 
   local hits = not gba and hitCount(ctx, record) or 1
 
-  if record and record.beforeAccuracy then record.beforeAccuracy(ctx) end
+  if record and record.beforeAccuracy and not ctx.gbaExplosionBeforeAccuracy then record.beforeAccuracy(ctx) end
+  if gba then
+    -- Weather Ball and authored native records may replace the move view.
+    move = ctx.move
+    require("src.battle.Gen3HitHistory").prepare(battle, move, false, tripleKick)
+  end
 
   if nativeAccuracy or not neverMiss and not alwaysHits then
     local hit, reason = battle:accuracyRoll(move, user, target, accuracyRaw)
     if not hit then
       if reason == "absorbed" then
+        if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.rsMultiHit = nil end
         battle:cancelMoveAnim()
         if record and record.onMiss then record.onMiss(ctx, "absorbed") end
         return
@@ -217,6 +244,7 @@ local function runDamaging(battle, ctx, record)
       battle:sayNext(Strings("%s's\nattack missed!", displayName(user)))
       -- Jump Kick crash, Explode self-destruct
       if record and record.onMiss then record.onMiss(ctx, "accuracy") end
+      if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'accuracy') end
       user.trappingTurns = nil
       return
     end
@@ -224,15 +252,21 @@ local function runDamaging(battle, ctx, record)
 
   if gba and record and record.gbaAfterAccuracy then record.gbaAfterAccuracy(ctx) end
   if gba then hits = hitCount(ctx, record) end
-  if gba and user.mon.hp <= 0 and not (record and record.explode) then
+  if gba then require("src.battle.Gen3HitHistory").prepare(battle, move, ordinaryMulti, tripleKick) end
+  if gba and not (record and record.explode)
+      and (require('src.battle.Gen3Faint').isFainted(user) or require('src.battle.Gen3Faint').isFainted(target)) then
     ctx.gbaNoEffect = true
     if battle._gbaMoveFrame then battle._gbaMoveFrame.noEffect = true end
+    require('src.battle.Gen3ZeroChance').finish(ctx, 'fainted')
     return
   end
 
   -- damage per hit
   local dmg, info
-  if move.id == "COUNTER" then
+  if ctx.gbaExplosionPrepared then
+    dmg, info = ctx.gbaExplosionDamage, ctx.gbaExplosionInfo
+    require("src.battle.Gen3Explosion").guard(ctx, info)
+  elseif move.id == "COUNTER" then
     -- HandleCounterMove: 2x the last damage dealt in battle, only if
     -- the opponent's last move was counterable with >0 power (and not
     -- Counter itself); wDamage is shared, so any last damage counts.
@@ -269,6 +303,15 @@ local function runDamaging(battle, ctx, record)
     dmg, info = ordinaryDamage(battle, ctx, record)
   end
 
+  if gba and not ctx.gbaExplosionPrepared and info.failed then
+    battle:cancelMoveAnim()
+    if gba and battle._gbaMoveFrame then battle._gbaMoveFrame.missed, battle._gbaMoveFrame.failed = true, true end
+    battle:sayNext(Strings("But, it failed!"))
+    return
+  end
+  if gba and not ctx.gbaExplosionPrepared and not (record and record.perHitDamage) then
+    dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info)
+  end
   if battle.arenaOutcome then
     battle.arenaOutcome.typeMult = info.typeMult
     -- an ability that made it do nothing speaks against the user's skill
@@ -291,6 +334,7 @@ local function runDamaging(battle, ctx, record)
       battle:sayNext(Strings("It doesn't affect\n%s!", displayName(target)))
     end
     if record and record.onMiss then record.onMiss(ctx, "immune") end
+    if gba then require('src.battle.Gen3ZeroChance').finish(ctx, 'immune') end
     return
   end
   if info.missed then
@@ -330,24 +374,33 @@ local function runDamaging(battle, ctx, record)
   local totalDealt = 0
   local landed, brokeSub = 0, false
   for h = 1, hits do
-    if target.mon.hp <= 0 then break end
+    if target.mon.hp <= 0 and not ctx.gbaExplosionPrepared then break end
     if nativeMulti and (user.mon.hp <= 0 or h > 1 and user.mon.status == "SLP"
         and not require("src.battle.Gen3MultiHit").sleepTalk(battle)) then break end
     -- Unlike ordinary multi-hit moves, each reached native kick checks
     -- accuracy again before its critical/damage opcodes. A later miss ends
     -- the script quietly; already landed kicks still reach move-end (Rage).
     if tripleKick and h > 1 and (nativeAccuracy or not neverMiss and not alwaysHits) then
+      local frame = battle._gbaMoveFrame
+      local previousMiss = frame and frame.missed
       local hit = battle:accuracyRoll(move, user, target, accuracyRaw)
-      if not hit then break end
+      if not hit then
+        -- FR/LG/E keep the successful attack's animation/result flags when
+        -- a later kick misses. R/S's script instead records its failure.
+        if frame and not frame.rsMultiHit then frame.missed = previousMiss end
+        break
+      end
     end
     ctx.gbaHit = h
     if record and record.perHitDamage then
       local nextDamage, nextInfo = record.perHitDamage(ctx, h, dmg, info)
       if nextDamage == nil then break end
       dmg, info = nextDamage, nextInfo or info
+      if gba then dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info) end
     elseif nativeMulti and h > 1
         and not (record and record.chooseDamage) then
       dmg, info = ordinaryDamage(battle, ctx, record)
+      dmg, info = require("src.battle.Gen3DamageAdjustment").apply(ctx, dmg, info)
       if info.typeMult == 0 or info.missed then
         ctx.gbaNoEffect = true
         if info.typeMult == 0 then
@@ -406,6 +459,9 @@ local function runDamaging(battle, ctx, record)
     -- on someone
     local substituteBefore = target.substituteHP
     local dealt, endured = battle:applyDamage(target, hitDamage, true, info.damageAdjustment)
+    if gba and (move.power ~= 0 or record and record.chooseDamage) then
+      require("src.battle.Gen3HitHistory").hit(battle, user, target, move, hadSub)
+    end
     if (info.gbaSetDamage or info.gbaBeatUp) and substituteBefore then dealt = math.min(dealt, substituteBefore) end
     if gba then require("src.battle.Gen3PostHitItems").damage(battle, hitDamage, dealt, hadSub) end
     totalDealt = totalDealt + dealt
@@ -441,9 +497,9 @@ local function runDamaging(battle, ctx, record)
     -- (:3228-3229), which is where the beat before "It's super effective!"
     -- comes from.
     battle:waitNext(Timing.CRIT_OHKO_TEXT)
-    if info.typeMult > 10 then
+    if not info.gbaNativeFixed and info.typeMult > 10 then
       battle:sayNext(Strings("It's super\neffective!"))
-    elseif info.typeMult < 10 then
+    elseif not info.gbaNativeFixed and info.typeMult < 10 then
       battle:sayNext(Strings("It's not very\neffective..."))
     end
     -- GBA's zero-power default script never runs the HP-damage command.
@@ -470,6 +526,7 @@ local function runDamaging(battle, ctx, record)
     if battle.firstBattle then
       require("src.battle.Gen3Critical").noteHit(battle, user, target, dealt, hadSub)
     end
+    if gba then require("src.battle.Gen3HitHistory").afterHit(battle) end
     if hadSub and not target.substituteHP and not info.gbaBeatUp then
       -- Older AttackSubstitute ends the move; GBA continues against real HP.
       brokeSub = true
@@ -559,7 +616,12 @@ local function runDamaging(battle, ctx, record)
   local gba = require("src.core.GameVersion").isGen3()
   if gba then
     local frame = battle._gbaMoveFrame
-    if frame then frame.noEffect = ctx.gbaNoEffect end
+    if frame then frame.noEffect = frame.noEffect or ctx.gbaNoEffect end
+    if ctx.gbaExplosionPrepared then
+      local Faint = require('src.battle.Gen3Faint')
+      if Faint.isFainted(target) then battle:onFaint(target) end
+      Faint.body(battle, frame)
+    end
     require("src.battle.GbaItemSchedule").moveEnd(battle)
   end
   if not gba and totalDealt > 0 and battle.shellBellDrain then

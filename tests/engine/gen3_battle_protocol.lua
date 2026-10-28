@@ -4,27 +4,25 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash audits secondary revision 22 -> 23.
--- NDS uses its own revision surface, covered by nds_link_native.lua.
+-- Independent Python integer FNV audits the combined revision 26 stream,
+-- retaining main's edition-specific secondary command and NDS surfaces.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "1e7b593d0cbd1d69"
-local EMERALD_NATIVE = "a7ffeef827cf59b4"
--- Independently extend the audited GBA fixture digest by the two explicit
--- native command/party suffixes. The record surface remains identical;
--- [native_gba_commands]23/[native_gba_party]1 becomes nds-4-1 or nds-5-1.
+local NATIVE = "ed48736806f1e02c"
+local EMERALD_NATIVE = "524ff88d849b1641"
 local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
-for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgreen", "emerald", "platinum", "firered", "black", "gold" }) do
+for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgreen", "emerald", "platinum", "diamond", "firered", "black", "gold" }) do
   V.set(version)
   local gba = V.isGen3()
   local generation = V.generation()
   local nds = generation == 4 or generation == 5
   local native = gba or nds
+  local expectedNative = version == "emerald" and EMERALD_NATIVE or NATIVE
   T.eq(
     F.compute(data, {}),
-    gba and (version == "emerald" and EMERALD_NATIVE or NATIVE) or nds and NDS[generation] or LEGACY,
+    gba and expectedNative or nds and NDS[generation] or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 23 or nds and ("nds-" .. generation .. "-1") or nil,
+  T.eq(F.nativeBattleRevision(), gba and 26 or nds and ("nds-" .. generation .. "-1") or nil,
     "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
@@ -55,10 +53,11 @@ for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgr
   end
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision, previous.fingerprint = 22, "0532b5c0de70029c"
-    T.eq(H.checkCompat(current, previous), "subset", "previous secondary rules cannot admit lockstep")
+    previous.nativeBattleRevision = 23
+    previous.fingerprint = version == "emerald" and "a7ffeef827cf59b4" or "1e7b593d0cbd1d69"
+    T.eq(H.checkCompat(current, previous), "subset", "previous native command rules cannot admit lockstep")
     T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "binding commands retain the native party codec")
+    T.eq(current.nativePartyRevision, 1, "Faint friendship rules retain the native party codec")
     for _, host in ipairs({ false, true }) do
       for _, peer in ipairs({ legacy, previous }) do
         local state = setmetatable(

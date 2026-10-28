@@ -373,21 +373,30 @@ function Status.residual(battler, opponent, battle)
       source = source.isPlayer and battle.player or battle.enemy
     end
     if source and source.mon.hp > 0 then
+      local Friendship=require('src.battle.Gen3FaintFriendship')
+      Friendship.step(battle,battler,'leech_seed',source)
       local dmg = math.min(mon.hp, math.max(1, math.floor(mon.stats.hp / 8)))
       mon.hp = mon.hp - dmg
+      Friendship.capture(battle,battler)
       if require("src.battle.Abilities").of(battler) == "LIQUID_OOZE" then
         source.mon.hp = math.max(0, source.mon.hp - dmg)
+        Friendship.capture(battle,source)
         if source.mon.hp == 0 then seedSource = source end
-      else source.mon.hp = math.min(source.mon.stats.hp, source.mon.hp + dmg) end
+      else
+        source.mon.hp = math.min(source.mon.stats.hp, source.mon.hp + dmg)
+        require('src.battle.Gen3Faint').healed(source)
+      end
       msgs[#msgs + 1] = Strings("LEECH SEED saps\n%s!", name(battler))
     end
   end
   if mon.hp <= 0 then return msgs, seedSource end
   local record = Status.recordFor(battleStatuses(battle), mon.status)
+  if gba then require('src.battle.Gen3FaintFriendship').step(battle,battler,'status_chip') end
   if record and record.residual then
     for _, m in ipairs(record.residual(battler, opponent, battle) or {}) do
       msgs[#msgs + 1] = m
     end
+    if gba then require('src.battle.Gen3FaintFriendship').capture(battle,battler) end
   end
   if not gba and battler.leechSeeded and mon.hp > 0 and opponent.mon.hp > 0 then
     -- the shared Toxic counter multiplies (and advances on) the seed

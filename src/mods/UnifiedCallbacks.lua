@@ -220,11 +220,12 @@ function C.install(loader, api, owner, generation)
           public=value
         else public=translate(original)end
         local called, downstream, publicResult = false, nil, nil
+        local repeatableTrainer = not api3 and generation == 3 and name == "battle.enemy_switch_or_item"
         local active = true
         local function nextPublic(...)
           assert(active, "next is only valid during its hook callback")
           assert(not called or downstream, "next is already running")
-          if not called then
+          if not called or repeatableTrainer then
             local args = select("#", ...) == 0 and public or pack(...)
             local raw = boundary.commit(function()
               return rawArgs(args)
@@ -236,7 +237,7 @@ function C.install(loader, api, owner, generation)
               downstream = pack(pcall(nextFn, unpack(raw, 1, raw.n)))
             end
             if downstream[1] then
-              boundary.refresh()
+              boundary.refresh("next")
               publicResult = pack(unpack(downstream, 2, downstream.n))
               if results[name] then
                 publicResult[1] = boundary.view(publicResult[1], results[name])

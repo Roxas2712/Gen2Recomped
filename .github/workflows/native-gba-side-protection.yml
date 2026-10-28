@@ -1,0 +1,30 @@
+name: Native GBA side protection
+on:
+  pull_request:
+    paths:
+      - 'src/battle/Gen3Mist.lua'
+      - 'src/battle/Gen3Secondary.lua'
+      - 'tests/gen3_mist/**'
+      - 'tests/engine/gen3_mist*.lua'
+      - 'tests/engine/gen3_secondary_protection.lua'
+      - 'tests/gen3_mist_compare_test.py'
+      - 'tools/gen3_mist_compare.py'
+      - 'tools/gen3_mist_contract.py'
+      - '.github/workflows/native-gba-side-protection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native side ownership, guaranteed effects and expiry
+        run: |
+          luajit tests/engine/gen3_secondary_protection.lua
+          luajit tests/engine/gen3_mist.lua
+          luajit tests/engine/gen3_mist_checkpoint.lua
+      - name: Explicit reference differences never hide other failures
+        run: python3 -m unittest discover -s tests -p gen3_mist_compare_test.py
