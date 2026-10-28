@@ -117,19 +117,7 @@ end
 -- heal-location stage's, and a destination is offered only once it has been
 -- visited -- which is the same gate every other generation's fly uses.
 local function flyTargets(game)
-  local field = (game.data or {}).field or {}
-  local warps = field.flyWarps or {}
-  local visited = (game.save or {}).visited or {}
-  local maps = (game.data or {}).maps or {}
-  local bySection = {}
-  for _, mapId in ipairs(field.flyOrder or {}) do
-    local def = maps[mapId]
-    local sec = def and tonumber(def.regionMapSection)
-    if sec and visited[mapId] and warps[mapId] and not bySection[sec] then
-      bySection[sec] = mapId
-    end
-  end
-  return bySection
+  return require('src.world.Gen3FlyTargets').bySection(game)
 end
 
 -- ---------------------------------------------------------------------------
@@ -192,6 +180,9 @@ function Gen3RegionMap.new(game, opts)
     blink = 0,
   }, Gen3RegionMap)
 
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
+  local ow=game.overworld
+  self.here=ow and ow.map and ow.map.def and tonumber(ow.map.def.regionMapSection)
   self.targets = self.fly and flyTargets(game) or nil
   if require('src.ui.Gen3RsRegionMap').available(game,opts)then
     self.uiSize=function()return 240,160 end
