@@ -16,8 +16,9 @@ placement, rather than Gen1's left-padding compensation. Image-specific scale
 settings still refer to the underlying Pokemon image. Opposite-orientation
 captures use the requested box dimensions with the real battler's palette.
 
-The public `pic` getter keeps its original indexed-Pokemon contract. Its
-`drawPic` capture paints the current replacement. `substituteDoll` exposes
+Where the public `pic`/`drawPic` boundary already exists, the getter keeps its
+original indexed-Pokemon contract and the capture paints the current replacement.
+The upstream adaptation does not invent those missing methods. `substituteDoll` exposes
 the actual indexed 16x32 ROM sheet with cached front/back quads, allowing the
 source caller to own its palette operation.
 
