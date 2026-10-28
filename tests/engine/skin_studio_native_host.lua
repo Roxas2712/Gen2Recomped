@@ -76,6 +76,14 @@ local dropped={getFilename=function()return 'owned-host.png'end,
 love.filedropped(dropped)
 T.eq(Studio.page().imagePath,'img/owned-host.png','actual file drop imports owned art into selected skin')
 T.check(Studio.dirty,'actual import marks native editor dirty')
+local previousSkin=Studio.skin
+local archive={getFilename=function()return 'another.zip'end,
+ open=function()return true end,read=function()return 'PENDING-ARCHIVE'end,close=function()end}
+love.filedropped(archive)
+T.check(Studio.confirm~=nil,'native archive drop asks before discarding unsaved artwork')
+T.eq(Studio.skin,previousSkin,'pending archive drop retains actual edited skin')
+Studio.confirmNo()
+T.eq(Studio.skin,previousSkin,'cancelling drop retains edits')
 -- The editor must preserve native DS controls, in addition to Gen1's binds.
 Studio.addControl();Studio.setBindSpec('x|y')
 local Input=require('src.core.Input');Input:init()

@@ -1151,7 +1151,10 @@ function Studio.filedropped(file)
     setStatus("Could not read " .. base, true)
     return
   end
-  if archive then return Studio.importSkinBytes(base,data) end
+  if archive then
+    return Studio.guard('Import another skin and lose the unsaved changes?',
+      function() Studio.importSkinBytes(base,data) end)
+  end
   return Studio.adoptImage(base, data)
 end
 
