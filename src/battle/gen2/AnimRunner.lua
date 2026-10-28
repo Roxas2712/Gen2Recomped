@@ -262,11 +262,9 @@ end
 -- The commands that swap a battler's pic out for something else.  The port
 -- records which, and the view draws it.
 --
--- Every one of them branches on hBattleTurn the same way
--- (engine/battle_anims/anim_commands.asm): `and a / jr z, .player`, and the
--- .player arm is the one that writes vTiles2 tile $31, the 6x6 BACKPIC slot.
--- So turn 0, the player attacking, always repaints the PLAYER's own pic, and
--- the fall-through arm (tile $00, the 7x7 frontpic) repaints the enemy's.
+-- hBattleTurn selects the actor's own 6x6 back or 7x7 front slot. GS writes
+-- Transform directly to BG; Crystal stages it in vTiles0 and copies it at
+-- updateactorpic. Keep that distinction at the command owner.
 C.transform = function(self)
   -- BattleAnimCmd_Transform: .player loads wTempEnemyMonSpecies into the
   -- backpic slot, i.e. the player's sprite becomes what it transformed into.
@@ -295,7 +293,7 @@ C.minimizeopp = function(self)
 end
 
 C.beatup = function(self)
-  -- wBattleAnimParam is the party slot whose pic to show.
+  -- wBattleAnimParam is the species byte; `slot` is the retained public key.
   local side = self.env.battleTurn == 0 and "player" or "enemy"
   self.picOverride[side] = { kind = "beatup", slot = self.param }
 end
