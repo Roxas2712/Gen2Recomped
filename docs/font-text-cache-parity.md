@@ -96,8 +96,13 @@ out-of-range rows fall back to the baked frame. GBA named faces and their
 separate nine-tile frame sheets keep their own lookup path.
 
 The GSC importer emits the actual battle-extra font and eight six-tile
-1bpp frame rows from each mounted ROM. No ROM art is shipped. Custom
-segmented/compressed font manifests retain their previous extraction;
+1bpp frame rows from each mounted ROM. No ROM art is shipped.
+The ordinary extra sheet also follows LoadFontsExtra's three initial
+loads: solid black, up-arrow and Pokegear telephone, replacing unused
+FontExtra bold-letter tiles. Gold/Silver's paired 1bpp source and Crystal's
+separate black/2bpp-arrow sources retain their own ROM symbol addresses.
+
+Custom segmented/compressed font manifests retain their previous extraction;
 other non-retail layouts need an explicit `fontFrameCount` to admit a
 frame sheet. The generated Gen2 cache revision requires an ordinary
 reimport of older font records while retaining saves. The native GRAPHICS

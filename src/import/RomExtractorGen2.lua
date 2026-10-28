@@ -15689,6 +15689,7 @@ function RomExtractorGen2:extractFontSheets()
         end
       end
     end
+    require('src.import.Gen2FontExtras').patchExtra(self, extra)
     self:saveImage(extra, "fonts/font_extra.png")
   end))
 end
