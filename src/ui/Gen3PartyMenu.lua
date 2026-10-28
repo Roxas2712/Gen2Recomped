@@ -198,12 +198,12 @@ function Gen3PartyMenu:slots() return #self:party() + 1 end
 -- again on their own way out -- which used to be right and would now pop
 -- whatever the presentation left on top.  Closing twice was always a bug; it
 -- simply never happened before.
-function Gen3PartyMenu:close()
+function Gen3PartyMenu:close(forFieldMove)
   if self.noCancel then return end
   if self.closed then return end
   self.closed = true
   self.game.stack:pop()
-  if self.onCancel then self.onCancel() end
+  if self.onCancel and not forFieldMove then self.onCancel() end
 end
 
 function Gen3PartyMenu:word(n, fallback)
@@ -641,7 +641,7 @@ function Gen3PartyMenu:useFieldMove(mon, move)
     for i,member in ipairs(self:party()) do if member==mon then slot=i-1;break end end
     local rows=id and slot and Field.secretProgram(self.game.data,id,effect,slot)
     if rows then
-      self:close()
+      self:close(true)
       ow:queueScript(rows,{mapId=ow.map.id})
       return
     end
@@ -658,7 +658,7 @@ function Gen3PartyMenu:useFieldMove(mon, move)
       and ow.gen3HasBadge and ow:gen3HasBadge(move)
       and Field.program(self.game.data,move,slot,npc.def.script)
     if rows then
-      self:close()
+      self:close(true)
       ow:queueScript(rows,{npc=npc,mapId=ow.map.id})
       return
     end
@@ -694,7 +694,9 @@ function Gen3PartyMenu:useFieldMove(mon, move)
                  or (move == "SURF" and self:surfUsableBy(mon))
                  or (move == "WATERFALL" and self:waterfallUsableBy(mon))
   if usable then
-    self:close()
+    -- Successful field actions return to the map; onCancel recreates the
+    -- START menu. Fly still owns a destination picker and its return path.
+    self:close(move~="FLY")
     -- ...EXCEPT FLY, WHICH ASKS WHERE FIRST.
     --
     -- Reported from play: "fix the hm transition screen for fly it appears
