@@ -240,7 +240,8 @@ return function(game)
   local dirs={up={0,-1},down={0,1},left={-1,0},right={1,0}}
   local function freeField()
     local w=game.overworld
-    return w and game.stack:top()==w and not w.player.moving and not w.player.inputLocked and not(w.runner and w.runner:isRunning())
+    return w and game.stack:top()==w and not w.player.moving and not w.player.inputLocked
+      and #(w.scriptMoves or {})==0 and not(w.runner and w.runner:isRunning())
   end
   local function step(dir)
     assert(dirs[dir]);if not freeField()then return false,'event/UI is active'end
@@ -254,7 +255,10 @@ return function(game)
     end
     game.input:overlayReleased(dir)
     if movement then movement.heldFrames=held end
-    for _=1,120 do if not game.overworld.player.moving then break end;U.wait(1)end
+    for _=1,1200 do
+      if not game.overworld.player.moving and #(game.overworld.scriptMoves or {})==0 then break end
+      U.wait(1)
+    end
     U.wait(8)
     return w.map.id~=map or w.player.cellX~=x or w.player.cellY~=y,'blocked or interrupted'
   end
@@ -276,8 +280,26 @@ return function(game)
         -- walkable bit includes Hoenn water beneath bridges and directed walls.
         local mover=setmetatable({cellX=p[1],cellY=p[2],elevation=p[3]},{__index=w.player})
         local elevation=map.elevationAfter and map:elevationAfter(p[3],x,y,p[1],p[2])or p[3]
+        local entered=map:inBounds(x,y)and Collision.mayEnter(map,w.entities or{},mover,x,y,dir)
+        -- A d-pad tap ends at the conveyor's exit, not its first arrow.
+        -- Simulate only read-only collision/rules; actual travel still uses
+        -- ordinary input and is recorded one frame/press at a time.
+        local forcedSeen={}
+        while entered and not w.player.surfing and map.forcedMovementAt do
+          local row=map:forcedMovementAt(x,y);local way=row and row.way
+          if not way then break end
+          local here=key(x,y,elevation)
+          if forcedSeen[here]then entered=false;break end
+          forcedSeen[here]=true
+          local step=dirs[way];if not step then entered=false;break end
+          mover=setmetatable({cellX=x,cellY=y,elevation=elevation},{__index=w.player})
+          local nx,ny=x+step[1],y+step[2]
+          if not map:inBounds(nx,ny)or not Collision.mayEnter(map,w.entities or{},mover,nx,ny,way)then break end
+          elevation=map.elevationAfter and map:elevationAfter(elevation,nx,ny,x,y)or elevation
+          x,y=nx,ny
+        end
         local k=key(x,y,elevation)
-        if not seen[k]and map:inBounds(x,y)and Collision.mayEnter(map,w.entities or{},mover,x,y,dir)then
+        if entered and not seen[k]then
           -- 0 changes the player's level; 15 preserves it. The same bridge
           -- coordinate can be reached on different levels in one search.
           seen[k]=true;prev[k]={dir=dir,from=key(p[1],p[2],p[3])};q[#q+1]={x,y,elevation}

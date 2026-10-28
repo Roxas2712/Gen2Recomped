@@ -41,6 +41,32 @@ return function(game)
   assert(intermediate.x~=p.cellX or intermediate.y~=p.cellY,'test did not witness movement after release')
   shot('native-mossdeep-conveyor-after')
   report.releasedInputStart=intermediate;report.releasedInputEnd={x=p.cellX,y=p.cellY}
+  -- Sootopolis's southward slide is a barrier: approaching from below
+  -- returns the player to the approach cell after the input is released.
+  U.teleport(game,'MAP_G15_N00',7,21,'up');w=game.overworld;map=w.map
+  local C=require('src.world.Collision');local barrier
+  for y=1,map.heightCells-2 do for x=0,map.widthCells-1 do
+    local row=map:forcedMovementAt(x,y)
+    if not barrier and row and row.slide and row.way=='down'
+      and map:isWalkableCell(x,y+1)and not map:forcedMovementAt(x,y+1)then
+      local mover={cellX=x,cellY=y+1,elevation=map:cellElevation(x,y+1)}
+      if C.mayEnter(map,w.entities,mover,x,y,'up')then barrier={x=x,y=y}end
+    end
+  end end
+  assert(barrier,'native Sootopolis slide barrier not found')
+  U.teleport(game,'MAP_G15_N00',barrier.x,barrier.y+1,'up');w=game.overworld;p=w.player
+  shot('native-sootopolis-slide-before')
+  game.input:overlayPressed('up');U.wait(1);game.input:overlayReleased('up')
+  local entered=false
+  for _=1,180 do
+    if p.cellX==barrier.x and p.cellY==barrier.y then entered=true end
+    U.wait(1)
+  end
+  assert(entered,'barrier fixture never entered the slide tile')
+  assert(p.cellX==barrier.x and p.cellY==barrier.y+1 and not p.moving,
+    'slide barrier did not return released input to the approach cell')
+  shot('native-sootopolis-slide-after');report.slideBarrier=barrier
+  report.slideReturnsToApproach=true
   report.nativeSwitchRoundTrip=true;report.drawPreservesSaveRng=true
   report.status='pass';persist();print('PASS_RS_NATIVE_FORCED_FLOORS');love.event.quit(0)
 end
