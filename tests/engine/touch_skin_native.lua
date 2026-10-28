@@ -204,4 +204,19 @@ T.eq(host.writes,1,'native toggle persists through engine owner')
 host.speedLocked=function() return true end
 host:touchSkinHotkey('fast_forward_toggle',true)
 T.eq(host.writes,1,'locked state blocks speed preference changes')
+-- The offered native host must supply the actual lock owner; a test-only
+-- speedLocked double cannot prove that a runtime skin action works.
+host.speedLocked=nil
+host.stack={states={{isFixedSpeed=true},{name='options'}}}
+T.eq(host:speedLocked(),true,'real native lock sees fixed-speed state under menu')
+host.speedOverride=4
+T.eq(host:logicSpeed(),1,'real lock overrides held acceleration in logic clock')
+host:touchSkinHotkey('fast_forward_toggle',true)
+T.eq(host.writes,1,'real lock blocks skin toggle persistence')
+host.stack.states={};host.linkSession={}
+T.eq(host:speedLocked(),true,'real native lock sees live link session')
+host.linkSession=nil
+T.eq(host:speedLocked(),false,'settled unlocked host can accelerate')
+host:touchSkinHotkey('fast_forward_toggle',true)
+T.eq(host.writes,2,'skin toggle reaches actual unlocked native owner')
 T.finish('native custom-skin ownership, persistence, rendering and input')
