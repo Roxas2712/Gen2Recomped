@@ -10,6 +10,17 @@ local old=V.get()
 for _,edition in ipairs(V.ORDER)do
  V.set(edition)
  local data=T.fixtures.fresh();data.constants.gen=V.generation(edition)
+ if data.constants.gen>=3 then
+  -- These editions use the structural six-stat/IV schema. The base fixture
+  -- is Gen1-shaped, so give the owned species their proper native layout.
+  for _,def in pairs(data.pokemon)do
+   if type(def)=='table'and def.baseStats then
+    def.baseStats.spatk=def.baseStats.spatk or def.baseStats.special
+    def.baseStats.spdef=def.baseStats.spdef or def.baseStats.special
+    def.evYield={hp=0,attack=0,defense=0,speed=0,spatk=0,spdef=0}
+   end
+  end
+ end
  local run=T.sdk.loadMods({'mods/scope_probe'},{data=data,fs=T.sdk.memfs({
   ['mods/scope_probe/manifest.json']='{"id":"scope_probe","name":"Native scope probe","version":"1.0.0","api":2,"entry":"main.lua"}',
   ['mods/scope_probe/main.lua']=[[
@@ -36,6 +47,10 @@ for _,edition in ipairs(V.ORDER)do
  T.neq(b.playerPartyIndices,selected,'caller cannot mutate retained selection indices')
  T.eq(b:benchFor(true),b.playerParty,'native bench uses the actual selected roster')
  T.eq(#b:benchFor(true),2,'excluded healthy mon is not a replacement')
+ -- AI runs after real screen entry initializes native on-field sides; a
+ -- constructor's not-yet-entered empty side table is not an AI phase.
+ b:enter()
+ T.eq(b.sides[1].battlers[1],b.player,'actual enter initializes the selected on-field owner')
  local menu=b:buildScreen(require('src.battle.Gen4Battle').partyScreenId(b)or 'PartyMenu',
   {battle=b,onSwitch=function()end})
  local shown=type(menu.party)=='function'and menu:party()or menu.party
