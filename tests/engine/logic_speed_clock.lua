@@ -40,9 +40,13 @@ upvalue("ModLoader", {
     return { load = noop, status = noop }
   end,
 })
-for _, name in ipairs({ "Input", "TouchControls", "Renderer" }) do
+for _, name in ipairs({ "Input", "Renderer" }) do
   upvalue(name, { init = noop })
 end
+local skinHotkeyHandler
+upvalue('TouchControls', {init=noop, setHotkeyHandler=function(_, handler)
+  skinHotkeyHandler=handler
+end})
 upvalue("StateStack", { init = noop })
 upvalue("SaveData", {
   loadOptions = noop,
@@ -69,6 +73,7 @@ end
 T.eq(ok, false, "test stops at the intended boot boundary")
 T.eq(err, stop, "real Game:load reached FixedStep installation")
 T.eq(type(FixedStep.callback), "function", "native step callback captured")
+T.eq(type(skinHotkeyHandler), 'function', 'real boot wires the native skin hotkey owner')
 
 local logic, audio, tilt, pipeline, camera = 0, 0, 0, 0, 0
 module("src.pokemon.Gen4PoketchState", { tick = noop })

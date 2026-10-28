@@ -8432,6 +8432,7 @@ function BattleState:executeAction(user, target, action)
   if user.g4Gone then return end
   -- this battler's action is under way (Payback, Sucker Punch, Me First)
   user.actedTurn = self.turnCount
+  if GameVersion.isGen2() then require("src.battle.Gen2Protection").actionStarted(self, user) end
   if GameVersion.isGen3() and action.id and not action.special then
     require("src.battle.Gen3PostHitItems").markMoved(self, user)
   end
@@ -9160,7 +9161,13 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- FURY CUTTER and ROLLOUT double for each consecutive LANDING and reset
   -- the same way.  Both counters live on the user and are cleared here,
   -- which is the one place every move passes through.
-  if move.id ~= "PROTECT" and move.id ~= "DETECT" and move.id ~= "ENDURE" then
+  local keepsProtection = move.id == "PROTECT" or move.id == "DETECT" or move.id == "ENDURE"
+  if GameVersion.isGen2() then
+    -- GSC's counter belongs to the selected effect. A source mod may rename
+    -- Protect/Endure, or replace a move formerly carrying one of those IDs.
+    keepsProtection = move.effect == "PROTECT_EFFECT" or move.effect == "ENDURE_EFFECT"
+  end
+  if not keepsProtection then
     user.protectRun = nil
   end
   if user.rampMove and user.rampMove ~= move.id then

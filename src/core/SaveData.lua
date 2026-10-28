@@ -549,6 +549,8 @@ function SaveData.defaultOptions()
     -- layout (#633).  Pre-#633 files stored one top-level positions table;
     -- TouchControls.normalizeConfig folds it into both orientations on load.
     touchControls = { enabled = true },
+    haptics = "light",
+    hotbar = true,
     -- Where imported game data lives.  false = LOVE's save directory (the
     -- appdata folder); a string is an absolute folder the player chose in
     -- LAUNCHER SETTINGS.  See the game-data folder block above.
