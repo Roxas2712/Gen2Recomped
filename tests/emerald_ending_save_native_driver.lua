@@ -148,6 +148,11 @@ return function(game)
   assert(menu.items[menu.index].key=='continue','Automatic League save did not offer CONTINUE')
   U.wait(90);shot('native-emerald-league-continue-menu')
   local leagueSave=game.save;press('a')
+  if game.stack:top()==menu and menu.info then
+    assert(game.save==leagueSave,'Continue preview adopted the save before confirmation')
+    assert(Save.encode(menu.info.party)==Save.encode(durable.party),'Host Continue preview changed the party')
+    shot('native-emerald-league-continue-preview');press('a')
+  end
   for _=1,1200 do
     if game.stack:top()==game.overworld and game.save~=leagueSave then break end
     U.wait(1)
@@ -163,7 +168,7 @@ return function(game)
   shot('native-emerald-league-continue-bedroom')
   game.writeSave=actualWrite;Sound.playId=play
   report.automaticLeagueSave=true;report.failedWritesPreserveDisk=true;report.writeAttempts=attempts
-  report.saveSounds=saveSounds;report.originalTitleAndContinue=true;report.correctGenderBedroom=true
+  report.saveSounds=saveSounds;report.nativeTitleAndHostContinue=true;report.correctGenderBedroom=true
   report.status='pass';report.actualGameClearSpecial=true;report.fullImportedCreditRoll=true
   report.nativeHallPartyMembers=6;report.nativeHallConfetti=true;report.nativePlayerPortrait=true
   report.playerGender=game.save.player.gender
