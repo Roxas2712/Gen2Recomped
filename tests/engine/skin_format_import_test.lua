@@ -2,6 +2,17 @@
 -- GPLv3 + Section 7; see licenses/GEN1RECOMP-TOUCH-SKINS.md.
 package.path = "./?.lua;./?/init.lua;" .. package.path
 if not _G.love then _G.love = require("tests.love_stub") end
+-- The native general stub does not model mounts/FileData. These contracts use
+-- a dedicated memory archive fixture, rather than pretending to open ZIPs.
+love.filesystem = require('tests.skin_fs_fixture')()
+local newImage = love.graphics.newImage
+love.graphics.newImage = function(source)
+  if type(source)=='table' and source.contents then
+    return {getWidth=function() return 1 end,getHeight=function() return 1 end,
+      getDimensions=function() return 1,1 end,setFilter=function() end}
+  end
+  return newImage(source)
+end
 
 local T = require("tests.harness")
 local check, eq = T.check, T.eq

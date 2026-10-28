@@ -2115,7 +2115,8 @@ function Game:touchpressed(id, x, y, dx, dy, pressure)
   -- one opens a different screen before the finger is lifted.
   if not self.secondScreenInjecting and TouchControls.visible and TouchControls:visible()
      and TouchControls:hitTest(x,y) then
-    if TouchControls:touchpressed(id,x,y) then return end
+    if TouchControls:touchpressed(id,x,y)
+       or (TouchControls.touches and TouchControls.touches[id]) then return end
   end
   if modPointer(self, "pressed", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchpressed", id, x, y) then return end
