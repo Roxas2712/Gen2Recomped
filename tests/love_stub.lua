@@ -39,19 +39,22 @@ local gstate = { shader = nil, canvas = nil, blend = "alpha",
                  color = { 1, 1, 1, 1 } }
 local gstack = {}
 
+-- Real Quad methods are shared. Fresh closures per object make identical
+-- draw traces differ by method identity instead of viewport geometry.
+local function setQuadViewport(self, a, b, c, d, e, f)
+  self.x, self.y, self.w, self.h = a, b, c, d
+  self.sw, self.sh = e or self.sw, f or self.sh
+end
+local function getQuadViewport(self) return self.x, self.y, self.w, self.h end
+
 stub.graphics = {
   newImage = function(path)
     local w, h = pngSize(path)
     return setmetatable({ w = w, h = h, path = path }, Image)
   end,
   newQuad = function(x,y,w,h,sw,sh)
-    local quad={x=x,y=y,w=w,h=h,sw=sw,sh=sh}
-    function quad:setViewport(a,b,c,d,e,f)
-      self.x,self.y,self.w,self.h=a,b,c,d
-      self.sw,self.sh=e or self.sw,f or self.sh
-    end
-    function quad:getViewport()return self.x,self.y,self.w,self.h end
-    return quad
+    return {x=x,y=y,w=w,h=h,sw=sw,sh=sh,
+      setViewport=setQuadViewport,getViewport=getQuadViewport}
   end,
   newCanvas = function(w, h)
     return setmetatable({ w = w, h = h, setFilter = noop }, Image)

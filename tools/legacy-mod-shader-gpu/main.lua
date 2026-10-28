@@ -19,6 +19,7 @@ local function setup()
  -- main.lua installs this before loading any mod. Preserve that actual
  -- engine boundary instead of testing an uninstalled graphics subsystem.
  require('src.render.LegacyShaderCompat').install()
+ require('src.render.ShaderSpecialization').install()
  local precedingCompiler=g.newShader
  local T=require('tests.modkit');local Clip=require('src.render.ClipSpaceCompat')
  local pixel='vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return c;}'
