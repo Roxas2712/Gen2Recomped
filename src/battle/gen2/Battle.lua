@@ -6,13 +6,33 @@ local Model = {}
 local screens = setmetatable({}, { __mode = 'kv' })
 local ended = setmetatable({}, { __mode = 'k' })
 
+local function owner(model)
+  return assert(screens[model], 'native Gen2 model is not attached to a battle')
+end
+
 function Model.bind(model, screen)
   screens[model] = screen
+  -- Source GSC's LOVE-style view uses the current native function even if
+  -- link setup or a scoped native owner replaces it after this bind.
+  rawset(model, '_nativeLoveRng', function(lo, hi)
+    local rng = owner(model).rng
+    if hi == nil then return rng(math.max(1, lo or 1)) end
+    if hi < lo then lo, hi = hi, lo end
+    return rng(lo, hi)
+  end)
   return model
 end
 
-local function owner(model)
-  return assert(screens[model], 'native Gen2 model is not attached to a battle')
+function Model:roller()
+  owner(self)
+  local roller = rawget(self, '_nativeRoller')
+  if not roller then
+    -- Zero-based BattleRandom over the same existing stream. Keep the cache
+    -- on the transient model; a global value closure could root a weak key.
+    roller = function(n) return owner(self).rng(n) - 1 end
+    rawset(self, '_nativeRoller', roller)
+  end
+  return roller
 end
 
 local function active(screen, mon)

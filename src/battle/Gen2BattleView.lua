@@ -22,6 +22,8 @@ function View.bind(screen)
     enemyParty = function() return screen.enemyParty end,
     save = function() return screen.game.save end,
     data = function() return screen.data end,
+    rng = function() return rawget(screen.battle, '_nativeLoveRng') end,
+    random = function() return screen.battle:roller() end,
     wild = function() return screen.kind == "wild" end,
     playerIndex = function() return indexOf(partyOf(screen), screen.player and screen.player.mon) end,
     enemyIndex = function() return indexOf(screen.enemyParty, screen.enemy and screen.enemy.mon) end,
