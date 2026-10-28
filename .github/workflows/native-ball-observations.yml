@@ -8,6 +8,7 @@ on:
       - 'src/battle/BattleState.lua'
       - 'src/battle/Gen3Battle.lua'
       - 'src/core/game3/battle/ball_open.lua'
+      - 'src/core/game3/battle/ball_open_phase.lua'
       - 'src/core/game3/battle/intro_seq.lua'
       - 'src/core/game3/battle/anim.lua'
       - 'src/core/game3/battle/sendout_tween.lua'
@@ -16,6 +17,7 @@ on:
       - 'tests/engine/native_ball_battler_presentation.lua'
       - 'tests/engine/native_ball_opening_projection.lua'
       - 'tests/engine/native_player_sendout_phases.lua'
+      - 'tests/engine/native_ball_open_notification.lua'
       - 'tests/engine/native_ball_intro_phase.lua'
       - 'tests/engine/native_ball_effect_layer.lua'
       - 'src/import/Gen3BallSendOutProfile.lua'
@@ -40,6 +42,7 @@ jobs:
           luajit tests/engine/native_ball_battler_presentation.lua
           luajit tests/engine/native_ball_opening_projection.lua
           luajit tests/engine/native_player_sendout_phases.lua
+          luajit tests/engine/native_ball_open_notification.lua
           luajit tests/engine/native_sendout_tween_admission.lua
           luajit tests/engine/native_sendout_tween.lua
           luajit tests/engine/native_ball_intro_phase.lua
