@@ -5,10 +5,11 @@ local versions={ruby=true,sapphire=true,emerald=true,firered=true,leafgreen=true
 local roles={gText_PkmnIsEvolving='evolving',gText_CongratsPkmnEvolved='congratulations',gText_PkmnStoppedEvolving='stopped'}
 function M.available(game,mon,target)
  local v=require('src.core.GameVersion').get();local d=game and game.data;local c=d and d.constants
- local text=c and c.gen3Evolution;local panel=c and c.gen3BattleTextbox;local bg=c and c.gen3BattleTerrain
+ local text=c and c.gen3Evolution;local rs=v=='ruby'or v=='sapphire'
+ local panel=c and(rs and c.gen3RsBattlePanel or c.gen3BattleTextbox);local bg=c and c.gen3BattleTerrain
  if not(versions[v]and type(text)=='table'and type(panel)=='table'and type(panel.images)=='table'
   and type(panel.images.message)=='string'and type(bg)=='table'and type(bg.images)=='table'
-  and type(bg.images.BUILDING)=='string')then return false end
+  and type(bg.images.BUILDING)=='string'and(not rs or panel.version==v))then return false end
  for _,key in pairs(roles)do if type(text[key])~='string'or text[key]==''then return false end end
  return mon and d.pokemon[mon.species]and type(d.pokemon[mon.species].index)=='number'
   and d.pokemon[target]and type(d.pokemon[target].index)=='number'or false
@@ -68,7 +69,8 @@ function M.new(game,raw,target,onDone,via,evo)
   love.graphics.setColor(1,1,1,1);love.graphics.draw(require('src.render.Assets').image(data.constants.gen3BattleTerrain.images.BUILDING),0,0)
  end
  function chrome.drawPanel()
-  local rec=data.constants.gen3BattleTextbox;local frame=(game.save.options or{}).gen3Frame or 1
+  local rec=(version=='ruby'or version=='sapphire')and data.constants.gen3RsBattlePanel or data.constants.gen3BattleTextbox
+  local frame=(game.save.options or{}).gen3Frame or 1
   local path=rec.frameImages and rec.frameImages[frame]and rec.frameImages[frame].message or rec.images.message
   love.graphics.setColor(1,1,1,1);love.graphics.draw(require('src.render.Assets').image(path),0,112)
  end
