@@ -4,11 +4,11 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Independent Python integer FNV audits the combined revision 26 stream,
--- retaining main's edition-specific secondary command and NDS surfaces.
+-- Independent Python integer FNV audits revision 27 while preserving
+-- edition-specific secondary commands and the separate NDS surfaces.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "ed48736806f1e02c"
-local EMERALD_NATIVE = "524ff88d849b1641"
+local NATIVE = "78dbbb41ed15c325"
+local EMERALD_NATIVE = "fb32852c3ce04be0"
 local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
 for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgreen", "emerald", "platinum", "diamond", "firered", "black", "gold" }) do
   V.set(version)
@@ -22,7 +22,7 @@ for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgr
     gba and expectedNative or nds and NDS[generation] or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 26 or nds and ("nds-" .. generation .. "-1") or nil,
+  T.eq(F.nativeBattleRevision(), gba and 27 or nds and ("nds-" .. generation .. "-1") or nil,
     "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
@@ -53,13 +53,20 @@ for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgr
   end
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision = 23
-    previous.fingerprint = version == "emerald" and "a7ffeef827cf59b4" or "1e7b593d0cbd1d69"
-    T.eq(H.checkCompat(current, previous), "subset", "previous native command rules cannot admit lockstep")
-    T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "Faint friendship rules retain the native party codec")
+    previous.nativeBattleRevision, previous.fingerprint = 26,
+      version == "emerald" and "524ff88d849b1641" or "ed48736806f1e02c"
+    local older = Copy(current)
+    older.nativeBattleRevision, older.fingerprint = 23,
+      version == "emerald" and "a7ffeef827cf59b4" or "1e7b593d0cbd1d69"
+    local oldest = Copy(current)
+    oldest.nativeBattleRevision, oldest.fingerprint = 22, "0532b5c0de70029c"
+    for _, peer in ipairs({ previous, older, oldest }) do
+      T.eq(H.checkCompat(current, peer), "subset", "previous native rules cannot admit lockstep")
+      T.eq(H.checkCompat(peer, current), "subset", "native rule mismatch is symmetric")
+    end
+    T.eq(current.nativePartyRevision, 1, "round initialization retains the native party codec")
     for _, host in ipairs({ false, true }) do
-      for _, peer in ipairs({ legacy, previous }) do
+      for _, peer in ipairs({ legacy, previous, older, oldest }) do
         local state = setmetatable(
           { game = game, myHello = current, peerHello = peer },
           { __index = require("src.link.LinkState") }
