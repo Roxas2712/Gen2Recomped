@@ -66,18 +66,20 @@ def main():
    identity='oasc-gen2recomp-qa-ios-runtime-'+token+'-'+variant
    command(variant+'-build',['xcodebuild','-project',source/'platform/xcode/love.xcodeproj','-target','love-ios',
      '-configuration','Release','-sdk','iphonesimulator','-destination','generic/platform=iOS Simulator',
-     'SYMROOT='+str(out/'products'/variant),'OBJROOT='+str(out/'objects'/variant),
+     'SYMROOT='+str(out/'products'),'OBJROOT='+str(out/'objects'),
      'CODE_SIGNING_ALLOWED=NO','CODE_SIGNING_REQUIRED=NO','CODE_SIGN_IDENTITY=',
      'ONLY_ACTIVE_ARCH=YES','ARCHS='+arch,'PRODUCT_BUNDLE_IDENTIFIER='+package,
      'OTHER_LDFLAGS=$(inherited) -Wl,-export_dynamic'],timeout=1800)
-   apps=list((out/'products'/variant).rglob('*.app'));assert len(apps)==1
+   apps=list((out/'products').rglob('*.app'));assert len(apps)==1
    app=apps[0];payload=app/'game.love'
    with zipfile.ZipFile(payload,'w',zipfile.ZIP_DEFLATED) as z:
     for name,path in probes.items():z.write(path,name)
     z.writestr('config.lua',f'return {{capacity={capacity},identity="{identity}",platform="ios",arch="{lua_arch}",jit=false}}\n')
-    z.writestr('conf.lua',f'function love.conf(t) t.identity="{identity}";t.version="12.0";t.window=false;t.modules.graphics=false;t.modules.audio=false;t.modules.joystick=false;t.modules.physics=false end\n')
+    z.writestr('conf.lua',f'function love.conf(t) t.identity="{identity}";t.version="12.0";t.window.width=128;t.window.height=128;t.modules.audio=false;t.modules.joystick=false;t.modules.physics=false end\n')
+   command(variant+'-sign',['codesign','--force','--deep','--sign','-','--timestamp=none',app])
    sim(variant+'-install','install',udid,app)
-   sim(variant+'-start','launch',udid,package)
+   console=(out/(variant+'-console.log')).open('w')
+   launcher=subprocess.Popen(['xcrun','simctl','launch','--console',udid,package],stdout=console,stderr=subprocess.STDOUT)
    container=Path(sim(variant+'-container','get_app_container',udid,package,'data'))
    deadline=time.monotonic()+180;result=None
    while time.monotonic()<deadline:
@@ -86,8 +88,14 @@ def main():
      try:result=json.loads(paths[0].read_text())
      except json.JSONDecodeError:pass
      else:break
+    if launcher.poll() is not None:break
     time.sleep(2)
-   assert result and result.get('passed') is True,result
+   if launcher.poll() is None:launcher.terminate()
+   launcher.wait(timeout=30);console.close()
+   sim(variant+'-system-log','spawn',udid,'log','show','--style','compact','--last','3m','--predicate','process == "love"',timeout=120)
+   sim(variant+'-screenshot','io',udid,'screenshot',out/(variant+'-screen.png'))
+   if not result or result.get('passed') is not True:
+    raise RuntimeError('iOS app host gate failed: '+str(result)+'\n'+(out/(variant+'-console.log')).read_text()[-9000:])
    assert result['capacity']==capacity and result['identity']==identity and result['arch']==lua_arch
    assert result['jitActive'] is False and result['closureReport']['interpreterOnly'] is True
    for key in ('cApiPassed','ffiCallbackPassed','threadVmPassed','filesystemPassed'):assert result.get(key) is True,key

@@ -3,9 +3,7 @@ local config = require('config')
 local Json = require('src.link.Json')
 local function publish(value)
   value.capacity, value.identity, value.schema = config.capacity, config.identity, 1
-  local file = assert(io.open(love.filesystem.getSaveDirectory() .. '/runtime-capacity-result.json', 'wb'))
-  assert(file:write(Json.encode(value)))
-  assert(file:close())
+  assert(love.filesystem.write('runtime-capacity-result.json', Json.encode(value)))
 end
 function love.load()
   local major, minor = love.getVersion()
@@ -15,6 +13,7 @@ function love.load()
   assert(jit.arch == config.arch, 'wrong target architecture: ' .. jit.arch)
   assert(jit.status() == config.jit, 'unexpected JIT availability')
   local closureReport
+  print('MOBILE_RUNTIME_PHASE', 'closures', config.capacity, jit.arch)
   local previousPrint, previousArg = print, arg
   print = function(line, ...)
     if type(line) == 'string' and line:sub(1,17) == 'RUNTIME_UPVALUES ' then
@@ -27,11 +26,17 @@ function love.load()
   print, arg = previousPrint, previousArg
   assert(ok, why)
   assert(closureReport and closureReport.passed and closureReport.minimum == config.capacity)
+  print('MOBILE_RUNTIME_PHASE', 'c-api')
+  local callbackJit = jit.status()
+  -- FFI callbacks must enter from an interpreter frame, including callers.
+  if callbackJit then jit.off(); jit.flush() end
   assert(love.filesystem.load('host-c-api.lua'))()(config.capacity, config.platform)
   local ffi = require('ffi')
   local callback = ffi.cast('double(*)(double)', function(value) return value + .5 end)
   assert(callback(2.25) == 2.75, 'actual host FFI callback failed')
   callback:free()
+  if callbackJit then jit.on() end
+  print('MOBILE_RUNTIME_PHASE', 'thread')
   local channel = love.thread.newChannel()
   local worker = love.thread.newThread('thread.lua')
   worker:start(channel, config.capacity)
@@ -40,6 +45,7 @@ function love.load()
     worker:getError() or 'actual host thread VM did not complete')
   worker:wait()
   assert(not worker:getError(), worker:getError())
+  print('MOBILE_RUNTIME_PHASE', 'filesystem')
   assert(love.filesystem.write('filesystem-probe.txt', config.identity))
   assert(love.filesystem.read('filesystem-probe.txt') == config.identity)
   publish({passed=true, loveVersion={major,minor}, arch=jit.arch, jitActive=jit.status(),

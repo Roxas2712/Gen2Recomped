@@ -188,7 +188,7 @@ def main():
                 raise ValueError('Refuse to replace an existing app, even in the test namespace')
             installed = False
             try:
-                device(variant+'-install', ['install', '--abi', abi, str(apk)])
+                device(variant+'-install', ['install', '-g', '--abi', abi, str(apk)])
                 installed = True
                 device(variant+'-start', ['shell', 'am', 'start', '-W', '-n', package+'/org.love2d.android.GameActivity'])
                 deadline = time.monotonic()+180
@@ -227,8 +227,10 @@ def main():
                 print(variant, capacity, 'ANDROID LOVE/JNI/THREAD/FFI PASS', flush=True)
             finally:
                 if installed:
-                    device(variant+'-device-log', ['logcat', '-d', '-t', '300',
-                           '-s', 'SDL', 'love', 'AndroidRuntime', 'GameActivity'], required=False)
+                    device(variant+'-device-log', ['logcat', '-d', '-t', '1000'], required=False)
+                    device(variant+'-crash-log', ['logcat', '-b', 'crash', '-d'], required=False)
+                    with (output/(variant+'-screen.png')).open('wb') as screen:
+                        run([str(adb),'-s',args_serial,'exec-out','screencap','-p'],stdout=screen,timeout=30)
                     device(variant+'-stop', ['shell', 'am', 'force-stop', package], required=False)
                     device(variant+'-uninstall', ['uninstall', package])
         report = {'appBuildReportSha256': manifest_hash, 'results': results,

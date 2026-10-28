@@ -74,5 +74,6 @@ jobs:
             ${{ runner.temp }}/android-love/candidate/*.apk
             ${{ runner.temp }}/android-love-execution/candidate/*.json
             ${{ runner.temp }}/android-love-execution/candidate/*.log
+            ${{ runner.temp }}/android-love-execution/candidate/*.png
           if-no-files-found: warn
           retention-days: 7

@@ -1,6 +1,27 @@
 name: Mobile extended Lua qualification
 on:
   workflow_dispatch:
+    inputs:
+      engine_ref:
+        description: Committed engine revision matching the frozen preview payload
+        type: string
+        default: 90a3b093e62d85440d0a1b8288e30e0caf3cc358
+        required: true
+      payload_asset_id:
+        description: Public preview payload asset in this fork
+        type: string
+        default: '686181921'
+        required: true
+      payload_sha256:
+        description: SHA-256 of the frozen preview payload
+        type: string
+        default: e4541d2dfff3dc59ad173a466342bb2be3a712f8d59292241a27bac9015df04f
+        required: true
+      engine_version:
+        description: Version embedded in the frozen preview payload
+        type: string
+        default: 0.8.57
+        required: true
 permissions:
   contents: read
 jobs:
@@ -13,7 +34,7 @@ jobs:
           path: tools-source
       - uses: actions/checkout@v7
         with:
-          ref: 90a3b093e62d85440d0a1b8288e30e0caf3cc358
+          ref: ${{ inputs.engine_ref }}
           path: engine
       - uses: actions/setup-python@v6
         with:
@@ -24,10 +45,14 @@ jobs:
       - name: Fetch the frozen engine payload and pinned Lua source
         env:
           GH_TOKEN: ${{ github.token }}
+          PAYLOAD_ASSET_ID: ${{ inputs.payload_asset_id }}
+          PAYLOAD_SHA256: ${{ inputs.payload_sha256 }}
         run: |
           set -euo pipefail
-          gh api repos/Roxas2712/Gen2Recomped/releases/assets/686181921 -H 'Accept: application/octet-stream' > "$RUNNER_TEMP/game.love"
-          python3 -c 'import hashlib,os,pathlib; assert hashlib.file_digest((pathlib.Path(os.environ["RUNNER_TEMP"])/"game.love").open("rb"),"sha256").hexdigest()=="e4541d2dfff3dc59ad173a466342bb2be3a712f8d59292241a27bac9015df04f"'
+          [[ "$PAYLOAD_ASSET_ID" =~ ^[0-9]+$ ]]
+          [[ "$PAYLOAD_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          gh api "repos/Roxas2712/Gen2Recomped/releases/assets/$PAYLOAD_ASSET_ID" -H 'Accept: application/octet-stream' > "$RUNNER_TEMP/game.love"
+          python3 -c 'import hashlib,os,pathlib; assert hashlib.file_digest((pathlib.Path(os.environ["RUNNER_TEMP"])/"game.love").open("rb"),"sha256").hexdigest()==os.environ["PAYLOAD_SHA256"]'
           git init "$RUNNER_TEMP/luajit"
           git -C "$RUNNER_TEMP/luajit" remote add origin https://github.com/LuaJIT/LuaJIT.git
           git -C "$RUNNER_TEMP/luajit" fetch --depth 1 origin a4c064539ea931274d407e1249b4bb575424a0f4
@@ -37,7 +62,8 @@ jobs:
         env:
           LOVE_SOURCE_REF: 937eb3b21f973607ab080aa26b7ef2a6b3b2b663
           APPLE_DEPENDENCIES_REF: a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e
-        run: bash scripts/build_ios.sh --fetch --package-only --game-love "$RUNNER_TEMP/game.love" --version 0.8.57
+          ENGINE_VERSION: ${{ inputs.engine_version }}
+        run: bash scripts/build_ios.sh --fetch --package-only --game-love "$RUNNER_TEMP/game.love" --version "$ENGINE_VERSION"
       - name: Build all device and simulator Lua slices
         run: >-
           python3 tools-source/tools/mobile-runtime-check/build_ios.py
@@ -57,5 +83,6 @@ jobs:
             ${{ runner.temp }}/ios-runtime/artifacts/
             ${{ runner.temp }}/ios-host/report.json
             ${{ runner.temp }}/ios-host/*.log
+            ${{ runner.temp }}/ios-host/*.png
           if-no-files-found: error
           retention-days: 14
