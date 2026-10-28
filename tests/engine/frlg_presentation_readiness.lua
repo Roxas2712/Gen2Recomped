@@ -2,6 +2,11 @@ package.path='./?.lua;./?/init.lua;'..package.path
 love=require('tests.love_stub');local T=require('tests.harness')
 local M=require('src.import.Gen3FrlgPresentation');local F=require('src.import.CacheFs')
 local Hall=require('src.import.Gen3FrlgHallAssets')
+-- Native credits have their own resource-corruption suite. Keep this boot
+-- fixture focused while checking that its readiness is composed here.
+local Credits=require('src.import.Gen3FrlgCreditsAssets');local creditsMissing=Credits.missing
+local creditsReady=true
+Credits.missing=function(version)return creditsReady and version=='leafgreen'and{}or{'<frlg:native-credits>'}end
 local Writer=require('src.import.LuaWriter');local oldRead,oldExists=F.read,F.exists
 local c={gen3SongNames={names={[321]='GAME_FREAK',[277]='INTRO_FIGHT',[278]='TITLE'}}}
 for group,keys in pairs(M.IMAGES)do
@@ -29,7 +34,8 @@ F.read=function(path)
 end
 F.exists=function()return true end
 T.eq(#M.missing('leafgreen'),0,'complete native LeafGreen replaces generic boot/summary requirements')
-T.eq(#M.missing('firered'),7,'wrong title, menu, trainer, Hall and three frame identities cannot be accepted as FireRed')
+T.eq(#M.missing('firered'),8,'wrong title, menu, trainer, Hall, credits and three frame identities cannot be accepted as FireRed')
+creditsReady=false;T.eq(#M.missing('leafgreen'),1,'original credits readiness is mandatory');creditsReady=true
 c.gen3FRLGTitle.images.streak=nil
 T.eq(#M.missing('leafgreen'),1,'LeafGreen requires its own streak image')
 c.gen3FRLGTitle.images.streak='assets/generated/streak.png'
@@ -55,6 +61,7 @@ T.check(#M.missing('leafgreen')>50,'malformed metadata fails readiness without r
 F.read=function()return 'this is not Lua'end
 T.eq(M.missing('leafgreen')[1],'data/generated/constants.lua','unreadable metadata fails closed')
 F.read,F.exists=oldRead,oldExists
+Credits.missing=creditsMissing
 local contract=require('src.import.RomImporter').datasetContract('leafgreen')
 local legacy=false;for _,key in ipairs(contract.modules)do if key=='scenes'then legacy=true end end
 T.eq(legacy,false,'LeafGreen no longer requests a classic scenes module')
