@@ -2610,7 +2610,12 @@ function BattleState:beginMsgLine()
 end
 
 function BattleState:stepGen3Ball(anim)
+  local before = anim.phase
   anim:update()
+  if before ~= "release" and anim.phase == "release" then
+    local source = GameVersion.isGen3() and package.loaded['src.core.game3.battle.anim']
+    if source then source._nativeBallOpen(self, anim) end
+  end
   if anim.sound then
     require("src.core.Sound").playId(self.data, anim.sound)
   end
