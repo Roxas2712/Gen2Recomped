@@ -12786,8 +12786,8 @@ Gen3Commands.SPECIALS[275] = function(ctx)
   -- dataset with no SS Tidal table falls straight through it.
   local ceremony = okHof and game and game.stack
                    and Gen3HallOfFame.new(game, function(ending)
-                         if ending and(ending.nativeRsSaved or ending.nativeEmeraldSaved)then
-                           -- The original RS ending resets after THE END.
+                         if ending and(ending.nativeRsSaved or ending.nativeEmeraldSaved or ending.nativeFrlgSaved)then
+                           -- The original GBA endings reset after THE END.
                            -- Retire this exact suspended script rather than
                            -- running the old home/gift callback behind title.
                            if runner and runner.cancelOwned then runner:cancelOwned(ctx,leagueCoroutine,true)end

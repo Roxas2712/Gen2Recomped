@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-206 files. Four further byte-exact files supply the native RS credits
+208 files. Four further byte-exact files supply the native RS credits
 controller, scenery selection and exact-edition credits extractor. Four more
 supply Hall of Fame presentation, art decoding and the RS text policy. One more
 supplies the original RS options controller and rendering over host-owned settings. The existing GBA
@@ -182,6 +182,12 @@ The controller, font, windows, PPU and isolated RNG reuse the existing byte-exac
 sources. Each verified cartridge supplies its own original labels, normal/small
 fonts, ten frames, egg/Red/Leaf portraits and separate bands/stripes/confetti.
 `frlg-native-hall-v1` rejects stale approximate FR/LG caches. The native display
-currently retains the existing host induction/ending ownership: enabling the
-original League save transaction and accepting the full reset/CONTINUE flow
-remain separate work.
+retains host induction and atomic IO ownership. The original League saving
+phase, write-failure retry, title reset and native Pallet CONTINUE are now
+covered separately in `docs/qa/frlg-league-save.md`.
+The original FR/LG credits now reuse the same private font/cache/audio bindings
+and exact reference controller, with 66 commands, thirteen cartridge map pans,
+original circle/ball/pose artwork, player/rival sheets and closing cards.
+Its loader-local graphics proxy composes the native WIN0 and fade over private
+map views without moving the live world or altering the save. See
+`docs/qa/frlg-original-credits.md`; ordinary complete FR/LG stories remain separate.
