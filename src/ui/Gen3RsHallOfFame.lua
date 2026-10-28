@@ -46,7 +46,12 @@ function M.new(game,onDone)
         return gender=='male'and'M'or gender=='female'and'F'or nil
       end,
       monFrontPic=function(mon)
-        local r=row(mon.species);local path=require('src.pokemon.Sprites').path(data,r.id,'front',{mon=mon._hostMon})
+        local raw=mon._hostMon
+        if raw and(raw.isEgg or raw.egg)then
+          local f=assert(love.filesystem.load(data.constants.gen3RsSummary.extras));setfenv(f,{})
+          return{image=require('src.render.Assets').image(assert(f().egg))}
+        end
+        local r=row(mon.species);local path=require('src.pokemon.Sprites').path(data,r.id,'front',{mon=raw,kind='hof'})
         return path and{image=require('src.render.Assets').image(path)}or nil
       end},
   }
