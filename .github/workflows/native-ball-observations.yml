@@ -6,6 +6,9 @@ on:
       - 'src/import/RomExtractorGen3.lua'
       - 'src/import/RomImporter.lua'
       - 'src/battle/BattleState.lua'
+      - 'src/battle/Gen3Battle.lua'
+      - 'src/core/game3/battle/ball_open.lua'
+      - 'tests/engine/native_ball_effect_layer.lua'
       - 'src/import/Gen3BallSendOutProfile.lua'
       - 'tests/engine/native_ball_sendout_import.lua'
       - 'src/core/game3/battle/stage.lua'
@@ -25,6 +28,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Actual native clocks, stage and capture identity
         run: |
+          luajit tests/engine/native_ball_effect_layer.lua
           luajit tests/engine/native_ball_sendout_import.lua
           luajit tests/engine/native_ball_flight_observations.lua
           luajit tests/engine/native_battle_stage.lua
