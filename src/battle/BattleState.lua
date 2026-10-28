@@ -2815,6 +2815,15 @@ function BattleState:updateQueuePresentation(textOnly)
   return false
 end
 
+function BattleState:runQueueAction(item)
+  self.nextInsert=0
+  item.fn()
+  self.nextInsert=nil
+  self.current=nil
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeFinish(self,item)end
+end
+
 -- Queue completion is part of the Gen2 admission boundary: observers see the
 -- decision phase on return, after every native presentation gate has released.
 -- Other generations retain completion at their existing outer update owner.
@@ -2858,10 +2867,18 @@ function BattleState:advanceQueue()
     return false
   end
   if item.fn then
-    self.nextInsert = 0 -- sayNext inserts right after this item
-    item.fn()
-    self.nextInsert = nil
-    self.current = nil
+    local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+    if sequence and item._sourceSwitchStep then
+      local consumed=false
+      local ok,why=pcall(sequence._nativeStep,self,item,function()
+        consumed=true
+        self:runQueueAction(item)
+        return true
+      end)
+      -- A held or failing source callback cannot discard a native action.
+      if not consumed then table.insert(self.queue,1,item)end
+      if not ok then error(why,0)end
+    else self:runQueueAction(item)end
     return true
   end
   if item.ui then
@@ -4159,6 +4176,8 @@ end
 -- any pop (finish, script teardown) must silence the alarm loop
 -- (end_of_battle.asm clears wLowHealthAlarm when a battle ends)
 function BattleState:exit()
+  local sequence=package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeRelease(self)end
   require('src.battle.Gen3LevelUpStreaks').release(self)
   if self.rsBattlePanel then self.rsBattlePanel:release();self.rsBattlePanel=nil end
   -- Teachy TV temporarily replaces the player's party exactly like
@@ -6305,6 +6324,7 @@ function BattleState:switchPlayerInto(pos, newMon)
   self:markParticipant()
   self.sendingOut = true
   self:sayNext(self:sendOutText(incoming.name))
+  local sendMessage=self.queue[self.nextInsert]
   self:animNext("POOF_ANIM", false)
   self:shinyAnim(incoming, false)
   self:actNext(function()
@@ -6314,9 +6334,12 @@ function BattleState:switchPlayerInto(pos, newMon)
     require("src.core.Sound").playCry(self.data, incoming.mon.species)
     HeldItems.onEntry(self, incoming)
   end)
+  local sendEntry=self.queue[self.nextInsert]
   -- ABILITYEFFECT_ON_SWITCHIN, after the send-out and its cry: an
   -- INTIMIDATE drops the foe's attack now, before the free move below
   self:actNext(function() self:abilitySwitchIn(incoming) end)
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
+  if sequence then sequence._nativeBind(self,pos,sendMessage,sendEntry,self.queue[self.nextInsert])end
   return incoming
 end
 
