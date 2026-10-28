@@ -29,6 +29,7 @@ jobs:
           luajit tests/engine/gen2_sfx_arbitration.lua
           luajit tests/engine/gen2_sleep_turns.lua
           luajit tests/engine/gen2_sleep_checkpoint.lua
+          luajit tests/engine/gen2_sleep_cures.lua
       - name: Existing command, object and background owners
         run: |
           luajit tests/engine/gen2_object_runtime.lua
