@@ -30,8 +30,8 @@ save/RNG immutability. Both Ruby and Sapphire passed on component runtime
 `bf807e5a4362d0030a91d297406b1c34a1a0c717`. Fresh full imports and the same
 complete native checks also passed on integrated runtime
 `7fcf9e76367b806a88105d235e86da2cec773bcf`, based on public main
-`87b90834558c8dfced863bd45aa5c93ce79edfaa`. The final head adds documentation
-only. Five focused integrated contract groups pass 690 assertions, including
+`87b90834558c8dfced863bd45aa5c93ce79edfaa`. Subsequent changes add documentation
+and CI comparison expectations without changing that runtime. Five focused integrated contract groups pass 690 assertions, including
 the current native battle revision 27 and the existing item-round regression.
 
 This is credits presentation acceptance in prepared fixtures. The ordinary
@@ -40,3 +40,12 @@ previous credits, home SAVE and unchanged CONTINUE before this change.
 It is not a replay of the story with the new movie. Hoenn Hall of Fame
 fly-in/confetti/player portrait, the native ending save/title flow, Emerald's
 movie and the other games' full-story coverage remain separate work.
+
+The integrated CI matrix also exposes two older reference gaps outside credits:
+major status after a caller faints, and neutral Spit Up against Wonder Guard.
+The documented cartridge completion oracle keeps complete comparisons while
+correcting those exact expectations. Rechecking all raw failed CI rows against
+the original commands accepts both editions: 120 faint rows and 24 Spit Up rows
+per edition. Fifteen oracle unit tests cover the original secondary rules,
+these corrections, retained raw reporting and rejection of unrelated drift.
+This does not claim equality with the older reference bugs.
