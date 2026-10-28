@@ -156,6 +156,33 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','
  if mode~='replacement'then T.eq(b.species,target.mon.species,mode..' commits resolved native visual identity')end
  T.eq(b.mon.species,species,mode..' retains saved species')
 end
+-- Crystal loads a transformed actor into vTiles0 first; updateactorpic later
+-- publishes it. Synthetic old caches/GS keep the previous direct command.
+for _,side in ipairs({'player','enemy'})do
+ local s,b,target,row=make('crystal',side,'transform')
+ s.data.battle_anims.pictureArt={version=1,stagedActorPic=true}
+ s.data.battle_anims.scripts[1].code={
+  {op='transform'},{op='delay',frames=3},{op='updateactorpic'},
+  {op='delay',frames=3},{op='ret'},
+ }
+ local old=s:picImage(b.sprite)
+ Effects.TRANSFORM_EFFECT(s,b,target)
+ local replacement=b.sprite
+ s:updateQueue();local r=s.anim
+ s:updateQueue()
+ T.eq(r.actorPic[side],'transform','Crystal stages actual transformed actor tiles')
+ T.eq(r.picOverride[side],nil,'staging has not repainted the real BG slot')
+ T.eq(s:battlerPic(b),old,'native picture pin survives the staging command')
+ local frames=0
+ while r.picOverride[side]~='transform'and frames<100 do
+  T.eq(s:battlerPic(b),old,'all waiting frames retain previous native picture')
+  s:updateQueue();frames=frames+1
+ end
+ T.check(frames>0 and frames<100,'native copy command is reached')
+ T.eq(s:battlerPic(b),s:picImage(replacement),'copy command reveals actual transformed actor')
+ T.eq(b.species,target.mon.species,'shown species commits at actual copy command')
+ T.eq(#s._gen2PictureChanges,0,'copy command retires the pin exactly once')
+end
 for _,disabled in ipairs({false,true})do
  local s,b,target,row=make('crystal','player','transform')
  local initial=s:picImage(b.sprite)
