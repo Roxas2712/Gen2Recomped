@@ -71,6 +71,8 @@ function Gen3HallOfFame.new(game, onDone)
   if record.frlg then
     return require("src.ui.Gen3HallOfFameFRLG").new(game, record, onDone)
   end
+  local Rs=require('src.ui.Gen3RsHallOfFame')
+  if Rs.available(game)then return Rs.new(game,onDone)end
   local self = setmetatable({}, Gen3HallOfFame)
   self.game = game
   self.onDone = onDone
