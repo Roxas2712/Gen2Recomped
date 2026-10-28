@@ -1056,6 +1056,29 @@ function Game:toggleFrameProfile()
   return FrameProfile.toggle()
 end
 
+-- Source Game2 queries use the native Gen2 chrome's coordinate contract.
+-- These are observations only: do not resize a canvas or change the active
+-- compositor, skin rectangle, renderer scale or cartridge on a query.
+function Game:frameFit(w, h)
+  local chrome = require('src.ui.Gen2Chrome')
+  local scale = chrome.fitScale(w, h)
+  local x, y = chrome.fitOrigin(w, h, scale)
+  local window = love and love.window
+  local dpi = window and window.getDPIScale and tonumber(window.getDPIScale()) or 1
+  local pw, ph = GameViewport.pixelDimensions()
+  return scale, x, y, dpi, pw, ph
+end
+
+function Game:viewport(w, h)
+  local scale, x, y, dpi = self:frameFit(w, h)
+  return {
+    width=w, height=h, gameX=x, gameY=y,
+    gameWidth=160*scale, gameHeight=144*scale,
+    scale=scale, dpiX=dpi, dpiY=dpi,
+  }
+end
+
+
 function Game:_draw()
   -- the UI canvas clears transparent when the overworld's world pass
   -- shows through beneath it; opaque full-screen states get the classic
