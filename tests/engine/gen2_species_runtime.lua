@@ -72,6 +72,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
     daycare={mon=legacy(25),breed={{mon=legacy(132)},{mon=legacy(29)},egg=legacy(175)}},
     player={name='TEST',id=17,map='FIX_TOWN',x=1,y=1},flags={},
     hallOfFame={{{species='SPECIES_155',level=5}}},
+    g2SecondMonBackup={legacy(152)},g2BugContest={party={legacy(158)}},
     g2PokeonlySpecies='SPECIES_155',g2Roam={RAIKOU={speciesId='SPECIES_243',hp=7}},
     pokedex={seen={SPECIES_155=true,CYNDAQUIL=false},owned={SPECIES_133=true}}}
   local encoded=Save.encode(s);local restored=assert(Save.decode(encoded))
@@ -83,6 +84,8 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   T.eq(restored.daycare.breed[2].mon.species,'NIDORAN_F')
   T.eq(restored.daycare.breed.egg.species,'TOGEPI')
   T.eq(restored.hallOfFame[1][1].species,'CYNDAQUIL')
+  T.eq(restored.g2SecondMonBackup[1].species,'CHIKORITA')
+  T.eq(restored.g2BugContest.party[1].species,'TOTODILE')
   T.eq(restored.g2Roam.RAIKOU.speciesId,'RAIKOU');T.eq(restored.g2Roam.RAIKOU.hp,7)
   T.eq(restored.g2PokeonlySpecies,'CYNDAQUIL')
   T.eq(restored.pokedex.seen.CYNDAQUIL,true);T.eq(restored.pokedex.seen.SPECIES_155,nil)

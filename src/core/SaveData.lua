@@ -2226,6 +2226,13 @@ function SaveData.validate(save, data)
   for b, box in ipairs(save.boxes or {}) do
     scrubMonList(box, "box " .. b, save, data, report, Boxes.capacity())
   end
+  if GameVersion.isGen2() then
+    scrubMonList(save.g2SecondMonBackup,"held party",save,data,report)
+    local contest=type(save.g2BugContest)=='table'and save.g2BugContest
+    if contest then
+      scrubMonList(contest.party,"contest held party",save,data,report)
+    end
+  end
   local daycare = save.daycare
   if type(daycare) == "table" and type(daycare.mon) == "table" then
     if not known(data.pokemon, daycare.mon.species) then
