@@ -61,7 +61,7 @@ function Model:effectiveSpeed(mon)
   return require('src.battle.TurnOrder').effectiveSpeed(assert(active(owner(self),mon)),owner(self))
 end
 function Model:movePriority(id)
-  return (self:moveDef(id)or {}).priority or 0
+  return require('src.battle.Gen2MovePriority').get(self:moveDef(id))
 end
 function Model:markMissed()
   return owner(self):markMissed()
