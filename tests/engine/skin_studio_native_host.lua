@@ -44,6 +44,8 @@ local host=setmetatable({tab='crystal',ready={crystal=true},_padCursor={x=90,y=8
 Importer.new=function(_,opts)options=opts;return host end
 open(false);Importer.new=oldNew
 T.check(type(options.onEditTouchSkins)=='function','native launcher actually supplies studio action')
+local oldGameActions=0
+require('src.core.TouchControls'):setHotkeyHandler(function()oldGameActions=oldGameActions+1 end)
 options.onEditTouchSkins()
 local Studio=require('src.ui.SkinStudio')
 local Skin=require('src.core.TouchSkin')
@@ -118,6 +120,17 @@ T.check(Input:isDown('a'),'Test input uses actual mock-device coordinates')
 T.eq(Skin.surfaceRect,nil,'Test input restores outer skin surface')
 Studio.mousereleased(cx,cy,1)
 T.check(not Input:isDown('a'),'mock-device release clears native button')
+Studio.setBindSpec('reset')
+Studio.mousepressed(cx,cy,1);Studio.mousereleased(cx,cy,1)
+T.eq(oldGameActions,0,'Test cannot reset or change a suspended actual game')
+T.check(Studio.status:find('soft_reset',1,true)~=nil,'Test reports the real parsed hotkey action')
+Studio.version='platinum';Studio.setBindSpec('x|y')
+Studio.mousepressed(cx,cy,1)
+T.check(Input:isDown('x') and Input:isDown('y'),'mock-device input uses selected DS cartridge capabilities')
+T.eq(Version.get(),'crystal','mock-device input restores outer cartridge context')
+Studio.mousereleased(cx,cy,1)
+T.check(not Input:isDown('x') and not Input:isDown('y'),'scoped DS release retires actual inputs')
+Studio.version='crystal'
 Studio.testing=false;Touch:setPreview(true)
 local calls=0
 local mouse=Studio.mousepressed
