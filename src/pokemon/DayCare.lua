@@ -632,11 +632,15 @@ function DayCare.step(data, save, expPerStep)
   local species = DayCare.eggSpecies(data, save)
   if not species then return false end
   local Pokemon = require("src.pokemon.Pokemon")
-  local egg = Pokemon.new(data, species, 5)
+  local eggDvs
+  if vanillaGen2 then
+    eggDvs=require('src.pokemon.Stats').randomDVs()
+    require('src.pokemon.Gen2Breeding').inheritedDVs(data,save,species,eggDvs)
+  end
+  local egg = Pokemon.new(data, species, 5, nil, nil, eggDvs and {dvs=eggDvs} or nil)
   if version=="emerald" then require("src.pokemon.Gen3Breeding").apply(data,save,egg) end
   if vanillaGen2 then
     local Breeding = require("src.pokemon.Gen2Breeding")
-    Breeding.inheritDVs(data, save, egg)
     Breeding.setOwner(save, egg)
     egg.hp = 0 -- DayCare_GiveEgg initializes current HP to zero.
   end
