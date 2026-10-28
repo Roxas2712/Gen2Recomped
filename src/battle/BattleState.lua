@@ -2861,7 +2861,10 @@ function BattleState:updateQueue()
       -- ball/send-out anims ignore the OPTIONS toggle: PlayMoveAnimation
       -- short-circuits to TossBallAnimation before its wOptions check
       -- (engine/battle/animations.asm:415)
-      if item.anim and (self:animationsOn() or BALL_ANIMS[item.anim]) then
+      local gen2Ids=GameVersion.isGen2() and self.animPlayer and self.animPlayer.anims
+        and self.animPlayer.anims.ids
+      local gen2Misc=gen2Ids and gen2Ids[item.anim] and not mdef
+      if item.anim and (self:animationsOn() or BALL_ANIMS[item.anim] or gen2Misc) then
         -- HOENN'S OWN ANIMATION, when the move has one.  It does not take the
         -- animPlaying path: that one belongs to the Game Boy players, which
         -- carry their own per-row sounds, and this one does not -- so the
@@ -2922,6 +2925,9 @@ function BattleState:updateQueue()
               ok, started = pcall(self.animForMove, self, item.anim,
                 item.attackerIsPlayer and 'player' or 'enemy',
                 item.animParam, item.effectiveness, item.afterAnim)
+            elseif gen2Misc and not opts then
+              ok,started=pcall(self.animForId,self,item.anim,
+                item.attackerIsPlayer and 'player' or 'enemy',item.animParam)
             else
               ok, started = pcall(require('src.battle.Gen2MovePresentation').start,
                 self, item.anim, item.attackerIsPlayer, opts)
@@ -8012,17 +8018,19 @@ end
 -- (core.asm): side-specific SLP_*/CONF_* anims, not the Rest/Amnesia
 -- move rows.  Player sleep plays the anim before FastAsleepText;
 -- enemy sleep and both confusion sides print the text first.
-function BattleState:statusOnomatopoeia(user, kind)
+function BattleState:statusOnomatopoeia(user, kind, caption)
   local isPlayer = user.isPlayer
   local anim
-  if kind == "sleep" then
+  if GameVersion.isGen2() then
+    anim=kind=='sleep' and 'ANIM_SLP' or 'ANIM_CONFUSED'
+  elseif kind == "sleep" then
     anim = isPlayer and "SLP_PLAYER_ANIM" or "SLP_ANIM"
   else
     anim = isPlayer and "CONF_PLAYER_ANIM" or "CONF_ANIM"
   end
-  local text = kind == "sleep"
+  local text = caption or (kind == "sleep"
     and self:romText("_FastAsleepText", "%s\nis fast asleep!", displayName(user))
-    or self:romText("_IsConfusedText", "%s\nis confused!", displayName(user))
+    or self:romText("_IsConfusedText", "%s\nis confused!", displayName(user)))
   if kind == "sleep" and isPlayer then
     self:animNext(anim, isPlayer)
     self:sayNext(text)
@@ -8032,14 +8040,12 @@ function BattleState:statusOnomatopoeia(user, kind)
   end
 end
 
--- Queue status text (+ sleep/confusion FX when the line matches).
+-- Queue status text and the effect belonging to this actual status event.
 -- Wake / snap-out / flinch / etc. stay text-only.
-function BattleState:sayStatusMsg(user, msg)
+function BattleState:sayStatusMsg(user, msg, kind)
   local text = prefixEnemy(msg, user)
-  if msg:find("is fast asleep!", 1, true) then
-    self:statusOnomatopoeia(user, "sleep")
-  elseif msg:find("is confused!", 1, true) then
-    self:statusOnomatopoeia(user, "confused")
+  if kind then
+    self:statusOnomatopoeia(user, kind, text)
   else
     self:sayNext(text)
   end
@@ -8114,8 +8120,10 @@ function BattleState:statusInterrupt(user, target)
     end
     user.truantLoafing = true
   end
-  local canMove, msgs, selfHit = Status.beforeMove(user, self.rng, self)
-  for _, m in ipairs(msgs) do self:sayStatusMsg(user, m) end
+  local canMove,msgs,selfHit,reason,presentation=Status.beforeMove(user,self.rng,self)
+  for i,m in ipairs(msgs)do
+    self:sayStatusMsg(user,m,presentation and presentation.index==i and presentation.kind or nil)
+  end
   if selfHit then
     -- confusion self-hit (core.asm:3428-3434): clears everything in
     -- status1 except CONFUSED, then HandleSelfConfusionDamage deals a
@@ -8136,8 +8144,7 @@ function BattleState:statusInterrupt(user, target)
     -- full paralysis (core.asm:3459-3464) clears bide/thrash/charge/
     -- trapping; sleep, freeze, flinch and held-in-place leave every
     -- volatile in place (a sleeping wrapper keeps its victim held)
-    if user.mon.status == "PAR" and msgs[#msgs]
-       and msgs[#msgs]:find("fully paralyzed", 1, true) then
+    if presentation and presentation.blockedStatus=='PAR' then
       self:clearVolatiles(user, false)
     end
     return true
