@@ -161,6 +161,7 @@ function M.new(game,opts)
     if id then return kit.image('data/generated/gba/trainers/front/'..id..'.png')end
     return rgba(path,w,h)
   end
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   return self
 end
 function M:uiSize()return 240,160 end

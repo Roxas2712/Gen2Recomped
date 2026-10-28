@@ -174,6 +174,7 @@ function Gen3DexSearch.new(game, opts)
   self.choice = { nil, nil, nil, nil, 1, 1 }
   if type(opts.mode) == "number" then self.choice[6] = opts.mode end
   if type(opts.order) == "number" then self.choice[5] = opts.order end
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   return self
 end
 
