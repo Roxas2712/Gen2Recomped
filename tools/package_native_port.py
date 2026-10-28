@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Build a mobile/console preview around the exact desktop engine payload."""
 import argparse
+import atexit
 import hashlib
 import importlib.util
 import json
@@ -10,6 +11,7 @@ import re
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -19,6 +21,8 @@ from stage_game_payload import stage
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS_ROOT = ROOT
+RUNNER = subprocess.run
+STORAGE = None
 APP_ID = "de.roxas2712.gen2recomp.nativepreview"
 APPLE_DEPENDENCIES_COMMIT = "a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e"
 ANDROID_CERT = "91ff1bad5d97a2cafd3da7ecf04a6b084792073dcd28df63db812a787cfb24ea"
@@ -49,7 +53,7 @@ def digest(path):
 
 
 def run(*args, **kwargs):
-    return subprocess.run(args, cwd=ROOT, check=True, **kwargs)
+    return RUNNER(args, cwd=ROOT, check=True, **kwargs)
 
 
 def one(paths):
@@ -136,6 +140,8 @@ def ios(payload, target, version, release_id, component=None):
     qualified = mobile_component(component, 'ios', source/'platform/xcode/ios/libraries/Lua.xcframework') if component else None
     with tempfile.TemporaryDirectory(prefix="preview-ios-") as temp:
         work = Path(temp)
+        if STORAGE:
+            STORAGE.limit_output(work, 4 * 1024**3)
         run("xcodebuild", "-project", str(source / "platform/xcode/love.xcodeproj"), "-target", "love-ios",
             "-configuration", "Release", "-sdk", "iphoneos", "-destination", "generic/platform=iOS",
             "SYMROOT=" + str(work / "Products"), "OBJROOT=" + str(work / "Intermediates"),
@@ -188,7 +194,7 @@ def switch(payload, target, version):
 
 
 def main():
-    global ROOT
+    global ROOT, RUNNER, STORAGE
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=("ios", "android", "switch"), required=True)
     parser.add_argument("--payload", type=Path, required=True)
@@ -217,10 +223,24 @@ def main():
         raise ValueError('mobile host inputs must be committed before selecting a runtime')
     with zipfile.ZipFile(payload) as archive:
         release = json.loads(archive.read("src/preview/release.json"))
+        builtin = any(name.startswith('mods/UNI_LANGUAGE_NATIVE/') for name in archive.namelist())
     identity = "Gen2Recomp-NativePreview-" + args.release_id.replace(".", "-")
     if release != dict(sourceCommit=source, releaseId=args.release_id, engineVersion=args.engine_version, previewIdentity=identity):
         raise ValueError("payload and platform build must use the same source, release and profile")
     out = args.out.resolve()
+    if not os.getenv('GITHUB_ACTIONS'):
+        sys.path.insert(0, str(TOOLS_ROOT/'tools'))
+        import qa_storage as qa
+        qa._storage = qa.Storage(TOOLS_ROOT)
+        atexit.register(qa._storage.close)
+        for path in (TOOLS_ROOT, ROOT, payload, component, Path(sys.executable)):
+            if path is not None:
+                qa.qa_source(path)
+        qa.qa_cache(out.parent)
+        qa.qa_limit_output(out, 4 * 1024**3)
+        for relative in ('mobile/android/love/build', 'mobile/android/app/build', 'mobile/ios/love-src'):
+            qa.qa_limit_output(ROOT/relative, 4 * 1024**3)
+        RUNNER, STORAGE = qa.qa_run, qa._storage
     out.mkdir(parents=True, exist_ok=False)
     extension = dict(ios="ipa", android="apk", switch="zip")[args.platform]
     target = out / f"Gen2Recomped-NativePreview-{args.release_id}-{args.platform}.{extension}"
@@ -235,7 +255,8 @@ def main():
                     buildToolsCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=TOOLS_ROOT,text=True).strip(),
                     previewIdentity=identity, payloadSha256=digest(payload), archiveSha256=digest(target),
                     archive=target.name, buildVerified=True, launchVerified=False, realDeviceVerified=False,
-                    extendedUpvaluesQualified=bool(runtime.get('qualifiedRuntime')), modsIncluded=False, automaticInstallation=False)
+                    extendedUpvaluesQualified=bool(runtime.get('qualifiedRuntime')), modsIncluded=builtin,
+                    builtinMods=['UNI_LANGUAGE_NATIVE'] if builtin else [], userModsIncluded=False, automaticInstallation=False)
     (out / "build.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(json.dumps(metadata, indent=2))
 

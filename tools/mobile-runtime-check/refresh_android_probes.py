@@ -36,7 +36,7 @@ def main():
  out.mkdir(parents=True)
  probes={'main.lua':'tools/mobile-runtime-check/host-main.lua','host-c-api.lua':'tools/mobile-runtime-check/host-c-api.lua',
          'thread.lua':'tools/runtime-upvalue-check/love-thread.lua','check.lua':'tools/runtime-upvalue-check/check.lua','src/link/Json.lua':'src/link/Json.lua'}
- report['probeSha256']={name:sha(ROOT/name) for name in probes.values()}
+ report['probeSha256']={**report['probeSha256'],**{name:sha(ROOT/name) for name in probes.values()}}
  report['refreshedFromReportSha256']=sha(source/'report.json')
  shutil.copyfile(source/'report.json',out/'previous-build-report.json')
  for variant,capacity in [('stock',60),('extended',120)]:
