@@ -1,10 +1,10 @@
 # Pinball friend-service contract
 
 Client integration by **Roxas2712**. This describes the service extension the
-Pinball client requires. It is **not** a server implementation or confirmation
-that the production service accepts these requests. The published public fork
-contains the account client; its `main` tree does not contain the ModCompass
-Laravel application. No production account or real friend was used in QA.
+Pinball client requires. The corresponding private Laravel implementation is deployed and was exercised
+with two disposable accounts on public HTTPS on 28 October 2026. The public
+fork contains the client, not the complete server. See `PINBALL-QUALIFICATION.md`
+for the exact tested scope; physical-device networking remains unqualified.
 
 The existing signed-in device session and `/play` authorization apply. Keep the
 existing friend, privacy, block, device, expiry and rate-limit checks. Pinball
@@ -76,6 +76,7 @@ idempotent stream and return:
   "account_id": "<requesting account>",
   "battle": "<invitation UUID>",
   "sent": 3,
+  "peer_sent": 4,
   "messages": [{"sequence": 1, "body": "<peer JSON>"}],
   "peer_online": true,
   "peer_closed": false
@@ -86,6 +87,11 @@ The client sends batches up to 8 messages / 96 KiB, a body up to 32 KiB and has
 a 128-message queue limit. Acknowledgements must refer to contiguous accepted
 sequence numbers, not the highest attempted number. Retry of the same sequence
 and bytes is idempotent; different bytes for an existing sequence are rejected.
+The optional `peer_sent` is the peer stream's current high-water mark. A close
+flag does not imply the final tail was delivered: fetch through that mark and
+ACK the resulting cursor before retiring. MySQL message reads must be current
+locking reads consistent with locked peer counters, including duplicate retry
+lookup; a previous device lookup may have established an older snapshot.
 Return at most 8 messages after `after`, in order. Scope streams to participant
 and invitation and retain final messages until acknowledged. Revoke wire access
 on cancellation/expiry or account/device revocation. Do not reuse RPG trade
@@ -96,6 +102,40 @@ identity hello, matching initial RAM checkpoint, host start, monotonic frame
 and exact decimal score updates, keepalive and cancel. Disconnects award no
 winner. Native preparation, the displayed countdown and gameplay timing remain
 client responsibilities; server readiness does not skip the RAM handshake.
+
+### Invite first, prepare the private import second
+
+The friend workspace can send `{account:"<friend account>",mode:"pinball",
+fingerprint,rules}` instead of a device-target request. The existing accepted
+friendship and request/privacy checks still apply. The service selects that
+friend's most recently seen authenticated device (ordinary menu heartbeat at
+most 120 seconds old), then binds the invitation to it. This permits a pending
+request before the recipient opens Pinball or imports a ROM. It does not mark
+an unprepared device ready. Acceptance and entry still require matching native
+rules, locale and fingerprint with fresh Pinball presence. An account change or
+leaving the module cancels the local automatic import continuation.
+
+### Optional side-by-side opponent picture
+
+New clients advertise `view:2` in the existing protocol-1 hello. Both must agree
+before sending `kind:"picture"` with monotonic `frame`, integer `width/height`
+and base64 `png`. Original clients remain score-only. Native workers publish
+completed pictures at up to six frames/second to a bounded latest-only queue;
+a separate worker encodes/decodes them. At most 20,000 PNG bytes, 27,000 base64
+characters and 512×512 pixels are accepted. Ancillary profiles and incomplete
+chunk envelopes are rejected before decoding. No second game is simulated and
+no ROM or save is shared. F7 hides/shows the large opponent pane.
+
+New clients also advertise `peerView:true` in hello. When both support it, the
+existing `POST /play/invites/{id}/transport` issues short-lived, device-bound
+peer tickets after both enter. It reuses Pinball friendship, privacy, session
+revocation and frozen-device checks. Independent bounded `pinball_picture`
+envelopes prefer WebRTC, fall back to authenticated WSS relay, then HTTPS
+CloudNet if peer service is unavailable. Only preview pictures use this channel;
+rules, scores and final ACKs stay on CloudNet. Old clients retain HTTPS pictures
+and their ACK/order/size limits. Images remain up to six per second, not 60-fps
+video. Both paths reject control packets disguised as preview messages. The
+public two-native-client direct/relay run passed; cross-NAT hardware is pending.
 
 ## Validation handoff
 
@@ -111,7 +151,26 @@ participant authorization, device binding, stale presence, privacy, concurrent
 invitations, immutable rules, duplicate/out-of-order wire requests and revoked
 sessions. Then qualify the real invite/accept flow with two isolated test
 accounts and native players over HTTPS, followed by separate physical devices.
-The current synthetic and localhost ENet tests do not establish that result.
+The synthetic and localhost ENet tests alone do not establish that result.
+
+The matching private ModCompass server implementation is saved on
+`codex/pinball-friend-duels`, commit
+`5b565c7394e7823559dde43ec0f757ff369e2039`. Its additive migration, affected
+PHP files and deployment/rollback procedure are documented in that server's
+README. The server checkout currently has no Git remote. Its 40 affected
+PHPUnit integration/regression tests pass (565 assertions), including RPG
+links, wagers and center lobbies. SQLite tests check reservation conflicts
+sequentially; they do not certify simultaneous MySQL requests under load.
+
+`tools/qualify_pinball_http.py` adds a different level of evidence: the actual
+Laravel application over local HTTPS, two separate native LÖVE processes,
+isolated authenticated accounts/profiles, real Friends/CloudNet/Duel modules,
+matching initial native RAM, game inputs, consistent final scores and drained
+final ACKs. The second client activates an already-built private import after
+the invitation; this does not test ROM recompilation or browser OAuth. It does
+not qualify the public service or separate physical devices. No production
+account was used or modified, and these server changes have not been deployed
+by this qualification.
 
 Run the managed ROM-free client checks with:
 

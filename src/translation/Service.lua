@@ -36,10 +36,23 @@ function Service.enqueueLauncher(options)
  for _,job in ipairs(Service.queue)do if job.version=="launcher"then job.options=options;return end end
  table.insert(Service.queue,1,{version="launcher",options=options})
 end
+function Service.formatSignature(value)
+ local out={}
+ if type(value)~='string'then return nil end
+ -- A space after a percent sign is prose ("75% shiny chance") in this
+ -- catalogue. Launcher templates never use printf's optional space flag.
+ for marker in value:gmatch('%%[-+#0]*%d*%.?%d*([cdeEfgGiouXxsq%%])')do
+  if marker~='%'then out[#out+1]=marker end
+ end
+ return table.concat(out)
+end
 function Service.launcherLookup(source)
  local reviewed=require("src.translation.LauncherCatalog")[Service.launcherTarget or "en"]
  local native=require('src.translation.NativeLanguageCatalog')[Service.launcherTarget or 'en']
  local text=native and native[source] or reviewed and reviewed[source] or (Service.launcherCatalog or {})[source] or source
+ -- Some views format a looked-up template later. Reject malformed cached
+ -- translations at the lookup boundary as well as at launcherFormat.
+ if type(text)~='string' or Service.formatSignature(text)~=Service.formatSignature(source)then text=source end
  -- LÖVE's default launcher face lacks the arrow block on some runtimes.
  -- Keep navigation readable before optional language fonts are downloaded.
  if type(text)=='string' then return (text:gsub('→','>'):gsub('←','<'):gsub('↔','<->'):gsub('↓','v'):gsub('↑','^')) end
@@ -47,15 +60,7 @@ function Service.launcherLookup(source)
 end
 -- Translate the template before inserting names, IDs or other private values.
 function Service.launcherFormat(source,...)
- local function signature(value)
-  local out={}
-  for marker in value:gmatch('%%[-+ #0]*%d*%.?%d*([cdeEfgGiouXxsq%%])')do
-   if marker~='%'then out[#out+1]=marker end
-  end
-  return table.concat(out)
- end
  local translated=Service.launcherLookup(source)
- if signature(translated)~=signature(source)then translated=source end
  local ok,value=pcall(string.format,translated,...)
  if ok then return value end
  return string.format(source,...)

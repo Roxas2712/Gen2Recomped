@@ -13,7 +13,7 @@ local function waitFor(want)
  while love.timer.getTime()<deadline do
   assert(not thread:getError(),thread:getError())
   local event=channels.events:pop()
-  while event do local e=Json.decode(event);assert(e.event~='error',e.message);event=channels.events:pop()end
+  while event do local e=Json.decode(event);assert(e.event~='error',e.message);if e.event=='priority'and e.priority==want then checked[#checked+1]=want;return end;event=channels.events:pop()end
   local frame=channels.frames:pop()
   if frame then
    local priority=frame.diagnostics.priority
@@ -27,12 +27,11 @@ local function waitFor(want)
 end
 local ok,why=pcall(function()
  waitFor(33) -- Darwin QOS_CLASS_USER_INTERACTIVE
- command{action='foreground',value=false};waitFor(17) -- QOS_CLASS_UTILITY
- command{action='pause',value=true};command{action='foreground',value=true}
+ command{action='foreground',value=false};waitFor(33) -- active audio keeps its class without focus
+ command{action='pause',value=true};waitFor(17) -- only actual pause relinquishes it
  command{action='pause',value=false};waitFor(33)
- command{action='pause',value=true};command{action='foreground',value=false}
- command{action='pause',value=false};waitFor(17)
- command{action='foreground',value=true};waitFor(33)
+ command{action='pause',value=true};waitFor(17)
+ command{action='foreground',value=true};command{action='pause',value=false};waitFor(33)
 end)
 command{action='quit'};thread:wait();assert(not thread:getError(),thread:getError())
 local frame=channels.frames:pop();while frame do for _,image in ipairs(frame.images)do image:release()end;frame=channels.frames:pop()end

@@ -1,6 +1,68 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
+ ["MODS FOR THIS GAME"]="MODS FÜR DIESES SPIEL",
+ ["ENABLE"]="AKTIVIEREN",
+ ["DISABLE"]="DEAKTIVIEREN",
+ ["DETAILS"]="DETAILS",
+ ["INSTALL"]="INSTALLIEREN",
+ ["SOUND & MUSIC"]="KLANG & MUSIK",
+ ["GRAPHICS & 3D"]="GRAFIK & 3D",
+ ["INTERFACE"]="OBERFLÄCHE",
+ ["NEW ADVENTURES"]="NEUE ABENTEUER",
+ ["EXPLORATION"]="ERKUNDUNG",
+ ["CHALLENGE"]="HERAUSFORDERUNG",
+ ["BALANCE"]="BALANCE",
+ ["QUALITY OF LIFE"]="KOMFORT",
+ ["GAMEPLAY & TOOLS"]="SPIEL & WERKZEUGE",
+ ["GAME SUPPORT DECLARED"]="UNTERSTÜTZUNG ANGEGEBEN",
+ ["CHECKING COMPATIBILITY"]="KOMPATIBILITÄT WIRD GEPRÜFT",
+ ["Mods that declare support for your edition. A matching Mod of the Week comes first. You choose what to install and enable."]="Mods mit angegebener Unterstützung für deine Edition. Ein passender Mod der Woche steht zuerst. Du entscheidest, was installiert und aktiviert wird.",
+ ["Installing %s…"]="%s wird installiert …",
+ ["Downloading %s…"]="%s wird heruntergeladen …",
+ ["This native game uses a separate mod format. RPG mod recommendations do not apply here."]="Dieses native Spiel verwendet ein eigenes Mod-Format. Empfehlungen für RPG-Mods passen hier nicht.",
+ ["Installed for this game · %d"]="Für dieses Spiel installiert · %d",
+ ["No mods installed for this game yet."]="Für dieses Spiel sind noch keine Mods installiert.",
+ ["ENABLED HERE"]="HIER AKTIV",
+ ["DISABLED HERE"]="HIER DEAKTIVIERT",
+ ["SHOW MORE"]="MEHR ANZEIGEN",
+ ["MANAGE INSTALLED MODS"]="INSTALLIERTE MODS VERWALTEN",
+ ["RECOMMENDED BEFORE YOU PLAY"]="EMPFOHLEN VOR DEM SPIELSTART",
+ ["Sign in to see recommendations and install new mods. Local play and manual ZIP imports stay available without an account."]="Melde dich an, um Empfehlungen zu sehen und neue Mods zu installieren. Lokal spielen und ZIPs manuell importieren geht weiterhin ohne Konto.",
+ ["SIGN IN / REGISTER"]="ANMELDEN / REGISTRIEREN",
+ ["Selected by declared game compatibility. The current Mod of the Week is highlighted when it matches. Recommendations do not change your active mods."]="Nach angegebener Spielkompatibilität ausgewählt. Der aktuelle Mod der Woche wird hervorgehoben, wenn er passt. Empfehlungen ändern deine aktiven Mods nicht.",
+ ["Installing mod…"]="Mod wird installiert …",
+ ["Downloading mod…"]="Mod wird heruntergeladen …",
+ ["Loading recommendations…"]="Empfehlungen werden geladen …",
+ ["No compatible recommendations available for this game."]="Für dieses Spiel sind noch keine kompatiblen Empfehlungen verfügbar.",
+ ["MOD OF THE WEEK"]="MOD DER WOCHE",
+ ["FOR THIS GAME"]="FÜR DIESES SPIEL",
+ ["MANIFEST MATCH"]="MANIFEST PASST",
+ ["COMPATIBILITY NOT VERIFIED"]="KOMPATIBILITÄT NICHT BESTÄTIGT",
+ ["CHECK & INSTALL"]="PRÜFEN & INSTALLIEREN",
+ ["MORE RECOMMENDATIONS"]="WEITERE EMPFEHLUNGEN",
+ ["REFRESH RECOMMENDATIONS"]="EMPFEHLUNGEN AKTUALISIEREN",
+ ["The account or selected game changed. Choose the mod again."]="Konto oder Spiel wurde gewechselt. Wähle den Mod erneut aus.",
+ ["This release does not match the selected game or engine. No mod was installed."]="Diese Version passt nicht zum gewählten Spiel oder zur Engine. Es wurde kein Mod installiert.",
+ ["Mod archive does not support the selected game."]="Das Mod-Archiv unterstützt das gewählte Spiel nicht.",
+ ["Mod archive is incompatible with this engine."]="Das Mod-Archiv ist mit dieser Engine nicht kompatibel.",
+ ["BETA / READY TO PLAY"]="BETA / SPIELBEREIT",
+ ["ORIGINAL CARTRIDGE IMAGE"]="ORIGINAL-MODULBILD",
+ ["Import save"]="Spielstand importieren",
+ ["Export save"]="Spielstand exportieren",
+ ["Re-import ROM"]="ROM erneut importieren",
+ ["SAVE SLOT"]="SPEICHERPLÄTZE",
+ ["Native SRAM · separate saves per language"]="Native SRAM · je Sprache ein Spielstand",
+ ["F5 / F8 · exact quick state"]="F5 / F8 · exakter Schnellstand",
+ ["Pinball saves must be exactly 32768 bytes."]="Pinball-Spielstände müssen genau 32768 Bytes groß sein.",
+ ["No Pinball save exists for this language yet."]="Für diese Sprache gibt es noch keinen Pinball-Spielstand.",
+ ["Pinball save exported."]="Pinball-Spielstand exportiert.",
+ ["Pinball save imported. Previous data was backed up."]="Pinball-Spielstand importiert. Der bisherige Stand wurde gesichert.",
+ ["Preparing your Pinball game …"]="Dein Pinball-Spiel wird vorbereitet …",
+ ["Pinball game prepared."]="Pinball-Spiel vorbereitet.",
+ ["Pinball import tools are unavailable."]="Die Pinball-Importwerkzeuge sind nicht verfügbar.",
+ ["Import your own USA cartridge; add the European cartridge for German, French, Italian or Spanish."]="Importiere dein eigenes USA-Modul. Ergänze das europäische Modul für Deutsch, Französisch, Italienisch oder Spanisch.",
+ ["European cartridge imported. Add the USA cartridge to prepare the native base."]="Europäisches Modul importiert. Ergänze das USA-Modul, um die native Basis vorzubereiten.",
  ["IMPORT GAME"]="SPIEL IMPORTIEREN",
  ["Native 3DS support included"]="Native 3DS-Unterstützung enthalten",
  ["Preparing your game. The first import can take several minutes."]="Dein Spiel wird vorbereitet. Der erste Import kann mehrere Minuten dauern.",
@@ -585,6 +647,14 @@ local catalog={ de={
 }}
 
 for language,rows in pairs(require("src.translation.CommunityCatalog"))do
+ catalog[language]=catalog[language]or{}
+ for key,value in pairs(rows)do catalog[language][key]=value end
+end
+for language,rows in pairs(require("src.translation.LauncherPolishCatalog"))do
+ catalog[language]=catalog[language]or{}
+ for key,value in pairs(rows)do catalog[language][key]=value end
+end
+for language,rows in pairs(require("src.translation.PinballCatalog"))do
  catalog[language]=catalog[language]or{}
  for key,value in pairs(rows)do catalog[language][key]=value end
 end

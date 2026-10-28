@@ -129,6 +129,8 @@ CONTENT=(
   tools/qa_preserved.py
   tools/qa_release_storage.py
   tools/qa_build_storage.py
+  tools/pinball_rs.py
+  tools/pinball-rs-native
 )
 
 # The ROM symbol manifests: src/core/GameVersion.lua names one per cartridge

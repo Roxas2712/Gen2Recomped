@@ -60,3 +60,26 @@ end
 T.setLauncher({launcherLanguage='en'})
 check(sidebar.nameOf('red')=='Pokemon Red','English library title remains unchanged')
 print('Library locale: '..n..' checks passed')
+
+local catalogues={'LauncherCatalog','NativeLanguageCatalog','SetupCatalog','PinballCatalog','LauncherPolishCatalog'}
+local translated=0
+for _,name in ipairs(catalogues)do
+ for lang,rows in pairs(require('src.translation.'..name))do
+  for source,target in pairs(rows)do
+   check(type(source)=='string'and type(target)=='string','text keys and values: '..name..'/'..lang)
+   check(T.formatSignature(source)==T.formatSignature(target),'format types/order: '..name..'/'..lang..' '..source)
+   check(not target:find('\239\191\189',1,true),'no replacement characters: '..name..'/'..lang..' '..source)
+   translated=translated+1
+  end
+ end
+end
+T.setLauncher({launcherLanguage='de'})
+T.launcherCatalog['Unchecked %s']='Wrong %d'
+check(T.launcherLookup('Unchecked %s')=='Unchecked %s','indirect formatting also rejects bad cached types')
+T.launcherCatalog['Unchecked value']={}
+check(T.launcherLookup('Unchecked value')=='Unchecked value','bad cached values cannot reach graphics')
+check(T.launcherFormat('Installed %s %s. Enable it in Installed mods.','SIGN IN','1.2'):find('SIGN IN 1.2 installiert',1,true),'dynamic mod notice translates the template before private values')
+check(T.launcherLookup('DUEL TABLE: RUBY')=='DUELL-TISCH: RUBIN','native Pinball uses launcher language')
+T.setLauncher({launcherLanguage='en'})
+check(T.launcherLookup('DUEL TABLE: RUBY')=='DUEL TABLE: RUBY','English Pinball has no forced German copy')
+print('Catalogue integrity: '..translated..' translations; '..n..' total checks passed')
