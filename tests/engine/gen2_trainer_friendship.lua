@@ -130,6 +130,16 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  T.eq(#probe.events,1,'selected fainted and both native egg representations stay excluded')
  T.eq(probe.events[1]and probe.events[1].mon,game.save.party[2],'scoped event uses original selected mon')
  T.eq(b:playerPartyView()[1],game.save.party[2],'ordered scope remains live')
+ -- Source ChangeHappiness reports applied zero-delta events, while its step
+ -- loop suppresses unchanged saturated values. Keep the two sites distinct.
+ prepare(game,255);probe.events={}
+ local friendship=require('src.pokemon.Gen2Friendship')
+ friendship.change(game.save.party[1],'XITEM')
+ T.eq(#probe.events,1,'zero-delta event remains observable by the actual API2 consumer')
+ T.eq(probe.events[1]and probe.events[1].delta,0,'zero-delta event is explicit')
+ probe.events={};game.save.g2HappinessStepCount=1
+ friendship.stepCycle(game.save)
+ T.eq(#probe.events,0,'unchanged saturated step does not publish a change')
  Model.isGymLeader,Model.isKantoGymLeader=originalGym,originalKanto
  run.release()
 end
