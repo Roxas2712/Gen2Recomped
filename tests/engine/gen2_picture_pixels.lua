@@ -28,9 +28,14 @@ end
 local calls,draw={},love.graphics.draw
 love.graphics.draw=function(image,...)calls[#calls+1]=image;return draw(image,...)end
 local function capture(s,b,expected,label)
- calls={};s:drawPic(b.mon,b.isPlayer)
+ calls={};s:drawPicsLayer(0,0,0,b.isPlayer and 'player'or'enemy',true)
  T.eq(#calls,1,label..' emits exactly one image')
  T.eq(calls[1],expected,label..' emits correct picture, not metadata alone')
+ if s.drawPic then
+  calls={};s:drawPic(b.mon,b.isPlayer)
+  T.eq(#calls,1,label..' public capture emits exactly one image')
+  T.eq(calls[1],expected,label..' public capture shares actual image owner')
+ end
 end
 local function command(s,side,expected)
  local n=0
@@ -54,7 +59,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do for _,side in ipairs({'pl
  capture(s,b,old,'queued Substitute')
  s:updateQueue();capture(s,b,old,'pre-command Substitute')
  command(s,side,'substitute')
- calls={};s:drawPic(b.mon,b.isPlayer)
+ calls={};s:drawPicsLayer(0,0,0,side,true)
  T.eq(#calls,1,'post-command Substitute emits actual doll')
  T.neq(calls[1],old,'doll image is distinct from normal Pokemon')
 

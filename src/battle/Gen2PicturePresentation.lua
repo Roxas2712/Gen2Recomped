@@ -25,7 +25,7 @@ end
 local function mark(screen,b,kind)
   local row=screen.moveAnimRow
   local player=screen.animPlayer
-  if not (Version.isGen2() and row and screen:animationsOn() and player
+  if not (Version.isGen2() and row and screen:animationsOn() and player and player.anims.gen2
       and player:scriptFor(row.anim))then return end
   local queued=false
   for _,item in ipairs(screen.queue or {})do if item==row then queued=true;break end end
@@ -102,6 +102,7 @@ function M.override(screen,b)
 end
 
 function M.species(screen,b)
+  if not Version.isGen2()then return b.species or b.mon.species end
   local p=pending(screen,b,'transform')
   if p then return p.beforeSpecies end
   local value=M.override(screen,b)
@@ -123,6 +124,7 @@ function M.species(screen,b)
 end
 
 function M.sprite(screen,b)
+  if not Version.isGen2()then return b.sprite end
   local p=pending(screen,b,'transform')
   if p then return p.beforeSprite end
   local species=M.species(screen,b)
