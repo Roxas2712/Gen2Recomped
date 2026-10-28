@@ -2085,6 +2085,7 @@ end
 -- indexes; the level floor widens to 1 because a freshly caught level-1
 -- mon can legitimately sit in a save
 local function scrubKnownMon(mon, data)
+  mon.species=require('src.core.Gen2SpeciesNames').registryId(data.pokemon,mon.species)
   if type(mon.dvs) == "table" then
     for stat, v in pairs(mon.dvs) do mon.dvs[stat] = clamp(v, 0, 15, 0) end
   end
@@ -2279,6 +2280,7 @@ function SaveData.validate(save, data)
     Mail.load(data);Mail.validate(save,report)
   end
   local dex = save.pokedex
+  require('src.core.Gen2SpeciesNames').normalizeDex(data,dex)
   if type(dex) == "table" then
     for _, key in ipairs({ "seen", "owned" }) do
       if type(dex[key]) == "table" then
@@ -2298,10 +2300,24 @@ function SaveData.validate(save, data)
     if type(entry) == "table" then
       for i = 1, #entry do
         local mon = entry[i]
-        if type(mon) == "table" and mon.species ~= nil
-            and not known(data.pokemon, mon.species) then
-          mon.species = nil
+        if type(mon) == "table" and mon.species ~= nil then
+          if known(data.pokemon, mon.species) then
+            mon.species = require('src.core.Gen2SpeciesNames').registryId(data.pokemon,mon.species)
+          else
+            mon.species = nil
+          end
         end
+      end
+    end
+  end
+  if GameVersion.isGen2() then
+    local Species=require('src.core.Gen2SpeciesNames')
+    if save.g2PokeonlySpecies~=nil then
+      save.g2PokeonlySpecies=Species.registryId(data.pokemon,save.g2PokeonlySpecies)
+    end
+    for _,roamer in pairs(type(save.g2Roam)=='table'and save.g2Roam or {})do
+      if type(roamer)=='table'and roamer.speciesId~=nil then
+        roamer.speciesId=Species.registryId(data.pokemon,roamer.speciesId)
       end
     end
   end

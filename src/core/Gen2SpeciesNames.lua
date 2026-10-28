@@ -1,7 +1,8 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- G/S/C species identifiers used by the separate Gen1Recomp reference
--- 535a5ec0 (constant names only; no ROM bytes or artwork). Native SPECIES_nnn
--- records remain the only stored/iterated rows. Names are live lookup aliases.
+-- 535a5ec0 (constant names only; no ROM bytes or artwork). Complete native
+-- cartridges use named runtime identities; old SPECIES_nnn addresses remain
+-- lookup aliases. Partial/authored datasets retain their existing identities.
 local Version = require("src.core.GameVersion")
 local M = {}
 local order = [[
@@ -39,15 +40,120 @@ MILTANK BLISSEY RAIKOU ENTEI SUICUNE LARVITAR PUPITAR TYRANITAR
 LUGIA HO_OH CELEBI
 ]]
 local nativeByName = {}
+local nameByNumber = {}
 local count = 0
 for name in order:gmatch("%S+") do
   count = count + 1
   nativeByName[name] = string.format("SPECIES_%03d", count)
+  nameByNumber[count] = ({FARFETCH_D='FARFETCHD',MR__MIME='MR_MIME'})[name] or name
 end
 local states = setmetatable({}, {__mode="k"})
 local function supported()
   local v = Version.get()
   return v == "gold" or v == "silver" or v == "crystal"
+end
+
+-- The original importer scaffold used numbered placeholders. Normal game
+-- loads now publish one authoritative, named GSC graph before mods or game
+-- objects are created. Old addresses remain lookup aliases, not extra rows.
+-- A total conversion, partial fixture, authored lookup or identity collision
+-- is not enough evidence to reinterpret its species numbering.
+function M.canonicalize(data)
+  local pokemon=type(data)=='table'and data.pokemon
+  local prior=type(pokemon)=='table'and states[pokemon]
+  if prior and prior.canonical then return getmetatable(pokemon)==prior.meta end
+  if not supported()or type(pokemon)~='table'or getmetatable(pokemon)~=nil then return false end
+  local constants=data.constants
+  local species=constants and constants.speciesOrder
+  if type(species)~='table'or #species~=251 then return false end
+  local aliases={}
+  for i=1,251 do
+    local id=string.format('SPECIES_%03d',i)
+    local def=rawget(pokemon,id)
+    local name=nameByNumber[i]
+    if species[i]~=id or type(def)~='table'or def.id~=id or def.index~=i or def.dex~=i
+       or rawget(pokemon,name)~=nil then return false end
+    aliases[id]=name
+  end
+  aliases.FARFETCH_D,aliases.MR__MIME='FARFETCHD','MR_MIME'
+  -- Plan the complete graph transaction before changing any table. Exact
+  -- identity tokens change; prose, filesystem paths and provenance do not.
+  local literal={text=true,text_pointers=true,name=true,nickname=true,title=true,body=true,
+    message=true,description=true,label=true,prompt=true,caption=true,source=true,
+    sourceId=true,native=true,path=true,file=true,filename=true}
+  local seen,plan={},{}
+  local function visit(row)
+    if type(row)~='table'or seen[row]then return true end
+    seen[row]=true
+    local targets={}
+    for key,value in pairs(row)do
+      if not literal[key]then
+        local target=aliases[key]or key
+        local replacement=type(value)=='string'and(aliases[value]or value)or value
+        local existing=target~=key and rawget(row,target)
+        if existing~=nil and existing~=replacement then return false end
+        if targets[target]~=nil and targets[target]~=replacement then return false end
+        targets[target]=replacement
+        if target~=key or replacement~=value then
+          plan[#plan+1]={row=row,key=key,target=target,value=replacement}
+        end
+        if not visit(value)then return false end
+      end
+    end
+    return true
+  end
+  if not visit(data)then return false end
+  for _,op in ipairs(plan)do
+    if op.key~=op.target then op.row[op.key]=nil end
+    op.row[op.target]=op.value
+  end
+  local meta={__index=function(t,id)
+    if supported()then local name=aliases[id];if name then return rawget(t,name)end end
+  end}
+  states[pokemon]={aliases=aliases,meta=meta,canonical=true}
+  setmetatable(pokemon,meta)
+  constants.speciesIdentity='gsc-canonical-v1'
+  return true
+end
+
+function M.fromNumber(data,index)
+  index=math.floor(tonumber(index)or 0)
+  local species=data and data.constants and data.constants.speciesOrder
+  return species and species[index]or string.format('SPECIES_%03d',index)
+end
+
+function M.number(data,species)
+  if type(species)=='table'then species=species.species end
+  local def=data and data.pokemon and data.pokemon[species]
+  return tonumber(def and def.index)or tonumber(species)
+    or(type(species)=='string'and tonumber(species:match('^SPECIES_(%d+)$')))or 0
+end
+
+function M.same(data,a,b)
+  local pokemon=data and data.pokemon
+  return M.registryId(pokemon,a)==M.registryId(pokemon,b)
+end
+
+-- Save validation already owns the native Pokemon lists. Normalize their
+-- identity when it scrubs them, and fold legacy Pokedex keys without losing
+-- a previously true seen/owned bit. No save file is written here.
+function M.normalizeDex(data,dex)
+  local state=data and data.pokemon and states[data.pokemon]
+  if not(supported()and state and state.canonical and type(dex)=='table')then return end
+  for _,kind in ipairs{'seen','owned'}do
+    local flags=dex[kind]
+    if type(flags)=='table'then
+      local changes={}
+      for id,value in pairs(flags)do
+        local target=state.aliases[id]
+        if target then changes[#changes+1]={id,target,value}end
+      end
+      for _,entry in ipairs(changes)do
+        flags[entry[2]]=flags[entry[2]]or entry[3]
+        flags[entry[1]]=nil
+      end
+    end
+  end
 end
 
 function M.publish(data)
