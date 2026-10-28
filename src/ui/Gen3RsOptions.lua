@@ -82,7 +82,12 @@ function M.new(owner,record)
   return self
 end
 function M:update()
-  self.scene.handleInput(self.game.input);self.scene.update();self.owner.index=self.scene.cursor
+  local scene=self.scene
+  if not scene then return end
+  scene.handleInput(self.game.input)
+  if not self.scene then return end
+  scene.update()
+  if self.scene then self.owner.index=scene.cursor end
 end
 function M:draw()
   local g=love.graphics
