@@ -62,7 +62,7 @@ function Gen3HallOfFame.record(game)
   return r
 end
 
-function Gen3HallOfFame.new(game, onDone)
+function Gen3HallOfFame.new(game, onDone, opts)
   local record = Gen3HallOfFame.record(game)
   if not record then return nil end
   -- save.c / post_battle_event_funcs.c: GAME_STAT_ENTERED_HOF and the first's play time
@@ -72,7 +72,7 @@ function Gen3HallOfFame.new(game, onDone)
     return require("src.ui.Gen3HallOfFameFRLG").new(game, record, onDone)
   end
   local Rs=require('src.ui.Gen3RsHallOfFame')
-  if Rs.available(game)then return Rs.new(game,onDone)end
+  if Rs.available(game)then return Rs.new(game,onDone,opts)end
   local self = setmetatable({}, Gen3HallOfFame)
   self.game = game
   self.onDone = onDone
