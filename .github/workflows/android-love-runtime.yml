@@ -84,11 +84,9 @@ jobs:
           target: google_apis
           avd-name: gen2-love-runtime-qa
           emulator-port: 5554
-          script: >-
-            python3 tools/mobile-runtime-check/qualify_android_love.py run
-            --serial emulator-5554
-            --build '${{ runner.temp }}/android-love/candidate'
-            --output '${{ runner.temp }}/android-love-execution/candidate'
+          script: |
+            if [ '${{ matrix.abi }}' = x86_64 ]; then python3 tools/mobile-runtime-check/check_android_target.py --serial emulator-5554 --abi x86_64 --build '${{ runner.temp }}/android-vm/candidate' --output '${{ runner.temp }}/android-target/candidate'; fi
+            python3 tools/mobile-runtime-check/qualify_android_love.py run --serial emulator-5554 --build '${{ runner.temp }}/android-love/candidate' --output '${{ runner.temp }}/android-love-execution/candidate'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -103,5 +101,7 @@ jobs:
             ${{ runner.temp }}/android-love-execution/candidate/*.json
             ${{ runner.temp }}/android-love-execution/candidate/*.log
             ${{ runner.temp }}/android-love-execution/candidate/*.png
+            ${{ runner.temp }}/android-target/candidate/*.json
+            ${{ runner.temp }}/android-target/candidate/*.log
           if-no-files-found: warn
           retention-days: 7
