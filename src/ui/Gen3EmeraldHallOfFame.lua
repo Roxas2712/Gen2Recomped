@@ -6,7 +6,7 @@ function M.available(game)
   return require('src.import.Gen3EmeraldHallAssets').valid(game and game.data and game.data.constants
     and game.data.constants.gen3EmeraldHall,require('src.core.GameVersion').get())
 end
-function M.new(game,onDone)
+function M.new(game,onDone,opts)
   assert(M.available(game))
   local data,save=game.data,game.save;local spec=data.constants.gen3EmeraldHall
   local basic=require('compat.gen1-rs.Loader').new('emerald')
@@ -25,7 +25,10 @@ function M.new(game,onDone)
       otSecretId=mon.otSecretId or 0,_hostMon=mon}end
   end
   local self
+  local saveEnding=opts and opts.saveEnding==true
+  local runtime={_game={saveGame=function()return self:writeEnding()end},session=session}
   local bindings={
+    ['src.core.game3.runtime']=runtime,
     ['src.core.game3.scripting.flags']={forVersion=function()return{IDS={FLAG_SYS_GAME_CLEAR=assert(flags.FLAG_SYS_GAME_CLEAR)}}end},
     ['src.import.gba.extract_island1']={CACHE_ROOT='data/generated/gba'},
     ['src.core.game3.dataset']={cache=function()return{read=function(_,path)return love.filesystem.read(path)end}end},
@@ -62,14 +65,31 @@ function M.new(game,onDone)
   local ui={frames={manifest=spec.manifest,userCount=20,user=require('src.import.Gen3EmeraldHallAssets').ROOT..'frame_%d.rgba',std='user',sign=false,
     dialogue={path=require('src.import.Gen3EmeraldHallAssets').ROOT..'message_box.rgba',layout='message_box',manifestKey='message_box'},
     dialogueWindow={left=2,top=15,width=27,height=4}}}
-  self=setmetatable(require('src.ui.Gen3EmeraldSceneContext').new(game,{bindings=bindings,textIR=spec.textIR,ui=ui}),M)
+  local text=setmetatable({},{__index=function(_,key)
+    if key=='gText_SavingDontTurnOffPower'and self and self.saveFailure then return assert(spec.textIR.gText_SaveFailed)end
+    return spec.textIR[key]
+  end})
+  self=setmetatable(require('src.ui.Gen3EmeraldSceneContext').new(game,{bindings=bindings,textIR=text,ui=ui,
+    packageLoaded={['src.core.game3.runtime']=runtime}}),M)
   self.onDone,self.session=onDone,session
+  self.saveEnding,self.endingResult=saveEnding,{nativeEmeraldSaved=true}
   self.load('src.ui.game3.chrome').setFrameType(math.max(0,((save.options or{}).gen3Frame or 1)-1))
   self.scene=self.load('src.ui.game3.hall_of_fame')
-  -- Only the private presentation session receives native stats/records.
-  -- Emerald's atomic ending save/reset is a separate integration step.
-  self.scene.start({session=session,dontSave=true,warp=false,credits=false,onDone=function()self:finish()end})
+  local audio=self.load('src.core.game3.audio');local playSe=audio.playSe
+  self.saveSound=assert(data.constants.gen3EmeraldPresentation.songIds.SE_SAVE)
+  audio.playSe=function(id,...)
+    if id==self.saveSound and saveEnding and not self.saved then return end
+    return playSe(id,...)
+  end
+  self.scene.start({session=session,dontSave=not saveEnding,warp=false,credits=false,onDone=function()self:finish()end})
   return self
+end
+function M:writeEnding()
+  assert(self.saveEnding and self.savingDrawn,'League saving must be rendered before IO')
+  if self.saved then return true end
+  self.saved,self.saveError=require('src.core.Gen3EmeraldEndingSave').write(self.game)
+  self.saveFailure=not self.saved
+  return self.saved
 end
 function M:exit()
   Rs.exit(self)

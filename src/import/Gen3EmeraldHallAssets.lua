@@ -2,7 +2,7 @@
 -- Original Emerald Hall art, text and frames; font belongs to the movie pack.
 local M={ROOT='data/generated/gba/hall_of_fame/'}
 local names={'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_Time',
-  'gText_WelcomeToHOF','gText_SavingDontTurnOffPower','gText_EggNickname','gText_LeagueChamp'}
+  'gText_WelcomeToHOF','gText_SavingDontTurnOffPower','gText_EggNickname','gText_LeagueChamp','gText_SaveFailed'}
 function M.resources()
   local paths={};for _,name in ipairs{'manifest.lua','bands.rgba','stripes.rgba','confetti.rgba'}do paths[#paths+1]=M.ROOT..name end
   for i=0,19 do paths[#paths+1]=M.ROOT..'frame_'..i..'.rgba'end

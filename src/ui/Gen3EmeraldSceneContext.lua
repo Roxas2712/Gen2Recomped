@@ -32,6 +32,7 @@ function M.new(game,opts)
     of=function()return profile end,family=function()return'rse'end}
   local packages={loaded={['src.core.GameVersion']=gv,['src.core.game3.profile']=profiles,
     ['src.core.game3.runtime']={_game=game,session={version='emerald'}}}}
+  for key,value in pairs(opts.packageLoaded or{})do packages.loaded[key]=value end
   local bindings={__package=packages,['src.core.GameVersion']=gv,
     ['src.core.Logger']=require('src.core.Logger'),['src.mods.Runtime']=require('src.mods.Runtime'),
     ['src.render.Font']=require('src.render.Font'),['src.import.CacheFs']=fs,

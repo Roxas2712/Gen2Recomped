@@ -5,7 +5,7 @@ local UI=require('src.ui.Gen3EmeraldHallOfFame');local V=require('src.core.GameV
 local Fs,W=require('src.import.CacheFs'),require('src.import.LuaWriter')
 local old,read,exists=V.get(),Fs.read,Fs.exists;V.set('emerald')
 local text={};for _,name in ipairs{'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_Time',
-  'gText_WelcomeToHOF','gText_SavingDontTurnOffPower','gText_EggNickname','gText_LeagueChamp'}do text[name]={{t='text',s='OWNED LABEL'}}end
+  'gText_WelcomeToHOF','gText_SavingDontTurnOffPower','gText_EggNickname','gText_LeagueChamp','gText_SaveFailed'}do text[name]={{t='text',s='OWNED LABEL'}}end
 local spec={format=1,version='emerald',resources=M.resources(),manifest=M.ROOT..'emerald.lua',textIR=text,
   trainerPics={boy='OWNED_BOY.png',girl='OWNED_GIRL.png'}}
 local constants={gen3EmeraldHall=spec}
