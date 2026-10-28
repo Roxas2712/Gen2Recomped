@@ -75,11 +75,23 @@ local HOTBAR = {
 }
 local HOTBAR_SLOP = 1.4
 
+local function skinButtonAvailable(btn)
+  return (btn ~= 'x' and btn ~= 'y') or GameVersion.isGen4()
+end
+
+local function skinControlAvailable(ctl)
+  if #ctl.keys > 0 or #ctl.hotkeys > 0 then return true end
+  for _,btn in ipairs(ctl.buttons)do
+    if skinButtonAvailable(btn) then return true end
+  end
+  return false
+end
+
 local function buttonAvailable(self, btn)
   -- X and Y are Platinum / HGSS buttons in play, but the launcher's layout
   -- editor (preview) shows them always: the layout it saves is shared by
   -- every game, and the Gen 4 ones are where a player wants to place them
-  if btn == 'x' or btn == 'y' then return self.preview or GameVersion.isGen4() end
+  if btn == 'x' or btn == 'y' then return self.preview or skinButtonAvailable(btn) end
   return self.img and self.img[btn] ~= nil
 end
 
@@ -634,7 +646,8 @@ function TouchControls:hitTest(x, y)
     local ww, wh, ox, oy = surfaceRect()
     for i = #page.controls, 1, -1 do
       local ctl = page.controls[i]
-      if not ctl.decorative and TouchSkin.hits(page, ctl, ww, wh, x, y, ox, oy) then
+      if not ctl.decorative and skinControlAvailable(ctl)
+         and TouchSkin.hits(page, ctl, ww, wh, x, y, ox, oy) then
         return ctl.spec, ctl
       end
     end
@@ -729,11 +742,13 @@ end
 
 local function enterControl(self, ctl)
   local freshButton, freshAction = false, false
-  for _, btn in ipairs(ctl.buttons) do if not self.held[btn] then freshButton = true end end
+  for _, btn in ipairs(ctl.buttons) do
+    if skinButtonAvailable(btn) and not self.held[btn] then freshButton = true end
+  end
   for _, key in ipairs(ctl.keys) do if not (self.keysHeld and self.keysHeld[key]) then freshAction = true end end
   for _, action in ipairs(ctl.hotkeys) do if not (self.hotkeysHeld and self.hotkeysHeld[action]) then freshAction = true end end
   for _, btn in ipairs(ctl.buttons) do
-    pressBtn(self, btn)
+    if skinButtonAvailable(btn) then pressBtn(self, btn) end
   end
   for _, key in ipairs(ctl.keys) do pressKey(self, key, true) end
   local switched = false
@@ -757,7 +772,7 @@ function skinHitSet(self, x, y, prev)
   local set = nil
   for _, ctl in ipairs(page.controls) do
     local held = (prev and prev[ctl]) == true
-    if not ctl.decorative
+    if not ctl.decorative and skinControlAvailable(ctl)
        and TouchSkin.hits(page, ctl, ww, wh, x, y, ox, oy, held) then
       set = set or {}
       set[ctl] = true
