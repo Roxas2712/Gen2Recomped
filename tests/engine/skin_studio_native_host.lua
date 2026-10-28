@@ -76,6 +76,17 @@ local dropped={getFilename=function()return 'owned-host.png'end,
 love.filedropped(dropped)
 T.eq(Studio.page().imagePath,'img/owned-host.png','actual file drop imports owned art into selected skin')
 T.check(Studio.dirty,'actual import marks native editor dirty')
+-- The editor must preserve native DS controls, in addition to Gen1's binds.
+Studio.addControl();Studio.setBindSpec('x|y')
+local Input=require('src.core.Input');Input:init()
+local Touch=require('src.core.TouchControls');Touch:setPreview(false)
+local w,h=love.graphics.getDimensions()
+local cx,cy=Skin.controlGeometry(Studio.page(),Studio.selectedControl(),w,h)
+T.check(Touch:touchpressed('ds-buttons',cx,cy),'studio-created native DS bind captures real contact')
+T.check(Input:isDown('x') and Input:isDown('y'),'both DS buttons reach actual native input owner')
+Touch:touchreleased('ds-buttons',cx,cy)
+T.check(not Input:isDown('x') and not Input:isDown('y'),'DS bind release reaches native owner')
+Touch:setPreview(true)
 local calls=0
 local mouse=Studio.mousepressed
 Studio.mousepressed=function(...)calls=calls+1;return mouse(...)end

@@ -8,7 +8,7 @@ TouchSkin.USER_ROOT = "skins"
 TouchSkin.EXPORT_ROOT = "skins/_export"
 
 TouchSkin.GB_BUTTONS = {
-  a = "a", b = "b", start = "start", select = "select",
+  a = "a", b = "b", x = "x", y = "y", start = "start", select = "select",
   up = "up", down = "down", left = "left", right = "right",
   l = "l", r = "r",
   l1 = "l", r1 = "r",

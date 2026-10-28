@@ -85,6 +85,7 @@ Studio.BIND_GROUPS = {
     specs = { "a", "b", "start", "select", "up", "down", "left", "right" } },
   { title = "GBA / SHOULDERS",
     specs = { "l", "r", "l|r" } },
+  { title = "NATIVE DS BUTTONS", specs = { "x", "y" } },
   { title = "DIAGONALS",
     specs = { "left|up", "right|up", "left|down", "right|down" } },
   { title = "HOTKEYS",
@@ -102,11 +103,12 @@ Studio.BIND_GROUPS = {
   { title = "NO INPUT", specs = { "nul" } },
 }
 
-Studio.BIND_PARTS = { "left", "right", "up", "down", "a", "b", "l", "r", "start", "select" }
+Studio.BIND_PARTS = { "left", "right", "up", "down", "a", "b", "l", "r", "start", "select", "x", "y" }
 
 local PART_RANK = {
   left = 1, right = 2, up = 3, down = 4,
   a = 5, b = 6, l = 7, r = 8, start = 9, select = 10,
+  x = 11, y = 12,
 }
 
 local function now()
@@ -728,19 +730,7 @@ function Studio.deleteEntry(id)
   return true
 end
 
-function Studio.importSkinFile()
-  if not FilePicker.available() then
-    setStatus("On mobile, use Import in the Skins tab to add a downloaded skin.", true)
-    return false
-  end
-  local kind = { label = "Skin", exts = { "zip", "deltaskin", "cfg" } }
-  local path = FilePicker.open("Choose a skin", kind)
-  if not path then return false end
-  local name, data = FilePicker.basename(path), FilePicker.read(path)
-  if not data then
-    setStatus("Could not read " .. name, true)
-    return false
-  end
+function Studio.importSkinBytes(name, data)
   local id, note = TouchSkin.installArchive(name, data)
   if not id then
     setStatus("Import failed: " .. tostring(note), true)
@@ -751,6 +741,22 @@ function Studio.importSkinFile()
   Studio.enterEditor()
   setStatus("Imported " .. id)
   return true
+end
+
+function Studio.importSkinFile()
+  if not FilePicker.available() then
+    setStatus("Use a desktop file picker, or drop a skin ZIP, Delta skin or CFG onto this window.", true)
+    return false
+  end
+  local kind = { label = "Skin", exts = { "zip", "deltaskin", "cfg" } }
+  local path = FilePicker.open("Choose a skin", kind)
+  if not path then return false end
+  local name, data = FilePicker.basename(path), FilePicker.read(path)
+  if not data then
+    setStatus("Could not read " .. name, true)
+    return false
+  end
+  return Studio.importSkinBytes(name, data)
 end
 
 function Studio.openLoadPicker()
@@ -1130,8 +1136,9 @@ function Studio.filedropped(file)
   if not Studio.skin then return end
   local path = (file.getFilename and file:getFilename()) or ""
   local base = FilePicker.basename(path)
-  if not FilePicker.matches(base, FilePicker.IMAGE) then
-    setStatus("Drop a PNG or JPG to use it as art.", true)
+  local archive=FilePicker.matches(base,{exts={'zip','deltaskin','cfg'}})
+  if not archive and not FilePicker.matches(base, FilePicker.IMAGE) then
+    setStatus("Drop a PNG/JPG for art, or a ZIP/Delta/CFG skin.", true)
     return
   end
   local ok, data = pcall(function()
@@ -1144,7 +1151,8 @@ function Studio.filedropped(file)
     setStatus("Could not read " .. base, true)
     return
   end
-  Studio.adoptImage(base, data)
+  if archive then return Studio.importSkinBytes(base,data) end
+  return Studio.adoptImage(base, data)
 end
 
 function Studio.detectViewport()
