@@ -1,6 +1,18 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
+ ["BETA / READY TO PLAY"]="BETA / SPIELBEREIT",
+ ["ORIGINAL CARTRIDGE IMAGE"]="ORIGINAL-MODULBILD",
+ ["Import save"]="Spielstand importieren",
+ ["Export save"]="Spielstand exportieren",
+ ["Re-import ROM"]="ROM erneut importieren",
+ ["SAVE SLOT"]="SPEICHERPLÄTZE",
+ ["Native SRAM · separate saves per language"]="Native SRAM · je Sprache ein Spielstand",
+ ["F5 / F8 · exact quick state"]="F5 / F8 · exakter Schnellstand",
+ ["Pinball saves must be exactly 32768 bytes."]="Pinball-Spielstände müssen genau 32768 Bytes groß sein.",
+ ["No Pinball save exists for this language yet."]="Für diese Sprache gibt es noch keinen Pinball-Spielstand.",
+ ["Pinball save exported."]="Pinball-Spielstand exportiert.",
+ ["Pinball save imported. Previous data was backed up."]="Pinball-Spielstand importiert. Der bisherige Stand wurde gesichert.",
  ["Preparing your Pinball game …"]="Dein Pinball-Spiel wird vorbereitet …",
  ["Pinball game prepared."]="Pinball-Spiel vorbereitet.",
  ["Pinball import tools are unavailable."]="Die Pinball-Importwerkzeuge sind nicht verfügbar.",

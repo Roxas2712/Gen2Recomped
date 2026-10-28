@@ -37,6 +37,8 @@ local ok,why=pcall(function()
  emit{event='ready'}
  local input={0,0};local paused=false;local phase=job.duel and 'preparing' or 'playing'
  local prepared,elapsed,done,best={},{},{},{}
+ local nextPreview=0
+ local previews=love.thread.getChannel(job.channel..'.previewSource')
  local nextFrame=love.timer.getTime();local n=0
  local width,height,count,rate=ffi.new('uint32_t[1]'),ffi.new('uint32_t[1]'),ffi.new('size_t[1]'),ffi.new('uint32_t[1]')
  local hasTableStats,tableStats=pcall(function()return lib.ascendant_pinball_table_stats end)
@@ -48,7 +50,21 @@ local ok,why=pcall(function()
   local raw=channels.commands:pop()
   while raw do
    local msg=Json.decode(raw)
-   if msg.action=='quit' then close();emit{event='closed'};return end
+   if msg.action=='quit' then
+    if not job.duel and handles[1]then
+     pcall(function()
+      local ptr=lib.ascendant_pinball_picture(handles[1],width,height)
+      local image=love.image.newImageData(tonumber(width[0]),tonumber(height[0]),'rgba8')
+      ffi.copy(image:getFFIPointer(),ptr,tonumber(width[0])*tonumber(height[0])*4)
+      local encoded=image:encode('png');image:release()
+      local path=job.session.player..'/preview-'..(job.session.locale or 'en')..'.png'
+      local file=io.open(path..'.pending','wb')
+      if file then file:write(encoded:getString());file:close();os.rename(path..'.pending',path)end
+      encoded:release()
+     end)
+    end
+    close();emit{event='closed'};return
+   end
    if msg.action=='input' then input=msg.buttons end
    if msg.action=='start' and phase=='waiting'then phase='playing';nextFrame=love.timer.getTime();schedule(not paused)end
    if msg.action=='pause' then paused=msg.value;input={0,0};nextFrame=love.timer.getTime();schedule(not paused and phase~='waiting'and phase~='finished')end
@@ -59,7 +75,12 @@ local ok,why=pcall(function()
    if msg.action=='state' then
     if job.duel then emit{event='notice',message='Schnellstände sind im Punkteduell gesperrt.'}
     else
-     local success=lib.ascendant_pinball_state(handles[1],job.session.player..'/quick.state',msg.load and 1 or 0)
+     local path=job.session.player..'/quick-'..(job.session.locale or 'en')..'.state'
+     if msg.load then
+      local f=io.open(path,'rb')
+      if f then f:close()else path=job.session.player..'/quick.state'end
+     end
+     local success=lib.ascendant_pinball_state(handles[1],path,msg.load and 1 or 0)
      emit{event='notice',message=success~=0 and (msg.load and 'Schnellstand geladen.' or 'Schnellstand gespeichert.')or failure()}
     end
    end
@@ -109,6 +130,13 @@ local ok,why=pcall(function()
     local ptr=lib.ascendant_pinball_picture(m,width,height)
     local data=love.image.newImageData(tonumber(width[0]),tonumber(height[0]),'rgba8')
     ffi.copy(data:getFFIPointer(),ptr,tonumber(width[0])*tonumber(height[0])*4);message.images[i]=data
+    if job.broadcastView and i==1 and phase=='playing'and now>=nextPreview then
+     nextPreview=now+1/6
+     previews:performAtomic(function(channel)
+      local old=channel:pop();while old do old.image:release();old=channel:pop()end
+      channel:push{image=data,frame=n}
+     end)
+    end
     if diagnostics then local t=love.timer.getTime();diagnostics.image=diagnostics.image+t-stamp;stamp=t end
     local game=read(job.session.game_pointer_address or 0x020314E0,4);local valid=game>=0x02000000 and game<0x02040000
     message.stats[i]={main=read(0x0200B0C2),sub=read(0x0200B0C3),field=read(0x0200B0C4),

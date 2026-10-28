@@ -97,6 +97,34 @@ and exact decimal score updates, keepalive and cancel. Disconnects award no
 winner. Native preparation, the displayed countdown and gameplay timing remain
 client responsibilities; server readiness does not skip the RAM handshake.
 
+### Invite first, prepare the private import second
+
+The friend workspace can send `{account:"<friend account>",mode:"pinball",
+fingerprint,rules}` instead of a device-target request. The existing accepted
+friendship and request/privacy checks still apply. The service selects that
+friend's most recently seen authenticated device (ordinary menu heartbeat at
+most 120 seconds old), then binds the invitation to it. This permits a pending
+request before the recipient opens Pinball or imports a ROM. It does not mark
+an unprepared device ready. Acceptance and entry still require matching native
+rules, locale and fingerprint with fresh Pinball presence. An account change or
+leaving the module cancels the local automatic import continuation.
+
+### Optional side-by-side opponent picture
+
+New clients advertise `view:2` in the existing protocol-1 hello. Both must agree
+before sending `kind:"picture"` with monotonic `frame`, integer `width/height`
+and base64 `png`. Original clients remain score-only. Native workers publish
+completed pictures at up to six frames/second to a bounded latest-only queue;
+a separate worker encodes/decodes them. At most 20,000 PNG bytes, 27,000 base64
+characters and 512×512 pixels are accepted. Ancillary profiles and incomplete
+chunk envelopes are rejected before decoding. No second game is simulated and
+no ROM or save is shared. F7 hides/shows the large opponent pane.
+
+These pictures currently use the existing HTTPS CloudNet fallback, including
+its ACK/order/size limits. Their effective update rate depends on network and
+server capacity. This is not a 60-fps video stream or qualification of Internet
+P2P/relay video. Keep score/control messages usable if picture decoding fails.
+
 ## Validation handoff
 
 `tests/pinball_friends_test.lua` drives two synthetic accounts through the real
@@ -111,7 +139,26 @@ participant authorization, device binding, stale presence, privacy, concurrent
 invitations, immutable rules, duplicate/out-of-order wire requests and revoked
 sessions. Then qualify the real invite/accept flow with two isolated test
 accounts and native players over HTTPS, followed by separate physical devices.
-The current synthetic and localhost ENet tests do not establish that result.
+The synthetic and localhost ENet tests alone do not establish that result.
+
+The matching private ModCompass server implementation is saved on
+`codex/pinball-friend-duels`, commit
+`5b565c7394e7823559dde43ec0f757ff369e2039`. Its additive migration, affected
+PHP files and deployment/rollback procedure are documented in that server's
+README. The server checkout currently has no Git remote. Its 40 affected
+PHPUnit integration/regression tests pass (565 assertions), including RPG
+links, wagers and center lobbies. SQLite tests check reservation conflicts
+sequentially; they do not certify simultaneous MySQL requests under load.
+
+`tools/qualify_pinball_http.py` adds a different level of evidence: the actual
+Laravel application over local HTTPS, two separate native LÖVE processes,
+isolated authenticated accounts/profiles, real Friends/CloudNet/Duel modules,
+matching initial native RAM, game inputs, consistent final scores and drained
+final ACKs. The second client activates an already-built private import after
+the invitation; this does not test ROM recompilation or browser OAuth. It does
+not qualify the public service or separate physical devices. No production
+account was used or modified, and these server changes have not been deployed
+by this qualification.
 
 Run the managed ROM-free client checks with:
 

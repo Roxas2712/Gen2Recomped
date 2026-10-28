@@ -33,14 +33,19 @@ def bridge_fingerprint():
         if p.suffix in {'.cpp','.h','.patch'})).hexdigest()[:16]
 
 def apply_runtime_fixes(source,qa):
-    """Apply only the reviewed fix to the pinned runtime, preserving other files."""
+    """Preflight every reviewed file, including upgrades of an older patched build."""
     patch=ROOT/'tools/pinball-rs-native/runtime-fixes.patch'
     command=['git','-C',str(source),'apply']
-    check=qa.qa_run(command+['--check',str(patch)],capture_output=True,text=True)
-    if check.returncode==0:
-        qa.qa_run(command+[str(patch)],capture_output=True,text=True,check=True)
-    elif qa.qa_run(command+['--reverse','--check',str(patch)],capture_output=True,text=True).returncode:
-        raise RuntimeError('The reviewed Pinball runtime fix conflicts with local changes; existing sources were preserved.')
+    paths=[line.split(' b/',1)[1] for line in patch.read_text().splitlines() if line.startswith('diff --git ')]
+    pending=[]
+    for path in paths:
+        selected=['--include='+path,str(patch)]
+        if qa.qa_run(command+['--check']+selected,capture_output=True,text=True).returncode==0:
+            pending.append(selected)
+        elif qa.qa_run(command+['--reverse','--check']+selected,capture_output=True,text=True).returncode:
+            raise RuntimeError('The reviewed Pinball runtime fix conflicts with local changes; existing sources were preserved.')
+    for selected in pending:
+        qa.qa_run(command+selected,capture_output=True,text=True,check=True)
 
 def verify(path,expected,size):
     path=path.expanduser().resolve(strict=True)

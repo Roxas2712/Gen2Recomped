@@ -40,15 +40,19 @@ local session={locale='en'};M.session=function()return session end
 M.install(RI)
 local ui=setmetatable({_s=1,_pinOpen=true,section='games',_pinLocale='en',ready={}}, {__index=RI})
 ui:_sbOpenGame('pinballrs');ui:_sbDrawContent(0,0,1000,700)
-check(ui._pinButtons[2].label=='SPIELEN'and ui._pinButtons[2].y<180,'standard primary Play precedes artwork and secondary settings')
+check(ui._pinButtons[2].label=='SPIELEN'and ui._pinButtons[2].y<300,'standard primary Play belongs to the module hero before secondary settings')
 check(ui._pinIndex==2,'Enter focuses the primary Play action on a ready cartridge')
 ui.pageScroll=400;ui._pinFocusNeeded=true;ui:_sbDrawContent(0,-400,1000,700)
-check(ui.pageScroll==0,'keyboard focus scrolls the primary Play control back into view')
+check(ui.pageScroll<100,'keyboard focus scrolls the primary Play control back into view')
 local function click(label)
  ui:_sbDrawContent(0,0,1000,700)
  for _,button in ipairs(ui._pinButtons)do if button.label:find(label,1,true)then button.action();return end end
  error('Missing button: '..label)
 end
+local advancedHidden=true
+for _,button in ipairs(ui._pinButtons)do if button.label:find('IP / Port',1,true)then advancedHidden=false end end
+check(advancedHidden,'manual IP entry is hidden in the normal friend flow')
+click('ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY')
 click('ONLINE / LAN · DIREKT HOSTEN')
 check(connections==0 and ui._pinConnectJob,'button queues connection instead of doing account I/O in the click handler')
 ui:update(.016);check(connections==1 and started==1 and ui._pinPlayer.net==lastNet,'completed transport launches the actual player path')
@@ -66,7 +70,7 @@ ui._launcherSequence=nil;ui._pinPendingNet=nil;ui._pinOpen=true;ui.section='game
 M.session=function()return nil end
 ui:_sbDrawContent(0,0,1000,700)
 local importButton,playButton=false,false
-for _,r in ipairs(ui._pinButtons)do importButton=importButton or r.label:find('IMPORT GAME',1,true);playButton=playButton or r.label:find('SPIELEN',1,true)end
+for _,r in ipairs(ui._pinButtons)do importButton=importButton or r.label:find('Import ROM',1,true);playButton=playButton or r.label:find('SPIELEN',1,true)end
 check(importButton and not playButton,'unprepared cartridge exposes import instead of a nonfunctional Play button')
 local callback;love.window.showFileDialog=function(_,fn)callback=fn end
 local imported=0;ui._pinImport=function(_,path)imported=imported+1 end

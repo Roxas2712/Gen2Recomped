@@ -18,12 +18,13 @@ its game modes with launcher approximations or bundle the decompilation's assets
 | Original button configurations | All ten GBA inputs are exposed on keyboard and controller. Shoulders are convenient flippers; triggers provide L/R, left-stick click provides Select, Back opens the host menu. |
 | Original SRAM and exact quick state | SRAM is preserved and reopened; exact quick-state image/RAM replay and legacy states are tested separately. No original-save schema is replaced. |
 | Host view, image filters, integer scale, fullscreen | Existing Pinball player controls remain available. Full-table rendering is still beta and covers standard tables. |
-| Friend point duels | Separate existing client protocol, not an original cartridge link battle. This fix does not qualify a production server or native network session. |
+| Friend point duels | Existing friendships and authenticated device invitations, optional import preparation, native joint start and consistent results passed with two actual clients over a local HTTPS server. Public deployment and physical-device networking remain unqualified. |
 | Physical e-Reader cards, Game Boy Player rumble, original Pokédex cable exchange | Not qualified by these tests. No card data, hardware accessory or functioning cable session is invented. |
 
-The HALT fix is in `tools/pinball-rs-native/runtime-fixes.patch`. The private
+The HALT and OBJ-layer fixes are in `tools/pinball-rs-native/runtime-fixes.patch`. The private
 builder applies it to the pinned GBARecomp checkout, recognizes an already
-applied patch, refuses conflicting changes and incorporates the patch into the
+applied patch, can upgrade a HALT-only installation without partial mutation,
+refuses conflicting changes and incorporates the patch into the
 backend fingerprint. Existing ROMs, SRAM and quick states are retained. Restart
 an already running app before using a replaced native library.
 
@@ -40,3 +41,40 @@ The cadence check verifies game steps and PCM duration, independently of window
 refresh rate. The menu check does not modify guest RAM to unlock anything.
 Reference/cached rendering comparisons establish equivalence between those two
 host paths, not a complete match to retail hardware or every game scene.
+
+The module detail view now follows the normal library page: one shared header,
+cartridge/design control, a primary Play button and ROM reimport in the hero,
+then SRAM import/export and the available language profiles. Save imports accept
+exactly 32768 bytes and retain the previous file under a unique backup name.
+Exports use the app's exports folder. A solo game's last native picture becomes
+its private local preview on return. Quick states are written per language;
+loading retains compatibility with the previous `quick.state` path when no
+language-specific state exists. No RPG save editor or unimplemented cloud-sync
+button is presented as a Pinball feature.
+
+The actual separate-profile GUI was exercised in German/HeartGold, including
+module Play → native game → F5 → F8 → host menu → return to the module page.
+The language-specific state and preview were created. Layout bounds and button
+overlap are checked at 420, 780 and 1400 content pixels; this does not certify
+physical mobile devices or every localized font.
+
+The OBJ fix selects one winning sprite by OAM order before compositing it
+against backgrounds. It prevents the monitor aperture from blending against
+other sprites. At two independently captured native/reference frames, the
+incorrect pixels above the monitor fell from 464/1287 to zero. A native raster
+regression covers transparency masks, OAM/background priority and both normal
+and expanded rendering. Both cartridges retain exact quick-state replay and
+cached/reference image/RAM equivalence.
+
+The online player displays its own actual board and the friend's transmitted
+board side by side. A separate bounded image worker handles previews; the
+client executes one native game. A macOS activity lease protects active audio
+and video from App Nap, allows idle system sleep, and ends on solo pause,
+completion or close. Native preparation/waiting is deliberately silent.
+The consumer prebuffers six native audio frames (about 100 ms) to cover short
+interpreter/scheduler spikes. A paused host menu discards current duel audio
+instead of replaying an old backlog when it closes. Guest timing and sample
+duration remain unchanged.
+Picture updates use the authenticated HTTPS fallback, not a qualified public
+P2P video channel. See `PINBALL-MODCOMPASS.md` for the wire limits and the
+distinction between synthetic tests, local native HTTPS duels and deployment.

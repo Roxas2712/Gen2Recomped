@@ -21,12 +21,23 @@ local function add(count,rate)
  for _=1,count do player.audio:push({getSampleRate=function()return rate or 32768 end,release=noop})end
  player:update(.016)
 end
-add(3);assert(not player.sound.playing,'short startup must prebuffer instead of immediately underrunning')
+add(5);assert(not player.sound.playing,'short startup must prebuffer instead of immediately underrunning')
 add(1);assert(player.sound.playing and player.sound.starts==1)
 player.sound.playing=false;player.sound.queued=0
-add(3);assert(not player.sound.playing,'starved playback must refill before restarting')
+add(5);assert(not player.sound.playing,'starved playback must refill before restarting')
 add(1);assert(player.sound.playing and player.audioRestarts==1)
-add(4,65536);assert(player.audioRate==65536 and player.sound.playing and #sources==2,'rate changes must retain a correctly sized new queue')
+add(6,65536);assert(player.audioRate==65536 and player.sound.playing and #sources==2,'rate changes must retain a correctly sized new queue')
 assert(cap.realtime());player:togglePause();assert(not cap.realtime() and not player.sound.playing)
-player:togglePause();assert(cap.realtime());player:dispose();assert(not cap.realtime())
+add(6,65536);assert(player.audio:getCount()==0 and player.sound.queued==0,'paused menus must discard live duel audio instead of replaying it late')
+player:togglePause();assert(cap.realtime())
+local function phase(value)
+ player.videoStarted=true
+ player.frames:push({images={},stats={},seconds=0,phase=value,frame=1})
+ player:update(.016)
+end
+phase('waiting');assert(not player.sound.playing and not player.audioStarted,'joint-start waiting ends preparation audio deliberately')
+phase('playing');add(6,65536)
+assert(player.sound.playing and player.audioRestarts==1,'resuming after intentional native waiting is not audio starvation')
+phase('finished');assert(not player.sound.playing,'completed native game must not replay queued sound while awaiting the peer')
+player:dispose();assert(not cap.realtime())
 print('Pinball audio: startup preroll, starvation recovery, sample-rate change, pause and lease cleanup passed')

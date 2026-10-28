@@ -1,6 +1,6 @@
 -- GBA Pinball library card and shared-window launch, by Roxas2712.
 local M={};local Json=require('src.link.Json');local Strings=require('src.core.Strings')
-local function read(path)local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
+local function read(path)if not path then return end;local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
 local function exists(path)if type(path)~='string'then return false end;local f=io.open(path,'rb');if not f then return false end;f:close();return true end
 local function sourceRoot()
  return require('src.pinball.Backend').root()
@@ -51,11 +51,29 @@ function M.install(RI)
    local path=U.chooseFileByExt({'gba'},'Pokémon Pinball: Ruby & Sapphire (.gba)');if path then self:_pinImport(path)end
   end
  end
+ function RI:_pinChooseSave()
+  if self._pinPicker or self._pinPlayer then return end
+  local session=M.session(self._pinLocale);if not session then return end
+  local function chosen(path)
+   if not self._pinOpen or self.section~='games' or self._pinPlayer then return end
+   local ok,why=require('src.pinball.SaveFiles').import(session,path)
+   self._pinProfiles=nil;self._pinNotice=ok and Strings('Pinball save imported. Previous data was backed up.')or tostring(why)
+  end
+  if love.window and love.window.showFileDialog then
+   local token={};self._pinPicker=token
+   local ok,why=pcall(love.window.showFileDialog,'openfile',function(files,_,problem)
+    if self._pinPicker~=token then return end;self._pinPicker=nil
+    if problem then self._pinNotice=tostring(problem)elseif type(files)=='table'and files[1]then chosen(files[1])end
+   end,{title=Strings('Import save'),filters={['Pinball SRAM (.sav)']='sav'},multiselect=false,attachtowindow=true})
+   if not ok then self._pinPicker=nil;self._pinNotice=tostring(why)end
+  else local path=U.chooseFileByExt({'sav'},Strings('Import save'));if path then chosen(path)end end
+ end
  local function cancelConnect(self)
   if self._pinConnectJob then self._pinConnectJob:cancel();self._pinConnectJob=nil end
  end
  local function library(self)
   cancelConnect(self)
+  self._pinPendingInvite=nil;self._pinPendingPeer=nil;self._pinResumeInvite=nil;self._pinSwitchLocale=nil
   self._pinOpen=false;self._pinButtons={};self.gamesView='consoles';self.pageScroll=0
   if self._pinPreviousTab then self.tab=self._pinPreviousTab;self._pinPreviousTab=nil end
  end
@@ -77,7 +95,7 @@ function M.install(RI)
   if not ok then begin();return end
   self._pinIntro={scene=scene,elapsed=0,begin=begin}
  end
- local function start(self,seats,net,host)
+ local function start(self,seats,net,host,opponent)
   local session=M.session(self._pinLocale);if not session or self._pinPlayer then return false,'Pinball ist nicht bereit.'end
   if self._xyStopPreview then self:_xyStopPreview()end
   require('src.import.LauncherBackdrop').stop()
@@ -85,7 +103,7 @@ function M.install(RI)
   local function begin()
    self._pinPendingNet=nil
    if net and net.closed then self._pinNotice='Das Freundesduell wurde abgebrochen.';return end
-   local ok,p=pcall(require('src.pinball.Player').new,session,{seats=seats or 1,duel=(seats or 1)==2 or net~=nil,field=self._pinField or 0,net=net,host=host})
+   local ok,p=pcall(require('src.pinball.Player').new,session,{seats=seats or 1,duel=(seats or 1)==2 or net~=nil,field=self._pinField or 0,net=net,host=host,opponent=opponent})
    if ok then self._pinPlayer=p else
     if net then
      net:close()
@@ -102,13 +120,30 @@ function M.install(RI)
  end
  local function friends(self,session)
   if self._pinFriends then self._pinFriends:close()end
-  if not session then self._pinFriends=nil;return end
-  self._pinFriends=require('src.pinball.Friends').new(session,{field=self._pinField or 0,
-   start=function(net,host,rules)
+  self._pinFriends=require('src.pinball.Friends').new(session,{field=self._pinField or 0,locale=self._pinLocale,
+   prepare=function(invite,peer)
+    self._pinPendingInvite=invite and invite.id or nil;self._pinPendingPeer=peer
+    self._pinPendingAccount=require('src.cloud.RetroCloud').accountId()
+    if invite and invite.rules then self._pinLocale=invite.rules.locale end
+    require('src.import.AccountWorkspace').close(self)
+    self:_sbOpenGame('pinballrs')
+    local required=M.session(self._pinLocale)
+    if required and invite and invite.rules.rom==required.rom_sha1 and invite.rules.backend~=required.backend then
+     self._pinNotice='Für dieses Duell müssen beide dieselbe aktuelle App- und Pinball-Version verwenden.'
+     self._pinPendingInvite=nil;return
+    end
+    if required and invite and require('src.pinball.Friends').new(required):compatible(invite.rules)then
+     self._pinSwitchLocale=self._pinLocale
+    else
+     self._pinNotice='Passenden eigenen Pinball-Import auswählen. Die Freundesanfrage bleibt vorgemerkt.'
+     self:_pinChooseImport()
+    end
+   end,
+   start=function(net,host,rules,opponent)
     if self._pinPlayer or self._pinIntro or self._launcherSequence then return false,'Pinball ist beschäftigt.'end
     require('src.import.AccountWorkspace').close(self)
-    self._pinField=rules.field;self:_sbOpenGame('pinballrs')
-    return start(self,1,net,host)
+    self._pinField=rules.field;self._pinFriends.options.field=rules.field;self:_sbOpenGame('pinballrs')
+    return start(self,1,net,host,opponent)
    end,
    stop=function(why)
     if self._pinPendingNet then
@@ -183,8 +218,10 @@ function M.install(RI)
     else
      self._pinJob=nil;self._pinNotice=result.ok and(result.data and result.data.notice or 'Pinball game prepared.')or result.error
      if result.ok then
-      if not M.session(self._pinLocale)then self._pinLocale='en'end
+      self._pinProfiles=nil
+      if not M.session(self._pinLocale)and not self._pinPendingInvite then self._pinLocale='en'end
       friends(self,M.session(self._pinLocale))
+      self._pinResumeInvite=true
      end
     end
     raw=self._pinImportChannel:pop()
@@ -203,6 +240,22 @@ function M.install(RI)
    end
   end
   if self._pinFriends then
+   if self._pinSwitchLocale then
+    self._pinSwitchLocale=nil;friends(self,M.session(self._pinLocale));self._pinResumeInvite=true
+   end
+   if self._pinResumeInvite then
+    local Auth=require('src.cloud.RetroCloud')
+    if Auth.signedIn()and Auth.accountId()==self._pinPendingAccount then
+     local invite=self._pinPendingInvite and self._pinFriends:invitation(self._pinPendingInvite)
+     if invite and self._pinFriends:compatible(invite.rules)then
+      self._pinFriends:action('pinball:accept:'..invite.id);self._pinResumeInvite=nil;self._pinPendingInvite=nil
+     elseif self._pinPendingPeer and self._pinFriends.session then
+      self._pinFriends:action('pinball:inviteaccount:'..self._pinPendingPeer);self._pinResumeInvite=nil;self._pinPendingPeer=nil
+     elseif invite then
+      self._pinNotice='Der Import passt noch nicht zur Anfrage. Sprache, Cartridge und App-Build müssen übereinstimmen.';self._pinResumeInvite=nil
+     end
+    else self._pinResumeInvite=nil;self._pinPendingInvite=nil;self._pinPendingPeer=nil end
+   end
    local available=not(self._pinConnectJob or self._pinPlayer or self._pinIntro or self._launcherSequence or self._xyPlayer or self._xyCheck or self.workState=='working' or self._storageTask)
    local overlay=self._accountOverlay
    local lobby=self._pinOpen or overlay and(overlay.mode=='friends'or overlay.mode=='inbox')
@@ -224,7 +277,7 @@ function M.install(RI)
   if self._pinPlayer then
    local p=self._pinPlayer;p:update(dt)
    if p.closed and not p.thread:isRunning()then
-    self._pinNotice=p.error;p:dispose();self._pinPlayer=nil
+    self._pinNotice=p.error;p:dispose();self._pinPlayer=nil;self._pinProfiles=nil;self._pinPreview=nil
     if self._pinFriends then self._pinFriends:finished()end
    end
    return
@@ -250,12 +303,14 @@ function M.install(RI)
  local open=RI._sbOpenGame
  RI._sbOpenGame=function(self,version,...)
   if self._xyStopPreview then self:_xyStopPreview()end
-  self._pinOpen=false;self._pinButtons={}
+  self._pinOpen=false;self._pinButtons={};self._pinProfiles=nil
   if version=='pinballrs'then
+   self.ready.pinballrs=M.available()
    self._xyOpen=false;self._pinOpen=true;self.section='games';self.gamesView='game';self.pageScroll=0
    self._pinPreviousTab=self._pinPreviousTab or self.tab;self.tab=version;self.browseConsole='gba';self.browseSeries='pokemon';self._pinIndex=M.available()and 2 or 1;return
   end
   cancelConnect(self)
+  self._pinPendingInvite=nil;self._pinPendingPeer=nil;self._pinResumeInvite=nil;self._pinSwitchLocale=nil
   return open(self,version,...)
  end
  local content=RI._sbDrawContent
@@ -269,6 +324,7 @@ function M.install(RI)
   local function keepVisible(r,index)
    if self._pinFocusNeeded and index==(self._pinIndex or 1)then
     self._pinFocusNeeded=nil
+    if r.pinned then return end
     if r.y<150*s then self.pageScroll=math.max(0,self.pageScroll-(150*s-r.y))
     elseif r.y+r.height>love.graphics.getHeight()-60*s then self.pageScroll=self.pageScroll+r.y+r.height-love.graphics.getHeight()+60*s end
    end
@@ -279,21 +335,15 @@ function M.install(RI)
    self._pinButtons[#self._pinButtons+1]=r;y=y+48*s
    keepVisible(r,index)
   end
-  button('ZUR BIBLIOTHEK',function()library(self)end)
-  text('Pokémon Pinball: Ruby & Sapphire',self.gameNameFont);y=y+12*s
-  text('Recompiled Ascendant · by Roxas2712',self.hintFont,RI.palette().link)
-  if M.available()then
-   -- Use the same primary play control as edition pages, before secondary
-   -- import/language/network options and within the initial viewport.
-   self:_playButton(x,y,math.min(w,340*s),44*s,'Pokémon Pinball',true,false)
-   local r=self.playButtonRect;self.playButtonRect=nil
-   if r then r.action=function()start(self,1)end;self._pinButtons[#self._pinButtons+1]=r;keepVisible(r,#self._pinButtons)end
-   y=y+56*s
+  local function register(r,action)
+   if not r then return end;r.action=action;self._pinButtons[#self._pinButtons+1]=r;keepVisible(r,#self._pinButtons)
   end
-  local height=180*s
+  local session=M.session(self._pinLocale);local Saves=require('src.pinball.SaveFiles')
+  if self._pinPreviewLocale~=self._pinLocale then self._pinPreview=nil end
   if self._pinPreview==nil then
-   self._pinPreview=false
-   local root=sourceRoot();local bytes=root and read(root..'/.local/pinball-rs/native/preview.png')
+   self._pinPreview=false;self._pinPreviewLocale=self._pinLocale
+   local root=sourceRoot();local bytes=session and read(session.player and(session.player..'/preview-'..(session.locale or 'en')..'.png'))
+   bytes=bytes or root and read(root..'/.local/pinball-rs/native/preview.png')
    if bytes then
     local ok,image=pcall(function()
      local data=love.filesystem.newFileData(bytes,'pinball-preview.png')
@@ -302,15 +352,30 @@ function M.install(RI)
     if ok then self._pinPreview=image;image:setFilter('nearest','nearest')end
    end
   end
-  local image=self._pinPreview
-  require('src.import.LauncherHardware').cartridge(self,'pinballrs',x+w*(image and .25 or .5),y+height*.5,w*(image and .43 or .55),height*.9)
-  if image then
-   local scale=math.min(w*.46/image:getWidth(),height*.9/image:getHeight())
-   love.graphics.setColor(1,1,1)
-   love.graphics.draw(image,x+w*.75-image:getWidth()*scale*.5,y+(height-image:getHeight()*scale)*.5,0,scale,scale)
+  if not self._pinProfiles then
+   self._pinProfiles={}
+   for _,lang in ipairs(LANGUAGES)do
+    local available=M.session(lang.id)
+    if available then
+     local id=lang.id
+     self._pinProfiles[#self._pinProfiles+1]={name=lang.name,selected=id==self._pinLocale,saved=Saves.exists(available),select=function()
+      self._pinLocale=id;self._pinProfiles=nil;self._pinIndex=2;love.filesystem.write('pinball-locale.txt',id);friends(self,M.session(id))
+     end}
+    end
+   end
   end
-  y=y+height+20*s
-  button(self._pinJob and 'PREPARING GAME' or 'IMPORT GAME',function()self:_pinChooseImport()end)
+  local actions={back=function()library(self)end,play=function()start(self,1)end,import=function()self:_pinChooseImport()end,
+   saved=session and Saves.exists(session),profiles=self._pinProfiles,
+   saveImport=function()self:_pinChooseSave()end,
+   saveExport=function()
+    local path,why=Saves.export(session)
+    self._pinNotice=path and Strings('Pinball save exported.')or tostring(why)
+    if path then love.system.openURL('file://'..path:match('^(.*)/'))end
+   end,
+   design=function()
+    if self._openCartDesigner then self:_openCartDesigner('pinballrs');self._cartDraft.originalOnly=true end
+   end}
+  y=y+require('src.import.LauncherPinballPage').draw(self,RI,x,y,w,session,self._pinPreview,actions,register)
   if not M.available()then
    text('BETA / ROM REQUIRED',self.hintFont,RI.palette().warning)
    text('Import your own USA cartridge; add the European cartridge for German, French, Italian or Spanish.')
@@ -325,7 +390,7 @@ function M.install(RI)
    for n=1,#LANGUAGES do
     local candidate=LANGUAGES[(at+n-1)%#LANGUAGES+1]
     local session=M.session(candidate.id)
-    if session then self._pinLocale=candidate.id;love.filesystem.write('pinball-locale.txt',candidate.id);friends(self,session);break end
+    if session then self._pinLocale=candidate.id;self._pinProfiles=nil;love.filesystem.write('pinball-locale.txt',candidate.id);friends(self,session);break end
    end
   end)
   button((self._pinField or 0)==0 and 'DUELL-TISCH: RUBY' or 'DUELL-TISCH: SAPPHIRE',function()self._pinField=1-(self._pinField or 0);if self._pinFriends then self._pinFriends.options.field=self._pinField end end)
@@ -346,6 +411,8 @@ function M.install(RI)
    if self[key]==nil then self[key]=default end
    button(label..': '..self[key]..(self._pinEdit==key and ' |'or ''),function()self._pinEdit=key;love.keyboard.setTextInput(true)end)
   end
+  button(self._pinAdvanced and 'ERWEITERTE VERBINDUNG AUSBLENDEN' or 'ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY',function()self._pinAdvanced=not self._pinAdvanced end)
+  if self._pinAdvanced then
   edit('IP / Port','_pinAddress','127.0.0.1:7777')
   button('ONLINE / LAN · DIREKT HOSTEN',function()online(self,true,false)end)
   button('ONLINE / LAN · VERBINDEN',function()online(self,false,false)end)
@@ -355,6 +422,7 @@ function M.install(RI)
   button('ONLINE · RAUM ERSTELLEN',function()online(self,true,true)end)
   button('ONLINE · RAUM BEITRETEN',function()online(self,false,true)end)
   text('Eigener Relay: ausgehende Verbindung · aktives ModCompass-Konto nötig.')
+  end
   text('Bildfilter, Pixelmaßstab und Schnellstände: Esc im Spiel.')
   text('Spieler 1: Pfeile / X / Z / Enter · Spieler 2: WASD / F / G / Tab')
   text('Controller bleiben ihrem Spieler fest zugeordnet.')
@@ -369,7 +437,7 @@ function M.install(RI)
  local back=RI._sbBack
  RI._sbBack=function(self,...)if self._pinOpen then library(self);return true end;return back(self,...)end
  local go=RI._sbGo
- RI._sbGo=function(self,...)cancelConnect(self);self._pinOpen=false;self._pinButtons={};return go(self,...)end
+ RI._sbGo=function(self,...)cancelConnect(self);self._pinPendingInvite=nil;self._pinPendingPeer=nil;self._pinResumeInvite=nil;self._pinSwitchLocale=nil;self._pinOpen=false;self._pinButtons={};return go(self,...)end
  local backdrop=RI._sbBackdropWant
  RI._sbBackdropWant=function(self,...)if self._pinOpen or self._pinPlayer then return nil end;return backdrop(self,...)end
  local play=RI.play

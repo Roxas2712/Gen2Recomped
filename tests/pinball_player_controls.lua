@@ -23,4 +23,5 @@ local noticeY
 love.graphics.printf=function(text,_,y)if text==player.notice then noticeY=y end end
 player:draw(800,600,false)
 assert(noticeY and noticeY<100,'view notice must stay above the table, away from score digits')
-player:dispose();print('Pinball controls: repeat-safe menu/table and normal focus handling passed')
+player:dispose();player:dispose();player:draw(800,600,false)
+print('Pinball controls: repeat-safe menu/table, focus handling and final-draw lifecycle passed')
