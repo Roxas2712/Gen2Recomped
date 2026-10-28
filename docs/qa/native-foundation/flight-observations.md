@@ -36,8 +36,19 @@ checks. The older native bodies are patched narrowly; later RS controller bodies
 are not copied. Its actual native RS owner and complete special-destination
 acceptance remain prerequisites, not a claim established by this composition.
 
-An unchanged-mod FireRed fresh-profile flight probe is in progress. Continuous
-story admission, complete atlas classification, native landing-effect decoration,
+Unchanged-mod FireRed fresh-profile `51233b80d5` opens the actual native picker,
+observes its destination, cancels without travel, reopens and invokes one native
+flight callback. Departure retains48 frames and arrival reaches native Pallet
+coordinates6,8 with input unlocked. The rendered destination is then awaited:
+its inspected upright exterior has397275 vertices and no pending build. The
+unmodified source wrapper performs13 departure-preparation slices. The first
+visible exterior frame costs about3152ms; this is not performance acceptance.
+The earlier `b3aa354334` reached native coordinates but captured the stale room
+before rendering settled, and remains retained. A separate readback-free outdoor
+benchmark is in progress. Native landing setup remains waiting because its
+phase/effect connection is still absent.
+
+Continuous story admission, complete atlas classification, native landing-effect decoration,
 all-edition transitions and sustained outdoor voxel60FPS remain open. Private
 mod/runtime files and player saves remain untouched. QA retains20GiB free,
 above the requested8GiB floor.
