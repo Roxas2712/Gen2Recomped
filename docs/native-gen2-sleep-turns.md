@@ -20,6 +20,8 @@ counter, and the party Pokemon did not receive the remaining counter.
 - Each tick updates the existing party sleep counter, so reconstruction
   reads the remaining count. Rest initializes three, allowing two blocked
   attempts before waking. No second turn or presentation clock is added.
+- Native held cures and medicine clear both party and active counters at the
+  existing cure site, including field medicine and revives.
 
 Source: `pret/pokecrystal` commit
 `5c877ef55197039c9676e8e3eec6d254b1c40fe8`,
