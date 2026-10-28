@@ -147,12 +147,13 @@ return function(game)
   end
   local menu=game.stack:top();assert(getmetatable(menu)==require('src.ui.Gen3MainMenu'))
   assert(menu.items[menu.index].key=='continue','Automatic League save did not offer CONTINUE')
-  U.wait(90);shot('native-rs-league-continue-menu');press('a')
+  U.wait(90);shot('native-rs-league-continue-menu')
+  local leagueSave=game.save;press('a')
   for _=1,1200 do
-    if game.stack:top()==game.overworld and game.overworld~=ow then break end
+    if game.stack:top()==game.overworld and game.save~=leagueSave then break end
     U.wait(1)
   end
-  assert(game.stack:top()==game.overworld and game.overworld~=ow,'Actual CONTINUE did not restore a new world')
+  assert(game.stack:top()==game.overworld and game.save~=leagueSave,'Actual CONTINUE did not load the durable save')
   local home=assert(require('src.core.Gen3RsEndingSave').home(game.data,game.save))
   local player=game.save.player
   assert(player.map==home.map and player.x==home.x and player.y==home.y,'CONTINUE missed native bedroom')
