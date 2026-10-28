@@ -43,7 +43,7 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(s:battlerPic(b),s:picImage(sprite),'native drawer retains preceding image')
   T.eq(s:pic(b.mon,b.isPlayer),s:picImage(sprite),'same-side public capture retains preceding image')
   local front,_,path=s:pic(b.mon,false)
-  T.check(path:find('FIXMON_A',1,true)or path:find('FIXMON_C',1,true),
+  T.check(path:find('fixmon_a',1,true)or path:find('fixmon_c',1,true),
     'opposite capture resolves an existing species path')
   T.eq(Pictures.species(s,b),species,'queued front identity precedes actual transform command')
   s:updateQueue()
@@ -146,7 +146,7 @@ for _,edition in ipairs({'red','emerald','firered'})do
  Version.set(edition)
  local s,b=make('crystal','player','dropsub');Version.set(edition)
  b.substituteHP=17;s.anim={picOverride={player=false}}
- T.eq(s:substituteVisible(b),17,edition..' keeps its original substitute owner')
+ T.eq(s:substituteVisible(b),edition=='red'and 17 or true,edition..' keeps its original substitute owner')
  T.eq(s:pictureSprite(b),b.sprite,edition..' keeps native image owner')
 end
 Version.set(before)

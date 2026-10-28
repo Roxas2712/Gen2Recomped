@@ -45,13 +45,16 @@ function M.transform(screen,b,target)
     return species
   end
   local species,before=resolved(target),resolved(b)
+  -- Front entrance frames belong to this battler, never the target's live
+  -- runner. A back picture has no front entrance animation to borrow.
+  local animation=not b.isPlayer and require('src.pokemon.PicAnim').new(screen.data,species) or nil
   local p=mark(screen,b,'transform')
   if p then
     p.beforeSprite,p.beforeSpecies=b.sprite,before
-    p.species,p.picAnim=species,target.picAnim
+    p.species,p.picAnim=species,animation
   end
   b.sprite=screen:speciesSprite(species,b.isPlayer) or b.sprite
-  if not p then commit({kind='transform',b=b,species=species,picAnim=target.picAnim})end
+  if not p then commit({kind='transform',b=b,species=species,picAnim=animation})end
 end
 
 function M.substitute(screen,b)
@@ -105,9 +108,16 @@ function M.species(screen,b)
   if type(value)=='table' and value.kind=='beatup' then
     -- The wire parameter is wCurPartySpecies, not an index into the party.
     -- Keep the pinned VM's public `slot` field for compatibility.
-    for name,def in pairs(screen.data.pokemon or {})do
-      if type(def)=='table' and def.index==value.slot then return name end
+    local catalog=screen.data.pokemon
+    local cached=screen._gen2BeatUpIdentity
+    if not(cached and cached.value==value and cached.catalog==catalog and cached.index==value.slot)then
+      cached={value=value,catalog=catalog,index=value.slot}
+      for name,def in pairs(catalog or {})do
+        if type(def)=='table' and def.index==value.slot then cached.species=name;break end
+      end
+      screen._gen2BeatUpIdentity=cached
     end
+    if cached.species then return cached.species end
   end
   return b.species or b.mon.species
 end
