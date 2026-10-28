@@ -15455,7 +15455,7 @@ end
 
 -- Name each object `function` slot from DoBattleAnimFrame's jumptable.  The
 -- routines themselves are hand-written asm and cannot be ported as data, but
--- the names tell the player which motion to approximate.
+-- the names resolve the imported IDs to the genuine GSC object routines.
 function RomExtractorGen2:gen2AnimFunctions()
   local out = {}
   -- Resolved from the routine that dispatches through it, never hardcoded:

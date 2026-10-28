@@ -6,6 +6,15 @@ local Player=require('src.battle.Gen2AnimPlayer')
 local Importer=require('src.import.RomImporter')
 local Version=require('src.core.GameVersion')
 local previous=Version.get()
+-- Older engine bases have the same real readiness gate without the newer
+-- public cache descriptor. Seed its genuine marker, never a guessed format.
+local markerFor
+for i=1,100 do
+ local name,value=debug.getupvalue(Importer.readyReport,i)
+ if name=='markerFor'then markerFor=value;break end
+ if not name then break end
+end
+assert(markerFor)
 for _,edition in ipairs({'gold','silver','crystal'})do
  Version.set(edition)
  local e=E.new(nil,edition,{symbols={BattleAnimCommands={1,0x4000},
@@ -34,7 +43,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
  p:release()
 end
 for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
- local marker=Importer.cacheContract(edition).marker
+ local marker=markerFor(edition)
  T.check(marker:find('gen2%-anim%-object%-v1:')~=nil,'generated animation cache has a new contract')
  Version.set(edition)
  local old=marker:gsub('gen2%-anim%-object%-v1:','')
@@ -45,7 +54,7 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   'real readiness gate refuses the old format before checking file gaps')
 end
 for _,edition in ipairs({'red','emerald','platinum'})do
- T.check(not Importer.cacheContract(edition).marker:find('gen2%-anim%-object'),
+ T.check(not markerFor(edition):find('gen2%-anim%-object'),
   'unrelated cartridge cache contract is retained')
 end
 Version.set(previous)

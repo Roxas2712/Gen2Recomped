@@ -20,10 +20,12 @@
     "A missing jump-table list resolves through edition-specific Gen2BgEffectIds for older native caches.",
     "Existing Gen2AnimPlayer dispatches BG/palette commands and steps the pool from its current VM update. Native scene and picture owners consume these registers directly, replacing the legacy SE approximations.",
     "BG presenter uses native palette/chrome/canvas owners, supports the real wide surface, preserves transparency and restores graphics state on supplied-panel errors.",
-    "Battler resize, hide, palette and lifted-row drawing remain attached to native image owners. Object function motion and complete send-out event sequencing remain separate work.",
+    "Battler resize, hide, palette and lifted-row drawing remain attached to native image owners. The genuine object pool and command VM now drive native OAM; complete send-out event sequencing remains separate work.",
     "The BG-only paper and clipping subset uses the native indexed palette owner, without requiring the full menu Chrome module on older engines.",
-    "Full object pool uses the already pinned native Gen2AnimMath sine/cosine subset. Native imported numeric animation tables are converted without inventing ROM programs or changing their operands."
+    "Full object pool uses the already pinned native Gen2AnimMath sine/cosine subset. Native imported numeric animation tables are converted without inventing ROM programs or changing their operands.",
+    "Existing native animation player now uses the complete command interpreter and object pool as its sole clock. The native view consumes emitted OAM through the actual loaded GFX dictionary; no interpolated motion, 48-frame age cap or 16-frame drain remains.",
+    "The native importer preserves the crossed battler-row macro/handler names. A Gen2-only cache revision rejects old generated commands and preserves game saves."
   ],
   "licence": "Gen1Recomp GPLv3 with its Additional Terms, retained in LICENSE.MD. Existing authors retain their rights; Roxas2712 integration changes in these derived files are offered on those applicable terms.",
-  "qualification": "CPU pool, SDK entry, native VM and classic/wide BG rendering contracts tested. One unchanged-VASC Crystal Metal battle reached a native faint, win, EXP award and world return with real window captures on ce12c485. Full object motion, send-out sequencing, all effects GPU frames, other platforms and release qualification remain required."
+  "qualification": "ROM-free actual-pixel counterexample fails 366 checks on the preceding native player; replacement passes. Initial actual Crystal ROM comparison matches 251 move and 23 extra-animation programs on both sides with four parameters (2192 cases); six high-parameter cases reach the observation limit equally on both interpreters. Expanded traces, new GPU frames, Windows and packaged release qualification remain pending. Earlier Metal battle ce12c485 predates the object/VM replacement."
 }

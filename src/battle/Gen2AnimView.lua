@@ -1,4 +1,4 @@
--- Native object drawing over Gen2AnimPlayer's actual OAM projection.
+-- Native object drawing over the genuine GSC VM's emitted OAM.
 -- Object layout/flip math retains Gen2AnimPlayer provenance (Cedric);
 -- public owner integration by Roxas2712, see NOTICE.md and contribution licence.
 -- GSC BG/OBJ register integration follows Gen1Recomp535a5ec0 under
