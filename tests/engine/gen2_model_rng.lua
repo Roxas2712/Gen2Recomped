@@ -20,6 +20,13 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
    mod.exports.love=function(model,lo,hi)return model.rng(lo,hi)end
    mod.exports.cart=function(model,n)return model.random(n)end
    mod.exports.method=function(model,n)return Battle.roller(model)(n)end
+   mod.exports.decorate=function()
+    local native=Battle.roller
+    Battle.roller=function(model)
+     mod.exports.lookups=(mod.exports.lookups or 0)+1
+     return native(model)
+    end
+   end
   ]],
  })})
  T.eq(#run.errors,0,'actual API2 source RNG consumer loads')
@@ -46,6 +53,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(model.rng,loveRng,'LOVE adapter identity is stable')
   T.eq(model.random,random,'zero-based adapter identity is stable')
   T.eq(model:roller(),roller,'roller identity is stable')
+  T.check(random~=roller,'source random field remains separate from the roller method wrapper')
   T.eq(#trace,0,'lookup and cache creation consume no native draws')
   for n=1,256 do
    local index=#trace+1
@@ -91,6 +99,15 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   index=#trace+1
   T.eq(probe.method(model,256),(index*37)%256,'incoming actor shares the same real stream')
   T.eq(#trace,index,'incoming actor does not create another generator')
+  probe.decorate()
+  local count=#trace
+  T.eq(model.random,random,'decorating roller does not replace the source random field')
+  T.eq(model.rng,loveRng,'decorating roller does not replace source LOVE field')
+  T.eq(probe.lookups,nil,'source field lookup does not invoke a decorated roller method')
+  index=#trace+1
+  T.eq(probe.method(model,255),(index*37)%255,'actual API2 roller decoration keeps native draw ownership')
+  T.eq(probe.lookups,1,'actual API2 consumer reaches the live class decoration')
+  T.eq(#trace,count+1,'decoration lookup itself adds no draw')
   T.raises(function()model.rng=function()end end,'read-only','source view cannot replace native RNG authority')
   T.raises(function()model.random=function()end end,'read-only','source view cannot replace cart RNG authority')
   T.raises(function()model.roller=function()end end,'read-only','source metadata cannot replace the public method')

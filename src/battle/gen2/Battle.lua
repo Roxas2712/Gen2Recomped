@@ -12,6 +12,7 @@ end
 
 function Model.bind(model, screen)
   screens[model] = screen
+  rawset(model, '_nativeRandom', function(n) return owner(model).rng(n) - 1 end)
   -- Source GSC's LOVE-style view normalizes missing/small bounds and reversed
   -- ranges. Resolve the current native function at invocation, not at bind:
   -- link setup and scoped native owners can replace that function later.
@@ -31,7 +32,8 @@ function Model:roller()
     -- BattleRandom's zero-based domain over the same existing stream.
     -- Keep the closure on its transient model, never in a global weak-key
     -- cache whose value could root the model on LuaJIT.
-    roller = function(n) return owner(self).rng(n) - 1 end
+    local random = rawget(self, '_nativeRandom')
+    roller = function(n) return random(n) end
     rawset(self, '_nativeRoller', roller)
   end
   return roller
