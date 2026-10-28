@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-205 files. Four further byte-exact files supply the native RS credits
+206 files. Four further byte-exact files supply the native RS credits
 controller, scenery selection and exact-edition credits extractor. Four more
 supply Hall of Fame presentation, art decoding and the RS text policy. One more
 supplies the original RS options controller and rendering over host-owned settings. The existing GBA
@@ -176,8 +176,8 @@ placeholder extractor and that edition's own ROM. Explicit literal team
 names are unchanged. No generated placeholder words are vendored.
 
 The shared loader also admits FireRed/LeafGreen for their original Hall of
-Fame. Six additional exact reference files provide the FR/LG address profile,
-LeafGreen relocation facts, font/window and Hall art extractors, and song enum.
+Fame. Seven additional exact reference files provide the FR/LG address profile,
+LeafGreen relocation facts, font/window and Hall art extractors, text facts and song enum.
 The controller, font, windows, PPU and isolated RNG reuse the existing byte-exact
 sources. Each verified cartridge supplies its own original labels, normal/small
 fonts, ten frames, egg/Red/Leaf portraits and separate bands/stripes/confetti.
