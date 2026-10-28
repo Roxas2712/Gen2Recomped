@@ -75,6 +75,8 @@ local function adapterTests()
  local g=love.graphics
  local hasLegacy,legacy=pcall(require,'src.render.LegacyShaderCompat')
  if hasLegacy then legacy.install()end
+ local hasAlpha,alpha=pcall(require,'src.render.AlphaDepthCompat')
+ if hasAlpha then alpha.install()end
  if os.getenv('QA_SHADER_WRONG_COMPILER')=='1'then
   assert(hasLegacy,'projection negative requires actual canvas compatibility adapter')
   legacy.compileNative=g.newShader
@@ -176,6 +178,80 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
  g.setCanvas();g.setShader();g.present()
  check(S.status().sources==0 and S.status().variants==0,'empty native stack releases disabled programs and C leases')
  alias:release();reference:release();target:release()
+ local alpha=package.loaded['src.render.AlphaDepthCompat']
+ if alpha and alpha.fragmentDepthTarget and alpha.compileNative then
+  local vertex=[[
+uniform mat4 sceneMatrix;
+#ifdef VERTEX
+vec4 independentPosition(mat4 supplied,vec4 vertex){return sceneMatrix*vertex;}
+vec4 position(mat4 supplied,vec4 vertex){vec4 clip=independentPosition(supplied,vertex);clip.y=-clip.y;return clip;}
+#endif
+]]
+  local fragment=[[
+uniform float gate;
+uniform Image ownedTexture;
+#ifdef PIXEL
+vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
+ vec4 pixel=Texel(ownedTexture,uv);if(gate<.5)pixel.rgb=vec3(0.,0.,1.);
+ if(pixel.a<.5)discard;
+ DEPTH_WRITE
+ return pixel;
+}
+#endif
+]]
+  local plain=vertex..fragment:gsub('DEPTH_WRITE','')
+  reference=g.newShader(plain)
+  -- Independent explicit-depth oracle, without the adapter's source helper.
+  local depthReference=g.newShader(vertex..fragment:gsub('DEPTH_WRITE','gl_FragDepth=gl_FragCoord.z;'))
+  candidate=g.newShader(plain..string.rep(' \n',32768))
+  target=g.newCanvas(8,8,{dpiscale=1})
+  local depth=g.newCanvas(8,8,{format='depth24stencil8',readable=true,dpiscale=1})
+  local pixels=love.image.newImageData(2,1);pixels:setPixel(0,0,0,1,0,0);pixels:setPixel(1,0,0,1,0,1)
+  local cutout=g.newImage(pixels);pixels:release();cutout:setFilter('nearest','nearest')
+  local matrix={.25,0,0,-1,0,.25,0,-1,0,0,1,0,0,0,0,1}
+  send('send','sceneMatrix','row',matrix);send('send','gate',1);send('send','ownedTexture',cutout)
+  depthReference:send('sceneMatrix','row',matrix);depthReference:send('gate',1);depthReference:send('ownedTexture',cutout)
+  local behind=g.newShader(vertex..[[
+#ifdef PIXEL
+vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(1.,0.,0.,1.);}
+#endif
+]])
+  behind:send('sceneMatrix','row',matrix)
+  local beforeCompiled=S.status().compiled;local beforeCompanions=alpha.status().compiled
+  check(S.status().sources==1,'the native cutout source is actually admitted')
+  local function render(withDepth)
+   g.setCanvas(withDepth and{target,depthstencil=depth}or target);g.origin()
+   g.setBlendMode('replace','premultiplied');g.setColor(1,1,1,1);g.clear(0,0,0,0,0,1)
+   g.setDepthMode('always',withDepth)
+   check(alpha.fragmentDepthTarget()==withDepth,'actual native colour/depth attachments select the matching path')
+   g.setShader(withDepth and depthReference or reference);g.draw(cutout,0,0,0,2,8)
+   g.setShader(candidate);g.draw(cutout,4,0,0,2,8)
+   check(g.getShader()==candidate,'depth and colour variants retain original public identity')
+   if withDepth then
+    g.setDepthMode('less',true);g.setShader(behind);g.rectangle('fill',0,0,8,8)
+   end
+   g.setCanvas();g.setShader();g.setDepthMode('always',false)
+   local data=love.graphics.readbackTexture(target)
+   local same=true
+   for y=0,7 do for x=0,3 do
+    local a={data:getPixel(x,y)};local b={data:getPixel(x+4,y)}
+    for i=1,4 do if a[i]~=b[i]then same=false end end
+   end end
+   check(same,'target-specific variants match independent native pixels')
+   if withDepth then
+    local r,green,blue,a=data:getPixel(4,4);check(r==1 and green==0 and blue==0 and a==1,'discarded front texels leave the later rear geometry visible')
+    r,green,blue,a=data:getPixel(7,4);check(r==0 and green==1 and blue==0 and a==1,'opaque front texels retain depth occlusion')
+   end
+   data:release()
+  end
+  render(false);render(true);render(false)
+  for key,value in pairs(S.status())do print('DEPTH_VARIANT_STATUS',key,value)end
+  check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
+  check(S.status().depthUses>0,'the native depth variant is actually drawn')
+  check(alpha.status().compiled==beforeCompanions,'variants do not manufacture duplicate depth companions')
+  candidate:release();reference:release();depthReference:release();behind:release();cutout:release();target:release();depth:release();g.present()
+  check(S.status().sources==0,'depth variants retire at the actual native empty-stack boundary')
+ end
  -- Mutable native Data is a supported source API, but is intentionally not a
  -- replayable adapter value. Its original C send and original pixels survive.
  local dataCode=[[
