@@ -37,7 +37,19 @@ return function(game, target)
       end
     end
   end
-  assert(found, "no native collision path to a passable north seam")
+  if not found then
+    local goals,edge={},{};local minY=h
+    for x=0,w-1 do if goal(x,0)then goals[#goals+1]=x end end
+    for _,key in ipairs(queue)do
+      local x,y=key%w,math.floor(key/w);minY=math.min(minY,y)
+      if y==0 then edge[#edge+1]=x end
+    end
+    print('PERF_WALK_NO_PATH '..require('src.link.Json').encode({source=source,target=target,
+      start={p.cellX,p.cellY},sourceCells={w,h},destination={dest.width,dest.height},
+      cellsPerBlock=cells,offset=conn.offset,reachable=#queue,minReachableY=minY,
+      goalColumns=goals,reachableNorthColumns=edge}))
+    error('no native collision path to a passable north seam')
+  end
   local path, cur = {}, found
   while cur ~= start do
     table.insert(path,1,{x=cur%w,y=math.floor(cur/w),dir=how[cur]})
