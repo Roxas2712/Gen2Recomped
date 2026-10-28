@@ -15,7 +15,8 @@ end
 M.drawUi=drawUi
 function M._wrapped()return M.drawUi~=drawUi end
 function M._nativeDrawUi(game,paint,...)
- if not Version.isGen3()or M.drawUi==drawUi then return paint(...)end
+ local presentation=package.loaded['src.render.NativePresentation']
+ if not Version.isGen3()or M.drawUi==drawUi and not(presentation and presentation._active())then return paint(...)end
  local G=require('src.core.Game3');local view=G.forNative(game)
  if not view then return paint(...)end
  local stack=game.stack;local states=stack.states;local sequence={}
@@ -29,17 +30,25 @@ function M._nativeDrawUi(game,paint,...)
   for i,state in ipairs(sequence)do if states[i]~=state then return false end end
   return true
  end
+ local function native()
+  if not admitted()then return false,'native UI pass cohort changed'end
+  return G._withCallbackOwner(nil,paint,unpack(args,1,args.n))
+ end
  local result=pack(Scope.call(function()
   return Boundary.dispatch('ui.draw',function()
    if not admitted()then return false,'native UI pass cohort changed'end
-   return G._withCallbackOwner(nil,paint,unpack(args,1,args.n))
+   if presentation and presentation._active()then
+    return presentation.layer('ui_stack',native,{first=args[1],last=args[2]})
+   end
+   return native()
   end,function()return Call.call(M,'drawUi')end)
  end))
  if not result[1]then error(result[2],0)end
  return unpack(result,2,result.n)
 end
 function M._nativeStates(game,scene,first,paint)
- if not Version.isGen3()or not M._wrapped()then return paint()end
+ local presentation=package.loaded['src.render.NativePresentation']
+ if not Version.isGen3()or not(M._wrapped()or presentation and presentation._active())then return paint()end
  local battle=package.loaded['src.core.game3.battle']
  local nativeBattle=battle and battle._screen()
  local battleClass=package.loaded['src.battle.BattleState']
