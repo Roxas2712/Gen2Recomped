@@ -229,6 +229,7 @@ end
 function G._observeActorMod(owner)if type(owner)=='string'then actorCallbackOwners[owner]=true end end
 function G._observeMod(owner)if type(owner)=='string'then callbackOwners[owner]=true end end
 function G._retireMod(owner)callbackOwners[owner]=nil;actorCallbackOwners[owner]=nil end
+function G._usesSourceRecords(owner)return callbackOwners[owner]==true and Version.generation()==3 end
 function G._usesCallbacks(owner)return (callbackOwners[owner]==true or actorCallbackOwners[owner]==true) and Version.generation()==3 end
 local function callbackGame(owner)
   if not callbackOwners[owner]or Version.generation()~=3 then return end
@@ -236,7 +237,7 @@ local function callbackGame(owner)
   return native,G.forNative(native)
 end
 function G._event(owner,name,payload)
-  if not G._usesCallbacks(owner)or type(payload)~='table'or name:match('^mod%.[%w_%-]+%.')then return payload end
+  if not G._usesSourceRecords(owner)or type(payload)~='table'or name:match('^mod%.[%w_%-]+%.')then return payload end
   local native=package.loaded['src.core.Game'];if type(native)~='table'then return payload end
   local rawGame=rawget(payload,'game')
   local saveEvent=name=='save.created'or name=='save.loaded'or name=='save.writing'or name=='save.loading'

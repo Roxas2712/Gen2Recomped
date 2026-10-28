@@ -5,6 +5,11 @@ on:
       - 'src/compat/gen1/CoroutineScopes.lua'
       - 'src/compat/gen1/ScriptBoundary.lua'
       - 'src/core/Game3.lua'
+      - 'src/mods/CallbackLease.lua'
+      - 'src/mods/CallbackRecords.lua'
+      - 'src/mods/UnifiedCallbacks.lua'
+      - 'src/mods/Hooks.lua'
+      - 'tests/engine/native_callback_context_ownership.lua'
       - 'src/core/game3/battle/effect_ctx.lua'
       - 'tests/engine/native_effect_coroutine_scopes.lua'
       - 'tests/engine/native_coroutine_phase_scopes.lua'
@@ -23,6 +28,9 @@ jobs:
       - name: Borrowing, suspension, retirement and callback attribution
         run: |
           luajit tests/engine/native_coroutine_phase_scopes.lua
+          luajit tests/engine/native_callback_context_ownership.lua
+          luajit tests/engine/unified_mod_callbacks.lua
+          luajit tools/hook_chain_lean_check.lua
           luajit tests/engine/native_effect_coroutine_scopes.lua
           luajit tests/engine/native_game_coroutine_scopes.lua
           luajit tests/engine/native_session_callbacks.lua
