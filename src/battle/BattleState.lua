@@ -13864,7 +13864,6 @@ Gen2BattleView.install(BattleState, {
   path = imagePathOf,
   trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
 })
-require('src.battle.Gen2BgPictures').install(BattleState)
 Gen2Queue.install(BattleState)
 Gen2Faint.install(BattleState)
 
@@ -13934,5 +13933,8 @@ function BattleState:throwBall(ball)
   if source then return source._nativeBegin(self,throwBallNative,ball)end
   return throwBallNative(self,ball)
 end
+
+-- Compose after native/source view installers, retaining their real draw owners.
+require('src.battle.Gen2BgPictures').install(BattleState)
 
 return BattleState
