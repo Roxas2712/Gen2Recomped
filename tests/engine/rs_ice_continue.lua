@@ -64,10 +64,10 @@ Sound.playSe=play
 for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
   local f=F.new(edition);local g=f.game;local id='OWNED_ICE_CALLBACK_'..edition
   g.data.map_scripts={source='RomExtractorGen3',maps={[id]={callbacks={
-    {type=1,script='LOAD'},{type=3,script='TRANSITION'},{type=5,script='RESUME'}},
+    {type=5,script='RESUME'},{type=1,script='LOAD'},{type=3,script='TRANSITION'}},
     tables={{type=4,rows={{var=0x4023,value=0,script='WARP'}}}}}},scripts={
     LOAD={{'setvar',0x400B,11},{'end'}},TRANSITION={{'setvar',0x4022,1},{'end'}},
-    RESUME={{'setvar',0x400C,12},{'end'}},WARP={{'setvar',0x400D,13},{'end'}}}}
+    RESUME={{'setvar',0x400C,12},{'addvar',0x400B,1},{'end'}},WARP={{'setvar',0x400D,13},{'end'}}}}
   g.data.maps[id]={}
   require('src.script.Gen3ScriptVM').register(g.data,'scenes')
   local scene=require('src.script.MapScripts').get(id)
@@ -78,7 +78,9 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
     g.save.gen3Vars={[0x4022]=29}
     scene.onEnter(g,world)
     for _,job in ipairs(world.queue) do world.runner:run(job[1],job[2]) end
-    T.eq(C.getVar(g.save,0x400B),11);T.eq(C.getVar(g.save,0x400C),12)
+    T.eq(C.getVar(g.save,0x400B),(edition=='ruby' or edition=='sapphire') and 12 or 11,
+      'RS runs LOAD before RESUME even when the ROM lists RESUME first')
+    T.eq(C.getVar(g.save,0x400C),12)
     T.eq(C.getVar(g.save,0x4022),world.gen3RsContinuing and 29 or 1)
     T.eq(C.getVar(g.save,0x400D),world.gen3RsContinuing and 0 or 13)
   end

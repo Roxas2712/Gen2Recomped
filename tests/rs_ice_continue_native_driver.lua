@@ -12,6 +12,7 @@ return function(game)
   game.save.party={require('src.pokemon.Pokemon').new(game.data,'SCEPTILE',48)}
   U.teleport(game,'MAP_G15_N00',8,20,'up');U.wait(90)
   local C=require('src.script.Gen3Commands');local S=require('src.core.SaveSerializer')
+  local firstBarrier=game.overworld.map:blockAt(8,15)
   local ow=game.overworld;local report={status='running',edition=edition,
     preparedFixture=true,continuousStory=false,captures={},nativeIceSounds={}}
   local Sound=require('src.core.Sound');local play=Sound.playSe
@@ -49,14 +50,22 @@ return function(game)
   assert(#report.nativeIceSounds==7,'Expected seven native cracking sounds')
   shot('native-rs-first-ice-solved')
   ow:captureSave(game.save)
-  local saved=assert(S.decode(S.encode(game.save)))
-  game:restoreSave(saved);U.wait(120);ow=game.overworld
+  local savedBytes=S.encode(game.save);local savedParty=S.encode(game.save.party)
+  game:restoreSave(assert(S.decode(savedBytes)));U.wait(120);ow=game.overworld
   assert(C.getVar(game.save,0x4022)==9,'Continue reset native ice progress')
   for _,xy in ipairs{{8,19},{9,19},{9,18},{8,18},{7,18},{7,17},{8,17}} do
     assert(ow.map:cellBehaviour(xy[1],xy[2])==39,'Continue lost a native cracked tile')
   end
-  assert(S.encode(game.save.party)==S.encode(saved.party),'Restore changed party')
+  assert(S.encode(game.save.party)==savedParty,'Restore changed party')
   shot('native-rs-ice-after-continue')
+  -- A fresh visit starts TRANSITION before LOAD checks the stair counter.
+  -- Checking LOAD first accidentally left the previously opened stairs up.
+  U.teleport(game,'MAP_G15_N00',8,20,'up');U.wait(90);ow=game.overworld
+  assert(C.getVar(game.save,0x4022)==1)
+  assert(ow.map:blockAt(8,15)==firstBarrier,'Fresh entry left the solved stair gate open')
+  shot('native-rs-solved-ice-fresh-entry')
+  game:restoreSave(assert(S.decode(savedBytes)));U.wait(120);ow=game.overworld
+  assert(C.getVar(game.save,0x4022)==9)
   step('left');U.wait(1);shot('native-rs-ice-break-before-fall')
   U.wait(180)
   assert(ow.map.id=='MAP_G15_N01','Original ice fall did not reach the basement')
