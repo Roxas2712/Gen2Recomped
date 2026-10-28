@@ -1699,7 +1699,7 @@ local function inspectorBody(x, y, w)
 
   local third = (w - gap * 2) / 3
   if Kit.button(x, cy, third, rowH, "Save", { id = "save" }) then Studio.save() end
-  if Kit.button(x + third + gap, cy, third, rowH, "Export \226\150\184",
+  if Kit.button(x + third + gap, cy, third, rowH, "Export >",
                 { id = "export" }) then
     Studio.openExportMenu()
   end
@@ -2721,7 +2721,7 @@ local function drawEditor()
                 { id = "tray-detect" }) then
     Studio.detectDeviceCanvas()
   end
-  if Kit.button(innerX + (actionW + gap), row3, actionW, zH, "Zoom −",
+  if Kit.button(innerX + (actionW + gap), row3, actionW, zH, "Zoom -",
                 { id = "zoom-out", enabled = zoomAt < #Studio.ZOOM_LEVELS }) then
     Studio.zoomOut()
   end
