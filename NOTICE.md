@@ -43,3 +43,11 @@ Copyright (C) 2026 BOIS CLUB GAMES, LLC. Their GPLv3 and Section 7 terms are
 retained in [licenses/GEN1RECOMP-TOUCH-SKINS.md](licenses/GEN1RECOMP-TOUCH-SKINS.md);
 Roxas2712's contribution notice does not replace that grant.
 No proprietary Gen1 launcher code is included in this integration.
+
+`src/ui/SkinStudio.lua`, `src/ui/PadCursor.lua`, the identified cursor sections
+in `TouchControlsEditor.lua`, and `src/ui/kit/` (except the independently drawn
+native vector `Icons.lua`) are adapted from the same Gen1Recomp revision under
+the same preserved GPLv3/Section7 terms. The copied studio/widget/cursor tests
+retain their provenance headers. The native launcher entry and vector artwork
+are integration contributions by Roxas2712; excluded Gen1 launcher files and
+artwork are not included.
