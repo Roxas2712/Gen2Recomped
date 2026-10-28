@@ -10,6 +10,7 @@ return function(game)
   game.input:reset();U.freshSave(game)
   local P=require('src.pokemon.Pokemon')
   game.save.party={P.new(game.data,'SCEPTILE',49),P.new(game.data,'KYOGRE',45)}
+  game.save.pokedex={seen={TREECKO=true,SCEPTILE=true,KYOGRE=true},caught={TREECKO=true,SCEPTILE=true,KYOGRE=true}}
   require('src.core.SaveData').validate(game.save,game.data)
   for _,mon in ipairs(game.save.party) do require('src.battle.BattleState').stampOT(game.save,mon) end
   U.teleport(game,'MAP_G15_N00',8,20,'up');U.wait(90)
@@ -41,12 +42,37 @@ return function(game)
   assert(screen.index==2);shot('native-rs-hall-second-pokemon');press('a')
   assert(screen.phase=='player');shot('native-rs-hall-player-original-label');press('a')
   assert(screen.phase=='welcome');shot('native-rs-hall-welcome');press('a')
-  local credits=game.stack:top();assert(getmetatable(credits)==Credits)
+  local credits=game.stack:top();assert(getmetatable(credits)==require('src.ui.Gen3RsCredits'))
   assert(require('src.core.Music').current()==game.data.audio.special.credits,'Wrong RS credits song')
-  U.wait(90);shot('native-rs-credits-first-page')
-  U.wait(4500);assert(game.stack:top()==credits);shot('native-rs-credits-middle-page')
-  U.wait(5200)
-  assert(credits.done,'Complete imported credits roll did not finish')
+  local state=credits.state;local man=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
+  local pageOf={};for i,p in ipairs(man.pages)do pageOf[p]=i end
+  local pages,scenes,monShot={},{},false
+  for _=1,40000 do
+    assert(game.stack:top()==credits,'Credits finished before the native THE END screen')
+    if state.text then pages[assert(pageOf[state.text])]=true end
+    local task=state.m.tasks:get(state.mainId)
+    local scene=task and task.data[7]
+    if not state.m.ppu.palette:fadeActive()and state.text and state.mainFunc=='main'then
+      if not state.showMons and not scenes[scene]then
+        shot('native-rs-credits-bike-scene-'..scene);scenes[scene]=true
+      elseif state.showMons and not monShot and state.mons[1]and state.mons[1].scale==256 then
+        shot('native-rs-credits-caught-pokemon');monShot=true
+      end
+    end
+    if state.mainFunc=='end6'and state.endDelay<6800 and not state.m.ppu.palette:fadeActive()then
+      local song=game.data.constants.gen3RsPresentation.songIds.MUS_END
+      assert(require('src.core.Music').current()==('SONG_%03X'):format(song),'THE END did not play its own native song')
+      shot('native-rs-credits-the-end');break
+    end
+    U.wait(1)
+  end
+  assert(state.mainFunc=='end6','Native credits never reached THE END')
+  for page=1,52 do assert(pages[page],'Missing native credits page '..page)end
+  for scene=0,4 do assert(scenes[scene],'Missing original bike scene '..scene)end
+  assert(monShot and state.imgCounter==68,'Native caught-Pokemon slide program did not complete')
+  press('a')
+  for _=1,1200 do if credits.closed then break end;U.wait(1)end
+  assert(credits.closed and state.mainFunc=='done','Native ending input did not finish exactly once')
   for _=1,600 do
     if game.save.flags.QA_RS_ENDING_FINISHED then break end
     local top=game.stack:top()
@@ -55,5 +81,6 @@ return function(game)
   assert(game.save.flags.QA_RS_ENDING_FINISHED,'GameClear callback did not resume its script')
   assert(game.save.hallOfFame==1,'Induction must be recorded once')
   report.status='pass';report.actualGameClearSpecial=true;report.fullImportedCreditRoll=true
+  report.nativeBikeScenes=5;report.nativeMonSlides=state.imgCounter;report.nativeTheEndAndMusic=true
   report.drawPreservesSaveRng=true;persist();print('PASS_NATIVE_RS_ENDING');love.event.quit(0)
 end

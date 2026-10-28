@@ -63,6 +63,8 @@ end
 function Gen3Credits.new(game, onDone)
   local record = Gen3Credits.record(game)
   if not record then return nil end
+  local Rs = require('src.ui.Gen3RsCredits')
+  if Rs.available(game) then return Rs.new(game,onDone) end
   -- FireRed's roll is a scripted scene over its own maps
   if type(record.frlg) == "table" and type(record.frlg.script) == "table" then
     local ok, FRLG = pcall(require, "src.ui.Gen3CreditsFRLG")
