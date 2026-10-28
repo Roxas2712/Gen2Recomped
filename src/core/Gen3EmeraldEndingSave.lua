@@ -6,7 +6,8 @@ function M.home(data,save)
   local r=data and data.constants and data.constants.gen3PlayerRoom
   if type(r)~='table'then return end
   local p=save.player or{};local female=p.gender=='girl'or p.gender=='female'or p.gender==1 or p.female==true
-  local map=female and r.girl or r.boy
+  local map
+  if female then map=r.girl else map=r.boy end
   if not(map and data.maps and data.maps[map]and type(r.x)=='number'and type(r.y)=='number'
     and r.x>=0 and r.y>=0 and r.x%1==0 and r.y%1==0)then return end
   return{map=map,x=r.x,y=r.y,facing='down'}
