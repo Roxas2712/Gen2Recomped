@@ -2,7 +2,7 @@ package.path='./?.lua;'..package.path
 love=require('tests.love_stub')
 local noop=function()end
 local options={cloudAutoSync=false,gameCacheDownload=false}
-local warning,cacheOptions,bankPull,cartChoice
+local warning,cacheOptions,bankPull,cartChoice,walkerPull,walkerWarning
 package.loaded['src.core.SaveData']={}
 package.loaded['src.core.GameVersion']={ORDER={'red'}}
 package.loaded['src.cloud.RetroCloud']={signedIn=function()return true end,accountId=function()return '17'end}
@@ -17,6 +17,9 @@ package.loaded['src.import.CloudSync']={syncOne=function()return 'uploaded'end,r
  syncVersions=function()return{uploaded=1,failed=0}end,describe=function()return 'one save'end}
 package.loaded['src.storage.PokemonBank']={sync=function(_,pull)bankPull=pull;return 1 end}
 package.loaded['src.storage.CartridgeCloud']={sync=function(_,choice)cartChoice=choice;return 'restored'end}
+package.loaded['src.pokewalker.WalkerCloud']={sync=function(_,pull)
+ walkerPull=pull;if walkerWarning then return nil,walkerWarning end;return 'empty'
+end}
 local R={ready={red=false},_settings=function()return options end,_sbCloudRows=noop,_settingsAction=noop,
  _setSettingValue=noop,play=noop,update=noop,_refreshSlots=noop,_recheckReady=noop,
  _sbCloudTarget=function()return{kind='retro',accountId='17'}end}
@@ -27,6 +30,7 @@ assert(cacheOptions.gameCacheDownload==true and cacheOptions.gameCacheUpload==fa
  'an explicit restore downloads games despite disabled automatic downloads and never enables upload')
 assert(bankPull==true and cartChoice=='download','restore includes the account Bank and designs without publishing local changes')
 assert(Sync.get().state=='available','a complete account restore is available')
+assert(walkerPull==true,'explicit account restore includes its read-only Walker restore')
 warning='A private game import needs updating'
 R:_storageSync(nil,nil,nil,'restore');R:update(0)
 assert(Sync.get().state=='error' and Sync.get().detail:find(warning,1,true),
@@ -35,4 +39,9 @@ assert(R.settingsNotice:find(warning,1,true),'the detailed failure remains visib
 R:_storageSync('red','slot1');R:update(0)
 assert(Sync.get().state=='error' and Sync.get().detail:find(warning,1,true),
  'syncing one save also retains an earlier game-cache failure')
-print('Launcher account restore: 6 checks passed')
+warning=nil;walkerWarning='A pending Pokémon transfer needs recovery'
+R:_storageSync(nil,nil,nil,'restore');R:update(0)
+assert(Sync.get().state=='error'and Sync.get().detail:find(walkerWarning,1,true),
+ 'Walker recovery failure is retained after saves and Bank restore')
+assert(R.settingsNotice:find(walkerWarning,1,true),'Walker recovery detail remains visible')
+print('Launcher account restore: 9 checks passed')

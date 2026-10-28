@@ -69,9 +69,10 @@ end
 
 -- one tick: read when due, credit what arrived; returns the steps credited
 function S.pump(st, courses, force)
+  local W = require('src.pokewalker.Walker')
+  if not W.check(st)then return 0 end
   S.request(force)
   local n,cursor = S.take(st)
-  local W = require('src.pokewalker.Walker')
   if n > 0 then
     W.addSteps(st, n, courses)
     if cursor then st.stepsJournal=cursor end

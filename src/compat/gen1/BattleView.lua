@@ -24,7 +24,7 @@ local monKeys={'species','nickname','level','hp','maxHp','attack','defense','spe
  'moves','pp','maxPp','item','status','ability','personality','friendship','isEgg','otId','otSecretId','otName','fatefulEncounter'}
 local battlerKeys={'id','side','flank','mon','species','type1','type2','ability','item','status','fainted','stages','partyIndex','expLockedMove','expEncoreMove'}
 local stateKeys={'player','enemy','battlers','party','playerParty','enemyParty','turn','wild','double','over','result',
- 'weather','weatherTurns','session','playerIndex','enemyIndex','trainerClass','trainerName','trainerPicId',
+ 'weather','weatherTurns','session','playerGender','playerIndex','enemyIndex','trainerClass','trainerName','trainerPicId',
  'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng','interactiveChoices'}
 local reserved={}
 for _,key in ipairs(stateKeys)do reserved[key]=true end
@@ -186,6 +186,10 @@ function M.new(game,screen,valid,identifiers)
    if key=='result'then return raw.result end
    if key=='weather'then return raw.field and raw.field.weather end
    if key=='weatherTurns'then return raw.field and raw.field.weatherTurns end
+   if key=='playerGender'then
+    local player=e.context.game.save and e.context.game.save.player
+    return player and player.gender==1 and 1 or 0
+   end
    if key=='playerIndex'then return partyIndex(party(),raw.player and raw.player.mon)end
    if key=='enemyIndex'then return raw.enemyIndex or(raw.enemy and 1)end
    if key=='trainerClass'then return raw.trainer and raw.trainer.class or raw.trainerClass end

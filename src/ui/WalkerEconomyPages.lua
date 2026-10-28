@@ -604,7 +604,7 @@ function M.install(P)
     local bw = narrow and w - 40 or 220
     local bx = narrow and x + 20 or x + w - 240
     local by = narrow and (ly + 28) or (y + 18)
-    self:button(bx, by, bw, bh, "Leaderboards", function() self:openPage("leaderboard") end, "accent", f.body)
+    self:button(bx, by, bw, bh, Strings("Personal records"), function() self:openPage("leaderboard") end, "accent", f.body)
     if not narrow then
       self:button(bx, by + bh + 10, bw, bh, "Watt Shop", function() self:openPage("shop") end, "gold", f.body)
     end
@@ -676,7 +676,7 @@ function M.install(P)
     local bh = f.body:getHeight() + 22
     self:button(x, y, 120, bh, "Back", function() self:openPage("awards") end, nil, f.body)
     g.setFont(f.head); setc(INK)
-    g.print("Leaderboards", x + 140, y + (bh - f.head:getHeight()) / 2)
+    g.print(Strings("Personal records"), x + 140, y + (bh - f.head:getHeight()) / 2)
     y = y + bh + 14
     local games = self:boardGames()
     if #games == 0 then

@@ -6,6 +6,20 @@ Gen2Recomped**, built on **Gen1Recomp by bryanthaboi / BOIS CLUB GAMES, LLC**.
 This fork is not a claim of sole authorship or ownership of the upstream
 engine.
 
+## Third-party game content and marks
+
+This project claims no ownership of third-party games, characters, graphics,
+music, sound recordings, names or trademarks. Their applicable rights remain
+with their respective rights holders. Source-code contribution notices do not
+grant permission to use, extract or distribute that third-party content.
+
+Local import, free distribution, attribution and user acknowledgement are not
+substitutes for the permissions required for a particular use. No statement in
+this notice promises that complaints will be limited to removal requests or
+excludes claims by third-party rights holders. Any permissions for independently
+owned contributions extend only to rights actually held by the contributor;
+existing upstream and third-party licence conditions remain applicable.
+
 ## Read the licences by provenance
 
 - [LICENSE](LICENSE) and [LICENSE.MD](LICENSE.MD) retain the upstream licence
@@ -33,3 +47,21 @@ are areas of contribution, not claims to every underlying implementation.
 Keep Cedric's, BOIS CLUB GAMES's and other contributors' applicable credits
 alongside this credit. See the contribution licence for the precise scope,
 attribution conditions and preservation of earlier permissions.
+
+## Gen1 touch-skin runtime
+
+`src/core/TouchSkin.lua`, `DeltaSkin.lua`, `SkinZip.lua`, `PdfImage.lua`,
+and the identified custom-skin/haptic/hotbar sections in `TouchControls.lua` are adapted
+from Gen1Recomp commit `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
+Copyright (C) 2026 BOIS CLUB GAMES, LLC. Their GPLv3 and Section 7 terms are
+retained in [licenses/GEN1RECOMP-TOUCH-SKINS.md](licenses/GEN1RECOMP-TOUCH-SKINS.md);
+Roxas2712's contribution notice does not replace that grant.
+No proprietary Gen1 launcher code is included in this integration.
+
+`src/ui/SkinStudio.lua`, `src/ui/PadCursor.lua`, the identified cursor sections
+in `TouchControlsEditor.lua`, and `src/ui/kit/` (except the independently drawn
+native vector `Icons.lua`) are adapted from the same Gen1Recomp revision under
+the same preserved GPLv3/Section7 terms. The copied studio/widget/cursor tests
+retain their provenance headers. The native launcher entry and vector artwork
+are integration contributions by Roxas2712; excluded Gen1 launcher files and
+artwork are not included.

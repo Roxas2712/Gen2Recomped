@@ -1,6 +1,48 @@
 """Qualify only this task's ordinary-input RS save receipts for continuation."""
 import re
 
+def first_badge_starter_proof(report):
+    """Derive legacy driver lineage from its witnessed native rescue input.
+
+    The continuous opening driver records the actual starter transition,
+    rather than the earlier lab driver's two summary booleans. Never edit
+    its report or accept a completed-badge claim without that transition.
+    """
+    if not (report.get('continuousOpeningToFirstBadge') is True
+            and report.get('newGameThroughUI') is True
+            and report.get('initialPartyEmpty') is True
+            and report.get('pokedexObtained') is True):
+        return False
+    if any(report.get(key)is False for key in('nativeStarterThroughRescueScript','naturalStarterAccepted')):
+        return False
+    starter=report.get('starter',{})
+    if starter.get('level')!=5 or starter.get('species')not in('TREECKO','TORCHIC','MUDKIP'):
+        return False
+    rows=report.get('commands',[])
+    first=next((i for i,row in enumerate(rows)if row.get('after',{}).get('party')),None)
+    if first is None:return False
+    row=rows[first];before=row.get('before',{});after=row.get('after',{})
+    top=after.get('top',{})
+    if any(r.get('before',{}).get('party')or r.get('after',{}).get('party')for r in rows[:first]):
+        return False
+    if not (before.get('party')==[] and after.get('party')==[starter]
+            and before.get('top',{}).get('screenId')=='Gen3RsStarterSelect'
+            and before.get('top',{}).get('source')=='src/ui/Gen3RsStarterSelect.lua'
+            and row.get('input',{}).get('op')=='press'and row['input'].get('button')=='a'
+            and any(p.get('key')=='a'for p in row.get('ordinaryInputs',[]))
+            and before.get('map',{}).get('id')==after.get('map',{}).get('id')=='MAP_G00_N16'
+            and after.get('scriptRunning') is True
+            and top.get('source')=='src/battle/BattleState.lua'
+            and top.get('musicKind')=='wild'
+            and top.get('enemy',{}).get('species')=='POOCHYENA'
+            and top['enemy'].get('level')==2
+            and top.get('battler',{}).get('species')==starter['species']
+            and top['battler'].get('level')==5):
+        return False
+    events=[e for e in report.get('events',[])if e.get('kind')=='first-party-member']
+    return (len(events)==1 and events[0].get('mon')==starter
+            and before.get('frame',-1)<=events[0].get('frame',-2)<=after.get('frame',-3))
+
 def is_save_yes(state):
     top=state['top']
     choice=(top.get('source')=='src/ui/ChoiceBox.lua'or
@@ -46,7 +88,8 @@ def qualify(edition, name, verification, report, checkpoint):
     assert re.fullmatch(r'[a-f0-9]{64}',checkpoint['sha256'])
     assert all(report[k]is True for k in('continuousFromNewGame','noTeleport','noPartyInjection','noDirectStoryFlagEdits'))
     assert report['starter']['level']==5
-    origin=report.get('continuousOpeningThroughRescueAndNormalLabSave')is True
+    witnessed_first_badge=completed and first_badge_starter_proof(report)
+    origin=report.get('continuousOpeningThroughRescueAndNormalLabSave')is True or witnessed_first_badge
     continued=(report.get('continuedOwnNormalSave')is True and report.get('continuedThroughUI')is True
                and report.get('checkpointFullSavePreserved')is True
                and report.get('lineage',{}).get('inherited',{}).get('naturalStarterAccepted')is True)
@@ -69,7 +112,8 @@ def qualify(edition, name, verification, report, checkpoint):
     else:
         assert any((r['input'].get('button')=='a'or r['input'].get('op')=='advance')and yes(r['before'])
                    for r in rows[first-1:last]),'Normal SAVE needs a witnessed YES input'
-    inherited={key:report[key]for key in('starter','newGameThroughUI','initialPartyEmpty',
-        'nativeStarterThroughRescueScript','naturalStarterAccepted')}
+    inherited={key:report[key]for key in('starter','newGameThroughUI','initialPartyEmpty')}
+    for key in('nativeStarterThroughRescueScript','naturalStarterAccepted'):
+        inherited[key]=report.get(key)is True or witnessed_first_badge
     assert all(inherited[key]is True for key in inherited if key!='starter')
     return inherited

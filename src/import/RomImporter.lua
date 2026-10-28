@@ -1289,8 +1289,8 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
-  if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = "frlg-native-credits-v1:frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
   -- hgss-phone-call-v1: gen4_hgss_phone_call (Gen4HgssPhoneCall), the
@@ -1326,7 +1326,7 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-native-hall-v1:rs-native-credits-v1:rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-edition-placeholders-v1:rs-native-hall-v1:rs-native-credits-v1:rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
   if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
@@ -2881,7 +2881,7 @@ end
 local function chooseFileByExt(exts, promptName, opts)
   opts = opts or {}
   local prompt = opts.title or Strings("Choose your %s", promptName or "file")
-  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts})
+  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts}, opts.nativeUTF8)
   for _,command in ipairs(commands or {}) do
     -- One selected backend: cancelling its dialog must not open another one.
     return commandOutput(command)
@@ -2981,6 +2981,7 @@ function RomImporter.new(onComplete, opts)
     forceImport = opts.forceImport or false,
     onEditSave = opts.onEditSave,
     onEditTouchControls = opts.onEditTouchControls,
+    onEditTouchSkins = opts.onEditTouchSkins,
     onEditMaps = opts.onEditMaps,
     android = android,
     -- Read by the three console-inbox branches below.  It was never assigned,
@@ -5140,6 +5141,27 @@ function RomImporter:_activatePadCursor()
     self._padInited = true
   end
   self._padCursorActive = true
+end
+
+-- Native overlay handoff: a release may be consumed by the editor rather
+-- than this suspended launcher. Drop gesture/axis ownership at both edges,
+-- retaining only cursor position and whether the player was using a pad.
+function RomImporter:prepareOverlayHandoff()
+  self._overlayPadActive = self._padCursorActive == true
+  self._slotPress, self._modPress, self._slotDrag = nil, nil, nil
+  self._touchGesture = nil
+  self._padAxis, self._padDir, self._rawHatDirs = {}, {}, {}
+  self._padCursorActive = false
+  self._lastMouseX, self._lastMouseY = nil, nil
+end
+
+function RomImporter:resumeAfterOverlay()
+  self._slotPress, self._modPress, self._slotDrag = nil, nil, nil
+  self._touchGesture = nil
+  self._padAxis, self._padDir, self._rawHatDirs = {}, {}, {}
+  self._padCursorActive = self._overlayPadActive == true
+  self._overlayPadActive = nil
+  self._lastMouseX, self._lastMouseY = nil, nil
 end
 
 -- THE ROW AS IT IS ON SCREEN, not a list written when there were three games.
@@ -8945,6 +8967,10 @@ function RomImporter:_settingsRows()
     add({ kind = "action", label = "EDIT LAYOUT",
           value = "OPEN", action = "touchLayout" })
   end
+  if self.onEditTouchSkins then
+    add({ kind = 'action', label = 'SKIN LIBRARY / EDITOR',
+          value = 'OPEN', action = 'touchSkins' })
+  end
 
   -- MOD OPTIONS, one section per installed mod that declares any. Read through
   -- LauncherMods, which parses the mod's declared schema FILE rather than
@@ -9463,6 +9489,8 @@ function RomImporter:_settingsAction(entry)
     self._settingsRowCache=nil
   elseif action == "touchLayout" then
     if self.onEditTouchControls then self.onEditTouchControls() end
+  elseif action == 'touchSkins' then
+    if self.onEditTouchSkins then self.onEditTouchSkins() end
   elseif action == "launcherPage" then
     self.settingsPage = "launcher"
     self.settingsScroll = 0

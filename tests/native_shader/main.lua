@@ -91,6 +91,32 @@ local function adapterTests()
   temporary:release()
  end
  local S=require('src.render.ShaderSpecialization')
+ local backend=tostring(g.getRendererInfo()):lower()
+ if not backend:find('metal',1,true)then
+  local compiler=g.newShader
+  check(not S.install(),'unsupported native backend keeps specialization disabled')
+  check(g.newShader==compiler and g.getShader==rawGet and g.setShader==rawSet
+    and g.push==rawPush and g.pop==rawPop,'passthrough preserves exact native graphics owners')
+  local shader=g.newShader('uniform float gate; vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(gate,.25,.5,1.);}')
+  local target=g.newCanvas(4,4,{dpiscale=1})
+  for _,value in ipairs{0,.25,1,0}do
+   shader:send('gate',value)
+   g.setCanvas(target);g.setShader(shader);g.setBlendMode('replace','premultiplied');g.setColor(1,1,1,1)
+   g.clear(0,0,0,0);g.rectangle('fill',0,0,4,4)
+   check(rawGet()==shader and g.getShader()==shader,'passthrough retains original shader userdata')
+   g.setCanvas();g.setShader()
+   local pixels=target:newImageData();local r,b,c,a=pixels:getPixel(1,1)
+   check(math.abs(r-value)<1/255 and math.abs(b-.25)<1/255 and math.abs(c-.5)<1/255 and a==1,
+     'passthrough keeps actual native pixels across continuous endpoints')
+   pixels:release()
+  end
+  check(S.status().sources==0 and S.status().variants==0 and S.status().compiled==0,
+    'unsupported backend manufactures no derivative programs')
+  shader:release();target:release()
+  check(g.getStackDepth()==0,'passthrough leaves no native graphics scope')
+  print('SHADER_PASSTHROUGH_PASS',count)
+  return
+ end
  check(S.install(),'native Metal adapter installs explicitly for QA')
  check(not S.install(),'native adapter install is idempotent')
  local code=[[
