@@ -8,8 +8,10 @@
 -- UTF-8 chars and ligature glyphs like 'd 'l 's map to single glyphs.
 
 local Assets = require("src.render.Assets")
+local TTF = require("src.render.FontTTF")
 
 local Font = {}
+Font.TTF_BASE, Font.PLAINPIXEL, Font.PLAINPIXEL_SIZE = TTF.BASE, TTF.FILE, TTF.SIZE
 
 local GLYPH = 8
 local FALLBACK = { enabled = false, font = nil }
@@ -45,14 +47,14 @@ function Font.load(data)
   -- not write one, and reading `def.source` off nil took the whole game down
   -- before the title screen -- from a module the loader itself calls optional.
   local def = data.font or {}
-  state = { def = def, pages = {}, order = {}, byFirstByte = {} }
+  state = { def = def, pages = {}, order = {}, byFirstByte = {}, ttf = TTF.open(def.ttf) }
   FALLBACK.enabled = false
   FALLBACK.font = nil
 
   -- Gen2 scaffold fonts are placeholder assets, not real glyph atlases.
   -- Use the built-in raster font so dialogue remains readable while
   -- extraction is incomplete.
-  if type(def.source) == "string" and def.source:find("Gen2 scaffold", 1, true) then
+  if not state.ttf and type(def.source) == "string" and def.source:find("Gen2 scaffold", 1, true) then
     FALLBACK.enabled = true
     FALLBACK.font = love.graphics.newFont(GLYPH)
   end
@@ -140,7 +142,7 @@ function Font.load(data)
       end
     end
   end
-  if #state.order == 0 then
+  if #state.order == 0 and not state.ttf then
     FALLBACK.enabled = true
     FALLBACK.font = love.graphics.newFont(GLYPH)
   end
@@ -214,7 +216,7 @@ function Font.load(data)
   -- which is one page and draws its frame rather than tiling it -- is not
   -- half-loaded, so demanding both would have dropped a font that is entirely
   -- there onto LOVE's built-in raster.
-  if def.image and def.imageExtra
+  if not state.ttf and def.image and def.imageExtra
      and not (state.pages.main and state.pages.extra) then
     FALLBACK.enabled = true
     FALLBACK.font = love.graphics.newFont(GLYPH)
@@ -223,6 +225,10 @@ function Font.load(data)
   Font.BORDER = {}
   for key, code in pairs(Font.DEFAULT_BORDER) do Font.BORDER[key] = code end
   for key, code in pairs(def.border or {}) do Font.BORDER[key] = code end
+end
+
+function Font.ttfActive()
+  return state ~= nil and state.ttf ~= nil
 end
 
 -- re-run load against the data it last saw, so hot reload picks up an
@@ -298,6 +304,7 @@ local SPACE = 0x7F
 local MACRO_TEXT = { ["#"] = "POK\xc3\xa9" }
 function Font.split(text)
   local spans = {}
+  local ttf = state and state.ttf
   local i, n = 1, #text
   while i <= n do
     local macro = not FALLBACK.enabled
@@ -315,10 +322,18 @@ function Font.split(text)
         for _, entry in ipairs(candidates) do
           local len = #entry.seq
           if text:sub(i, i + len - 1) == entry.seq then
+            if ttf and not ttf.tiles[entry.seq] then
+              local cp, last = TTF.decode(entry.seq, 1)
+              if cp and last == len then break end
+            end
             span = { from = i, to = i + len - 1, code = entry.code }
             break
           end
         end
+      end
+      if not span and ttf then
+        local cp, last = TTF.decode(text, i)
+        if cp and cp >= 32 then span = {from=i, to=last, code=TTF.BASE + cp} end
       end
       if not span then
         -- Nothing matched. Still keep a UTF-8 sequence whole, so a cut never
@@ -625,6 +640,9 @@ end
 
 -- the unstyled blit; Font.drawCode below is this plus the active style
 local function blitCode(code, x, y)
+  if state and state.ttf and code and code >= TTF.BASE then
+    return TTF.draw(state.ttf, code, x, y)
+  end
   if FALLBACK.enabled then
     love.graphics.setFont(FALLBACK.font)
     local ch
@@ -688,7 +706,7 @@ function Font.drawCode(code, x, y)
   -- Font.beginTwoTone.  Only a pre-tinted page has two tones to tell apart,
   -- so anything else falls through to the flat tint it always took.
   local shadow = (not borderPaint) and style and style.shadow
-  local page = shadow and pageFor(code)
+  local page = shadow and not (state and state.ttf and code and code >= TTF.BASE) and pageFor(code)
   if shadow and page and page.preTinted then
     local pr, pg, pb, pa = love.graphics.getColor()
     if Font.beginTwoTone(paint, shadow) then
@@ -759,6 +777,9 @@ end
 -- TextBox's own wrapping via spansFitting -- so one answer keeps the layout
 -- and the drawing agreeing.  A page with no width table is unchanged.
 function Font.advanceOf(code)
+  if state and state.ttf and code and code >= TTF.BASE then
+    return TTF.advance(state.ttf, code)
+  end
   if FALLBACK.enabled and code and code>=32 and code<=126
       and require("src.translation.UnicodeFont").active() then
     return require("src.translation.UnicodeFont").width(
@@ -812,8 +833,13 @@ function Font.fit(text, pixels)
   local spans = Font.split(text or "")
   local n = Font.spansFitting(spans, pixels)
   if n >= #spans then return text or "" end
+  -- The ellipsis is another glyph, not necessarily as wide as the last
+  -- retained character. Budget its actual advance for TTF and GBA faces.
+  local dotWidth = Font.width(".")
+  if dotWidth > pixels then return "" end
+  n = Font.spansFitting(spans, pixels - dotWidth)
   local out = {}
-  local i,last = 1,math.max(0,n-1)
+  local i,last = 1,n
   while i<=last do
     local span=spans[i]
     local raw=(text or ""):sub(span.from,span.to)
