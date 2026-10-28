@@ -3,6 +3,13 @@ package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit');local M=require('src.import.Gen3EmeraldCreditsAssets')
 local UI=require('src.ui.Gen3EmeraldCredits');local Fs,Writer=require('src.import.CacheFs'),require('src.import.LuaWriter')
 local V=require('src.core.GameVersion');local old=V.get();V.set('emerald')
+local oldLoad=love.filesystem.load;love.filesystem.load=loadfile
+local load=require('compat.gen1-rs.Loader').new('emerald',{['src.core.GameVersion']=M.versionBinding()})
+local IR=load('src.core.game3.scripting.text_ir')
+T.eq(IR.dialectOf(),'rse','isolated importer decodes the original Emerald text dialect')
+local encoded=IR.decode({252,6,1,255})
+T.eq(encoded[1].font,'FONT_NORMAL','native FONT_1 is Emerald normal rather than FireRed normal copy')
+love.filesystem.load=oldLoad
 local read,exists=Fs.read,Fs.exists;local root='data/generated/gba/credits_rse/'
 local resources={};for _,name in ipairs{'manifest.lua','the_end.rgba','the_end_blank.rgba','grass.rgba',
   'fonts/latin_normal_fg.rgba','fonts/latin_normal_shadow.rgba','fonts/latin_widths.lua','fonts/metrics.lua','fonts/palette.lua'}do resources[#resources+1]=root..name end

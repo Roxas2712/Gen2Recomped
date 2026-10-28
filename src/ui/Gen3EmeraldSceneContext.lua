@@ -6,7 +6,7 @@ function M.new(game,opts)
   local self={game=game,version='emerald'}
   local spec=assert(game.data.constants.gen3EmeraldCredits)
   local songs=assert(game.data.constants.gen3EmeraldPresentation.songIds)
-  local gv={current='emerald',get=function()return'emerald'end}
+  local gv=require('src.import.Gen3EmeraldCreditsAssets').versionBinding()
   local function readLua(path)
     local f=assert(love.filesystem.load(path),'Missing Emerald movie resource '..path);setfenv(f,{});return f()
   end

@@ -4,6 +4,10 @@ local M={PAGE_COUNT=57,MON_SLIDES=71};local ROOT='data/generated/gba/credits_rse
 local files={'manifest.lua','the_end.rgba','the_end_blank.rgba','grass.rgba',
   'fonts/latin_normal_fg.rgba','fonts/latin_normal_shadow.rgba','fonts/latin_widths.lua',
   'fonts/metrics.lua','fonts/palette.lua'}
+function M.versionBinding()
+  return{current='emerald',get=function()return'emerald'end,
+    layout=function(version)if version==nil or version=='emerald'then return'rse'end end}
+end
 local function read(path)
   local raw=require('src.import.CacheFs').read(path);local f=raw and loadstring(raw,'@'..path)
   if not f then return end;setfenv(f,{})
@@ -17,8 +21,7 @@ function M.extract(x)
     count=function(name,stride)return assert(S.count(name,stride))end}
   basic('src.import.gba.games.emerald.uc')(V)
   assert(V.CREDITS_RSE.pageCount==M.PAGE_COUNT)
-  local load=Loader.new('emerald',{['src.import.gba.versions']=V,
-    ['src.core.GameVersion']={current='emerald',get=function()return'emerald'end}})
+  local load=Loader.new('emerald',{['src.import.gba.versions']=V,['src.core.GameVersion']=M.versionBinding()})
   local rom={id='emerald'}
   function rom:get(off)return x.rom:u8(off)end
   function rom:u16(off)return x.rom:u16(off)end
