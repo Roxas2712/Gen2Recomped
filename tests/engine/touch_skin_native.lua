@@ -207,7 +207,8 @@ T.eq(host.writes,1,'locked state blocks speed preference changes')
 -- The offered native host must supply the actual lock owner; a test-only
 -- speedLocked double cannot prove that a runtime skin action works.
 host.speedLocked=nil
-host.stack={states={{isFixedSpeed=true},{name='options'}}}
+host.stack=setmetatable({},{__index=Stack});host.stack:init()
+host.stack:push({isFixedSpeed=true});host.stack:push({name='options'})
 T.eq(host:speedLocked(),true,'real native lock sees fixed-speed state under menu')
 host.speedOverride=4
 T.eq(host:logicSpeed(),1,'real lock overrides held acceleration in logic clock')
