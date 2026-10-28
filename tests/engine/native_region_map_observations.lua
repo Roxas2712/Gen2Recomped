@@ -54,11 +54,18 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   map.page='sevii123';T.eq(FR.canFlyToCursor(),false);map.page='kanto'
   map:pick();T.eq(picked,'TEST','actual native pick retains its own target identity');T.eq(FR.isOpen(),false)
  else
+  local atlas=RS.manifest()
+  T.eq(atlas.layout[1][1],7);T.eq(atlas.layout[1][2],8);T.eq(atlas.layout[1][3],false)
+  atlas.layout[1][1]=999;T.eq(RS.manifest().layout[1][1],7,'atlas metadata is detached without opening a screen')
+  c.gen3RegionMapLayout={width=2,height=1,none=99,cells={8,7}}
+  atlas=RS.manifest();T.eq(atlas.layout[1][1],8);T.eq(atlas.layout[1][2],7,'real cell bank wins over rectangle approximations')
+  c.gen3RegionMapLayout=nil
   local map=Map.new(game,{fly=true});game.stack:push(map);local live=assert(RS.active())
+  T.eq(RS.isOpen(),true)
   T.eq(FR.isOpen(),false);T.eq(live.state,12);T.eq(RS.mapSecType(live,7),RS.TYPE.CITY_CANFLY)
   T.eq(RS.flyWarpDestination(G.forNative(game).session,7).x,4)
   T.eq(RS.flyWarpDestination({},7),nil,'foreign session cannot resolve native destination')
-  map:close();T.eq(live.open,false)
+  map:close();T.eq(live.open,false);T.eq(RS.isOpen(),false)
  end
  V.set('crystal');T.eq(Q.active(),nil);T.eq(Field._game,nil);V.set(edition)
  Q._service.release();G.release()
