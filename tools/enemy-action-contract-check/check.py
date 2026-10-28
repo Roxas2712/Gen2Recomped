@@ -14,9 +14,6 @@ from cartridge_secondary import expected_observations
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from qa_report_storage import write_report
 
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from qa_report_storage import write_report
-
 GEN1_REF = "535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91"
 
 
