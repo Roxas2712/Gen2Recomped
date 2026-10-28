@@ -1288,6 +1288,7 @@ local function newBattle(game, opts)
       if ok then
         self.animPlayer = Gen2AnimPlayer.new(game.data)
         self.animPlayer.battle = self.battle
+        self.animPlayer.screen = self
         self.animView = self.animPlayer.view
         self.anims = self.animPlayer.anims
       end
@@ -13972,6 +13973,7 @@ end
 -- Compose after native/source view installers, retaining their real draw owners.
 require('src.battle.Gen2BgPictures').install(BattleState)
 require('src.battle.Gen2PicturePresentation').install(BattleState)
-require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf})
+require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf,
+  source=function(image)return imageMeta[image]end})
 
 return BattleState

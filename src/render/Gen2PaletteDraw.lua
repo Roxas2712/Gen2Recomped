@@ -276,4 +276,8 @@ end
 function M.with(colors, body) return scoped(colors, body, M.use) end
 function M.withRaw(colors, body) return scoped(colors, body, M.useRaw) end
 function M.keyedWith(colors, body) return scoped(colors, body, M.useKeyed) end
+-- Graphics push/pop retains a shader object, not its mutable uniforms. An
+-- OAM pass selects several palettes itself, so preserve the outer indexed
+-- palette without imposing an extra palette on the first object.
+function M.preserving(body) return scoped(nil, body, function()return false end) end
 return M

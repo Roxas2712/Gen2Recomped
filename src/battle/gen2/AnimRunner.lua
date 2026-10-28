@@ -216,6 +216,9 @@ function Runner:loadBattlerGfx(rows)
   self.loaded[#self.loaded + 1] =
     { gfx = "BATTLE_ANIM_GFX_ENEMYFEET", tile = tiles.enemy, tiles = rows * 6,
       battler = "player", rows = rows }
+  if self.hooks.battlerGfx then
+    self.hooks.battlerGfx(self,self.loaded[#self.loaded-1],self.loaded[#self.loaded])
+  end
 end
 
 --------------------------------------------------------------------------
