@@ -43,6 +43,8 @@ def verify_payload(path,engine_version=None):
    if name.startswith('mods/')and not builtin or name in ('options.lua','save.lua','cloud_clients.lua'):raise ValueError('non-preview content')
   for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua'):
    if f not in z.namelist():raise ValueError('missing preview entry: '+f)
+  if 'src/core/TouchSkin.lua' in z.namelist() and 'licenses/GEN1RECOMP-TOUCH-SKINS.md' not in z.namelist():
+   raise ValueError('missing Gen1 touch-skin licence')
   if engine_version is not None:
    version=z.read('src/core/Version.lua').decode('utf-8')
    stamped=re.search(r'engine\s*=\s*"([^"]+)"',version)
@@ -84,6 +86,11 @@ def extract_preview_source(ref,source):
  licenses=[name for name in root_files if name.lower()in ('license','license.md','license-roxas2712.md','notice.md')]
  if not licenses:raise ValueError('source revision has no license')
  paths.extend(licenses)
+ skin_licence='licenses/GEN1RECOMP-TOUCH-SKINS.md'
+ if subprocess.check_output(['git','ls-tree','--name-only',ref,'src/core/TouchSkin.lua'],cwd=ROOT,text=True).strip():
+  if not subprocess.check_output(['git','ls-tree','--name-only',ref,skin_licence],cwd=ROOT,text=True).strip():
+   raise ValueError('source revision has no Gen1 touch-skin licence')
+  paths.append(skin_licence)
  archive=subprocess.check_output(['git','archive',ref,*paths],cwd=ROOT)
  with tarfile.open(fileobj=io.BytesIO(archive))as t:t.extractall(source,filter='data')
  return builtin

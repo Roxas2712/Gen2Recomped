@@ -61,7 +61,7 @@ T.setLauncher({launcherLanguage='en'})
 check(sidebar.nameOf('red')=='Pokemon Red','English library title remains unchanged')
 print('Library locale: '..n..' checks passed')
 
-local catalogues={'LauncherCatalog','NativeLanguageCatalog','SetupCatalog','PinballCatalog','LauncherPolishCatalog'}
+local catalogues={'LauncherCatalog','NativeLanguageCatalog','SetupCatalog','PinballCatalog','LauncherPolishCatalog','WalkerCatalog'}
 local translated=0
 for _,name in ipairs(catalogues)do
  for lang,rows in pairs(require('src.translation.'..name))do
@@ -80,6 +80,8 @@ T.launcherCatalog['Unchecked value']={}
 check(T.launcherLookup('Unchecked value')=='Unchecked value','bad cached values cannot reach graphics')
 check(T.launcherFormat('Installed %s %s. Enable it in Installed mods.','SIGN IN','1.2'):find('SIGN IN 1.2 installiert',1,true),'dynamic mod notice translates the template before private values')
 check(T.launcherLookup('DUEL TABLE: RUBY')=='DUELL-TISCH: RUBIN','native Pinball uses launcher language')
+check(T.launcherFormat('100% ready')=='100% ready','literal percent signs work with zero formatting arguments')
+check(T.launcherFormat('%s enjoyed that! (+%d friendship)','SIGN IN',2)=='SIGN IN hatte Spaß! (+2 Freundschaft)','minigame result preserves nicknames during launcher translation')
 T.setLauncher({launcherLanguage='en'})
 check(T.launcherLookup('DUEL TABLE: RUBY')=='DUEL TABLE: RUBY','English Pinball has no forced German copy')
 print('Catalogue integrity: '..translated..' translations; '..n..' total checks passed')

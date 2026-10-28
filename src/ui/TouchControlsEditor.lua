@@ -14,6 +14,9 @@
 
 local SaveData = require("src.core.SaveData")
 local TouchControls = require("src.core.TouchControls")
+-- Shared Gen1 cursor mechanics; GPLv3/Section7 notice in NOTICE.md.
+local PadCursor = require("src.ui.PadCursor")
+local GamepadMap = require("src.core.GamepadMap")
 
 local Editor = {}
 
@@ -44,6 +47,7 @@ function Editor.load(opts)
   opts = opts or {}
   Editor.onClose = opts.onClose
   Editor.drag = nil
+  PadCursor.reset()
   Editor.rects = {}
   Editor.fonts = {
     title = love.graphics.newFont(28),
@@ -63,6 +67,7 @@ function Editor.unload()
   TouchControls:reset()
   Editor.drag = nil
   Editor.onClose = nil
+  PadCursor.reset()
 end
 
 local function persist()
@@ -72,6 +77,7 @@ local function persist()
   -- dropped once the player saves under the new shape
   opts.touchControls = {
     enabled = cfg.enabled,
+    skin = cfg.skin,
     layouts = cfg.layouts,
   }
   SaveData.saveOptions(opts)
@@ -94,13 +100,16 @@ local function toggleEnabled()
   if not Editor.enabled then TouchControls:reset() end
 end
 
-function Editor.update(_dt)
+function Editor.update(dt)
+  PadCursor.update(dt or 0)
   -- drag follows the live pointer when love.touch / mouse is available;
   -- touchmoved / mousemoved also update, so this is a belt-and-suspenders
   -- path for Android where move events can be thin
   if not Editor.drag then return end
   local x, y
-  if love.touch and love.touch.getPosition and Editor.drag.touchId then
+  if Editor.drag.touchId == 'pad' then
+    x, y = PadCursor.pointer()
+  elseif love.touch and love.touch.getPosition and Editor.drag.touchId then
     local ok, tx, ty = pcall(love.touch.getPosition, Editor.drag.touchId)
     if ok and tx then x, y = tx, ty end
   end
@@ -163,7 +172,17 @@ function Editor.draw()
   local titleW = Editor.fonts.title:getWidth("Touch Controls")
   local narrow = colW < titleW + 2 * btnW + 4 * pad
   if narrow then btnW = math.min(btnW, (colW - 2 * pad - 10 * s) / 2) end
-  local rowY = narrow and (oy + pad + barH) or (oy + pad + (barH - btnH) / 2)
+  local inset = 0
+  local toggle = Lay.hotbar
+  if toggle and TouchControls:hotbarShown()
+     and toggle.cx + toggle.w * 0.7 > colX
+     and toggle.cx - toggle.w * 0.7 < colX + colW
+     and toggle.cy - toggle.w * 0.7 < oy + 260 * s then
+    inset = math.max(0, toggle.cy + toggle.w * 0.7 - oy + pad)
+  end
+  local rowY = narrow and (oy + inset + pad + barH)
+    or (oy + inset + pad + (barH - btnH) / 2)
+  barH = barH + inset
   local done = { x = colX + colW - pad - btnW, y = rowY, w = btnW, h = btnH }
   local reset = { x = done.x - 10 * s - btnW, y = done.y, w = btnW, h = btnH }
   if narrow then barH = barH + btnH + 8 * s end
@@ -179,7 +198,7 @@ function Editor.draw()
   col(PAL.white)
   -- shrunk to the column when it is narrower than the heading (portrait)
   local tScale = math.min(1, (colW - 2 * pad) / math.max(1, titleW))
-  love.graphics.print("Touch Controls", colX + pad, oy + pad + 4 * s, 0, tScale, tScale)
+  love.graphics.print("Touch Controls", colX + pad, oy + inset + pad + 4 * s, 0, tScale, tScale)
 
   Editor.rects.done, Editor.rects.reset = done, reset
 
@@ -276,6 +295,7 @@ function Editor.draw()
       love.graphics.circle("line", zone.cx, zone.cy, zone.w * 0.62)
     end
   end
+  PadCursor.draw()
 end
 
 local function beginDrag(id, x, y)
@@ -290,6 +310,9 @@ local function beginDrag(id, x, y)
     TouchControls:nudgeScale(TouchControls.SCALE_STEP); return
   end
 
+  -- A custom skin's controls have arbitrary shapes/specs rather than native
+  -- pad layout keys. Its dedicated studio owns those edits.
+  if require('src.core.TouchSkin').active then return end
   local name = TouchControls:hitTest(x, y)
   if not name then return end
   local zone = TouchControls:layout()[name]
@@ -317,6 +340,7 @@ end
 
 function Editor.mousepressed(x, y, button)
   if button ~= 1 then return end
+  PadCursor.yieldToPointer()
   beginDrag("mouse", x, y)
 end
 
@@ -330,6 +354,7 @@ function Editor.mousereleased(x, y, button)
 end
 
 function Editor.touchpressed(id, x, y)
+  PadCursor.yieldToPointer()
   beginDrag(id, x, y)
 end
 
@@ -340,6 +365,65 @@ end
 function Editor.touchreleased(id, x, y)
   endDrag(id)
 end
+
+local function handlePadAction(action)
+  if not action then return end
+  if action == "a" then
+    local mx, my = PadCursor.pointer()
+    beginDrag("pad", mx, my)
+  elseif action == "b" then
+    close()
+  elseif action == "tab_prev" then
+    TouchControls:nudgeScale(-TouchControls.SCALE_STEP)
+  elseif action == "tab_next" then
+    TouchControls:nudgeScale(TouchControls.SCALE_STEP)
+  end
+end
+
+function Editor.gamepadpressed(joystick, button)
+  handlePadAction(PadCursor.gamepadpressed(joystick, button))
+end
+
+function Editor.gamepadreleased(joystick, button)
+  PadCursor.gamepadreleased(joystick, button)
+  -- A release ends a pad drag (hold A + stick to reposition a control).
+  local action = GamepadMap.mapGamepadButton(button)
+  if action == "a" then endDrag("pad") end
+end
+
+function Editor.gamepadaxis(joystick, axis, value)
+  PadCursor.gamepadaxis(joystick, axis, value)
+end
+
+function Editor.joystickpressed(joystick, button)
+  handlePadAction(PadCursor.joystickpressed(joystick, button))
+end
+
+function Editor.joystickreleased(joystick, button)
+  PadCursor.joystickreleased(joystick, button)
+  if GamepadMap.ignoreRawForJoystick(joystick) then return end
+  local padButton = GamepadMap.mapRawToGamepadButton(button)
+  if padButton then
+    local action = GamepadMap.mapGamepadButton(padButton)
+    if action == "a" then endDrag("pad") end
+  end
+end
+
+function Editor.joystickaxis(joystick, axis, value)
+  PadCursor.joystickaxis(joystick, axis, value)
+end
+
+function Editor.joystickhat(joystick, hat, direction)
+  PadCursor.joystickhat(joystick, hat, direction)
+end
+
+function Editor.focus()
+  Editor.drag=nil
+  PadCursor.reset()
+  TouchControls:reset()
+end
+Editor.visible=Editor.focus
+Editor.joystickremoved=Editor.focus
 
 function Editor.keypressed(key)
   if key == "escape" or key == "return" or key == "space" then

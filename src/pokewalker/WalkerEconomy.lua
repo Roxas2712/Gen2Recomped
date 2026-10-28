@@ -288,7 +288,7 @@ function E.friendship(st, amount, exp)
   return w.friendship
 end
 
-function E.save(st) W.save(st or W.live) end
+function E.save(st) return W.save(st or W.peek()) end
 
 -- the walker state everyone in this process shares (the screen, the passive
 -- credit, the minigames)
@@ -348,6 +348,11 @@ local run = { pending = 0, ticked = 0, sinceFlush = 0, unsaved = 0, away = nil }
 E._run = run
 
 function E.tick(dt)
+  local scope=W.storage()
+  if E._scope and E._scope~=scope then
+    for key in pairs(run)do if key=='away'then run[key]=nil else run[key]=0 end end
+  end
+  E._scope=scope
   dt = tonumber(dt) or 0
   if dt <= 0 then return end
   dt = math.min(dt, E.MAX_FRAME)
@@ -360,12 +365,14 @@ end
 -- move the tally into the walker state; writes it when a watt came in, every
 -- E.SAVE_EVERY seconds of partial progress, or when forced (focus lost, quit)
 function E.flush(force)
+  E.tick(0) -- discard another account's pending passive-time tally first
+  if W.syncing then return 0 end
   run.sinceFlush = 0
-  local st = W.live
+  local st = W.peek()
   if not st then
     -- a player who never opened the walker: nothing is written for them; the
     -- time waits (up to a day's worth) for the first open
-    if not (love and love.filesystem and love.filesystem.getInfo(W.FILE)) then
+    if not (love and love.filesystem and W.exists()) then
       run.pending = math.min(run.pending, E.PASSIVE_DAILY_CAP * E.PASSIVE_SECONDS_PER_WATT)
       return 0
     end
@@ -388,6 +395,7 @@ end
 -- when; focus back: the wall-clock time away that no frame ticked through
 -- (LOVE stops updating a backgrounded Android app) is credited
 function E.focus(f)
+  E.tick(0)
   local now = E.clock()
   if not f then
     run.away = { t = now, ticked = run.ticked }
@@ -410,14 +418,14 @@ local Shop = require("src.pokewalker.WalkerShop")
 local function weekOf(day) return math.floor(((day or E.day()) + 3) / 7) end
 E.week = weekOf
 
-local function pay(st, price, what)
+local function pay(st, price, what, defer)
   st.watts = (st.watts or 0) - price
   local e = E.econ(st)
   e.counters.purchases = (e.counters.purchases or 0) + 1
   e.counters.spent = (e.counters.spent or 0) + price
   W.note(st, ("Bought %s for %d W."):format(what, price))
   E.check(st)
-  W.save(st)
+  if not defer then return W.save(st)end
 end
 
 local function afford(st, price)
@@ -429,12 +437,6 @@ local function destination(st,target)
   local source=st.walking and st.walking.source
   if source and source.version and source.slot then return source end
   return target
-end
-
-local function deliver(target, parcel)
-  if not (target and target.version and target.slot) then return false, "choose a game and save first" end
-  local Link = require("src.pokewalker.WalkerLink")
-  return Link.deliverTo(target.version, target.slot, parcel)
 end
 
 -- a one-off already taken (today's stock, this week's gift)
@@ -455,40 +457,48 @@ end
 function E.stockKey(version, dex, day) return ("mon:%d:%s:%d"):format(day or E.day(), tostring(version), dex) end
 function E.giftKey(id, week) return ("gift:%d:%s"):format(week or weekOf(), tostring(id)) end
 
+local function preparePurchase(st,price,what,key)
+  local S=require('src.core.SaveSerializer')
+  local nextState=S.decode(S.encode(st));pruneBought(nextState)
+  if key then E.econ(nextState).bought[key]=true end
+  pay(nextState,price,what,true)
+  return nextState
+end
+
+local function purchase(st,target,parcel,price,what,key)
+  return require('src.pokewalker.WalkerLink').deliverPurchase(st,target,parcel,preparePurchase(st,price,what,key))
+end
+
 function E.buyItem(st, entry, target)
+  local allowed,why=W.check(st);if not allowed then return false,why end
   target=destination(st,target)
   if not entry then return false, "nothing chosen" end
   if Shop.genOf(target and target.version) < (entry.gen or 1) then return false, "that game does not have it" end
   local ok, why = afford(st, entry.price)
   if not ok then return false, why end
-  ok, why = deliver(target, { items = { { name = entry.name, count = entry.count } } })
-  if not ok then return false, why end
-  pay(st, entry.price, (entry.count or 1) > 1 and ("%s x%d"):format(entry.name, entry.count) or entry.name)
-  return true,why
+  return purchase(st,target,{items={{name=entry.name,count=entry.count}}},entry.price,
+    (entry.count or 1)>1 and("%s x%d"):format(entry.name,entry.count)or entry.name)
 end
 
 function E.buyPokemon(st, offer, target)
+  local allowed,why=W.check(st);if not allowed then return false,why end
   target=destination(st,target)
   if not offer then return false, "nothing chosen" end
   local Courses = require("src.pokewalker.WalkerCourses")
   if offer.dex > Courses.maxDexFor(target and target.version) then return false, "that game does not have it" end
-  pruneBought(st)
   local key = E.stockKey(target and target.version, offer.dex)
   if E.taken(st, key) then return false, "sold out until tomorrow" end
   local ok, why = afford(st, offer.price)
   if not ok then return false, why end
-  ok, why = deliver(target, { caught = { { species = offer.dex, name = offer.name, level = offer.level } } })
-  if not ok then return false, why end
-  E.econ(st).bought[key] = true
-  pay(st, offer.price, ("%s Lv%d"):format(offer.name, offer.level))
-  return true,why
+  return purchase(st,target,{caught={{species=offer.dex,name=offer.name,level=offer.level}}},offer.price,
+    ("%s Lv%d"):format(offer.name,offer.level),key)
 end
 
 function E.buyGift(st, gift, target)
+  local allowed,why=W.check(st);if not allowed then return false,why end
   target=destination(st,target)
   if not gift then return false, "nothing chosen" end
   if Shop.genOf(target and target.version) < (gift.gen or 1) then return false, "that game cannot receive it" end
-  pruneBought(st)
   local key = E.giftKey(gift.id)
   if E.taken(st, key) then return false, "already claimed this week" end
   local ok, why = afford(st, gift.price)
@@ -502,25 +512,22 @@ function E.buyGift(st, gift, target)
     what = (gift.count or 1) > 1 and ("%s x%d"):format(gift.name, gift.count) or gift.name
     parcel = { items = { { name = gift.name, count = gift.count } } }
   end
-  ok, why = deliver(target, parcel)
-  if not ok then return false, why end
-  E.econ(st).bought[key] = true
-  pay(st, gift.price, "Mystery Gift: " .. what)
-  return true,why
+  return purchase(st,target,parcel,gift.price,"Mystery Gift: "..what,key)
 end
 
 -- THE EVENTS SHELF (src/pokewalker/WalkerEvents.lua): a real distribution,
 -- once per save, queued into the target save for the game to hand over
 function E.buyEvent(st, ev, target)
+  local allowed,why=W.check(st);if not allowed then return false,why end
   target=destination(st,target)
   if not ev then return false, "nothing chosen" end
   if not (target and target.version and target.slot) then return false, "choose a game and save first" end
   local ok, why = afford(st, ev.price)
   if not ok then return false, why end
-  ok, why = require("src.pokewalker.WalkerEvents").queue(target.version, target.slot, ev)
+  local save,bytes
+  ok, why,save,bytes = require("src.pokewalker.WalkerEvents").queue(target.version, target.slot, ev,true)
   if not ok then return false, why end
-  pay(st, ev.price, "Event: " .. tostring(ev.name))
-  return true,why
+  return W.transfer(st,target.version,target.slot,bytes,save,preparePurchase(st,ev.price,"Event: "..tostring(ev.name)))
 end
 
 -- cosmetics: kind theme / shell / sound, or course (an event course id)

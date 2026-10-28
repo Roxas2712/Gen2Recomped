@@ -25,6 +25,8 @@ class Payload(unittest.TestCase):
                  '--version','0.8.53','--output',str(payload)],capture_output=True,text=True)
   self.assertEqual(result.returncode,0,result.stdout+result.stderr)
   with zipfile.ZipFile(payload)as archive:
+   self.assertEqual(archive.read('licenses/GEN1RECOMP-TOUCH-SKINS.md'),
+                    (ROOT/'licenses/GEN1RECOMP-TOUCH-SKINS.md').read_bytes())
    for edition in ('gen1-rs','gen1-frlg'):
     base=ROOT/'compat'/edition
     provenance=json.loads((base/'provenance.json').read_text())
@@ -33,6 +35,10 @@ class Payload(unittest.TestCase):
       self.assertEqual(archive.read('compat/'+edition+'/'+relative),(base/relative).read_bytes())
 
  def test_isolated_payload(self):module.verify_payload(self.archive())
+ def test_skin_code_requires_preserved_gen1_licence(self):
+  with self.assertRaisesRegex(ValueError,'touch-skin licence'):
+   module.verify_payload(self.archive(('src/core/TouchSkin.lua',)))
+  module.verify_payload(self.archive(('src/core/TouchSkin.lua','licenses/GEN1RECOMP-TOUCH-SKINS.md')))
  def test_complete_windows_build_writes_matching_builtin_metadata(self):
   host=ROOT/'.local/qa'/('native-preview-build-'+uuid.uuid4().hex)/'source'
   qa_copy(host,ephemeral=True);host.mkdir(parents=True)

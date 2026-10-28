@@ -50,6 +50,9 @@ function P.saveCheck()
   return true
 end
 function P.profileChanged(self)
+  local hub=package.loaded['src.ui.WalkerMinigames']
+  if hub and hub.active then hub.active:close(true)end
+  self.walker=nil;self._walkerPumpT=0
   local backdrop=package.loaded['src.import.LauncherBackdrop'];if backdrop and backdrop.stop then backdrop.stop() end
   local cache=package.loaded['src.storage.GameCache'];if cache then cache.refresh() end
   if cache and self._recheckReady then self:_recheckReady() end

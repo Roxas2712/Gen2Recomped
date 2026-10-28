@@ -18,7 +18,7 @@ local function names(words)
   return out
 end
 local FIELDS = names([[
-gen3Voiceover gen3ExpParticipants
+gen3Voiceover gen3ExpParticipants _gen2ProtectionTurn _gen2ProtectionFirst
 g4fx g4PrevMove g4TrickRoomResort turnActions backWalkOff
 Abilities AllyAI AnimPlayer BattleCommands BattleQueuePhase BattleState CatchTutorialDemo Catching CaughtMarker
 Damage EffectRegistry EnemyActionContext EnemyMoveChoice Experience FieldResiduals GbaItemSchedule
