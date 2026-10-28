@@ -41,7 +41,8 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   local runner=Runner.new(game)
   runner:run({{'g2_trade',0}})
   local picker=assert(stack:top());T.eq(picker.pickOnly,true)
-  picker:confirm()
+  game.input={wasPressed=function(_,button)return button=='a'end}
+  picker:update(0)
   local received=game.save.party[1]
   T.check(received~=sent,'actual native NPC exchange replaces picked mon')
   T.eq(received.species,'EEVEE');T.eq(received.level,12)

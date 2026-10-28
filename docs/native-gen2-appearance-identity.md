@@ -21,7 +21,10 @@ by itself. Hook context edits retain their existing ownership contract.
 `tests/engine/gen2_appearance_identity.lua` covers all seven gender-ratio
 classes, DV boundaries and shiny attack classes in Gold, Silver and Crystal;
 save codec/validation for party, sparse boxes, day care and contest parties;
-fixed trainer genes, Odd Eggs, actual DayCare.step and evolution. The existing
+fixed trainer genes, Odd Eggs, actual DayCare.step and evolution. `tests/engine/gen2_appearance_transactions.lua` additionally runs the actual
+NPC trade script, party picker and movie continuation, plus the real companion
+DV/species mutation handlers. Passive panel recalculation preserves identity
+and does not dispatch appearance hooks every frame. The existing
 identity authority/roll suites cover hook delegation, suppression, forced shiny
 and failed callback rollback across generations and API formats.
 
