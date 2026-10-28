@@ -7312,6 +7312,10 @@ Gen3Commands.RESULT_SPECIALS = RESULT_SPECIALS
 
 function Commands.g3_special(ctx, index, destVar)
   local id = tonumber(index) or 0
+  if require('src.script.Gen3RsOrbSpecials').run(ctx,id)then
+    if destVar then setVar(ctx.save,destVar,0)end
+    return
+  end
   local fn = Gen3Commands.SPECIALS[id]
   if fn then
     local result = fn(ctx)
