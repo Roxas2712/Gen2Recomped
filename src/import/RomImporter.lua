@@ -1349,7 +1349,9 @@ local function markerFor(version)
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:rs-forced-floors-v1:rs-battler-coords-v1:'
   end
-  if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  if GameVersion.generation(version)==3 then
+    revision=revision..'gba-field-move-art-v1:gba-door-metadata-v'..require('src.import.Gen3DoorMetadata').REVISION..':'
+  end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then
     revision=revision..'frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'
@@ -2879,7 +2881,7 @@ end
 local function chooseFileByExt(exts, promptName, opts)
   opts = opts or {}
   local prompt = opts.title or Strings("Choose your %s", promptName or "file")
-  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts})
+  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts}, opts.nativeUTF8)
   for _,command in ipairs(commands or {}) do
     -- One selected backend: cancelling its dialog must not open another one.
     return commandOutput(command)
@@ -2979,6 +2981,7 @@ function RomImporter.new(onComplete, opts)
     forceImport = opts.forceImport or false,
     onEditSave = opts.onEditSave,
     onEditTouchControls = opts.onEditTouchControls,
+    onEditTouchSkins = opts.onEditTouchSkins,
     onEditMaps = opts.onEditMaps,
     android = android,
     -- Read by the three console-inbox branches below.  It was never assigned,
@@ -5138,6 +5141,27 @@ function RomImporter:_activatePadCursor()
     self._padInited = true
   end
   self._padCursorActive = true
+end
+
+-- Native overlay handoff: a release may be consumed by the editor rather
+-- than this suspended launcher. Drop gesture/axis ownership at both edges,
+-- retaining only cursor position and whether the player was using a pad.
+function RomImporter:prepareOverlayHandoff()
+  self._overlayPadActive = self._padCursorActive == true
+  self._slotPress, self._modPress, self._slotDrag = nil, nil, nil
+  self._touchGesture = nil
+  self._padAxis, self._padDir, self._rawHatDirs = {}, {}, {}
+  self._padCursorActive = false
+  self._lastMouseX, self._lastMouseY = nil, nil
+end
+
+function RomImporter:resumeAfterOverlay()
+  self._slotPress, self._modPress, self._slotDrag = nil, nil, nil
+  self._touchGesture = nil
+  self._padAxis, self._padDir, self._rawHatDirs = {}, {}, {}
+  self._padCursorActive = self._overlayPadActive == true
+  self._overlayPadActive = nil
+  self._lastMouseX, self._lastMouseY = nil, nil
 end
 
 -- THE ROW AS IT IS ON SCREEN, not a list written when there were three games.
@@ -8943,6 +8967,10 @@ function RomImporter:_settingsRows()
     add({ kind = "action", label = "EDIT LAYOUT",
           value = "OPEN", action = "touchLayout" })
   end
+  if self.onEditTouchSkins then
+    add({ kind = 'action', label = 'SKIN LIBRARY / EDITOR',
+          value = 'OPEN', action = 'touchSkins' })
+  end
 
   -- MOD OPTIONS, one section per installed mod that declares any. Read through
   -- LauncherMods, which parses the mod's declared schema FILE rather than
@@ -9461,6 +9489,8 @@ function RomImporter:_settingsAction(entry)
     self._settingsRowCache=nil
   elseif action == "touchLayout" then
     if self.onEditTouchControls then self.onEditTouchControls() end
+  elseif action == 'touchSkins' then
+    if self.onEditTouchSkins then self.onEditTouchSkins() end
   elseif action == "launcherPage" then
     self.settingsPage = "launcher"
     self.settingsScroll = 0

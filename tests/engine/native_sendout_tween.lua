@@ -35,6 +35,7 @@ local function run(edition,mode,shiny)
  elseif mode=='default'then A.tweenStage=base
  else
   A.tweenStage=function(frames,onStep,onComplete)
+   if frames~=35 then return base(frames,onStep,onComplete)end
    begins=begins+1;T.eq(frames,35);borrowed=onStep
    if mode=='noop'then
     local task=base(frames,onStep,onComplete)

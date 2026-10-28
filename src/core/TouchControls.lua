@@ -30,6 +30,8 @@ local Input = require("src.core.Input")
 local SafeArea = require("src.core.SafeArea")
 local GameVersion = require("src.core.GameVersion")
 
+local TouchSkin = require("src.core.TouchSkin")
+
 local TouchControls = {}
 
 -- idle vs pressed overlay opacity
@@ -61,13 +63,35 @@ local SLOP = { a = 1.3, b = 1.3, x = 1.15, y = 1.15, start = 1.4, select = 1.4, 
 -- and that switches the whole overlay off, so an install whose assets predate
 -- these two would lose its d-pad. They are skipped instead -- see OPTIONAL.
 local BUTTONS = { "a", "b", "x", "y", "start", "select", "l", "r" }
-local CONTROLS = { "dpad", "a", "b", "x", "y", "start", "select", "l", "r" }
+local CONTROLS = { "dpad", "a", "b", "x", "y", "start", "select", "l", "r", "hotbar" }
+
+local HOTBAR = {
+  { spec = "key:f1", label = "SAVE" },
+  { spec = "key:f2", label = "LOAD" },
+  { spec = "key:1", label = "SPEED" },
+  { spec = "key:2", label = "COLOR" },
+  { spec = "key:3", label = "TILT" },
+  { spec = "key:4", label = "ZOOM" },
+}
+local HOTBAR_SLOP = 1.4
+
+local function skinButtonAvailable(btn)
+  return (btn ~= 'x' and btn ~= 'y') or GameVersion.isGen4()
+end
+
+local function skinControlAvailable(ctl)
+  if #ctl.keys > 0 or #ctl.hotkeys > 0 then return true end
+  for _,btn in ipairs(ctl.buttons)do
+    if skinButtonAvailable(btn) then return true end
+  end
+  return false
+end
 
 local function buttonAvailable(self, btn)
   -- X and Y are Platinum / HGSS buttons in play, but the launcher's layout
   -- editor (preview) shows them always: the layout it saves is shared by
   -- every game, and the Gen 4 ones are where a player wants to place them
-  if btn == 'x' or btn == 'y' then return self.preview or GameVersion.isGen4() end
+  if btn == 'x' or btn == 'y' then return self.preview or skinButtonAvailable(btn) end
   return self.img and self.img[btn] ~= nil
 end
 
@@ -112,6 +136,52 @@ local function clampScale(v)
   return v
 end
 
+-- Haptic controls adapted from Gen1Recomp 535a5ec0.
+-- Copyright (C) 2026 BOIS CLUB GAMES, LLC; licenses/GEN1RECOMP-TOUCH-SKINS.md.
+TouchControls.HAPTICS = { "off", "light", "normal", "strong" }
+TouchControls.HAPTIC_DEFAULT = "light"
+
+local HAPTIC_SECONDS = {
+  off = 0, light = 0.012, normal = 0.025, strong = 0.045,
+}
+local HAPTIC_LABELS = {
+  off = "OFF", light = "LIGHT", normal = "NORMAL", strong = "STRONG",
+}
+
+function TouchControls.normalizeHaptics(level)
+  if level == "physical" then return "light" end
+  if level == "medium" then return "normal" end
+  if level == "heavy" then return "strong" end
+  if HAPTIC_SECONDS[level] then return level end
+  return TouchControls.HAPTIC_DEFAULT
+end
+
+function TouchControls.hapticLabel(level)
+  return HAPTIC_LABELS[TouchControls.normalizeHaptics(level)]
+end
+
+function TouchControls.cycleHaptics(level, dir)
+  local cur, idx = TouchControls.normalizeHaptics(level), 1
+  for i, m in ipairs(TouchControls.HAPTICS) do
+    if m == cur then idx = i break end
+  end
+  local n = #TouchControls.HAPTICS
+  return TouchControls.HAPTICS[(idx - 1 + (dir or 1)) % n + 1]
+end
+
+-- One pulse at the given level.  Feature-guarded rather than platform-gated:
+-- love.system.vibrate is a no-op on desktop and absent from the headless love
+-- stubs, so the press path below stays identical everywhere and the tests
+-- never reach a vibrator.
+function TouchControls.buzz(level)
+  local secs = HAPTIC_SECONDS[TouchControls.normalizeHaptics(level)]
+  if not secs or secs <= 0 then return false end
+  if not (love and love.system and love.system.vibrate) then return false end
+  pcall(love.system.vibrate, secs)
+  return true
+end
+
+
 -- Copy a persisted positions table, dropping unknown / non-numeric entries.
 -- Always a fresh table: two orientations seeded from the same pre-#633
 -- layout must not alias, or dragging one would still move the other.
@@ -152,6 +222,7 @@ function TouchControls.normalizeConfig(tc)
   -- no caller ever has to nil-check a bucket's scale
   if type(tc) ~= "table" then tc = {} end
   if tc.enabled == false then out.enabled = false end
+  if type(tc.skin) == "string" and tc.skin ~= "" then out.skin = tc.skin end
   local saved = type(tc.layouts) == "table" and tc.layouts or nil
   for _, o in ipairs(ORIENTATIONS) do
     local b = saved and saved[o]
@@ -185,6 +256,8 @@ function TouchControls.defaultLayout(ww, wh, ox, oy, scale)
     b = { cx = ox + ww - margin - abW * 1.60, cy = oy + wh - margin - abW * 0.55, w = abW },
     start = { cx = ox + ww / 2 + ssW * 0.60, cy = oy + wh - margin - ssW * 0.95, w = ssW },
     select = { cx = ox + ww / 2 - ssW * 0.60, cy = oy + wh - margin - ssW * 0.95, w = ssW },
+    -- Between the native shoulders, above the thumb clusters.
+    hotbar = {cx=ox + ww * 0.50, cy=oy + margin + ssW * 0.70, w=ssW},
     -- THE SHOULDERS GO AT THE TOP CORNERS, where the hardware puts them and
     -- where a hand already holding the phone can reach without covering the
     -- screen. Sized off `dpadW` like everything else here, so the size slider
@@ -226,6 +299,12 @@ end
 
 function TouchControls:init()
   self.active = wantsOverlay()
+  TouchSkin.setOverlayLive(self.active)
+  TouchSkin.setActive(nil)
+  self.skinId, self.skinError = nil, nil
+  self.hotkeysHeld, self.keysHeld = {}, {}
+  self.haptics = TouchControls.HAPTIC_DEFAULT
+  self.hotbarEnabled, self.hotbarOpen, self.hotbarControls = true, false, nil
   self.enabled = true
   -- per-orientation buckets (#633); self.positions / self.scale mirror the
   -- one currently on screen so layout(), the editor and the tests keep a
@@ -267,6 +346,11 @@ end
 function TouchControls:applyOptions(opts)
   local cfg = TouchControls.normalizeConfig(opts and opts.touchControls)
   self.enabled = cfg.enabled
+  self.haptics = TouchControls.normalizeHaptics(opts and opts.haptics)
+  self.hotbarEnabled = not (opts and opts.hotbar == false)
+  if not self.hotbarEnabled then self.hotbarOpen = false end
+  TouchSkin.setOverlayLive(self.active)
+  self:selectSkin(cfg.enabled and cfg.skin or nil)
   self.layouts = cfg.layouts
   self.layoutW, self.layoutH = nil, nil
   self.layoutOx, self.layoutOy = nil, nil
@@ -282,7 +366,7 @@ end
 -- Snapshot for the editor's save path: enabled plus both orientation
 -- buckets, matching what options.lua stores (#633).
 function TouchControls:config()
-  local out = { enabled = self.enabled ~= false, layouts = {} }
+  local out = { enabled = self.enabled ~= false, skin = self.skinId, layouts = {} }
   for _, o in ipairs(ORIENTATIONS) do
     local b = self.layouts and self.layouts[o] or nil
     out.layouts[o] = {
@@ -305,9 +389,70 @@ function TouchControls:setPreview(on)
 end
 
 function TouchControls:visible()
-  if self.preview then return self.img ~= nil end
-  return self.active and self.enabled ~= false and self.img ~= nil
-     and not self.controllerHidden
+  local art = TouchSkin.active ~= nil or self.img ~= nil
+  if self.preview then return art end
+  if self.enabled == false or not art then return false end
+  -- A selected skin is also a desktop/TV bezel.  Input remains gated in
+  -- touchpressed, but the artwork must not disappear when a controller is
+  -- connected or the platform is not touch-first.
+  if TouchSkin.active then return true end
+  return self.active and not self.controllerHidden
+end
+
+local function surfaceRect()
+  local r = TouchSkin.surfaceRect
+  if r then return r.w, r.h, r.x, r.y end
+  if love and love.graphics and love.graphics.getDimensions then
+    local w, h = love.graphics.getDimensions()
+    return w, h, 0, 0
+  end
+  return 0, 0, 0, 0
+end
+
+TouchControls.surfaceRect = surfaceRect
+
+function TouchControls:selectSkin(id)
+  if id == self.skinId and TouchSkin.active then return TouchSkin.active end
+  self:reset()
+  self.skinError = nil
+  if not id or id == "" then
+    self.skinId = nil
+    TouchSkin.setActive(nil)
+    return nil
+  end
+  local skin, err = TouchSkin.select(id)
+  if not skin then
+    self.skinId = nil
+    self.skinError = err
+    TouchSkin.setActive(nil)
+    return nil, err
+  end
+  self.skinId = id
+  return skin
+end
+
+function TouchControls:skin()
+  if not self:visible() then return nil end
+  return TouchSkin.active
+end
+
+function TouchControls:setHotkeyHandler(fn)
+  self.hotkeyHandler = type(fn) == "function" and fn or nil
+end
+
+local skinHitSet, applySkinSet
+
+function TouchControls:buttons()
+  local out = {}
+  for _, name in ipairs(BUTTONS) do if buttonAvailable(self, name) then out[#out+1] = name end end
+  return out
+end
+
+function TouchControls:controls()
+  local out = {"dpad"}
+  for _, name in ipairs(self:buttons()) do out[#out+1] = name end
+  if self:hotbarShown() then out[#out+1] = "hotbar" end
+  return out
 end
 
 -- Keep a control fully inside the usable rect [x0,y0]..[x1,y1].
@@ -434,10 +579,86 @@ local function inCircle(zone, x, y, slop)
   return dx * dx + dy * dy <= r * r
 end
 
+-- Hotbar geometry/drawing adapted from Gen1Recomp535a5ec0.
+-- Copyright(C)2026 BOIS CLUB GAMES, LLC; licenses/GEN1RECOMP-TOUCH-SKINS.md.
+function TouchControls:hotbarItems()
+  if self.hotbarControls then return self.hotbarControls end
+  local out = {}
+  for i, entry in ipairs(HOTBAR) do
+    local ctl = TouchSkin.newControl(entry.spec, 0, 0, 0, 0, "rect")
+    ctl.label = entry.label
+    out[i] = ctl
+  end
+  self.hotbarControls = out
+  return out
+end
+
+function TouchControls:hotbarShown()
+  return self.hotbarEnabled ~= false and not TouchSkin.active
+end
+
+function TouchControls:hotbarStrip()
+  local L = self:layout()
+  local zone = L and L.hotbar
+  local items = self:hotbarItems()
+  if not zone or #items == 0 then return nil end
+  local ox, oy, sw, sh = (SafeArea.windowRect or SafeArea.rect)()
+  local h = zone.w * 0.95
+  local pad = h * 0.14
+  local cw = h * 1.9
+  if self.labelFont then
+    for _, ctl in ipairs(items) do
+      cw = math.max(cw, self.labelFont:getWidth(ctl.label) + pad * 3)
+    end
+  end
+  local total = math.min(sw - pad * 2, cw * #items)
+  cw = total / #items
+  local x0 = math.max(ox + pad,
+                      math.min(zone.cx - total, ox + sw - pad - total))
+  local y0 = zone.cy + zone.w * 0.80
+  if y0 + h + pad > oy + sh then y0 = zone.cy - zone.w * 0.80 - h end
+  y0 = math.max(oy + pad, math.min(y0, oy + sh - h - pad))
+  local cells = {}
+  for i, ctl in ipairs(items) do
+    cells[i] = { ctl = ctl, label = ctl.label, h = h,
+                 x = x0 + (i - 1) * cw, y = y0, w = cw - pad }
+  end
+  return cells
+end
+
+function TouchControls:hotbarCellAt(x, y)
+  if self.preview or not (self.hotbarOpen and self:hotbarShown()) then return nil end
+  for _, cell in ipairs(self:hotbarStrip() or {}) do
+    if x >= cell.x and x <= cell.x + cell.w
+       and y >= cell.y and y <= cell.y + cell.h then
+      return cell
+    end
+  end
+  return nil
+end
+
+
 -- Which control (if any) contains (x, y).  Prefer face buttons over the
 -- d-pad when they overlap, matching touchpressed's order.
 function TouchControls:hitTest(x, y)
+  local page = TouchSkin.page()
+  if page then
+    local ww, wh, ox, oy = surfaceRect()
+    for i = #page.controls, 1, -1 do
+      local ctl = page.controls[i]
+      if not ctl.decorative and skinControlAvailable(ctl)
+         and TouchSkin.hits(page, ctl, ww, wh, x, y, ox, oy) then
+        return ctl.spec, ctl
+      end
+    end
+    return nil
+  end
   local L = self:layout()
+  if self:hotbarShown() then
+    local cell = self:hotbarCellAt(x, y)
+    if cell then return "hotkey", cell.ctl end
+    if inCircle(L.hotbar, x, y, HOTBAR_SLOP) then return "hotbar" end
+  end
   for _, btn in ipairs(BUTTONS) do
     if buttonAvailable(self,btn) and L[btn] and inCircle(L[btn], x, y, SLOP[btn]) then return btn end
   end
@@ -462,7 +683,10 @@ end
 local function pressBtn(self, btn)
   local n = (self.held[btn] or 0) + 1
   self.held[btn] = n
-  if n == 1 then Input:overlayPressed(btn) end
+  if n == 1 then
+    Input:overlayPressed(btn)
+    TouchControls.buzz(self.haptics)
+  end
 end
 
 local function releaseBtn(self, btn)
@@ -484,17 +708,131 @@ local function setDpad(self, touch, dir)
   if dir then pressBtn(self, dir) end
 end
 
+-- Custom-skin control ownership adapted from Gen1Recomp 535a5ec0.
+-- Copyright (C) 2026 BOIS CLUB GAMES, LLC; licenses/GEN1RECOMP-TOUCH-SKINS.md.
+local function pressKey(self, key, down)
+  self.keysHeld = self.keysHeld or {}
+  local before = self.keysHeld[key] or 0
+  local count = math.max(0, before + (down and 1 or -1))
+  self.keysHeld[key] = count > 0 and count or nil
+  if down and before > 0 or not down and (before == 0 or count > 0) then return end
+  local fn = down and love.keypressed or love.keyreleased
+  if type(fn) == "function" then pcall(fn, key, key, false) end
+end
+
+local function fireHotkey(self, action, pressed, ctl)
+  if action == "overlay_next" then
+    if pressed then TouchSkin.nextPage(ctl and ctl.nextTarget) end
+    return pressed
+  end
+  if action == "overlay_prev" then
+    if pressed then TouchSkin.setPage(TouchSkin.pageIndex - 1) end
+    return pressed
+  end
+  self.hotkeysHeld = self.hotkeysHeld or {}
+  local n = (self.hotkeysHeld[action] or 0) + (pressed and 1 or -1)
+  if n < 0 then n = 0 end
+  self.hotkeysHeld[action] = n > 0 and n or nil
+  local edge = (pressed and n == 1) or (not pressed and n == 0)
+  if edge and self.hotkeyHandler then
+    pcall(self.hotkeyHandler, action, pressed)
+  end
+  return false
+end
+
+local function enterControl(self, ctl)
+  local freshButton, freshAction = false, false
+  for _, btn in ipairs(ctl.buttons) do
+    if skinButtonAvailable(btn) and not self.held[btn] then freshButton = true end
+  end
+  for _, key in ipairs(ctl.keys) do if not (self.keysHeld and self.keysHeld[key]) then freshAction = true end end
+  for _, action in ipairs(ctl.hotkeys) do if not (self.hotkeysHeld and self.hotkeysHeld[action]) then freshAction = true end end
+  for _, btn in ipairs(ctl.buttons) do
+    if skinButtonAvailable(btn) then pressBtn(self, btn) end
+  end
+  for _, key in ipairs(ctl.keys) do pressKey(self, key, true) end
+  local switched = false
+  for _, action in ipairs(ctl.hotkeys) do
+    if fireHotkey(self, action, true, ctl) then switched = true end
+  end
+  if not freshButton and freshAction then TouchControls.buzz(self.haptics) end
+  return switched
+end
+
+local function exitControl(self, ctl)
+  for _, btn in ipairs(ctl.buttons) do releaseBtn(self, btn) end
+  for _, key in ipairs(ctl.keys) do pressKey(self, key, false) end
+  for _, action in ipairs(ctl.hotkeys) do fireHotkey(self, action, false, ctl) end
+end
+
+function skinHitSet(self, x, y, prev)
+  local page = TouchSkin.page()
+  if not page then return nil end
+  local ww, wh, ox, oy = surfaceRect()
+  local set = nil
+  for _, ctl in ipairs(page.controls) do
+    local held = (prev and prev[ctl]) == true
+    if not ctl.decorative and skinControlAvailable(ctl)
+       and TouchSkin.hits(page, ctl, ww, wh, x, y, ox, oy, held) then
+      set = set or {}
+      set[ctl] = true
+    end
+  end
+  return set
+end
+
+function applySkinSet(self, touch, set)
+  local prev = touch.set or {}
+  local switched = false
+  for ctl in pairs(prev) do
+    if not (set and set[ctl]) then exitControl(self, ctl) end
+  end
+  for ctl in pairs(set or {}) do
+    if not prev[ctl] then
+      if enterControl(self, ctl) then switched = true end
+    end
+  end
+  touch.set = set
+  if switched then
+    for ctl in pairs(touch.set or {}) do exitControl(self, ctl) end
+    touch.set = nil
+  end
+end
+
+
 function TouchControls:touchpressed(id, x, y)
   -- preview mode is layout-edit only: never press GB buttons
   if self.preview then return end
-  if not (self.active and self.enabled ~= false and self.img) then return end
+  if not (self.active and self.enabled ~= false and (TouchSkin.active or self.img)) then return end
   -- A reused native pointer id must release its previous hold first.
   if self.touches[id] then self:touchreleased(id,x,y) end
   -- A controller hid the overlay; restore it and accept this same press.
   if self.controllerHidden then
     self.controllerHidden = false
   end
+  if TouchSkin.active then
+    local set = skinHitSet(self, x, y, nil)
+    if not set then return end
+    local touch = { control = "skin" }
+    self.touches[id] = touch
+    applySkinSet(self, touch, set)
+    return true
+  end
   local L = self:layout()
+  if self:hotbarShown() then
+    local cell = self:hotbarCellAt(x, y)
+    if cell then
+      self.touches[id] = {control="hotkey", ctl=cell.ctl}
+      enterControl(self, cell.ctl)
+      return true
+    end
+    if inCircle(L.hotbar, x, y, HOTBAR_SLOP) then
+      self.hotbarOpen = not self.hotbarOpen
+      self.touches[id] = {control="hotbarToggle"}
+      TouchControls.buzz(self.haptics)
+      return true
+    end
+  end
   for _, btn in ipairs(BUTTONS) do
     if buttonAvailable(self,btn) and L[btn] and inCircle(L[btn], x, y, SLOP[btn]) then
       self.touches[id] = { control = btn }
@@ -528,6 +866,10 @@ function TouchControls:touchmoved(id, x, y)
   if self.preview then return end
   local touch = self.touches[id]
   if not touch then return end
+  if touch.control == "skin" then
+    applySkinSet(self, touch, skinHitSet(self, x, y, touch.set))
+    return
+  end
 
   -- Gen4 free camera look
   if touch.control == "cameralook" and self.cameraLookStart then
@@ -560,7 +902,12 @@ function TouchControls:touchreleased(id, x, y)
   if not touch then return end
   self.touches[id] = nil
 
-  if touch.control == "cameralook" then
+  if touch.control == "skin" then
+    applySkinSet(self, touch, nil)
+  elseif touch.control == "hotkey" then
+    exitControl(self, touch.ctl)
+  elseif touch.control == "hotbarToggle" then
+  elseif touch.control == "cameralook" then
     self.cameraLookTouch = nil
     self.cameraLookStart = nil
   elseif touch.control == "dpad" then
@@ -576,6 +923,18 @@ end
 -- touchreleased and would strand its button held forever.  Called from
 -- Game alongside Input:reset() on focus/visibility loss.
 function TouchControls:reset()
+  for _, touch in pairs(self.touches or {}) do
+    if touch.control == "skin" then applySkinSet(self, touch, nil)
+    elseif touch.control == "hotkey" and touch.ctl then exitControl(self, touch.ctl) end
+  end
+  for key in pairs(self.keysHeld or {}) do
+    self.keysHeld[key] = 1
+    pressKey(self, key, false)
+  end
+  for action in pairs(self.hotkeysHeld or {}) do
+    if self.hotkeyHandler then pcall(self.hotkeyHandler, action, false) end
+  end
+  self.keysHeld, self.hotkeysHeld = {}, {}
   for btn in pairs(self.held or {}) do
     Input:overlayReleased(btn)
   end
@@ -586,6 +945,7 @@ function TouchControls:reset()
   self.rightStickTouch = nil
   self.cameraLookTouch = nil
   self.cameraLookStart = nil
+  self.hotbarOpen = false
 end
 
 -- Recover if Android cancels a contact without delivering touchreleased.
@@ -637,8 +997,53 @@ end
 -- Screen-space, called by Game:draw after Renderer:endFrame so the
 -- overlay rides on top of everything (world, UI, CRT/GBC FX included).
 -- Also used by the launcher layout editor under preview mode.
+local function drawOverlayImage(img, x, y, w, h, alpha)
+  if not img or alpha <= 0 then return end
+  local sx, sy = TouchSkin.imageFit(img:getWidth(), img:getHeight(), w, h)
+  if not sx then return end
+  love.graphics.setColor(1, 1, 1, math.min(1, alpha))
+  love.graphics.draw(img, x, y, 0, sx, sy)
+end
+
+function TouchControls:drawSkin(alphaMul)
+  local page = TouchSkin.page()
+  if not page then return false end
+  local ww, wh, sox, soy = surfaceRect()
+  local bx, by, bw, bh = TouchSkin.pageBox(page, ww, wh, sox, soy)
+  local opacity = (self.skinOpacity or 1) * alphaMul
+
+  love.graphics.push("all")
+  love.graphics.origin()
+  drawOverlayImage(page.image, bx, by, bw, bh, opacity)
+
+  local pressed = {}
+  for _, touch in pairs(self.touches or {}) do
+    for ctl in pairs(touch.set or {}) do pressed[ctl] = true end
+  end
+
+  for _, ctl in ipairs(page.controls) do
+    local down = pressed[ctl] == true
+    local img = (down and ctl.pressedImage) or ctl.image
+    if img then
+      local cx, cy, halfW, halfH =
+        TouchSkin.controlGeometry(page, ctl, ww, wh, sox, soy)
+      local alpha = opacity
+      if down and not ctl.pressedImage then alpha = opacity * ctl.alphaMod end
+      drawOverlayImage(img, cx - halfW, cy - halfH, halfW * 2, halfH * 2, alpha)
+    end
+  end
+
+  love.graphics.pop()
+  return true
+end
+
+
 function TouchControls:draw()
   if not self:visible() then return end
+  if TouchSkin.active then
+    local mul = (self.preview and self.enabled == false) and 0.45 or 1
+    if self:drawSkin(mul) then return end
+  end
   local L = self:layout()
   -- when the player disabled the overlay but the editor is previewing,
   -- draw dimmed so the layout is still editable
@@ -683,6 +1088,49 @@ function TouchControls:draw()
   end
   label("START", L.start)
   label("SELECT", L.select)
+
+  if self:hotbarShown() then
+    local z = L.hotbar
+    local r = z.w * 0.5
+    love.graphics.setColor(0.15, 0.15, 0.15, 0.55 * alphaMul)
+    love.graphics.circle("fill", z.cx, z.cy, r * 1.16)
+    love.graphics.setColor(1, 1, 1, (ALPHA + 0.2) * alphaMul)
+    local dot = r * 0.16
+    for i = -1, 1 do
+      love.graphics.circle("fill", z.cx + i * r * 0.5, z.cy, dot)
+    end
+    if self.hotbarOpen and not self.preview then
+      local pressed = {}
+      for _, touch in pairs(self.touches or {}) do
+        if touch.control == "hotkey" and touch.ctl then pressed[touch.ctl] = true end
+      end
+      local cells = self:hotbarStrip() or {}
+      local first, last = cells[1], cells[#cells]
+      if first and last then
+        local pad = first.h * 0.14
+        love.graphics.setColor(0.15, 0.15, 0.15, 0.55 * alphaMul)
+        love.graphics.rectangle("fill", first.x - pad, first.y - pad,
+                                last.x + last.w - first.x + pad * 2,
+                                first.h + pad * 2, first.h * 0.3)
+      end
+      for _, cell in ipairs(cells) do
+        local down = pressed[cell.ctl] == true
+        love.graphics.setColor(0.3, 0.3, 0.3,
+          (down and 0.85 or 0.6) * alphaMul)
+        love.graphics.rectangle("fill", cell.x, cell.y, cell.w, cell.h,
+                                cell.h * 0.25)
+        local tw = self.labelFont:getWidth(cell.label)
+        local ty = cell.y + (cell.h - self.labelFont:getHeight()) * 0.5
+        love.graphics.setColor(0, 0, 0, 0.6 * alphaMul)
+        love.graphics.print(cell.label,
+                            cell.x + (cell.w - tw) * 0.5 + 1, ty + 1)
+        love.graphics.setColor(1, 1, 1,
+          (down and ALPHA_PRESSED or (ALPHA + 0.2)) * alphaMul)
+        love.graphics.print(cell.label, cell.x + (cell.w - tw) * 0.5, ty)
+      end
+    end
+  end
+
 
   love.graphics.pop()
 end

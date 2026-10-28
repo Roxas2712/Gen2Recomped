@@ -1,5 +1,5 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
--- A visual lease over the real opponent send-out, never a second ball player.
+-- Visual phases over the real native send-out, never a second ball player.
 local Battle=require('src.core.game3.battle')
 local G=require('src.core.Game3')
 local Clock=require('src.battle.PresentationClock')
@@ -11,7 +11,7 @@ local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 local function finite(v)return type(v)=='number'and v==v and math.abs(v)<math.huge end
 local function clearCallbacks(c)
- c.step,c.complete,c.hook,c.hookNow,c.owner=nil,nil,nil,nil,nil
+ c.step,c.complete,c.hook,c.hookNow,c.owner,c.dispatch=nil,nil,nil,nil,nil,nil
  c.processing,c.body=false,nil
 end
 local function release(c)
@@ -25,7 +25,7 @@ local function native(c)
  if s and Battle._screen()==s and Battle.getState()==r[10]
   and s.game.data==r[2]and s.game.save==r[3]and s.game.stack==r[4]
   and s.game.mods==r[5]and s._sourceIntroSequence==r[9]
-  and s.enemy==r[7]and(s.gen3Ball==r[6]
+  and(s[c.actorKey]==r[7])and(s.gen3Ball==r[6]
    or c.nativeCompleted and s.gen3Ball==nil and not s.gen3BallPlaying)then return s,r[6]end
 end
 local function live(c)
@@ -39,6 +39,11 @@ local function live(c)
  return s,a
 end
 local function canonicalAt(c,tick)
+ local phase=c.phase
+ if phase.kind~='opponent'then
+  if tick>=phase.duration then return phase.units end
+  return phase.delay+tick*phase.span/phase.duration
+ end
  -- Public presentation units: 16 at the ball opening, 12 for emergence,
  -- then a 7-unit trainer exit tail. They are not cartridge frame counts.
  if tick>=c.duration then return 35 end
@@ -46,15 +51,20 @@ local function canonicalAt(c,tick)
  return 16+(tick-c.wait)*12/c.fade
 end
 local function nativeAt(c,u)
+ local phase=c.phase
+ if phase.kind~='opponent'then
+  return phase.start+math.floor(math.max(0,math.min(phase.span,u*phase.units-phase.delay))
+   *phase.duration/phase.span+1e-7)
+ end
  local frame=u*35
  local n=frame<=16 and frame*c.wait/16
   or c.wait+math.min(12,frame-16)*c.fade/12
  return math.min(c.duration,math.floor(n+1e-7))
 end
-local function advance(c,u)
+local function advance(c,offered,u)
  local s,a=live(c)
  local phase=processing:find('native.sendout.step')
- if not phase or phase.value~=c or not s or not c.active or not c.processing or not c.body
+ if offered~=c.phase or offered.closed or not phase or phase.value~=c or not s or not c.active or not c.processing or not c.body
   or not Clock.active(s)or s.game.stack:top()~=s then
   return false,'native send-out callback is outside its visual phase'
  end
@@ -74,40 +84,56 @@ end
 local function call(c,fn,...)
  if fn then return G._withCallbackOwner(c.owner,fn,...)end
 end
-function M._begin(screen,anim,row,hook,hookNow,dispatch)
- if anim.sendOut~='opponent'or anim.battler~=screen.enemy
-  or not screen._sourceIntroSequence or not Clock.active(screen)then return false end
- local token=screen._sourceIntroSequence
- local index=token.sendOuts and token.sendOuts.opponent_sendout
- if not index then return false end
- local send=anim.send;local wait,fade=send and send.foeWait,send and send.fadeFrames
- if not(finite(wait)and finite(fade)and wait>=1 and fade>=1
-  and wait%1==0 and fade%1==0 and wait+fade<=4096)then return false end
- if current then release(current)end
- local c={refs=setmetatable({screen,screen.game.data,screen.game.save,screen.game.stack,
-  screen.game.mods,anim,screen.enemy,row,token,Battle.getState()},{__mode='v'}),
-  wait=wait,fade=fade,duration=wait+fade,index=index,desired=0,tick=0,active=true,
-  hook=hook,hookNow=hookNow}
- current=c
+local function offer(c,phase)
+ c.phase,c.tick=phase,0
  local configured=false
+ local step=function(u)return advance(c,phase,u)end
  local function configure(frames,onStep,onComplete)
-  assert(native(c)and Clock.active(screen),'native send-out offer retired')
+  local screen=native(c)
+  assert(screen and Clock.active(screen),'native send-out offer retired')
   if configured then return c.public end
   assert(finite(frames)and frames>=0 and frames<=65536,'invalid send-out presentation duration')
   assert(onStep==nil or type(onStep)=='function','invalid send-out step callback')
   assert(onComplete==nil or type(onComplete)=='function','invalid send-out completion callback')
   configured=true;c.total=math.max(1,math.ceil(frames));c.owner=G._callbackOwner()
   c.step,c.complete=onStep,onComplete
-  c.public={frames=0,total=c.total} -- Detached observation; writes grant no authority.
-  c.displayTotal=c.total==35 and c.duration or c.total
+  c.public={frames=0,total=c.total}
+  -- Delegation keeps the existing native duration. A player provider that
+  -- decorates its callback requests the public windup/throw presentation;
+  -- the native ball remains at frame zero throughout that visual windup.
+  c.canonical=c.total==phase.units and(phase.kind=='opponent'or onStep==step)
+  c.displayTotal=c.canonical and phase.duration or c.total
   return c.public
  end
- local result=pack(pcall(dispatch,configure,35,function(u)return advance(c,u)end,function()
-  return c.processing and c.active and true or false
+ local result=pack(pcall(c.dispatch,configure,phase.units,step,function()
+  return c.phase==phase and not phase.closed and c.processing and c.active and true or false
  end))
  if not result[1]then release(c);error(result[2],0)end
- if not configured or not native(c)or hookNow()~=hook then release(c);return false end
+ if not configured or not native(c)or not c.hookNow or c.hookNow()~=c.hook then release(c);return false end
  return true
+end
+function M._begin(screen,anim,row,hook,hookNow,dispatch)
+ local player=anim.sendOut=='player'and anim.battler==screen.player
+ local opponent=anim.sendOut=='opponent'and anim.battler==screen.enemy
+ if not(player or opponent)or not screen._sourceIntroSequence or not Clock.active(screen)then return false end
+ local token=screen._sourceIntroSequence
+ local index=token.sendOuts and token.sendOuts[player and'player_throw'or'opponent_sendout']
+ if not index then return false end
+ local send=anim.send;local wait,fade=send and(player and send.frames or send.foeWait),send and send.fadeFrames
+ if not(finite(wait)and finite(fade)and wait>=1 and fade>=1
+  and wait%1==0 and fade%1==0 and wait+fade<=4096)then return false end
+ if current then release(current)end
+ local c={refs=setmetatable({screen,screen.game.data,screen.game.save,screen.game.stack,
+  screen.game.mods,anim,anim.battler,row,token,Battle.getState()},{__mode='v'}),
+  wait=wait,fade=fade,duration=wait+fade,index=index,desired=0,tick=0,active=true,
+  hook=hook,hookNow=hookNow,dispatch=dispatch,actorKey=player and'player'or'enemy'}
+ c.phases=player and{
+  {kind='player',units=57,start=0,duration=wait,delay=32,span=25},
+  {kind='emergence',units=12,start=wait,duration=fade,delay=0,span=12},
+ }or{{kind='opponent',units=35,start=0,duration=wait+fade}}
+ current=c
+ c.phaseIndex=1
+ return offer(c,c.phases[1])
 end
 function M._step(screen,anim,body)
  local c=current
@@ -123,7 +149,8 @@ function M._step(screen,anim,body)
  Clock.once(screen,'native.sendout.tween',function()
   if not live(c)then return end
   c.tick=c.tick+1
-  local f=c.total==35 and canonicalAt(c,math.min(c.tick,c.duration))or c.tick
+  local offered=c.phase
+  local f=c.canonical and canonicalAt(c,math.min(c.tick,offered.duration))or c.tick
   local task={frames=f,total=c.total}
   c.public.frames=f;c.processing,c.body=true,body
   local phase=processing:push('native.sendout.step',c)
@@ -131,7 +158,14 @@ function M._step(screen,anim,body)
    call(c,c.step,math.min(1,f/c.total),task)
    assert(not Coroutines.retired()and not phase.closed,'native send-out phase retired while suspended')
    if not native(c)then return end
-   if c.tick>=c.displayTotal then call(c,c.complete);c.active=false end
+   if c.tick>=c.displayTotal then
+    call(c,c.complete)
+    offered.closed=true
+    if c.active and native(c)and c.phases[c.phaseIndex+1]then
+     c.phaseIndex=c.phaseIndex+1
+     offer(c,c.phases[c.phaseIndex])
+    else c.active=false end
+   end
   end))
   processing:close(phase)
   c.processing,c.body=false,nil

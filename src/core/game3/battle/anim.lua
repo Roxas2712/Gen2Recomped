@@ -197,6 +197,16 @@ local function tweenStage(frames,onStep,onComplete)
   return task
 end
 A.tweenStage=tweenStage
+local function ballOpen(key,x,y)
+ return require('src.core.game3.battle.ball_open_phase').open(key,x,y)
+end
+A.ballOpen=ballOpen
+function A._nativeBallOpen(screen,ball)
+ if A.ballOpen==ballOpen then return false end
+ return require('src.core.game3.battle.ball_open_phase').notify(screen,ball,function(...)
+  return Call.call(A,'ballOpen',...)
+ end)
+end
 function A._nativeSendOut(screen,anim,row)
   if A.tweenStage==tweenStage then return false end
   local _,actual=context();if actual~=screen then return false end

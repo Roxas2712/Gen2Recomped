@@ -6,7 +6,7 @@ local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
 local S={}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -102,7 +102,14 @@ local function remember(record,method,args)
  if record.leaves>limits.leaves then error('uniform bank cap')end
  bank[#bank+1]=row
  if record.plan.kinds[name]then
-  local literal=row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
+  -- A float observed between endpoints remains dynamic thereafter.
+  -- Keep later endpoints dynamic too, so a completed fade/camera tween does
+  -- not synchronously manufacture another endpoint-specific GPU program.
+  if record.plan.kinds[name]=='float'and row.n==1 and type(args[2])=='number'
+   and args[2]>0 and args[2]<1 and not record.continuous[name]then
+   record.continuous[name]=true;stats.continuousUniforms=stats.continuousUniforms+1
+  end
+  local literal=not record.continuous[name]and row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
   if record.scalars[name]~=literal then record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1 end
  end
  -- Eager writes keep existing variant textures current, release their old C
@@ -123,25 +130,33 @@ local function afterSend(record,method,args,...)
 end
 local function hook(shader)
  local methods=debug.getmetatable(shader).__index
- local prior=hooks[methods];if prior then return prior end
+ local prior=hooks[methods]
+ if prior then
+  local alpha=package.loaded['src.render.AlphaDepthCompat']
+  -- The depth adapter hooks this native class lazily, on its first cutout.
+  -- Rebase only that exact engine-owned interposition. Foreign owners keep
+  -- the existing conservative fallback; old closures must forward once.
+  if not(alpha and alpha.followsShaderMethods and alpha.followsShaderMethods(methods,prior.wrapped,prior.hasUniform))then return prior end
+ end
  local h={send=methods.send,sendColor=methods.sendColor,release=methods.release,hasUniform=methods.hasUniform,methods=methods,wrapped={}}
  hooks[methods]=h
  for _,method in ipairs{'send','sendColor'}do
   if h[method]then h.wrapped[method]=function(self,...)
    local record=not compiling and originals[self]
-   if not record or record.disabled then return h[method](self,...)end
+   if not record or record.disabled or record.hook~=h then return h[method](self,...)end
    return afterSend(record,method,pack(...),h[method](self,...))
   end;methods[method]=h.wrapped[method]end
  end
  methods.release=function(self,...)
   local record=originals[self]
-  if record then disable(record)end
+  if record and record.hook==h then disable(record)end
   return h.release(self,...)
  end
  h.wrapped.release=methods.release
+ if prior then for _,record in ipairs(records)do if record.hook==prior then record.hook=h end end end
  return h
 end
-local function construct(record,key,constants)
+local function construct(record,key,constants,depth)
  if record.count>=limits.perSource or stats.variants>=limits.variants then return end
  -- Reconstruct resources before compiling. A missing/released Lua Texture is
  -- still correctly owned by the original C shader, so retain that path.
@@ -159,7 +174,15 @@ local function construct(record,key,constants)
  local ok,why=pcall(function()
   local source=Branches.rewrite(record.plan,constants)
   source=Guard.rewrite(source,record.plan.clean,function(name)return record.hook.hasUniform(original(record),name)end)
-  shader=raw.compile(source)
+  local compiler=raw.compile
+  if record.depthAdapter then
+   compiler=record.depthAdapter.compileNative
+   if depth then
+    local changed;source,changed=record.depthAdapter.source(source)
+    assert(changed,'native depth variant no longer admissible')
+   end
+  end
+  shader=compiler(source)
   if record.hook.hasUniform(shader,Guard.uniform)then record.hook.send(shader,Guard.uniform,0)end
   for name,rows in pairs(replay)do
    if record.hook.hasUniform(shader,name)then
@@ -174,9 +197,10 @@ local function construct(record,key,constants)
   record.variants[key]=false;stats.failures=stats.failures+1;stats.lastFailure=tostring(why):sub(1,1000)
   return nil,why
  end
- local variant={shader=shader}
+ local variant={shader=shader,depth=depth}
  record.variants[key]=variant;variants[shader]=record
  stats.variants=stats.variants+1;stats.compiled=stats.compiled+1
+ if depth then stats.depthCompiled=stats.depthCompiled+1 end
  return variant
 end
 local function choose(record)
@@ -195,12 +219,14 @@ local function choose(record)
   record.constants,record.key=constants,table.concat(key,';');record.keyRevision=record.scalarRevision
  end
  if record.key==''then return end
- local variant=record.variants[record.key]
+ local depth=record.depthAdapter and record.depthAdapter.fragmentDepthTarget()or false
+ local key=record.key..(record.depthAdapter and(depth and';@native-depth'or';@native-color')or'')
+ local variant=record.variants[key]
  if variant==nil then
-  if record.retryKey==record.key and record.retryRevision==record.bankRevision then return end
-  local ok,value=pcall(construct,record,record.key,record.constants)
+  if record.retryKey==key and record.retryRevision==record.bankRevision then return end
+  local ok,value=pcall(construct,record,key,record.constants,depth)
   if ok then variant=value else stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(value):sub(1,160)end
-  if not variant then record.retryKey,record.retryRevision=record.key,record.bankRevision end
+  if not variant then record.retryKey,record.retryRevision=key,record.bankRevision end
  end
  return variant
 end
@@ -209,7 +235,9 @@ local function beforeDraw()
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
  if not record then return end
  local variant=choose(record)
- if variant then raw.setShader(variant.shader);stats.uses=stats.uses+1
+ if variant then
+  if actual~=variant.shader then raw.setShader(variant.shader)end
+  stats.uses=stats.uses+1;if variant.depth then stats.depthUses=stats.depthUses+1 end
  else raw.setShader(original(record));stats.fallbacks=stats.fallbacks+1 end
 end
 local function admit(shader,source,second,third,n)
@@ -221,7 +249,12 @@ local function admit(shader,source,second,third,n)
  local plan=Branches.plan(source)
  if not plan or #plan.order==0 or plan.clean:find('void%s+[vp]ertexmain%s*%(')or plan.clean:find('void%s+pixelmain%s*%(')then return end
  local h=hook(shader);local lease=love.thread.newChannel();lease:push(shader)
- local record={plan=plan,lease=lease,hook=h,aliases=setmetatable({},{__mode='k'}),variants={},bank={},scalars={},uniformCount=0,leaves=0,count=0,scalarRevision=0,bankRevision=0,gamma=love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()}
+ local record={plan=plan,lease=lease,hook=h,aliases=setmetatable({},{__mode='k'}),variants={},bank={},scalars={},continuous={},uniformCount=0,leaves=0,count=0,scalarRevision=0,bankRevision=0,gamma=love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()}
+ local alpha=package.loaded['src.render.AlphaDepthCompat']
+ if alpha and type(alpha.compileNative)=='function'and type(alpha.fragmentDepthTarget)=='function'then
+  local _,eligible=alpha.source(source)
+  if eligible then record.depthAdapter=alpha end
+ end
  record.aliases[shader]=true;originals[shader]=record;records[#records+1]=record
  sourceBytes=sourceBytes+#source;stats.sources=stats.sources+1
 end
