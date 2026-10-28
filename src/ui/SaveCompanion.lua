@@ -140,6 +140,7 @@ local function recalc(game,mon)
     mon.stats=Stats.calc(def,mon.level or 1,mon.dvs or {},mon.statExp)
   end
   mon.hp=clamp(tonumber(mon.hp) or (mon.stats.hp or 1),0,mon.stats.hp or 1)
+  require('src.pokemon.Pokemon').syncIdentity(game.data,mon)
 end
 local function setLevel(game,mon,delta)
   if not mon then return end

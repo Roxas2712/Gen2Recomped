@@ -1986,6 +1986,7 @@ local function scrubKnownMon(mon, data)
     for stat, v in pairs(mon.statExp) do mon.statExp[stat] = clamp(v, 0, 65535, 0) end
   end
   mon.level = clamp(mon.level, 1, 100, 1)
+  require('src.pokemon.Pokemon').ensureIdentity(data,mon)
   -- Box mons imported from a real .sav carry NO stat block: box_struct stops
   -- before MON_LEVEL/MON_STATS, so src/save_convert/GenSave.lua decodeMon
   -- only fills `stats` for party slots.  Every HP-bar draw then nil-indexes

@@ -385,6 +385,7 @@ function Evolution.apply(game, mon, newSpecies, via, evo)
     mon.stats = Stats.calc(newDef, mon.level, mon.dvs, mon.statExp)
   end
   mon.hp = math.max(1, mon.stats.hp - hpLost)
+  require('src.pokemon.Pokemon').syncIdentity(game.data,mon)
   if game.save.pokedex then
     game.save.pokedex.seen[newSpecies] = true
     game.save.pokedex.owned[newSpecies] = true
