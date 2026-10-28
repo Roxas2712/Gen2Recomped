@@ -10,7 +10,7 @@ function M.tables(anims,constants)
   anims=anims or {}
   local c={}
   for _,key in ipairs({'battleAnimFramesetOrder','battleAnimObjectOrder',
-      'battleAnimFuncOrder','battleAnimGfxOrder'})do c[key]=order(constants,key)end
+      'battleAnimFuncOrder','battleAnimGfxOrder','battleAnimObPaletteOrder'})do c[key]=order(constants,key)end
   c.battleBgEffectOrder=constants and constants.battleBgEffectOrder
     or require('src.battle.Gen2BgEffectIds').forVersion()
   local data={objects={},framesets={},oamsets={},gfx={},palettes=anims.palettes}
@@ -23,7 +23,7 @@ function M.tables(anims,constants)
       or c.battleAnimFuncOrder[(row.fn or 0)+1]
     data.objects[name]={flags=row.oamFlags,fixY=row.fixY,
       frameset=c.battleAnimFramesetOrder[row.frameset+1]or row.frameset,
-      func=fn,palette=row.palette,
+      func=fn,palette=c.battleAnimObPaletteOrder[(row.palette or 0)+1]or row.palette,
       gfx=c.battleAnimGfxOrder[(row.gfx or 0)+1]or row.gfx}
   end
   for id,set in pairs(anims.framesets or {})do

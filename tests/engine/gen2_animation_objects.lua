@@ -9,7 +9,7 @@ local oldVersion=Version.get()
 local function fixture()
   return {battle_anims={gen2=true,moveAnims={FIX_MOVE=1},misc={throwPokeBall=1},
     scripts={[1]={entry=1,code={{op='gfx',ids={2}},{op='obj',args={0,40,40,0}},{op='delay',frames=5},{op='ret'}}}},
-    objects={[0]={oamFlags=0,fixY=255,frameset=0,fn=0,palette=4}},functions={[0]='Null'},
+    objects={[0]={oamFlags=0,fixY=255,frameset=0,fn=0,palette='PAL_BATTLE_OB_RED'}},functions={[0]='Null'},
     framesets={[0]={frames={{oam=0,duration=20}},loop='hold'}},
     oam={[0]={tile=0,sprites={{x=0,y=0,tile=0,attr=0},{x=8,y=0,tile=1,attr=32}}}},
     gfx={[2]={tiles=2,cols=2,image='fixture.png'}},palettes={[2]={{255,255,255},{200,100,50},{100,30,10},{0,0,0}}}}}
@@ -25,8 +25,8 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   local native=p.objects.structs[1]
   local rows=p:oam()
   T.eq(#rows,2,'actual frame OAM contains both object tiles')
-  T.same(rows[1],{x=40,y=40,tile=0,attr=0,palette=4},'first native sprite projection')
-  T.same(rows[2],{x=48,y=40,tile=1,attr=32,palette=4},'second native sprite retains tile and flip')
+  T.same(rows[1],{x=40,y=40,tile=0,attr=0,palette='PAL_BATTLE_OB_RED'},'first native sprite projection')
+  T.same(rows[2],{x=48,y=40,tile=1,attr=32,palette='PAL_BATTLE_OB_RED'},'second native sprite retains tile and flip')
   local runner=View.runner(p)
   T.eq(runner.frames,1,'runner observes actual update clock')
   T.eq(runner.objects.structs[1].index,native.index,'runner observes actual native object identity')
@@ -51,7 +51,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   local ticks=runner.frames
   p:start('FIX_MOVE',false)
   T.eq(runner.frames,ticks,'restarting VM cannot rebind previous animation observation')
-  T.eq(runner:oam()[1].palette,4,'retired OAM retains its own actual palette')
+  T.eq(runner:oam()[1].palette,'PAL_BATTLE_OB_RED','retired OAM retains its own actual palette')
   T.eq(p.frames,0,'new animation starts with its own actual clock')
   p:update()
   local g=love.graphics;local draw=g.draw;local calls={}

@@ -587,4 +587,14 @@ M.nativeFunctions={
   ["RockSmash"]="BATTLE_ANIM_FUNC_ROCK_SMASH",
   ["Cotton"]="BATTLE_ANIM_FUNC_COTTON",
 }
+M.battleAnimObPaletteOrder={
+  "PAL_BATTLE_OB_ENEMY",
+  "PAL_BATTLE_OB_PLAYER",
+  "PAL_BATTLE_OB_GRAY",
+  "PAL_BATTLE_OB_YELLOW",
+  "PAL_BATTLE_OB_RED",
+  "PAL_BATTLE_OB_GREEN",
+  "PAL_BATTLE_OB_BLUE",
+  "PAL_BATTLE_OB_BROWN",
+}
 return M
