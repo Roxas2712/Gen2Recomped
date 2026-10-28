@@ -354,7 +354,11 @@ local function readFile(path)
     local ok, data = pcall(love.filesystem.read, path)
     if ok and data then return data end
   end
-  return require("src.core.FilePicker").read(path)
+  local ok, handle = pcall(io.open, path, "rb")
+  if not ok or not handle then return nil end
+  local read, bytes = pcall(handle.read, handle, "*a")
+  pcall(handle.close, handle)
+  return read and bytes or nil
 end
 
 local function listDir(path)

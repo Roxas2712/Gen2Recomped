@@ -92,7 +92,11 @@ g.input.wasPressed=function(self,key) return self.pressed[key]==true end
 g.writeOptions=function(self) self.writes=self.writes+1;self.persisted=Save.encode(self.save) end
 g.save.options.touchControls={layouts={portrait={scale=1.2}}}
 local menu=Menu.new(g);g.stack:push(menu)
-local page=menu:focusRow('touchSkin')
+-- This offered base retains upstream's actual flat OPTIONS page.
+local page
+for index,row in ipairs(menu.rows) do
+  if row.id=='touchSkin' then menu.index=index;page=menu;break end
+end
 T.check(page ~= nil,'installed skin exposes a native Options row')
 if page then
   g.input.pressed={right=true};page:update(1/60);g.input.pressed={}

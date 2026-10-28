@@ -1,5 +1,9 @@
 # Native custom touch skins
 
+Upstream stack: this change is based on the offered viewport/window contract
+PR #124 (and its prerequisites). Merge those first. The runtime needs their
+actual game rectangle and input mapping; no viewport stub is provided here.
+
 The shared engine now supplies the real `src.core.TouchSkin` service used by
 Gen1 mods. This is engine work; mod files and their optional geometry consumers
 do not need changes. The implementation is adapted from Gen1Recomp

@@ -12,3 +12,7 @@ https://github.com/Roxas2712
 Existing upstream and Gen1 rights and licence grants remain effective; this
 notice assigns no other author's work to Roxas2712. No proprietary Gen1
 launcher code or third-party bundled skin art is included.
+
+Roxas2712's independently owned additions are offered under
+[LICENSE-ROXAS2712.md](LICENSE-ROXAS2712.md), subject to prior grants and
+the preserved Gen1 GPL terms. Existing GPL-covered code is not relicensed.
