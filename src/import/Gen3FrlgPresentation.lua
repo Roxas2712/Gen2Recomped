@@ -81,6 +81,7 @@ function M.missing(version)
   for id,name in pairs({[321]='GAME_FREAK',[277]='INTRO_FIGHT',[278]='TITLE'})do
     if names[id]~=name then missing[#missing+1]='<frlg:song-'..name..'>'end
   end
+  for _,path in ipairs(require('src.import.Gen3FrlgHallAssets').missing(version))do missing[#missing+1]=path end
   table.sort(missing);return missing
 end
 return M

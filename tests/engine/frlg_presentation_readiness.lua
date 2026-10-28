@@ -1,6 +1,7 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 love=require('tests.love_stub');local T=require('tests.harness')
 local M=require('src.import.Gen3FrlgPresentation');local F=require('src.import.CacheFs')
+local Hall=require('src.import.Gen3FrlgHallAssets')
 local Writer=require('src.import.LuaWriter');local oldRead,oldExists=F.read,F.exists
 local c={gen3SongNames={names={[321]='GAME_FREAK',[277]='INTRO_FIGHT',[278]='TITLE'}}}
 for group,keys in pairs(M.IMAGES)do
@@ -13,16 +14,22 @@ c.gen3FRLGOakSpeech.text={welcome='WELCOME!'}
 c.gen3FRLGMainMenu.format=1;c.gen3FRLGMainMenu.version='leafgreen'
 c.gen3FRLGMainMenu.text={continue='CONTINUE',newGame='NEW GAME',player='PLAYER',time='TIME',pokedex='POKéDEX',badges='BADGES'}
 c.gen3FRLGMainMenu.bounce={frequency=8,multiplier=2,bounceDir=1}
+local labels={};for _,key in ipairs(Hall.LABELS)do labels[key]={{t='text',s='OWNED'}}end
+c.gen3FrlgHall={format=1,version='leafgreen',resources=Hall.resources(),textIR=labels,
+ trainerPics={boy='OWNED_BOY.png',girl='OWNED_GIRL.png'},songIds={MUS_HALL_OF_FAME=286,SE_APPLAUSE=98}}
 c.gen3TrainerPresentation={format=1,version='leafgreen',classCount=107};c.trainerClasses={[106]='PLAYER'}
 local font={
  dialogueFrame={source='ROM:gfx 041F004, gTextWindowPalettes[0] 04716C8',fill={1,1,1},image='assets/generated/fonts/frlg_dialogue.png'},
  signpostFrame={source='ROM:gfx 04703E8, gTextWindowPalettes[1] 04716E8',fill={1,1,1},image='assets/generated/fonts/frlg_signpost.png'},
  standardFrame={source='ROM:gStdTextWindow_Gfx 0471328, gTextWindowPalettes[3] 0471728',fill={1,1,1},image='assets/generated/fonts/frlg_standard_frame.png'},
 }
-F.read=function(path)return Writer.encode(path=='data/generated/font.lua'and font or c)end
+F.read=function(path)
+ if path==Hall.ROOT..'hall_of_fame/manifest.lua'then return Writer.encode({format_version=1,width=240,height=160,confetti={w=8,h=8,frames=17}})end
+ return Writer.encode(path=='data/generated/font.lua'and font or c)
+end
 F.exists=function()return true end
 T.eq(#M.missing('leafgreen'),0,'complete native LeafGreen replaces generic boot/summary requirements')
-T.eq(#M.missing('firered'),6,'wrong title, menu, trainer and three frame identities cannot be accepted as FireRed')
+T.eq(#M.missing('firered'),7,'wrong title, menu, trainer, Hall and three frame identities cannot be accepted as FireRed')
 c.gen3FRLGTitle.images.streak=nil
 T.eq(#M.missing('leafgreen'),1,'LeafGreen requires its own streak image')
 c.gen3FRLGTitle.images.streak='assets/generated/streak.png'
