@@ -93,9 +93,21 @@ function finish:initial()
 end
 function finish:later()self._text.TEXT_000000=plain end
 function finish:write(name,value)if name=='text_pointers'then emitted=value end end
+-- This reader intentionally contains only a short text string, not the ROM
+-- tables used by newer required UI stages. Model their late text writes while
+-- retaining the actual run/final-publication owner and restore every stub.
+local required={}
+for _,name in ipairs{'src.import.Gen3StatGrowthAssets','src.import.Gen3SafariAssets'}do
+ local ok,owner=pcall(require,name)
+ if ok then
+  required[#required+1]={owner,owner.extract}
+  owner.extract=function(x)x._text.TEXT_000000=x._text.TEXT_000000..'\nQA late native stage'end
+ end
+end
 local completed,why=pcall(finish.run,finish)
+for _,row in ipairs(required)do row[1].extract=row[2]end
 Extractor.DATA_STAGES,Extractor.ASSET_STAGES=dataStages,assetStages
-T.eq(completed,true,why);T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,plain,
+T.eq(completed,true,why);T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finish._text.TEXT_000000,
  'final cache publication snapshots text added by later native stages')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  Version.set(edition);package.loaded['src.translation.Service']=nil

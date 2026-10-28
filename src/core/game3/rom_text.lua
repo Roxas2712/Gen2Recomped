@@ -26,6 +26,10 @@ local function readNative(key)
   if value~=row.nativePlain then return value,nil,game,value==nil end
   return row.plain,row.ir,game,nil,true
  end
+ if value==nil and key:sub(1,14)=='native.safari.'then
+  local plain,nodes=require('src.battle.Gen3SafariText').read(data,Version.get(),key)
+  return plain,nodes,game
+ end
  return value,nil,game
 end
 -- Semantic RS names refer to the cartridge's own records. PP and TYPE share
