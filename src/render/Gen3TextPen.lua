@@ -5,7 +5,19 @@ local Font=require('src.render.Font')
 local M={}
 local codes={[0x0d]=true,[0x0e]=true,[0x11]=true,[0x12]=true,[0x13]=true,[0x14]=true}
 local compound='{POKEBLOCK}'
+local firstCompound,lastCompound=0x55,0x59
 function M.isCompound(text)return text==compound end
+function M.compoundWidth(text)
+ if text~=compound then return end
+ local width=0;for code=firstCompound,lastCompound do width=width+Font.advanceOf(code)end
+ return width
+end
+function M.drawCompound(text,x,y)
+ if text~=compound then return end
+ local pen=x
+ for code=firstCompound,lastCompound do Font.drawCode(code,pen,y);pen=pen+Font.advanceOf(code)end
+ return pen-x
+end
 function M.has(text)return type(text)=='string'and(text:find(string.char(0xfc),1,true)~=nil or text:find(compound,1,true)~=nil)end
 function M.layout(text,opts,paint)
  opts=opts or{}
@@ -49,7 +61,7 @@ function M.layout(text,opts,paint)
    if not first then break end
    -- These five native cartridge glyphs form one 40px action label. Do not
    -- re-encode its letters through the ordinary proportional Latin charmap.
-   for code=0x55,0x59 do if not glyph(nil,code)then return false end end
+   for code=firstCompound,lastCompound do if not glyph(nil,code)then return false end end
    start=last+1
   end
   return true

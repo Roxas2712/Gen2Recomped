@@ -34,6 +34,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(F.draw('{POKEBLOCK}',10,20),20)
  T.same(rows,{{0x55,10,20},{0x56,14,20},{0x57,18,20},{0x58,22,20},{0x59,26,20}})
  T.eq(F.measure('{POKEBLOCK}',{small=true}),15,'selected native face owns compound metrics')
+ rows={};T.eq(F.draw('{POKEBLOCK}',0,0,{maxWidth=8}),20)
+ T.same(rows,{{0x55,0,0},{0x56,4,0}},'clipped compound keeps native glyph widths and skips excess ink')
+ T.eq(F.measure('{POKEBLOCK}',{letterSpacing=1}),24)
  rows={};T.eq(F.draw('A{POKEBLOCK}é',0,0),28)
  T.same(rows,{{'A',0,0},{0x55,4,0},{0x56,8,0},{0x57,12,0},{0x58,16,0},{0x59,20,0},{'é',24,0}})
  Font.drawCode=drawCode
