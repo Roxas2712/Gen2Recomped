@@ -57,6 +57,7 @@ for _,backend in ipairs{'OpenGL','Metal'}do
   validateShader=function()return true end}
  local compat=require('src.render.AlphaDepthCompat')
  T.eq(compat.install(),backend=='Metal',backend..' explicit backend scope')
+ T.eq(compat.fragmentDepthTarget(),false,backend..' unobservable target cannot select a depth variant')
  local shader=love.graphics.newShader('cutout.glsl',vertex,options)
  T.eq(shader,calls[1].shader,backend..' returns the real original Shader')
  T.eq(calls[1].args[1],'cutout.glsl',backend..' original file-backed program untouched')
@@ -64,6 +65,11 @@ for _,backend in ipairs{'OpenGL','Metal'}do
  T.eq(calls[1].args[3],options,backend..' exact compile options identity')
  T.eq(#calls,backend=='Metal'and 2 or 1,backend..' bounded companion compilation')
  if backend=='Metal'then
+  T.eq(compat.compileNative,compiler,'derivative compiler retains the exact preceding constructor')
+  T.check(compat.ownsShaderMethods(methods),'only the actual installed depth method owner is recognized')
+  local owned=methods.send;methods.send=function(...)return owned(...)end
+  T.eq(compat.ownsShaderMethods(methods),false,'a later foreign owner is not mistaken for an engine hook')
+  methods.send=owned;T.check(compat.ownsShaderMethods(methods))
   local late=calls[2].shader
   T.check(calls[2].args[1]:find('gl_FragDepth = gl_FragCoord.z;',1,true)~=nil,'late program keeps rasterized depth')
   T.eq(calls[2].args[2],vertex,'separate vertex source preserved')
@@ -77,16 +83,19 @@ for _,backend in ipairs{'OpenGL','Metal'}do
   shader:sendColor('tint',{1,.5,.2})
   T.eq(late.values.tint,shader.values.tint,'texture/array/colour arguments forwarded directly without retained Lua snapshots')
   selected=shader;target={depthstencil={{getFormat=function()return 'depth24'end}}}
+  T.eq(compat.fragmentDepthTarget(),true,'the shared variant seam uses the actual depth binding')
   local actual,empty,last=love.graphics.draw()
   T.eq(actual,late,'explicit depth attachment selects late alpha program')
   T.eq(empty,nil,'draw nil-bearing return preserved');T.eq(last,7,'draw return arity retained')
   T.eq(selected,shader,'original restored immediately after native draw')
   target={getFormat=function()return 'rgba8'end}
+  T.eq(compat.fragmentDepthTarget(),false,'colour-only variants never declare fragment depth')
   T.eq(love.graphics.draw(),shader,'colour-only target retains original even with stale depth-write state')
   target=nil;T.eq(love.graphics.draw(),shader,'backbuffer without observable attachment retains original')
   target={depthstencil={{getFormat=function()return 'stencil8'end}}}
   T.eq(love.graphics.draw(),shader,'stencil-only attachment cannot accept fragment depth')
   target={depthstencil={{getFormat=function()return 'depth24'end}}};writes=false
+  T.eq(compat.fragmentDepthTarget(),false,'a non-writing native pass selects the colour program')
   T.eq(love.graphics.draw(),shader,'non-writing ghost/transparent pass retains original')
   writes=true;throwDraw=true
   local ok,err=pcall(love.graphics.draw)
