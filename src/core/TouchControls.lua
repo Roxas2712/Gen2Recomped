@@ -114,6 +114,52 @@ local function clampScale(v)
   return v
 end
 
+-- Haptic controls adapted from Gen1Recomp 535a5ec0.
+-- Copyright (C) 2026 BOIS CLUB GAMES, LLC; licenses/GEN1RECOMP-TOUCH-SKINS.md.
+TouchControls.HAPTICS = { "off", "light", "normal", "strong" }
+TouchControls.HAPTIC_DEFAULT = "light"
+
+local HAPTIC_SECONDS = {
+  off = 0, light = 0.012, normal = 0.025, strong = 0.045,
+}
+local HAPTIC_LABELS = {
+  off = "OFF", light = "LIGHT", normal = "NORMAL", strong = "STRONG",
+}
+
+function TouchControls.normalizeHaptics(level)
+  if level == "physical" then return "light" end
+  if level == "medium" then return "normal" end
+  if level == "heavy" then return "strong" end
+  if HAPTIC_SECONDS[level] then return level end
+  return TouchControls.HAPTIC_DEFAULT
+end
+
+function TouchControls.hapticLabel(level)
+  return HAPTIC_LABELS[TouchControls.normalizeHaptics(level)]
+end
+
+function TouchControls.cycleHaptics(level, dir)
+  local cur, idx = TouchControls.normalizeHaptics(level), 1
+  for i, m in ipairs(TouchControls.HAPTICS) do
+    if m == cur then idx = i break end
+  end
+  local n = #TouchControls.HAPTICS
+  return TouchControls.HAPTICS[(idx - 1 + (dir or 1)) % n + 1]
+end
+
+-- One pulse at the given level.  Feature-guarded rather than platform-gated:
+-- love.system.vibrate is a no-op on desktop and absent from the headless love
+-- stubs, so the press path below stays identical everywhere and the tests
+-- never reach a vibrator.
+function TouchControls.buzz(level)
+  local secs = HAPTIC_SECONDS[TouchControls.normalizeHaptics(level)]
+  if not secs or secs <= 0 then return false end
+  if not (love and love.system and love.system.vibrate) then return false end
+  pcall(love.system.vibrate, secs)
+  return true
+end
+
+
 -- Copy a persisted positions table, dropping unknown / non-numeric entries.
 -- Always a fresh table: two orientations seeded from the same pre-#633
 -- layout must not alias, or dragging one would still move the other.
@@ -233,6 +279,7 @@ function TouchControls:init()
   TouchSkin.setActive(nil)
   self.skinId, self.skinError = nil, nil
   self.hotkeysHeld, self.keysHeld = {}, {}
+  self.haptics = TouchControls.HAPTIC_DEFAULT
   self.enabled = true
   -- per-orientation buckets (#633); self.positions / self.scale mirror the
   -- one currently on screen so layout(), the editor and the tests keep a
@@ -274,6 +321,7 @@ end
 function TouchControls:applyOptions(opts)
   local cfg = TouchControls.normalizeConfig(opts and opts.touchControls)
   self.enabled = cfg.enabled
+  self.haptics = TouchControls.normalizeHaptics(opts and opts.haptics)
   TouchSkin.setOverlayLive(self.active)
   self:selectSkin(cfg.enabled and cfg.skin or nil)
   self.layouts = cfg.layouts
@@ -530,7 +578,10 @@ end
 local function pressBtn(self, btn)
   local n = (self.held[btn] or 0) + 1
   self.held[btn] = n
-  if n == 1 then Input:overlayPressed(btn) end
+  if n == 1 then
+    Input:overlayPressed(btn)
+    TouchControls.buzz(self.haptics)
+  end
 end
 
 local function releaseBtn(self, btn)
@@ -585,6 +636,10 @@ local function fireHotkey(self, action, pressed, ctl)
 end
 
 local function enterControl(self, ctl)
+  local freshButton, freshAction = false, false
+  for _, btn in ipairs(ctl.buttons) do if not self.held[btn] then freshButton = true end end
+  for _, key in ipairs(ctl.keys) do if not (self.keysHeld and self.keysHeld[key]) then freshAction = true end end
+  for _, action in ipairs(ctl.hotkeys) do if not (self.hotkeysHeld and self.hotkeysHeld[action]) then freshAction = true end end
   for _, btn in ipairs(ctl.buttons) do
     pressBtn(self, btn)
   end
@@ -593,6 +648,7 @@ local function enterControl(self, ctl)
   for _, action in ipairs(ctl.hotkeys) do
     if fireHotkey(self, action, true, ctl) then switched = true end
   end
+  if not freshButton and freshAction then TouchControls.buzz(self.haptics) end
   return switched
 end
 

@@ -564,6 +564,20 @@ local function buildRows(game)
         return true
       end },
   }
+  do
+    local osName = love.system and love.system.getOS and love.system.getOS()
+    if osName == 'Android' or osName == 'iOS' or os.getenv('POKEPORT_TOUCH') == '1' then
+      rows[#rows + 1] = { id = 'haptics', label = Strings('HAPTICS'),
+        value = function(g) return require('src.core.TouchControls').hapticLabel(g.save.options.haptics) end,
+        step = function(g, dir)
+          local Controls = require('src.core.TouchControls')
+          g.save.options.haptics = Controls.cycleHaptics(g.save.options.haptics, dir or 1)
+          Controls:applyOptions(g.save.options)
+          Controls.buzz(g.save.options.haptics)
+          return true
+        end }
+    end
+  end
   -- The same installed library is usable as mobile controls or a desktop bezel.
   local skins = require('src.core.TouchSkin').list()
   if #skins > 0 then

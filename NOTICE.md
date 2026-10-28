@@ -37,7 +37,7 @@ attribution conditions and preservation of earlier permissions.
 ## Gen1 touch-skin runtime
 
 `src/core/TouchSkin.lua`, `DeltaSkin.lua`, `SkinZip.lua`, `PdfImage.lua`,
-and the identified custom-skin sections in `TouchControls.lua` are adapted
+and the identified custom-skin/haptic sections in `TouchControls.lua` are adapted
 from Gen1Recomp commit `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.
 Copyright (C) 2026 BOIS CLUB GAMES, LLC. Their GPLv3 and Section 7 terms are
 retained in [licenses/GEN1RECOMP-TOUCH-SKINS.md](licenses/GEN1RECOMP-TOUCH-SKINS.md);

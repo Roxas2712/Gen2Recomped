@@ -23,6 +23,14 @@ position/size editor retains this selection in its save snapshot. Turning the
 pad off clears the active skin and its cutout. Invalid/missing selections
 restore the native presentation and expose `TouchControls.skinError`.
 
+Mobile OPTIONS also offers **HAPTICS**: OFF, LIGHT, NORMAL and STRONG, with
+Gen1's light default and legacy-name normalization. The preference is shared
+across cartridges, outside position/size layout snapshots. The first owner of
+a button/key/action pulses through the real `love.system.vibrate`; additional
+contacts holding that same input, release and focus reset do not retrigger it.
+Runtimes without a vibrator retain normal input. Unit pulse checks do not
+constitute physical phone vibration acceptance.
+
 The custom-skin studio/library editor and its launcher integration remain a
 separate, open Gen1 parity requirement. This runtime PR does not claim that
 the existing native position editor implements that studio.
@@ -59,6 +67,7 @@ luajit tests/engine/touch_skin_test.lua
 luajit tests/engine/touch_skin_dpad_area.lua
 luajit tests/engine/skin_format_import_test.lua
 luajit tests/engine/touch_skin_native.lua
+luajit tests/engine/touch_haptics.lua
 luajit tests/engine/touch_orientation_bug633.lua
 luajit tests/engine/game_viewport.lua
 ```
