@@ -526,6 +526,11 @@ function Studio.load(opts)
   TouchControls:init()
   TouchControls.active = true
   TouchControls.enabled = true
+  -- A mock-device test must never call a suspended game's reset/menu/speed
+  -- handler. Keep real control ownership/pressed art and report the action.
+  TouchControls:setHotkeyHandler(function(action,pressed)
+    if pressed then setStatus('Test action: '..action) end
+  end)
   TouchControls:setPreview(true)
   -- Play snaps pages from the window aspect.  The studio uses its own
   -- Match canvas toggle against the mock device instead.  #1503
@@ -791,6 +796,7 @@ function Studio.unload()
   TouchSkin.autoOrient = true
   TouchControls:setPreview(false)
   TouchControls:reset()
+  TouchControls:setHotkeyHandler(nil)
   Studio.skin = nil
   Studio.onClose = nil
   Studio.onPlay = nil
@@ -2775,6 +2781,9 @@ end
 -- already relinquished that surface, so input must scope the same rectangle
 -- explicitly and restore its caller's surface afterwards.
 local function testPad(method,x,y)
+  local Version=require('src.core.GameVersion')
+  local previousVersion=Version.get()
+  if Studio.version and Version.VERSIONS[Studio.version] then Version.set(Studio.version) end
   local previous=TouchSkin.surfaceRect
   local r=Studio.lastCanvas
   if r then TouchSkin.setSurface(r.x,r.y,r.w,r.h) end
@@ -2782,6 +2791,7 @@ local function testPad(method,x,y)
   if previous then
     TouchSkin.setSurface(previous.x,previous.y,previous.w,previous.h)
   else TouchSkin.setSurface(nil) end
+  Version.set(previousVersion)
   if not ok then error(result,0) end
   return result
 end
