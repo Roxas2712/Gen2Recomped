@@ -12,6 +12,13 @@ local function pack(...) return { n = select("#", ...), ... } end
 -- so every guard re-raises instead of skipping
 local PASS = {}
 
+-- A source child that outlived its native phase cannot reach vanilla through
+-- a wrapper-error fallback. Ordinary native and Gen2 calls take the same path.
+local function live()
+  local scopes=package.loaded['src.compat.gen1.CoroutineScopes']
+  assert(not(scopes and scopes.retired()),'native hook coroutine retired')
+end
+
 function Hooks.new()
   return setmetatable({ chains = {} }, Hooks)
 end
@@ -87,6 +94,7 @@ local function afterLink(st, index, entry, started, ok, ...)
       .. siteOf(entry),
       (FrameProfile.now() - started) - st.below[index])
   end
+  live()
   if ok then return ... end
   local err = ...
   if type(err) == "table" and err[PASS] ~= nil then error(err, 0) end
@@ -107,11 +115,13 @@ local function afterLink(st, index, entry, started, ok, ...)
 end
 
 local function afterVanilla(ok, ...)
+  live()
   if ok then return ... end
   error({ [PASS] = (...) }, 0)
 end
 
 local function runLean(st, index)
+  live()
   local chain = st.chain
   if index > #chain then
     st.ranVanilla = true
@@ -161,6 +171,7 @@ local function afterChain(ok, ...)
 end
 
 function Hooks:callLean(name, vanilla, ...)
+  live()
   local chain = self.chains[name]
   if not chain or #chain == 0 then return vanilla(...) end
   local st = { chain = chain, name = name, vanilla = vanilla,
@@ -175,14 +186,17 @@ function Hooks:call(name, vanilla, ...)
 end
 
 function Hooks:callClassic(name, vanilla, ...)
+  live()
   local chain = self.chains[name]
   if not chain or #chain == 0 then return vanilla(...) end
   local args = pack(...)
   local ranVanilla = false
   local function run(index)
+    live()
     if index > #chain then
       ranVanilla = true
       local res = pack(pcall(vanilla, unpack(args, 1, args.n)))
+      live()
       if res[1] then return unpack(res, 2, res.n) end
       error({ [PASS] = res[2] }, 0)
     end
@@ -222,6 +236,7 @@ function Hooks:callClassic(name, vanilla, ...)
         .. siteOf(entry),
         (FrameProfile.now() - started) - below)
     end
+    live()
     if res[1] then return unpack(res, 2, res.n) end
     local err = res[2]
     if type(err) == "table" and err[PASS] ~= nil then error(err, 0) end

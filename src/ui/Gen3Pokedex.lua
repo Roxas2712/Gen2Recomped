@@ -139,9 +139,12 @@ function Gen3Pokedex.listing(game, national)
 end
 
 function Gen3Pokedex.new(game, opts)
+  local RS = require('src.ui.Gen3RsPokedex')
+  if RS.available(game) then return RS.new(game, opts) end
   local FRLG = require("src.ui.Gen3PokedexFRLG")
   if FRLG.record(game) then return FRLG.new(game, opts) end
   local self = setmetatable({ game = game, opts = opts or {} }, Gen3Pokedex)
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.dexMode = (game.save and game.save.nationalDex) and 2 or 1
   self.list, self.count = Gen3Pokedex.listing(game, self.dexMode >= 2)
   self.index = 1

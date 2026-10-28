@@ -32,7 +32,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.raises(function()Ui._mode='menu'end,'read-only');T.raises(function()Ui._st={}end,'read-only')
  q.phase='menu';Ui._menuIndex=4;T.eq(q.menuIndex,4);T.eq(rawget(Ui,'_menuIndex'),nil)
  T.raises(function()Ui._moveIndex=1 end,'cursor is not active')
- q.moveSwapIndex=1;T.eq(Ui._swap,1);q.moveSwapIndex=nil
+ q.moveSwapIndex=1;T.same(Ui._swap,{cursor=0});T.eq(Ui._swapIndex,1);q.moveSwapIndex=nil
  q:act(function()end);T.eq(Ui.busy(),true);T.eq(Ui.waitingForCommand(),false);T.eq(Ui.dialogPending(),false)
  q:say('Native queued message');T.eq(Ui.dialogPending(),true);q.queue={};q:startMessage({text='Native current message'})
  T.eq(Ui.dialogPending(),true);T.eq(Ui.busy(),true);q.current=nil

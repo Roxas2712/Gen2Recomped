@@ -1,0 +1,27 @@
+name: Native introduction and field admission
+on:
+  pull_request:
+    paths:
+      - 'src/core/Game.lua'
+      - 'src/core/Game3.lua'
+      - 'src/compat/gen1/NativeSession.lua'
+      - 'src/ui/Gen3OakSpeechFRLG.lua'
+      - 'src/ui/Gen3RsBirchSpeech.lua'
+      - 'tests/engine/gen3_new_game_lifecycle.lua'
+      - 'tests/engine/gen2_new_game_lifecycle.lua'
+      - '.github/workflows/native-new-game.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - run: luajit tests/engine/gen3_new_game_lifecycle.lua
+      - run: luajit tests/engine/gen2_new_game_lifecycle.lua
+      - run: luajit tests/engine/native_session_callbacks.lua
+      - run: luajit tests/engine/native_audio_shutdown.lua
+      - run: luajit tests/engine/native_entry_world_scope.lua
+      - run: luajit tests/engine/native_coroutine_phase_scopes.lua

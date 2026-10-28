@@ -13,8 +13,8 @@ local Json = require("src.link.Json")
 
 -- releaseUrl is the fixed public landing page the UI links on needs_full
 eq(Check.releaseUrl(),
-   "https://github.com/UNDERdecoded/Gen2Recomped/releases/latest",
-   "releaseUrl points at the repo's latest release")
+   "https://github.com/Roxas2712/Gen2Recomped/releases",
+   "releaseUrl includes this fork's preview releases")
 
 -- parseRelease: a well-formed release with the .love payload and its sums
 local body = Json.encode({

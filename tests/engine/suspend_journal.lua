@@ -65,6 +65,7 @@ local before=J.encode(J.witness(Game))
 local presentation={enemy._caughtIcon,enemy.picAnim,enemy.monAnim,battle.scrollPx}
 enemy._caughtIcon={mon=enemy.mon};enemy.picAnim={left=8};enemy.monAnim={clock=56}
 battle.scrollPx=8;battle._gen3OamCompositedFrame=408;battle._gen3OamObjectRanks={};battle._gen3OamResidual='inactive'
+Stack:top()._gen3OamGlobalTieResidual='global-sprite-slot-history'
 T.eq(J.encode(J.witness(Game)),before,'render-only caches and their monster aliases do not change the semantic witness')
 enemy._caughtIcon,enemy.picAnim,enemy.monAnim,battle.scrollPx=unpack(presentation,1,4)
 battle._gen3OamCompositedFrame=nil;battle._gen3OamObjectRanks=nil;battle._gen3OamResidual=nil

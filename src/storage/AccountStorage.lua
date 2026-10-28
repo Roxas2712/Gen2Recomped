@@ -40,9 +40,13 @@ end
 function P.saveCheck()
   if not P.enabled then return true end
   local id=auth().accountId and auth().accountId()
-  if valid(id) then return P.check() end
   local scope=P.scope()
-  if scope and scope~='guest' then return nil,'The account changed during this operation. Existing records were preserved.' end
+  if scope and scope~=(valid(id)and id or'guest') then return nil,'The account changed during this operation. Existing records were preserved.' end
+  if valid(id)then
+    local owner,why=P.owner()
+    if why then return nil,why end
+    if owner and owner~=id then return nil,'These local saves and Bank belong to another account. Sign in with that account; no files were reassigned.'end
+  end
   return true
 end
 function P.profileChanged(self)
@@ -83,7 +87,7 @@ end
 function P.stamp(save)
   if not P.enabled then return true end
   local ok,why=P.saveCheck();if not ok then return nil,why end
-  save.meta=save.meta or {};save.meta.retroAccountId=auth().accountId()
+  save.meta=save.meta or {};save.meta.retroAccountId=P.owner()==auth().accountId()and auth().accountId()or nil
   save.meta.localOnly=not valid(save.meta.retroAccountId) or nil;return true
 end
 function P.storeCheck(store)
@@ -102,6 +106,7 @@ end
 function P.install(RI)
   local play=RI.play
   RI.play=function(self,version,...)
+    if self.workState=='working'or self.ready and not self.ready[version]then return end
     if not P.requireUI(self,{kind='play',version=version}) then return end
     if P.enabled and not valid(auth().accountId and auth().accountId()) then
       local options=self._settings and self:_settings() or require('src.core.SaveData').loadOptions()

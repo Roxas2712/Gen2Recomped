@@ -10,6 +10,8 @@ local ChoiceBox = {}
 ChoiceBox.__index = ChoiceBox
 
 function ChoiceBox.new(game, onChoose, opts)
+  local Native=require('src.ui.Gen3RsChoice')
+  if Native.available(game)then return Native.yesNo(game,onChoose,opts)end
   local self = setmetatable({}, ChoiceBox)
   self.game = game
   self.onChoose = onChoose

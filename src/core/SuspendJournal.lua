@@ -122,6 +122,7 @@ PRESENTATION={_checkpointContinuation=true,game=true,data=true,def=true,ruleset=
  -- Text scroll is consumed by draw(), not the native logic clock. A receiving
  -- device can draw at a different rate (and replay intentionally never draws).
  scrollPx=true,_caughtIcon=true,_gen3OamCompositedFrame=true,_gen3OamObjectRanks=true,_gen3OamResidual=true}
+PRESENTATION._gen3OamGlobalTieResidual=true
 PRESENTATION.playerBackPic=true;PRESENTATION.trainerPic=true;PRESENTATION.trainerPicB=true;PRESENTATION.backThrow=true
 PRESENTATION.trainer=true
 function J.witness(game)

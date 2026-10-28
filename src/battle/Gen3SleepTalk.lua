@@ -43,7 +43,7 @@ function S.beforeMove(user, rng, battle, move)
     return true, {}
   end
   if n == 173 then
-    return true, { Strings("%s\nis fast asleep!", user.name) }
+    return true, { Strings("%s\nis fast asleep!", user.name) }, nil, nil, "sleep"
   end
   return false, { Strings("%s\nis fast asleep!", user.name) }, false, "gen3_sleep"
 end

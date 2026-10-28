@@ -15,6 +15,7 @@ local Logger = require("src.core.Logger")
 local StatusRegistry = require("src.battle.StatusRegistry")
 local TurnOrder = require("src.battle.TurnOrder")
 local TypeChart = require("src.battle.TypeChart")
+local Gen2Read = require('src.battle.Gen2BattleRead')
 local Strings = require("src.core.Strings")
 local HeldItems = require("src.battle.HeldItems")
 local Weather = require("src.battle.Weather")
@@ -49,7 +50,7 @@ local STAT_LABEL = {
 -- stat stages
 -- ---------------------------------------------------------------------
 
-local function changeStage(battle, who, stat, delta, fromEnemy)
+local function changeStage(battle, who, stat, delta, fromEnemy, source)
   if fromEnemy and (who.substituteHP or who.mist) then
     if who.mist then
       return { Strings("%s is\nprotected by MIST!", displayName(who)) }
@@ -58,12 +59,11 @@ local function changeStage(battle, who, stat, delta, fromEnemy)
   end
   -- CLEAR BODY, WHITE SMOKE, HYPER CUTTER and KEEN EYE refuse a drop an
   -- OPPONENT causes, and print "won't go lower!" instead of dropping.
-  -- `delta < 0` is the whole test rather than `fromEnemy`, because a side
-  -- effect that pierces MIST passes fromEnemy = false and is still the foe's
-  -- doing; every negative-delta call in this engine targets the opponent,
-  -- and the self-lowering moves that would need the distinction (Overheat,
-  -- Superpower) are later generations' than the one this file serves.
+  -- A secondary effect can pierce MIST and still belong to the opponent.
+  -- Native GBA self-costs carry their actual source so White Smoke/Clear
+  -- Body do not prevent Overheat, Superpower or Curse lowering the user.
   if delta < 0
+     and not (GameVersion.isGen3() and source == who)
      and require("src.battle.Abilities").refusesStatDrop(who, stat) then
     return { Strings("%s's\n%s\nwon't go lower!", displayName(who),
                      Strings(STAT_LABEL[stat] or tostring(stat))) }
@@ -277,7 +277,7 @@ MoveEffects.primary = {
     if target.leechSeeded then
       return { Strings("But, it failed!") }
     end
-    for _, t in ipairs(target.curTypes) do
+    for _, t in ipairs(Gen2Read.types(target)) do
       if t == "GRASS" then return { Strings("But, it failed!") } end
     end
     target.leechSeeded = true
@@ -292,6 +292,7 @@ MoveEffects.primary = {
       mon.hp = mon.stats.hp
       mon.status = "SLP"
       user.sleepTurns = 2
+      if GameVersion.isGen2()then require('src.battle.Gen2Sleep').rest(user)end
       user.toxicCounter = nil
       return { Strings("%s\nstarted sleeping!", displayName(user)) }
     end
@@ -364,6 +365,7 @@ MoveEffects.primary = {
       return { Strings("Too weak to make\na SUBSTITUTE!") }
     end
     user.mon.hp = user.mon.hp - cost
+    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').substitute(battle,user) end
     user.substituteHP = cost + 1
     -- _SubstituteText
     return { Strings("It created a\nSUBSTITUTE!") }
@@ -374,7 +376,8 @@ MoveEffects.primary = {
     if target.invulnerable then
       return { Strings("But, it failed!") }
     end
-    user.curTypes = { target.curTypes[1], target.curTypes[2] }
+    local types = Gen2Read.types(target)
+    user.curTypes = { types[1], types[2] }
     -- _ConvertedTypeText
     return { Strings("Converted type to\n%s's!", displayName(target)) }
   end,
@@ -390,7 +393,9 @@ MoveEffects.primary = {
     -- mosaic and HandleSpeciesGfxDataChange performs it at callback 46.
     -- Gen3MoveAnim owns that visual midpoint, so changing the FireRed sprite
     -- here would expose the copied species for the first 45 callbacks.
-    if not GameVersion.isFRLG() then
+    if GameVersion.isGen2() then
+      require('src.battle.Gen2PicturePresentation').transform(battle,user,target)
+    elseif not GameVersion.isFRLG() then
       user.sprite = battle:speciesSprite(target.mon.species, user.isPlayer)
                     or user.sprite
       -- Black / White draw a live animation over `sprite`, so their picture
@@ -398,13 +403,15 @@ MoveEffects.primary = {
       local okT, T = pcall(require, "src.battle.Gen5Transform")
       if okT then T.apply(battle, user, target) end
     end
+    local stats = Gen2Read.stats(target)
     user.curStats = {
       hp = user.mon.stats.hp, -- HP is kept
-      attack = target.curStats.attack, defense = target.curStats.defense,
-      speed = target.curStats.speed, special = target.curStats.special,
-      spatk = target.curStats.spatk, spdef = target.curStats.spdef,
+      attack = stats.attack, defense = stats.defense,
+      speed = stats.speed, special = stats.special,
+      spatk = stats.spatk, spdef = stats.spdef,
     }
-    user.curTypes = { target.curTypes[1], target.curTypes[2] }
+    local types = Gen2Read.types(target)
+    user.curTypes = { types[1], types[2] }
     -- transform.asm:130-132 copies the target's stat MODS into the user
     -- (wEnemyMonStatMods -> wPlayerMonStatMods), it does NOT clear them;
     -- deep copy so later stage changes on either mon stay independent
@@ -531,22 +538,29 @@ local function hitsFrom(dist, ctx)
   return dist[r + 1]
 end
 
--- drain_hp.asm halves the RAW wDamage IN PLACE (minimum 1) and heals
--- that amount, so Counter would see the halved value
-local function drainHalf(text)
+-- Classic drain_hp.asm halves raw wDamage in place. GBA instead reads
+-- hpDealt, capped by the defender's remaining HP (or Substitute HP); its
+-- counter memory must retain the hit rather than the amount being healed.
+local function drainHalf(text, dreamEater)
   return function(ctx)
-    local heal = math.max(1, math.floor(ctx.rawDamage / 2))
-    ctx.battle.lastDamage = heal
+    local gba = GameVersion.isGen3()
+    local basis = gba and ctx.totalDealt or ctx.rawDamage
+    local heal = math.max(1, math.floor(basis / 2))
+    if not gba then ctx.battle.lastDamage = heal end
     local mon = ctx.user.mon
     -- LIQUID OOZE TURNS IT AROUND.  The amount is the same; it comes OUT of
     -- the attacker instead of going in, and the cartridge prints the drain
     -- line all the same before it does.  TENTACRUEL is the one that matters:
     -- a GIGA DRAIN into one is a self-inflicted wound.
-    if require("src.battle.Abilities").reversesDrain(ctx.target) then
+    -- GBA's Dream Eater script bypasses Liquid Ooze; ordinary draining
+    -- moves still reverse the same capped amount into attacker HP loss.
+    if not (gba and dreamEater)
+       and require("src.battle.Abilities").reversesDrain(ctx.target) then
       ctx.say(Strings(text, displayName(ctx.target)))
       ctx.say(Strings("%s\nsucked up the liquid ooze!",
                       displayName(ctx.user)))
-      ctx.battle:applyDamage(ctx.user, heal)
+      if gba then ctx.damage(ctx.user, heal)
+      else ctx.battle:applyDamage(ctx.user, heal) end
       return
     end
     mon.hp = math.min(mon.stats.hp, mon.hp + heal)
@@ -570,7 +584,7 @@ end
 -- effectiveness step.  So in Gen 1 NIGHT_SHADE hits Normal-types and
 -- SUPER_FANG hits Ghosts, and only OHKO_EFFECT calls this (#616).
 local function immuneMsg(ctx)
-  if TypeChart.effectiveness(ctx.move.type, ctx.target.curTypes) == 0 then
+  if TypeChart.effectiveness(ctx.move.type, Gen2Read.types(ctx.target)) == 0 then
     return Strings("It doesn't affect\n%s!", displayName(ctx.target))
   end
   return nil
@@ -659,7 +673,7 @@ MoveEffects.full = {
       if ctx.target.mon.status ~= "SLP" then return false, "But, it failed!" end
       return true
     end,
-    afterDamage = drainHalf(Strings.source("%s's\ndream was eaten!")),
+    afterDamage = drainHalf(Strings.source("%s's\ndream was eaten!"), true),
   },
 
   -- charge moves: first turn just charges; Fly AND Dig go
@@ -1238,7 +1252,7 @@ MoveEffects.primary.CURSE_EFFECT = function(battle, user, target)
   local msgs = {}
   for _, step in ipairs({ { "speed", -1 }, { "attack", 1 },
                           { "defense", 1 } }) do
-    for _, line in ipairs(changeStage(battle, user, step[1], step[2], false)
+    for _, line in ipairs(changeStage(battle, user, step[1], step[2], false, user)
                           or {}) do
       msgs[#msgs + 1] = line
     end

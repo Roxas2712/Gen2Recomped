@@ -170,10 +170,14 @@ end
 -- Integer framebuffer pixels per GB pixel that fit the window.  Zoom /
 -- GBCFX / callers treat this as the crisp scale; endFrame converts to LOVE
 -- units via / dpiX and / dpiY when drawing.
+local function fitSurfaceScale(pw, ph, w, h)
+  return math.max(1, math.floor(math.min(pw / w, ph / h)))
+end
+
 function Renderer:fitScale()
   local _, _, pw, ph = displayMetrics()
   local w, h = self:uiSize()
-  return math.max(1, math.floor(math.min(pw / w, ph / h)))
+  return fitSurfaceScale(pw, ph, w, h)
 end
 
 -- Integer framebuffer pixels per GB pixel for the UI pass.
@@ -188,8 +192,7 @@ end
 -- Zooming IN does not scale the UI up -- a dialogue box larger than the
 -- classic one has no reference to be faithful to, and the letterbox it sits
 -- in does not grow either.
-function Renderer:uiScale()
-  local S = self:fitScale()
+local function uiSurfaceScale(self, S)
   local off = Zoom.offset or 0
   -- UI LAYOUT = CENTERED (uiCentered, set per frame by Game:draw): the UI is
   -- a fixed letterbox at the fit scale and does not follow the survey zoom at
@@ -219,6 +222,10 @@ function Renderer:uiScale()
   local s = S + off               -- one integer step per zoom-out step
   if s < floorS then s = floorS end
   return math.max(1, s)
+end
+
+function Renderer:uiScale()
+  return uiSurfaceScale(self, self:fitScale())
 end
 
 -- the native-pixel UI surface in use right now
@@ -1003,13 +1010,23 @@ end
 -- no extra target or resampling is needed for a correctly sized override.
 Renderer.scalesWorldOverride = true
 local nativeFrameRects = setmetatable({}, {__mode="k"})
-local function frameRects(self, r)
+local function frameRects(self, r, windowW, windowH, surfaceW, surfaceH)
   local ww, wh, pw, ph, dpiX, dpiY = displayMetrics()
+  local uiw, uih = self:uiSize()
+  local query = windowW ~= nil or windowH ~= nil or surfaceW ~= nil or surfaceH ~= nil
+  if query then
+    ww, wh, uiw, uih = windowW or ww, windowH or wh, surfaceW or uiw, surfaceH or uih
+    for _, value in ipairs{ww, wh, uiw, uih} do
+      assert(type(value) == 'number' and value > 0 and value < math.huge,
+        'surface metrics require positive finite dimensions')
+    end
+    pw, ph = ww * dpiX, wh * dpiY
+    assert(pw < math.huge and ph < math.huge, 'surface metrics exceed finite drawable dimensions')
+  end
   -- Sp = integer framebuffer pixels per GB pixel;
   -- Sx/Sy = LOVE-unit draw scales (may differ when dpiX ≠ dpiY).
-  local Sp = self:fitScale()
+  local Sp = query and fitSurfaceScale(pw, ph, uiw, uih) or self:fitScale()
   local Sx, Sy = Sp / dpiX, Sp / dpiY
-  local uiw, uih = self:uiSize()
   local vpw, vph = uiw * Sx, uih * Sy
   -- Snap the letterbox origin to a framebuffer pixel, then convert to units.
   local ox = math.floor((pw - uiw * Sp) / 2) / dpiX
@@ -1017,7 +1034,7 @@ local function frameRects(self, r)
   -- The UI has its own scale: it steps down as the survey zoom goes out (see
   -- uiScale), so it can be smaller than the world letterbox.  Un-zoomed these
   -- are identical to Sp/ox/oy and every rect below is what it always was.
-  local Up = self:uiScale()
+  local Up = query and uiSurfaceScale(self, Sp) or self:uiScale()
   -- BATTLE SIZE "fill" (Renderer.uiFill, set per frame by Game:draw): scale
   -- the surface to the window rather than to whole GB pixels, so the battle
   -- fills vertically at any zoom or window size.  Fractional by nature -- a
@@ -1040,6 +1057,18 @@ local function frameRects(self, r)
 end
 function Renderer:frameRects()
   return frameRects(self) -- public snapshots cannot mutate the compositor
+end
+
+-- Detached capture fitting uses the same built-in policy and current DPI.
+-- Active-surface requests retain override-aware native scale methods.
+function Renderer:surfaceRects(surfaceW, surfaceH, windowW, windowH)
+  local w, h = self:uiSize()
+  local ww, wh = displayMetrics()
+  if (surfaceW == nil or surfaceW == w) and (surfaceH == nil or surfaceH == h)
+      and (windowW == nil or windowW == ww) and (windowH == nil or windowH == wh) then
+    return frameRects(self)
+  end
+  return frameRects(self, nil, windowW, windowH, surfaceW, surfaceH)
 end
 
 local function endFrame(self, zones, worldZones, privateViewport)
@@ -1100,6 +1129,8 @@ local function endFrame(self, zones, worldZones, privateViewport)
       secondScreen = HotModules.get("src.render.SecondScreen"),
     }
     if Runtime.call("render.compose", function() return false end, self, ctx) == true then
+      local presentation=package.loaded['src.render.NativePresentation']
+      if presentation then presentation._nativeFlush(ww,wh)end
       self.worldActive = false
       self.uprightActive = false
       self.uiOverride = nil
@@ -1579,6 +1610,8 @@ local function endFrame(self, zones, worldZones, privateViewport)
   if self.gen2FrameManaged and self.gen2WindowDraw then
     self.gen2WindowDraw(viewportResult(false, ww, wh, ox, oy, vpw, vph, Sp, dpiX, dpiY))
   end
+  local presentation=package.loaded['src.render.NativePresentation']
+  if presentation then presentation._nativeFlush(ww,wh)end
 
   if battleNeedsSource and present then
     -- Snapshot the untouched finished frame into a second screen-sized canvas.

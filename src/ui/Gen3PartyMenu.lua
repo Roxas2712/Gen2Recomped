@@ -133,6 +133,7 @@ function Gen3PartyMenu.new(game, opts)
   opts = opts or {}
   local self = setmetatable({}, Gen3PartyMenu)
   self.game = game
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.onCancel = opts.onCancel
   -- the battle's three shapes (see the note at the top of this file)
   self.onSwitch = opts.onSwitch
@@ -167,6 +168,12 @@ function Gen3PartyMenu.new(game, opts)
   self.index = 1
   self.lastSelectedSlot = 2
   self.words = screenText(game, "partyActions")
+  if require('src.ui.Gen3RsParty').available(game) then
+    self.rsLayout=opts.rsLayout
+    self.rsEligibility=opts.eligible or self.chooseOrder and self.chooseOrder.eligible
+    if self.rsLayout==nil and self.battle and self.battle.isDouble and self.battle:isDouble() then self.rsLayout=1 end
+    self.rsNative=require('src.ui.Gen3RsParty').new(self)
+  end
   if not self.words then
     Logger.warn("gen3 party: this dataset carries no action words -- falling "
                 .. "back to the engine's own")
@@ -191,12 +198,12 @@ function Gen3PartyMenu:slots() return #self:party() + 1 end
 -- again on their own way out -- which used to be right and would now pop
 -- whatever the presentation left on top.  Closing twice was always a bug; it
 -- simply never happened before.
-function Gen3PartyMenu:close()
+function Gen3PartyMenu:close(forFieldMove)
   if self.noCancel then return end
   if self.closed then return end
   self.closed = true
   self.game.stack:pop()
-  if self.onCancel then self.onCancel() end
+  if self.onCancel and not forFieldMove then self.onCancel() end
 end
 
 function Gen3PartyMenu:word(n, fallback)
@@ -441,9 +448,9 @@ function Gen3PartyMenu:useFly(mon)
   local ow = self.game.overworld
   local game = self.game
   self:close()
-  local function depart(mapId)
+  local function depart(mapId,nativeWarp)
     -- the carrier goes with the destination: the departure draws it
-    local function go() if ow then ow:flyTo(mapId, mon) end end
+    local function go() if ow then ow:flyTo(mapId, mon,nativeWarp) end end
     if not (mon and ow) then return go() end
     -- THE REGION MAP COMES DOWN FIRST.  The sweep is an overworld animation;
     -- pushed onto the map screen it would sweep across THAT.  flyTo closes
@@ -512,6 +519,10 @@ function Gen3PartyMenu:actionWords()
 end
 
 function Gen3PartyMenu:actionWord(key, index, fallback)
+  if self.rsNative then
+    local label=self.rsNative:actionLabel(key)
+    if label then return Prose.partyAction(self.game,key,label)end
+  end
   local words = self:actionWords()
   local native = (words and words[key]) or (self.words and self.words[index]) or Strings(fallback)
   return Prose.partyAction(self.game, key, native)
@@ -548,6 +559,7 @@ function Gen3PartyMenu:fieldMovesOf(mon)
 end
 
 function Gen3PartyMenu:fieldActionsFor(mon)
+  if self.rsNative then return self.rsNative:fieldActions(mon)end
   local rows = {
     { label = self:actionWord("summary", 4, "SUMMARY"), action = "summary" },
   }
@@ -629,7 +641,7 @@ function Gen3PartyMenu:useFieldMove(mon, move)
     for i,member in ipairs(self:party()) do if member==mon then slot=i-1;break end end
     local rows=id and slot and Field.secretProgram(self.game.data,id,effect,slot)
     if rows then
-      self:close()
+      self:close(true)
       ow:queueScript(rows,{mapId=ow.map.id})
       return
     end
@@ -646,7 +658,7 @@ function Gen3PartyMenu:useFieldMove(mon, move)
       and ow.gen3HasBadge and ow:gen3HasBadge(move)
       and Field.program(self.game.data,move,slot,npc.def.script)
     if rows then
-      self:close()
+      self:close(true)
       ow:queueScript(rows,{npc=npc,mapId=ow.map.id})
       return
     end
@@ -682,7 +694,9 @@ function Gen3PartyMenu:useFieldMove(mon, move)
                  or (move == "SURF" and self:surfUsableBy(mon))
                  or (move == "WATERFALL" and self:waterfallUsableBy(mon))
   if usable then
-    self:close()
+    -- Successful field actions return to the map; onCancel recreates the
+    -- START menu. Fly still owns a destination picker and its return path.
+    self:close(move~="FLY")
     -- ...EXCEPT FLY, WHICH ASKS WHERE FIRST.
     --
     -- Reported from play: "fix the hm transition screen for fly it appears
@@ -760,8 +774,9 @@ function Gen3PartyMenu:giveItem(mon)
   local ok = pcall(function()
     Screens_.push(game, "BagMenu", {
       pick = true,
-      onPick = function(id)
-        require("src.ui.BagMenu").handOver(game, mon, id)
+      onPick = function(id,selection)
+        if require('src.ui.Gen3RsMailFlow').give(self,mon,id,selection)then return end
+        require("src.ui.BagMenu").handOver(game, mon, id,nil,{bagSlot=selection})
       end,
     })
   end)
@@ -834,7 +849,7 @@ function Gen3PartyMenu:orderActionsFor(slot)
   local picked = self:orderOf(slot)
   if picked then
     rows[#rows + 1] = { label = self:word(7, "NO ENTRY"), action = "noEntry" }
-  elseif #self.order < (self.chooseOrder.most or 1) then
+  elseif (not self.rsNative or self.rsNative:eligible(slot)) and #self.order < (self.chooseOrder.most or 1) then
     rows[#rows + 1] = { label = self:word(6, "ENTER"), action = "enter" }
   end
   rows[#rows + 1] = { label = self:word(4, "SUMMARY"), action = "summary" }
@@ -849,6 +864,9 @@ function Gen3PartyMenu:orderRefusal(slot)
   local party = self:party()
   local mon = party[slot]
   if not mon then return nil end
+  if self.rsNative and not self.rsNative:eligible(slot) then
+    return self:orderWord('ineligible',"This POKéMON can't enter.")
+  end
   for _, n in ipairs(self.order or {}) do
     local other = party[n]
     if other then
@@ -901,6 +919,7 @@ function Gen3PartyMenu:handOff(mon)
 end
 
 function Gen3PartyMenu:runAction(action, mon, row)
+  if self.rsNative then self.rsNative:beforeAction(action)end
   if action=='source_field_move'then
     return require('src.ui.game3.party_menu')._fieldAction(self,mon,row)
   end
@@ -942,12 +961,15 @@ function Gen3PartyMenu:runAction(action, mon, row)
   if action == "give" then return self:giveItem(mon) end
   if action == "take" then return self:takeItem(mon) end
   if action == "mail" then
+    if require('src.ui.Gen3RsMailFlow').menu(self)then return end
     -- READ / TAKE / CANCEL is the mail list, and there is no mail screen in
     -- this port yet: say so with the cartridge's own word rather than
     -- silently doing nothing
     Logger.info("gen3 party: no %s screen yet", self:actionWord("mail", nil, "MAIL"))
     return
   end
+  if action=='readMail'then return require('src.ui.Gen3RsMailFlow').read(self,mon)end
+  if action=='takeMail'then return require('src.ui.Gen3RsMailFlow').take(self,mon)end
 end
 
 function Gen3PartyMenu:openSummary(mon)
@@ -961,6 +983,7 @@ function Gen3PartyMenu:openSummary(mon)
   local ok = pcall(function()
     Screens.push(self.game, screen,
                  { mon = mon, party = self:party(), partyIndex = self.index,
+                   onMonChange = function(index) self.index=index end,
                    onCancel = function() end })
   end)
   if not ok then
@@ -1076,6 +1099,10 @@ function Gen3PartyMenu:update(dt)
 end
 function Gen3PartyMenu:_updateBody(dt)
   if self.onUpdate then self.onUpdate(self); if self.closed then return end end
+  if self.rsNative then
+    self.rsNative:update(dt)
+    if self.rsNative:input() then return end
+  end
   -- RECONSTRUCTED: every icon bounces, all the time, on the same beat.  On
   -- the cartridge each one is an OBJ with its own callback; here it is one
   -- clock, which is indistinguishable on screen and cannot drift.
@@ -1589,6 +1616,7 @@ function Gen3PartyMenu:drawMember(mon, panel, selected, inset)
 end
 
 function Gen3PartyMenu:draw()
+  if self.rsNative then return self.rsNative:draw()end
   local inset = math.max(0, math.floor((16 - Font.glyphHeight()) / 2))
   local rec = self:record()
   local images = rec and rec.images or {}

@@ -394,6 +394,16 @@ do
   require("src.world.OverworldController").updateCast(f.ow)
   T.eq(handle:canStep("right"), false, "neighbor cast sees translated primary actor")
   T.eq(homeHandle:canStep("left"), false, "primary cast sees translated neighbor actor")
+  homeActor.hidden,homeActor.gen3Hidden=true,true
+  require("src.world.OverworldController").updateCast(f.ow)
+  T.eq(handle:canStep("right"),false,"invisible active actor blocks across a map seam")
+  homeActor.gen3Hidden,homeActor.gen3Invisible=nil,true
+  require("src.world.OverworldController").updateCast(f.ow)
+  T.eq(handle:canStep("right"),false,"script-invisible active actor blocks across a seam")
+  homeActor.gen3Invisible=nil
+  require("src.world.OverworldController").updateCast(f.ow)
+  T.eq(handle:canStep("right"),true,"removed ordinary actor leaves the seam passable")
+  homeActor.hidden=nil
   homeActor.passable = true
   actor.passable = true
   require("src.world.OverworldController").updateCast(f.ow)

@@ -545,10 +545,11 @@ function Sound.playWeatherEffect(data, name, looping)
   end, name)
 end
 
-function Sound.play(data, name)
-  local sfx = data.audio and data.audio.sfx
-  local def = sfx and sfx[name]
-  local src = playPath(data, name, def)
+local gen2Sfx=require('src.audio.Gen2Sfx').new(function(src)
+  safeAudio('Source:stop',src.stop,src)
+  effectUses[src]=nil
+end)
+local function finishSfx(data,name,def,src)
   if not src then return end
   if ducks(data, name, def) then
     require("src.core.Music").duckForFanfare(src)
@@ -556,6 +557,25 @@ function Sound.play(data, name)
   played("sfx", name)
   return src
 end
+function Sound.play(data, name)
+  if sessionSuspended or not love.audio then return end
+  local sfx=data.audio and data.audio.sfx
+  local def=sfx and sfx[name]
+  local src=gen2Sfx:play(data,name,def,false,false,function()return playPath(data,name,def)end)
+  return finishSfx(data,name,def,src)
+end
+
+-- GSC anim_sound calls PlayStereoSFX, bypassing PlaySFX's priority gate and
+-- preserving wCurSFX. Register the actual Source before dispatching events:
+-- a reentrant sound.played callback must see the sound that really started.
+function Sound.playStereo(data,name)
+  if sessionSuspended or not love.audio then return end
+  local sfx=data.audio and data.audio.sfx
+  local def=sfx and sfx[name]
+  local src=gen2Sfx:play(data,name,def,true,nativeCryMono,function()return playPath(data,name,def)end)
+  return finishSfx(data,name,def,src)
+end
+function Sound.sfxChannelsOff()gen2Sfx:clear()end
 
 -- PLAY A CARTRIDGE SOUND BY ITS NUMBER.
 --
@@ -1218,6 +1238,20 @@ function Sound.anyPlaying(kind)
   return false
 end
 
+-- CheckSFX reads actual native SFX sources. Cries and independently owned
+-- weather/alarm voices must not hold a battle's one-shot sound boundary.
+function Sound.sfxBusy()
+  for key,src in pairs(cache) do
+    local name=tostring(key)
+    if src and name:sub(1,4)~='cry:' and name:sub(1,8)~='pikacry:'
+        and name:sub(1,8)~='weather:' then
+      local ok,playing=pcall(src.isPlaying,src)
+      if ok and playing then return true end
+    end
+  end
+  return false
+end
+
 -- Looping sources (the low-health alarm): started/stopped by game
 -- states. ChipAudio generates the two-tone siren used by runtime imports;
 -- legacy data can still provide a looping static source.
@@ -1319,6 +1353,7 @@ function Sound.invalidateNativeFanfares(name)
 end
 
 function Sound.invalidate(name)
+  gen2Sfx:forget(name)
   resetWarm()
   byNumber = nil
   local nativeCry = package.loaded["src.core.NativeCryPlayer"]
@@ -1361,6 +1396,7 @@ Assets.register(Sound.invalidate)
 function Sound.suspend()
   if sessionSuspended then return end
   sessionSuspended = true
+  gen2Sfx:reset()
   resetWarm()
   local nativeCry = package.loaded["src.core.NativeCryPlayer"]
   if nativeCry then nativeCry.invalidate() end

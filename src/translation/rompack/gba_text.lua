@@ -17,7 +17,7 @@ function T.plain(ir,game,slots)
   elseif kind=='bph'then out[#out+1]=('{B_%02X}'):format(seg.code)
   elseif kind=='ph'then
    local n=seg.code;local names={[0]='UNKNOWN',[1]='PLAYER',[2]='VAR1',[3]='VAR2',[4]='VAR3',[5]='KUN',[6]='RIVAL',[7]='VERSION',[8]='AQUA',[9]='MAGMA',[10]='ARCHIE',[11]='MAXIE',[12]='KYOGRE',[13]='GROUDON'}
-   out[#out+1]='{'..(names[n]or('ULA_GENDER_'..tostring(n)))..'}'
+   out[#out+1]=require('src.core.Gen3RsTextPlaceholders').token(n,game)or'{'..(names[n]or('ULA_GENDER_'..tostring(n)))..'}'
   elseif kind=='tag'then
    local tags={['{POKEBLOCK}']='POKéBLOCK',['{PK}']='PK',['{MN}']='MN',['{LV}']='Lv',['{LV_2}']='Lv',['{UNK_SPACER}']=' '}
    out[#out+1]=tags[seg.tag]or seg.tag

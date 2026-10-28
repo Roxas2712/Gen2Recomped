@@ -585,6 +585,12 @@ function Music.fadeOut(control)
   }
 end
 
+-- GBA m4a fades have sixteen steps, each held for `speed` frames.
+function Music.fadeOutM4a(speed)
+  Music.fadeOut(math.max(1, tonumber(speed) or 4))
+  if state.fade then state.fade.level, state.fade.fullLevel = 16, 16 end
+end
+
 -- the song a map should currently play, honoring the bike/surf overrides
 local function effectiveMapSong(data, song)
   -- PLATINUM / HGSS: FieldBGM_GetEffective takes the surf song on ANY map
@@ -916,7 +922,7 @@ local function updateSharedPlayback(data)
         Music.stop()
         return
       end
-      local vol = muted and 0 or f.from * f.level / 7
+      local vol = muted and 0 or f.from * f.level / (f.fullLevel or 7)
       if state.source then pcall(state.source.setVolume, state.source, vol) end
       if state.loopSource then
         pcall(state.loopSource.setVolume, state.loopSource, vol)

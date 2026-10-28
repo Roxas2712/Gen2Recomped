@@ -1289,7 +1289,7 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-trade-scene-v3:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
   if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end
@@ -1326,12 +1326,12 @@ local function markerFor(version)
   end
   -- RS now carries its own action tables as well as field geometry. Rebuild these
   -- caches; retain the earlier 36-byte dex and item-effect corrections.
-  if version == "ruby" or version == "sapphire" then revision = "rs-item-menu-v4:" end
+  if version == "ruby" or version == "sapphire" then revision = "rs-edition-placeholders-v1:rs-native-hall-v1:rs-native-credits-v1:rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
   if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
   if version == "emerald" or version == "ruby" or version == "sapphire" then
-    revision = revision .. "source-behavior-flags-v1:"
+    revision = revision .. "source-behavior-flags-v1:rusturf-two-rock-pair-v3:"
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "original-object-sheets-v" .. require("src.import.Gen3ObjectSheets").SCHEMA .. ":"
@@ -1339,13 +1339,30 @@ local function markerFor(version)
   end
   if GameVersion.generation(version) == 3 then
     revision = revision .. "gba-script-operands-v" .. require("src.import.Gen3ScriptOps").CACHE_REVISION .. ":"
+    revision = revision .. "gba-text-ir-v" .. require("src.import.Gen3TextCatalog").REVISION .. ":"
+    revision = revision .. 'gba-visual-task-v' .. require('src.import.Gen3VisualTaskFacts').REVISION .. ':'
+    local help=require('src.import.Gen3HelpFacts')
+    if help.supports(version)then revision=revision..'gba-help-v'..help.REVISION..':'end
+    local levelArt=require('src.import.Gen3LevelUpArt')
+    if levelArt.supports(version)then revision=revision..'gba-levelup-streaks-v'..levelArt.REVISION..':'end
   end
   if version == 'ruby' or version == 'sapphire' then
-    revision = revision .. 'rs-transition-classes-v1:'
+    revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:rs-ball-art-v1:rs-forced-floors-v1:rs-battler-coords-v1:'
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
+  -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
+  if GameVersion.isFRLG(version)then
+    revision=revision..'frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'
+  end
+  if version=='firered'or version=='leafgreen'or version=='emerald'then
+    revision=revision..'gba-textbox-palette-v2:'
+  end
   if GameVersion.generation(version)==2 then
+    revision=revision..'gen2-font-extras-v'..require('src.import.Gen2FontExtras').REVISION..':'
     revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
+    -- The genuine animation VM consumes battler-row commands that older
+    -- handler-name imports reversed. Rebuild generated data, retain saves.
+    revision=revision..'gen2-anim-object-v'..require('src.battle.Gen2AnimData').CACHE_REVISION..':'
   end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
@@ -1726,7 +1743,16 @@ local function requiredFiles(version)
   end
   -- Black and White: their own list as the Gen 5 stages arrive (RomExtractorGen5)
   if gen == 5 then return require("src.import.RomExtractorGen5").REQUIRED_FILES end
-  if gen == 3 then return REQUIRED_FILES_GEN3 end
+  if gen == 3 then
+    if version=='ruby'or version=='sapphire'or version=='firered'or version=='leafgreen'then
+      local files={}
+      for _,path in ipairs(REQUIRED_FILES_GEN3)do
+        if path~='data/generated/scenes.lua'and path~='assets/generated/ui/summary_info.png'then files[#files+1]=path end
+      end
+      return files
+    end
+    return REQUIRED_FILES_GEN3
+  end
   if gen == 2 then return REQUIRED_FILES_GEN2 end
   return REQUIRED_FILES_GEN1
 end
@@ -2054,6 +2080,80 @@ function RomImporter.readyReport(version)
   -- KNOWN-ABSENT FILES ARE NOT A REASON TO RUN AGAIN. The import that wrote
   -- this marker already tried, at this cache format, against this ROM.
   local missing, gaps = {}, {}
+  if GameVersion.generation(version)==3 then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3SafariAssets').missing(version)
+    if #absent==0 then absent=require('src.import.Gen3StatGrowthAssets').missing(version)end
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA Safari or level-up data is incomplete.'}end
+  end
+  if version=='firered'or version=='leafgreen'or version=='emerald'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox font is incomplete.'}end
+  end
+  if version=='emerald'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3EmeraldPresentation').missing()
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false,missing=nativeMissing,why='The native Emerald presentation is incomplete.'}
+    end
+  end
+  if version=='firered'or version=='leafgreen'then
+    local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3FrlgPresentation').missing(version)
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false,missing=nativeMissing,why='The native FireRed/LeafGreen presentation is incomplete.'}
+    end
+  end
+  if version == 'ruby' or version == 'sapphire' then
+    local savedPrefix=CacheFs.prefix
+    CacheFs.prefix=GameVersion.cachePrefix(version)
+    local nativeMissing=require('src.import.Gen3RsPresentation').missing(version)
+    for _,path in ipairs(require('src.import.Gen3RsBag').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsSummaryAssets').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPartyAssets').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsMapData').missing(version)) do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsBirchAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsStarterAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsBattlePanelAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsWallyAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPokenavAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsStorageAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsPokedexAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    for _,path in ipairs(require('src.import.Gen3RsShopAssets').missing(version))do
+      nativeMissing[#nativeMissing+1]=path
+    end
+    CacheFs.prefix=savedPrefix
+    if #nativeMissing>0 then
+      return {ok=false, missing=nativeMissing, why='The native Ruby/Sapphire presentation is incomplete.'}
+    end
+  end
   for _, path in ipairs(missingRequiredFiles(version)) do
     if absent[path] then gaps[#gaps + 1] = path else missing[#missing + 1] = path end
   end
@@ -2201,8 +2301,9 @@ local function commandOutput(command)
   releasePointerGrab()
   local pipe = HostShell.popen(command)
   if not pipe then return nil end
-  local result = pipe:read("*a")
-  pipe:close()
+  local ok, result = pcall(pipe.read, pipe, "*a")
+  pcall(pipe.close, pipe)
+  if not ok or type(result) ~= "string" then return nil end
   result = trim(result)
   return result ~= "" and result or nil
 end
@@ -2775,73 +2876,14 @@ end
 -- The extension list comes from the manifest rather than being fixed, because
 -- what a mod needs is its own business: STADIUM2_IMPORTER wants a Nintendo 64
 -- cartridge in any of its three byte orders (.z64/.n64/.v64).
-local function chooseFileByExt(exts, promptName)
-  if type(exts) ~= "table" or #exts == 0 then return nil end
-  local prompt = Strings("Choose your %s", promptName or "file")
-  local platform = love.system.getOS()
-  local quoted, globs, semis = {}, {}, {}
-  for index, ext in ipairs(exts) do
-    quoted[index] = '"' .. ext .. '"'
-    globs[index] = "*." .. ext
-    semis[index] = "*." .. ext
+local function chooseFileByExt(exts, promptName, opts)
+  opts = opts or {}
+  local prompt = opts.title or Strings("Choose your %s", promptName or "file")
+  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts})
+  for _,command in ipairs(commands or {}) do
+    -- One selected backend: cancelling its dialog must not open another one.
+    return commandOutput(command)
   end
-  if platform == "OS X" then
-    return commandOutput(
-      ([[osascript -e 'POSIX path of (choose file with prompt "%s" of type {%s})' 2>/dev/null]])
-        :format(prompt, table.concat(quoted, ", ")))
-  elseif platform == "Windows" then
-    local script = table.concat({
-      "Add-Type -AssemblyName System.Windows.Forms;",
-      "$d=New-Object System.Windows.Forms.OpenFileDialog;",
-      "$d.Title='" .. prompt .. "';",
-      "$d.Filter='Base file (" .. table.concat(semis, ";") .. ")|"
-        .. table.concat(semis, ";") .. "|All files (*.*)|*.*';",
-      -- THE TEMP COPY IS THE FALLBACK NOW, NOT THE DEFAULT.
-      --
-      -- io.open on Windows needs ANSI bytes, so a path with characters outside
-      -- them cannot be opened at all (#325) and the pick has to be copied to
-      -- an ASCII temp name first.  That was done for EVERY pick, on the
-      -- reasoning that "a cartridge is tens of megabytes, so this copy is the
-      -- one slow step" -- which stopped being true the moment a mod could
-      -- declare a GameCube disc.  A 1.4 GB pick was copied into %TEMP% on the
-      -- system drive before anything looked at it: minutes of apparent freeze,
-      -- 1.4 GB of C: needed to import a file already sitting on G:, and -- the
-      -- reported failure -- Copy-Item leaves $ErrorActionPreference at
-      -- Continue, so a copy that ran out of space still fell through to
-      -- writing the temp path, and the launcher opened a file that was never
-      -- created.  "that file could not be opened", for a file that was right
-      -- there.
-      --
-      -- So: an ASCII path is handed back AS IS, which is every ordinary path
-      -- and costs nothing.  Only a path io.open genuinely cannot take is
-      -- copied, and that copy now has to prove it landed before its
-      -- destination is reported -- otherwise nothing is written and the
-      -- caller falls through to the "copy it into imports/" instructions,
-      -- which at least tell the player what to do next.
-      "if($d.ShowDialog() -eq 'OK'){",
-      "$p=$d.FileName;",
-      "$ascii=$true;",
-      "foreach($c in $p.ToCharArray()){",
-      "if([int]$c -lt 32 -or [int]$c -gt 126){$ascii=$false}};",
-      "[Console]::OutputEncoding=[Text.Encoding]::UTF8;",
-      "if($ascii){[Console]::Write($p)}else{",
-      "$t=Join-Path $env:TEMP 'pokeport_base_pick.bin';",
-      "Copy-Item -LiteralPath $p -Destination $t -Force "
-        .. "-ErrorAction SilentlyContinue;",
-      "if(Test-Path -LiteralPath $t){[Console]::Write($t)}}}",
-    })
-    return commandOutput(
-      'powershell -NoProfile -STA -Command "' .. script .. '"')
-  elseif platform == "Linux" then
-    local path = commandOutput(
-      ([[zenity --file-selection --title="%s" --file-filter="Base file | %s" 2>/dev/null]])
-        :format(prompt, table.concat(globs, " ")))
-    if path then return path end
-    return commandOutput(
-      ([[kdialog --getopenfilename "$HOME" "%s|Base file" 2>/dev/null]])
-        :format(table.concat(globs, " ")))
-  end
-  return nil
 end
 
 -- PUBLISHED, because the map editor needs a picker too.
@@ -5785,13 +5827,14 @@ function RomImporter:draw()
     if link.url==DONATE_URL then paypalLink=link
     else footerLinks[#footerLinks+1]=link end
   end
-  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors')
+  local retroCredits=Strings('Gen2Recomped · Created and led by UNDERdecoded (Cedric), with the Gen2Recomped contributors\nRetroRecomped fork · Fork lead, launcher, cloud & integrations: Roxas2712\nGen1Recomp foundation · bryanthaboi / BOIS CLUB GAMES & contributors\nBased on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC\n(https://github.com/bryanthaboi/gen1recomp)')
   local creditH = self.hintFont:getHeight()
   if self.sidebarMode then local _,lines=self.hintFont:getWrap(retroCredits,appW-2*padH);creditH=math.max(1,#lines)*self.hintFont:getHeight() end
   local donateH = self.hintFont:getHeight() + 10 * s
   local chipsH = (#footerLinks > 0) and (8 * s + donateH) or 0
   local footerH = 10 * s + bcgDH + 6 * s + warningH + 8 * s + creditH + chipsH + 12 * s
   if self.sidebarMode then footerH=creditH+26*s end
+  footerH=footerH+2*creditH+10*s
 
   -- Logo: centred over the strip, width clamped, gentle bob + glow pulse.  The
   -- resting metrics fix the tab bar's top so the layout never shifts as it bobs.
@@ -6356,6 +6399,12 @@ function RomImporter:draw()
   end
 
   end -- Classic upstream footer. RetroRecomped keeps a compact engine credit.
+  if not self.sidebarMode then
+    love.graphics.setFont(self.hintFont)
+    col(PAL.detail,.7)
+    love.graphics.printf('Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC\n(https://github.com/bryanthaboi/gen1recomp)',
+      appX+padH,footerTop+footerH-2*creditH-6*s,appW-2*padH,'center')
+  end
 
   -- End of the scrolling column; the logo and the page scrollbar are pinned and
   -- draw outside it.
