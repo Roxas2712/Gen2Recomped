@@ -200,7 +200,13 @@
     "src/core/game3/constants/emerald/trainer_classes.lua": "aaacb3bf58afe9d06c0aaa32fcc72fd35ad3dfba3f12cbe0b802747194dc7377",
     "src/core/game3/constants/emerald/flags.lua": "fec9d17a698c8a7ae528e9479d56f173c9a9cd483248a2f9bcb8a76ea8c40bdf",
     "src/ui/game3/rse/main_menu_rse.lua": "438afed17b575fbc584fd7a3651544dfd1aebfab868fb31d7e4dda32a20333e4",
-    "src/import/gba/text_placeholders_extract.lua": "2491c75195fec21951449e6a153022f2ccbd41a625895e39d24ceb873ca43b60"
+    "src/import/gba/text_placeholders_extract.lua": "2491c75195fec21951449e6a153022f2ccbd41a625895e39d24ceb873ca43b60",
+    "src/import/gba/versions_frlg.lua": "57a7346b1ccb0bebab0a5171aa420b77674f23f8460dd66f805166321db00f01",
+    "src/import/gba/editions/leafgreen_1_0.lua": "1ed3f0a72be36acdf783bcdbb7529a7961b7647dd92587b5275ac101adbd24ea",
+    "src/import/gba/text_chrome_extract.lua": "513593426c957cee55da3394afb5e75bc3cf422d1795ff00c1409f0373899256",
+    "src/import/gba/league_extract.lua": "be33bcace96ba8fc4eb2c3c31bc52b774090a71e7d8aeb7211f7f09f39f3b2f0",
+    "src/core/game3/constants/firered/songs.lua": "bcbaeabca05574e69977db3599a985f4e90782873df89a273b2d37657907ae29",
+    "src/import/gba/versions_game.lua": "9b9dc1392aaa9f1dad065ff9f9b5c96ba2c967a49755946bb20aae846dbd4e19"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison; original Emerald common main-menu presentation and callback adapter"
 }
