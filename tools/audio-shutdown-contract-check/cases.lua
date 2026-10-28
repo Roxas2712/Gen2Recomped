@@ -1,0 +1,27 @@
+-- One observable shutdown contract, run against both real audio adapters.
+local C={}
+function C.run(A,T,environment)
+ local e=environment()
+ T.eq(A.stopCry(),nil,'stopCry retains its nil return')
+ T.eq(A.isCryFinished(),true,'explicit cry completion is immediately observable')
+ T.eq(e.cry:isPlaying(),false,'current cry handle stops')
+ T.eq(e.music:isPlaying(),true,'stopping a cry retains background music')
+ T.eq(e.se:isPlaying(),true,'stopping a cry retains sound effects')
+ e.restartCry()
+ T.eq(A.isCryFinished(),false,'a later cry remains independently playable')
+ T.eq(A.stopAll(),nil,'stopAll retains its nil return')
+ T.eq(e.music:isPlaying(),false,'boot music stops')
+ T.eq(e.se:isPlaying(),false,'sound effects stop')
+ T.eq(e.cry:isPlaying(),false,'cry stops with the session')
+ T.eq(A.isSePlaying(),false,'no stopped source remains audible in observations')
+ T.eq(A.isCryFinished(),true,'native cry wait completes')
+ T.eq(e.currentSong(),nil,'stopped song identity retires')
+ T.eq(e.outside:isPlaying(),true,'unregistered application audio remains independent')
+ T.eq(A.stopAll(),nil,'repeated shutdown is idempotent')
+ e.afterStop()
+ T.eq(e.music:isPlaying(),false,'later polling cannot replay the old boot song')
+ T.eq(e.se:isPlaying(),false,'later polling cannot replay an old effect')
+ T.eq(e.outside:isPlaying(),true,'polling retains independent application audio')
+ e.cleanup()
+end
+return C
