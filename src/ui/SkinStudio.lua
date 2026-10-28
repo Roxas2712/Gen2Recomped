@@ -2771,6 +2771,21 @@ end
 
 -- ---------------------------------------------------------------- input
 
+-- Test uses the mock device drawn inside the workspace. The draw pass has
+-- already relinquished that surface, so input must scope the same rectangle
+-- explicitly and restore its caller's surface afterwards.
+local function testPad(method,x,y)
+  local previous=TouchSkin.surfaceRect
+  local r=Studio.lastCanvas
+  if r then TouchSkin.setSurface(r.x,r.y,r.w,r.h) end
+  local ok,result=pcall(TouchControls[method],TouchControls,'studio',x,y)
+  if previous then
+    TouchSkin.setSurface(previous.x,previous.y,previous.w,previous.h)
+  else TouchSkin.setSurface(nil) end
+  if not ok then error(result,0) end
+  return result
+end
+
 function Studio.update(dt)
   PadCursor.update(dt or 0)
   local x, y, active = PadCursor.pointer()
@@ -2799,7 +2814,7 @@ function Studio.mousepressed(x, y, button, fromPad)
   if not r then return end
   if Studio.testing then
     if x >= r.x and x <= r.x + r.w and y >= r.y and y <= r.y + r.h then
-      TouchControls:touchpressed("studio", x, y)
+      testPad('touchpressed',x,y)
     end
     return
   end
@@ -2830,7 +2845,7 @@ function Studio.mousemoved(x, y)
     return
   end
   if Studio.testing then
-    TouchControls:touchmoved("studio", x, y)
+    testPad('touchmoved',x,y)
     return
   end
   if Studio.drag and (Studio.pointerDown or love.mouse.isDown(1)) and Studio.lastCanvas then
@@ -2846,7 +2861,7 @@ function Studio.mousereleased(x, y, button)
   Studio.libraryPress = nil
   if press and not press.dragged then Studio.clicked = true end
   if Studio.testing then
-    TouchControls:touchreleased("studio", x, y)
+  testPad('touchreleased',x,y)
     return
   end
   Studio.drag = nil
