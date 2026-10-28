@@ -39,7 +39,7 @@ function F.wrap(base,id)
   if byPrefix[prefix] then return byPrefix[prefix] end
   local fs={_profileBase=base,_accountPrefix=prefix}
   function fs.mapPath(path) return prefix~='' and private(path) and prefix..path or path end
-  for _,method in ipairs({'read','getInfo','remove','getDirectoryItems','createDirectory','getRealDirectory'}) do
+  for _,method in ipairs({'read','getInfo','remove','getDirectoryItems','createDirectory','getRealDirectory','newFile'}) do
     if base[method] then fs[method]=function(path,...) return base[method](fs.mapPath(path),...) end end
   end
   function fs.write(path,bytes,...)
@@ -48,6 +48,10 @@ function F.wrap(base,id)
     return base.write(mapped,bytes,...)
   end
   if base.realPath then fs.realPath=function(path) return base.realPath(fs.mapPath(path)) end end
+  if not fs.realPath and love and base==love.filesystem and base.getSaveDirectory then
+    fs.realPath=function(path)return base.getSaveDirectory()..'/'..fs.mapPath(path)end
+  end
+  if base.rename then fs.rename=function(from,to)return base.rename(fs.mapPath(from),fs.mapPath(to))end end
   setmetatable(fs,{__index=base});byPrefix[prefix]=fs;return fs
 end
 F.valid=valid

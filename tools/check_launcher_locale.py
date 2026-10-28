@@ -28,7 +28,7 @@ FILES = ['src/import/BankPages.lua', 'src/import/BankWorkspace.lua',
 LOOKUP_ONLY = ['src/import/RomImporter.lua', 'src/import/LauncherSidebar.lua',
                'src/import/LauncherStorage.lua', 'src/import/LauncherModProfiles.lua',
                'src/pinball/Friends.lua', 'src/pinball/Player.lua', 'src/ui/WalkerOnlinePage.lua',
-               'src/pokewalker/minigames/Enrollment.lua']
+               'src/pokewalker/minigames/Enrollment.lua', 'src/pokewalker/minigames/ContentSetup.lua']
 FILES += LOOKUP_ONLY
 # Helpers have different signatures. Never mistake paths, code or action IDs
 # for visible copy just because their surrounding function is named button.

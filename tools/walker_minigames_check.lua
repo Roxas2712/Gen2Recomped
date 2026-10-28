@@ -26,6 +26,7 @@ local Rhythm = require('src.pokewalker.minigames.RhythmTap')
 local Hub = require('src.ui.WalkerMinigames')
 -- Pure rules/input regression; the real mandatory UI gate has its own suite.
 package.loaded['src.pokewalker.minigames.Enrollment'].accepted=function()return true end
+package.loaded['src.pokewalker.minigames.Content'].current=function()return{mode='basic'}end
 
 local NOW = 20000 * 86400 + 3600
 Rewards.clock = function() return NOW end

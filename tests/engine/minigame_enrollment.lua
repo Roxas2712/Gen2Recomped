@@ -3,7 +3,7 @@
 love=require('tests.love_stub')
 local S=require('src.core.SaveSerializer');local filesA,filesB={},{};local fail=false
 local function fs(files)return{read=function(p)return files[p]end,write=function(p,b)if fail then return false,'full'end;files[p]=b;return true end,
- getInfo=function(p)return files[p]and{type='file',size=#files[p]}end,remove=function(p)files[p]=nil;return true end,createDirectory=function()return true end}end
+ getInfo=function(p)return files[p]and{type='file',size=#files[p]}end,rename=function(p,q)files[q]=files[p];files[p]=nil;return true end,remove=function(p)files[p]=nil;return true end,createDirectory=function()return true end}end
 local a,b=fs(filesA),fs(filesB);local active=a
 package.loaded['src.core.SaveData']={persistenceFs=function()return active end}
 local builds,art,starts=0,0,0
@@ -21,8 +21,10 @@ h.gateFocus=2;h:action('a')
 check(not E.accepted(H.GAME_MODULES)and not h.session,'continue without ticking remains locked')
 h.gateFocus=1;h:key('return');check(h.gateChecked and not E.accepted(H.GAME_MODULES),'ticking alone does not store acceptance')
 h:key('down');h:key('return')
-check(E.accepted(H.GAME_MODULES)and not h.enrolling and builds==1 and art==1,'explicit accept persists and initializes only afterward')
-check(st.minigames and starts==0,'accepting opens the catalogue without automatically starting a game')
+check(E.accepted(H.GAME_MODULES)and not h.enrolling and h.settingContent and builds==0 and art==0,'explicit accept opens separate content setup before gameplay or art')
+check(not st.minigames and starts==0,'acceptance alone does not initialize the reward budget')
+h.contentFocus=1;h:action('a')
+check(not h.settingContent and builds==1 and st.minigames,'explicit basic graphics choice initializes the catalogue')
 h:play(1,true);check(starts==1 and h.session.phase=='play','accepted entry can start a minigame')
 local stored=filesA[E.FILE];check(stored and not stored:find('token',1,true),'receipt contains no device credential')
 local restarted=H.new(nil,W.newState());check(not restarted.enrolling,'same local profile and version do not prompt again')

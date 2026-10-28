@@ -1,7 +1,9 @@
 # Strategie für optionale Minispiel-Assets
 
-Stand: 28. Oktober 2026. Konzept von Roxas2712; noch keine rechtliche Freigabe
-und keine vollständig implementierte Asset-Umstellung.
+Stand: 28. Oktober 2026. Konzept von Roxas2712; noch keine rechtliche Freigabe.
+Die gemeinsame Einrichtung und Grafikpakete für die fünf Walker-Spiele sind
+in [MINIGAME-CONTENT.md](MINIGAME-CONTENT.md) dokumentiert. Die vollständige
+Umstellung der separat entwickelten Spiele Slide/Warsheep steht noch aus.
 
 ## Ziel und rechtliche Grenzen
 
@@ -104,9 +106,11 @@ hochgeladen. Eine neue Hinweisversion oder ein geänderter registrierter
 Spielkatalog erfordern erneute Annahme. Unter **Freunde & Cloud** kann die
 Annahme widerrufen werden. Lokales Spielen benötigt weiterhin kein Konto.
 
-Dies implementiert die verpflichtende Einstiegshinweis-Annahme. Die separate
-Asset-Inventur, lokale Paket-Erzeugung, tatsächlichen Ersatzgrafiken und
-Paket-Berechtigungen sind damit noch nicht umgesetzt oder rechtlich freigegeben.
+Dies implementiert die verpflichtende Einstiegshinweis-Annahme. Die folgende
+gemeinsame Inhaltseinrichtung ergänzt lokale Grafikpakete, einfache
+prozedurale Darstellungen und eine getrennte Bestätigung je Paketfassung
+für die fünf Walker-Spiele. Eine vollständige Inventur und rechtliche Freigabe
+aller anderen Inhalte sind damit nicht verbunden.
 Insbesondere macht der Dialog bereits vorhandene oder später lokal kombinierte
 fremde Inhalte nicht automatisch zulässig.
 
