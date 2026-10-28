@@ -2609,6 +2609,29 @@ function BattleState:beginMsgLine()
   self.shown[#self.shown + 1] = {}
 end
 
+function BattleState:stepGen3Ball(anim)
+  anim:update()
+  if anim.sound then
+    require("src.core.Sound").playId(self.data, anim.sound)
+  end
+  -- the trainer is gone by the time his Pokemon is out of the ball
+  -- ...unless the trainer's own walk-off is still running (#407): the
+  -- cartridge frees that sprite at the end of the fifty frames, not when
+  -- the ball opens, and cutting it short hides most of the throw
+  if anim.sendOut == "player" and self.showPlayerBack
+      and anim.phase ~= "throw"
+      and not (self.backWalkOff and self.backWalkOff > 0) then
+    self.showPlayerBack = false
+    self:slidePic("back")
+  end
+  if anim:isDone() then
+    self.gen3BallPlaying = false
+    -- a caught Pokemon leaves the ball resting on screen through the text,
+    -- exactly as the Game Boy chain does
+    if not anim.caught then self.gen3Ball = nil end
+  end
+end
+
 function BattleState:updateQueue()
   if self.waitingUI then
     if self.game.stack:top() ~= self then return true end
@@ -2641,29 +2664,7 @@ function BattleState:updateQueue()
   -- ...and the ball's own timeline, ticked in the same place and for the same
   -- reason: its frames are counted where the hold is counted, or it would
   -- stand still for exactly as long as it is meant to be moving.
-  if self.gen3BallPlaying and self.gen3Ball then
-    local anim = self.gen3Ball
-    anim:update()
-    if anim.sound then
-      require("src.core.Sound").playId(self.data, anim.sound)
-    end
-    -- the trainer is gone by the time his Pokemon is out of the ball
-    -- ...unless the trainer's own walk-off is still running (#407): the
-    -- cartridge frees that sprite at the end of the fifty frames, not when
-    -- the ball opens, and cutting it short hides most of the throw
-    if anim.sendOut == "player" and self.showPlayerBack
-        and anim.phase ~= "throw"
-        and not (self.backWalkOff and self.backWalkOff > 0) then
-      self.showPlayerBack = false
-      self:slidePic("back")
-    end
-    if anim:isDone() then
-      self.gen3BallPlaying = false
-      -- a caught Pokemon leaves the ball resting on screen through the text,
-      -- exactly as the Game Boy chain does
-      if not anim.caught then self.gen3Ball = nil end
-    end
-  end
+  if self.gen3BallPlaying and self.gen3Ball then self:stepGen3Ball(self.gen3Ball)end
   -- a queued hold (faint slide, hit blink) counts down before the next row
   if self.waitFrames and self.waitFrames > 0 then
     self.waitFrames = self.waitFrames - 1
