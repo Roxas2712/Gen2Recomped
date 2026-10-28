@@ -23,6 +23,8 @@ Qualification on main cbb552a8 plus the existing shader corrections:
 - The benchmark is reproducible with
   `luajit tools/native-atlas/palette-reuse-benchmark.lua /path/to/earlier/AtlasPixels.lua`.
   The comparison baseline is 9f8cc0fb, before this projection cache.
+- The actual native atlas GPU fixture passes 526 checks with 215 texture
+  readbacks under each of Metal and OpenGL on the integrated fork source.
 
-Receipts: focused CPU 6413d6b825, benchmark b436937911.
+Receipts: focused CPU 6413d6b825, benchmark b436937911, GPU a980111c01.
 Contributions by Roxas2712 under LICENSE-ROXAS2712.md; existing rights remain.
