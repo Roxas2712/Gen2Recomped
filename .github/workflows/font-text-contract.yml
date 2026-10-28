@@ -15,3 +15,6 @@ jobs:
           luajit tests/engine/font_text_contract.lua
           luajit tests/engine/font_text_macros.lua
           luajit tests/engine/font_ttf_contract.lua
+          luajit tests/engine/gen2_font_selection.lua
+          luajit tests/engine/gen2_font_import.lua
+          luajit tests/engine/gen2_font_options.lua
