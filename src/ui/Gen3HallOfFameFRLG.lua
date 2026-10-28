@@ -52,7 +52,7 @@ function HOF.new(game, record, onDone)
   local layout = #self.party > 3 and FULL or HALF
   for i, mon in ipairs(self.party) do
     local p = layout[i] or layout[#layout]
-    local ok, path = pcall(Sprites.path, game.data, mon.species, "front", { mon = mon })
+    local ok, path = pcall(Sprites.path, game.data, mon.species, "front", { mon = mon, kind = "hof" })
     self.mons[i] = { mon = mon, x = p[1], y = p[2], dx = p[3], dy = p[4],
                      img = ok and image(path) or nil, dim = 0 }
   end
@@ -69,7 +69,7 @@ function HOF.new(game, record, onDone)
 end
 
 function HOF:enter()
-  pcall(Music.play, self.game.data, "Music_HallOfFame")
+  pcall(Music.play, self.game.data, Music.special(self.game.data, "hallOfFame"))
 end
 
 function HOF:finish()
@@ -154,7 +154,8 @@ local function monLine(self, m)
   local dexNo = (self.text.dexNo or "No. ") .. (number and ("%03d"):format(number) or "???")
   local nick = m.mon.nickname or def.name or ""
   local gender = ""
-  if m.mon.gender == "male" then gender = "♂" elseif m.mon.gender == "female" then gender = "♀" end
+  local sex = require("src.pokemon.Pokemon").genderOf(self.game.data, m.mon)
+  if sex == "male" then gender = "♂" elseif sex == "female" then gender = "♀" end
   return dexNo, nick, "/" .. tostring(def.name or "") .. gender,
          (self.text.level or "Lv. ") .. tostring(m.mon.level or 0),
          (self.text.idNo or "IDNo.") .. ("%05d"):format((tonumber(m.mon.otId) or tonumber(((self.game.save or {}).player or {}).id) or 0) % 65536 % 100000)
@@ -217,7 +218,8 @@ function HOF:draw()
       Font.draw(tostring(self.text.idNo or "IDNo."), x0 + 4, y0 + 18 - 8)
       Font.draw(("%05d"):format((tonumber(p.id) or 0) % 100000), x0 + inner - 38, y0 + 18 - 8)
       Font.draw(tostring(self.text.time or "TIME"), x0 + 4, y0 + 32 - 8)
-      local secs = tonumber(save.playTime or save.playSeconds) or 0
+      local clock = save.playTime and save or { playTime = save.playSeconds }
+      local secs = require("src.core.SaveData").playSeconds(clock)
       local hours = math.floor(secs / 3600)
       Font.draw(("%3d:%02d"):format(hours, math.floor(secs / 60) % 60), x0 + inner - 44, y0 + 32 - 8)
       Font.drawBox(0, 14, 30, 6)
