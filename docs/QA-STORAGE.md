@@ -272,6 +272,16 @@ bleiben erhalten. Ein neuer Fingerprint über dem Budget wird abgelehnt, statt
 ungeprüft alte Quellen oder fertige Bibliotheken zu entfernen. Direkte Aufrufe
 an den Helfern vorbei haben keine laufende Budgetkontrolle.
 
+Der gebündelte X/Y-Compiler erhält zusätzlich ein 512-MiB-Cachebudget. Nach
+einem mit SHA-256 bestätigten erfolgreichen Link darf der Backend unter
+`session.lock` nur bytegleiche Cachekopien seiner bekannten Objektdateien
+entfernen. Zuvor werden Zigs lokale Hash-Manifeste bytegenau nach
+`compiler-cache/retired-manifests/<sha256>.txt` verschoben: Mehrere Quellen
+können dasselbe Objekt verwenden; zurückgelassene Manifeste können beim
+Neubau leere Objekte erzeugen. Fremde Dateien und Symlinks bleiben erhalten.
+`tools/qualify_pokemon_xy_cache.py --runtime <runtime-root>` prüft den echten
+Compile-/Link-/Bereinigungs-/Neubau-Zyklus ohne Spieldaten.
+
 QA-Profile und einzeln registrierte Testkopien erhalten ebenfalls laufende
 Budgets: 2 GiB je QA-Profil, 4 GiB je Testkopie. Auch ein kurzer erfolgreicher
 `qa_run` wird nach dem Kindende auf Überschreitung geprüft. Die laufende Kontrolle

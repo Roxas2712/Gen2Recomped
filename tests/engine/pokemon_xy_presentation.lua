@@ -63,4 +63,9 @@ ui=RI.new();prepare(ui);ui:update(100);ui:draw();ui:update(0);for _=1,4 do ui:up
 check(ui._xyPlayer and (ui._xyPlayer.keys or 0)==0,'intro skip input never reaches the new game')
 ui=RI.new({launcherAnimations=false});prepare(ui)
 check(ui._xyPlayer and not ui._xyIntro and not ui._launcherSequence,'user animation preference still permits direct play')
+local withAssets=io.open
+io.open=function(path,...)if path:find('/intro-assets/',1,true)then return nil end;return withAssets(path,...)end
+ui=RI.new();prepare(ui);ui:update(100)
+check(ui._xyPlayer and not ui._xyIntro,'an installed intro script without its private artwork cannot block the game handoff')
+io.open=withAssets
 print('3DS presentation lifecycle: '..checks..' checks passed')

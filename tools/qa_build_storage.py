@@ -5,9 +5,93 @@ Only matching C compiler object intermediates after successful linking may go.
 """
 import re
 import fcntl
+import hashlib
+import json
 from pathlib import Path
 from qa_storage import GIB
 from qa_legacy_storage import LiveUse
+
+
+def _digest(path):
+    value=hashlib.sha256()
+    with path.open('rb') as stream:
+        for block in iter(lambda:stream.read(1024*1024),b''):value.update(block)
+    return value.hexdigest()
+
+
+def retire_compiler_manifests(work):
+    """Preserve Zig manifests outside its lookup path before retiring objects.
+
+    Zig's manifests do not expose their resulting artifact keys. Invalidate all
+    owned local manifests under session.lock: a manifest for another source can
+    refer to the same deduplicated object. Leaving it behind can make Zig emit a
+    zero-byte output while returning success on a later compile.
+    """
+    cache=Path(work)/'compiler-cache'
+    manifests=cache/'local/h';retired=cache/'retired-manifests'
+    if not manifests.exists():return 0
+    if cache.resolve()!=cache or manifests.resolve()!=manifests:
+        raise ValueError('Refusing redirected compiler-cache manifests')
+    if retired.exists() and (retired.is_symlink() or not retired.is_dir()):
+        raise ValueError('Refusing redirected retired compiler manifests')
+    retired.mkdir(exist_ok=True)
+    count=0
+    for source in manifests.iterdir():
+        if source.is_symlink() or not source.is_file() or not re.fullmatch('[0-9a-f]{32,64}\\.txt',source.name):continue
+        target=retired/(_digest(source)+'.txt')
+        if target.exists():
+            if target.is_symlink() or not target.is_file() or _digest(target)!=target.stem:
+                raise ValueError('Retired compiler manifest changed')
+            source.unlink()
+        else:source.rename(target)
+        count+=1
+    return count
+
+
+def clean_compiler_duplicates(work, output):
+    """Retire only cached objects identical to owned, linked C intermediates.
+
+    Keep generated C, the final library, unrelated cache files and live data.
+    Call under session.lock after committing the final library marker, before
+    clean_linked_objects removes the original object peers.
+    """
+    work,output=Path(work),Path(output)
+    cache=work/'compiler-cache/local/o'
+    if (output.parent!=work/'recompiled' or not re.fullmatch('[0-9a-f]{64}',output.name)
+            or output.resolve()!=output or not cache.is_dir() or cache.resolve()!=cache):return 0
+    live=LiveUse()
+    if (output/'.qa-keep').exists() or live.busy(output) or live.busy(cache):return 0
+    committed=False
+    for binary in output.glob('0004000000055?00.dylib'):
+        if binary.is_symlink():continue
+        try:
+            marker=json.loads(binary.with_suffix('.complete.json').read_text())
+            if marker.get('sha256')==_digest(binary):committed=True;break
+        except (OSError,ValueError):continue
+    if not committed:return 0
+    objects={}
+    for obj in output.glob('*.o'):
+        if (not obj.is_symlink() and obj.is_file() and obj.with_suffix('.c').is_file()
+                and re.fullmatch(r'(?:code[0-9]+|entries|runtime|recomp|[0-9a-f]{8})\.o',obj.name)):
+            objects[obj.name]=(obj.stat().st_size,_digest(obj))
+    candidates=[]
+    for folder in cache.iterdir():
+        if not re.fullmatch('[0-9a-f]{32,64}',folder.name) or not folder.is_dir() or folder.is_symlink():continue
+        for obj in folder.glob('*.o'):
+            expected=objects.get(obj.name)
+            if (expected and not obj.is_symlink() and obj.is_file() and obj.stat().st_size==expected[0]
+                    and not live.busy(obj) and _digest(obj)==expected[1]):
+                candidates.append((obj,expected))
+    if not candidates:return 0
+    # Invalidate cache lookups first, preserving the metadata byte for byte.
+    # An interruption now causes recompilation, never dangling cache lookups.
+    retire_compiler_manifests(work)
+    removed=0
+    for obj,expected in candidates:
+        if (not obj.is_symlink() and obj.is_file() and obj.stat().st_size==expected[0]
+                and _digest(obj)==expected[1]):
+            size=obj.stat().st_blocks*512;obj.unlink();removed+=size
+    return removed
 
 
 def clean_linked_objects(work):

@@ -193,9 +193,9 @@ def host_status():
             "free_GiB": round(shutil.disk_usage(ROOT).free / 2**30, 3)}
 
 
-def qa_manager(*, collect=True):
+def qa_manager(*, collect=True, bundled=False):
     installed = Path.home() / ".local/lib/origami-qa-storage/active-tools"
-    sys.path.insert(0, str(installed if installed.is_dir() else ROOT / "tools"))
+    sys.path.insert(0, str(installed if not bundled and installed.is_dir() else ROOT / "tools"))
     import qa_storage as qa
     qa._storage = qa.Storage(ROOT)
     atexit.register(qa._storage.close, collect=collect)
