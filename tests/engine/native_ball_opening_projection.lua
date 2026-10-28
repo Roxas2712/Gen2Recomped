@@ -65,9 +65,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
    Ui.presentation.ballPosition=function()return nil end
    fresh();Opening.draw();T.same(calls,baseline,'an absent projection preserves native geometry')
    Ui.presentation.ballPosition=function()return 120,88,0/0 end
-   fresh();T.raises(Opening.draw,'invalid opening projection');T.eq(#calls,0);T.eq(#stack,0)
+   fresh();T.raises(Opening.draw,'invalid opening projection','nonfinite source projection is rejected');T.eq(#calls,0);T.eq(#stack,0)
    Ui.presentation.ballPosition=function()g.translate(7,9);error('source projection failed')end
-   fresh();T.raises(Opening.draw,'source projection failed')
+   fresh();T.raises(Opening.draw,'source projection failed','source projection failure is reported')
    T.same(state,{x=0,y=0,sx=1,sy=1});T.eq(#stack,0)
    Ui.presentation.ballPosition=function()b.gen3Ball=nil;return 120,88,.5 end
    fresh();local ok,why=Opening.draw();T.eq(ok,false);T.eq(why,'native opening presentation admission changed')
