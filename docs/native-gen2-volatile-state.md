@@ -16,8 +16,9 @@ mon or serialized battler.
 
 GSC consecutive-protection retention follows the actual PROTECT/ENDURE effect,
 including renamed moves; an old PROTECT ID with another effect resets it.
-Protection RNG, opponent-first and Substitute rules remain separate open
-mechanics work. No second battle simulator is introduced.
+Protection RNG, opponent-first and Substitute rules are addressed by the
+separate [native protection work](native-gen2-protection.md).
+No second battle simulator is introduced.
 
 On this older host, 423 real native state/mechanics/ownership/collection checks,
 262 model checks and 83 move-priority checks pass independently. The fixture
