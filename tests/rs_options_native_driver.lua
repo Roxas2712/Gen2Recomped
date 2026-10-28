@@ -27,6 +27,19 @@ return function(game)
   options.textSpeed=3;options.battleAnim=true;options.battleStyle='shift';options.stereo=false
   options.gen3ButtonMode=1;options.gen3Frame=1;options.qaUnrelated='keep'
   local base=Values.read(options);local callback=0;local world=game.stack:top()
+  local Extra=require('src.ui.OptionsMenu');local build=Extra.buildRows;local activations=0
+  Extra.buildRows=function(g)
+    local rows=build(g)
+    rows[#rows+1]={id='qaOptionStep',label='QA STEP',value=function(host)
+      assert(host==game);return tostring(host.save.options.qaOptionStep or 0)
+    end,step=function(host,dir)
+      assert(host==game);host.save.options.qaOptionStep=(host.save.options.qaOptionStep or 0)+dir;return true
+    end}
+    rows[#rows+1]={id='qaOptionAction',label='QA ACTION',activate=function(host)
+      assert(host==game);activations=activations+1
+    end}
+    return rows
+  end
   local function open()
     local screen=UI.new(game,{onCancel=function()callback=callback+1 end});game.stack:push(screen)
     assert(screen.rsNative,'ROM option vocabulary did not select native RS view')
@@ -48,7 +61,19 @@ return function(game)
   local expected={};for key,v in pairs(scene._pending)do expected[key]=v end
   -- The host's existing controls/mod/graphics options remain on a native subpage.
   assert(scene.cursor==7);press('a');assert(#scene._pages==2)
-  shot('native-rs-options-extra-host-settings');press('b');assert(#scene._pages==1)
+  shot('native-rs-options-extra-host-settings')
+  local function find(label)
+    for _=1,256 do
+      local page=scene._pages[#scene._pages];local row=page.rows[page.index]
+      if row and row.label==label then return end;press('down')
+    end
+    error('Host option was lost: '..label)
+  end
+  find('QA STEP');press('right');assert(options.qaOptionStep==1)
+  assert(require('src.core.SaveData').loadOptions().qaOptionStep==1,'Host extra row did not persist through its ordinary callback')
+  assert(Values.read(options).textSpeed==base.textSpeed,'Extra setting committed the pending native values early')
+  find('QA ACTION');press('a');assert(activations==1,'Host activation callback was lost or duplicated')
+  shot('native-rs-options-host-callbacks');press('b');assert(#scene._pages==1)
   press('down');assert(scene.cursor==8);shot('native-rs-options-scroll-and-cancel')
   press('a',90)
   assert(game.stack:top()==world and callback==1,'Native CANCEL did not restore its owner callback once')
@@ -70,6 +95,8 @@ return function(game)
   assert(game.stack:top().rsNative,'Main-menu OPTION did not reach native view')
   press('b',100);assert(game.stack:top()==menu)
   shot('native-rs-options-main-menu-return')
+  Extra.buildRows=build
+  report.cases.hostStepAndActivateCallbacks=true
   report.cases.mainMenuReturn=true;report.cases.originalTwentyFrames=true;report.drawPreservesSaveRng=true
   report.status='pass';persist();print('PASS_NATIVE_RS_OPTIONS');love.event.quit(0)
 end
