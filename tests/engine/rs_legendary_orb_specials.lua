@@ -25,14 +25,18 @@ for _,edition in ipairs{'ruby','sapphire'}do
     Fx.tick(ow);T.eq(parked,false);T.eq(resumed,2);T.eq(ow.g3Orb,nil);T.eq(Fx.pan(ow),nil)
     T.eq(W.encode(save),before,'screen effect does not edit story flags or variables')
   end
-  local oldFade,oldCurrent=Music.fadeOutM4a,Music.current
+  local oldFade,oldCurrent=Music.nativeCommand,Music.current
   local song='MAP_SONG';local speed,parked=nil,false
-  Music.fadeOutM4a=function(s)speed=s end;Music.current=function()return song end
-  local runner={yield=function()parked=true end};local ctx={save={},runner=runner}
+  local data={};local context
+  Music.nativeCommand=function(d,op,s,keep,c)
+    T.eq(d,data);T.eq(op,'fadeoutbgm');T.eq(keep,nil);speed=s;context=c
+  end;Music.current=function()return song end
+  local runner={yield=function()parked=true end};local ctx={save={},game={data=data},runner=runner}
   T.eq(M.run(ctx,0x114C),true);T.eq(speed,4);T.eq(parked,true)
+  T.eq(context,ctx)
   T.eq(runner.waitingCheck(),false);song=nil;T.eq(runner.waitingCheck(),true)
   parked=false;runner.waitingCheck=nil;T.eq(M.run(ctx,0x114C),true);T.eq(parked,false)
-  Music.fadeOutM4a,Music.current=oldFade,oldCurrent
+  Music.nativeCommand,Music.current=oldFade,oldCurrent
 end
 for _,edition in ipairs{'emerald','firered','leafgreen','gold'}do
   V.set(edition)

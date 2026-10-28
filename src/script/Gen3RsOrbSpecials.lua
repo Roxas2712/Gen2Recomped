@@ -13,7 +13,7 @@ function M.run(ctx,id)
     if ctx.overworld then require('src.world.Gen3ScreenFx').fadeOutOrb(ctx.overworld)end
   elseif id==0x114C then -- native 332, sub_8081924
     local Music=require('src.core.Music')
-    Music.fadeOutM4a(4)
+    Music.nativeCommand(ctx.game.data,'fadeoutbgm',4,nil,ctx)
     if Music.current()~=nil and ctx.runner then
       ctx.runner.waitingCheck=function()return Music.current()==nil end
       ctx.runner:yield()

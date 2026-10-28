@@ -13,6 +13,9 @@ Emerald's dispatch or claim the same extended special IDs in FRLG.
 The original music callback requests `FadeOutMapMusic(4)` and waits until
 the map music has stopped. The growing window and fading blend each own a
 separate script wait; the camera must be centred after the fade.
+Use the native BGM command service: the legacy sixteen-step helper's
+shared-playback clock is not serviced for a native GBA stream and can leave
+this special waiting forever.
 
 Primary references at pokeruby revision
 `5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f`:
@@ -22,6 +25,10 @@ Primary references at pokeruby revision
 
 CPU checks cover dispatch, all four colour/centre variants, waitstate
 release, existing frame cadence, music completion and save isolation.
+The music regression runs the actual script VM and native sequencer with
+owned tracks and queueable hardware, plus shared music overrides, in both
+editions. It verifies song ownership until tick 63, stopping at tick 64,
+empty native output queues and script continuation.
 The native driver uses a prepared field and the real VM special/waitstate
 rows, map music, and final-renderer captures of growth, full tint/shake,
 fade and restoration. These fixtures do not replace ordinary scene or
