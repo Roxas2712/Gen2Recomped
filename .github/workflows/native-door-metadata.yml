@@ -1,0 +1,28 @@
+name: Native door metadata
+on:
+  pull_request:
+    paths:
+      - 'src/core/game3/doors.lua'
+      - 'src/import/Gen3DoorMetadata.lua'
+      - 'src/import/RomExtractorGen3.lua'
+      - 'src/import/RomImporter.lua'
+      - 'tests/engine/native_door*.lua'
+      - '.github/workflows/native-door-metadata.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Descriptor reader and genuine native map queries
+        run: |
+          luajit tests/engine/native_door_metadata_import.lua
+          luajit tests/engine/native_door_metadata.lua
+          luajit tests/engine/native_door_observations.lua
+          luajit tests/engine/native_map_world_admission.lua
+          luajit tests/engine/native_field_observations.lua
+          luajit tests/engine/game_cache.lua
