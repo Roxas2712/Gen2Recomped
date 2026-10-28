@@ -35,7 +35,7 @@ local Hooks=require('src.mods.Hooks')
 local hooks=Hooks.new()
 Runtime.install(require('src.mods.Events').new(),hooks,{})
 local stack=setmetatable({},{__index=Stack});stack:init()
-local g=setmetatable({save=Save.newGame(),data=T.fixtures.fresh(),stack=stack}, {__index=Game})
+local g=setmetatable({save=Save.newGame({version='crystal'}),data=T.fixtures.fresh(),stack=stack}, {__index=Game})
 local captures=0
 local world={isOverworld=true,captureSave=function(_,save)
   captures=captures+1;save.money=4321
@@ -141,7 +141,7 @@ g._padPointerIds.reused=true
 g:touchpressed('reused',320,240)
 T.eq(g._padPointerIds.reused,nil,'new press clears an obsolete id owner')
 T.eq(pointers,2,'reused id outside pad reaches actual mod hook')
-unhook();Runtime.install(nil,nil,nil)
+unhook()
 
 -- Safe-area geometry, rotations and edited bottom toggle at native scale limits.
 for _,size in ipairs{{380,720},{800,400}}do
@@ -198,4 +198,5 @@ for _,size in ipairs{{380,720},{800,400}}do
   Editor.unload()
 end
 Touch:init();Tilt.reset();Zoom.reset()
+Runtime.install(nil,nil,nil)
 T.finish('native hotbar actions, ownership, safe area and editor')
