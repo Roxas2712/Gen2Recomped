@@ -64,11 +64,12 @@ end
 -- Native row admission binds the one actual VM (or selects the normal
 -- disabled/missing-data fallback), never a parallel animation owner.
 function M.admitted(screen,row,runner)
-  for i=#(screen._gen2PictureChanges or {}),1,-1 do
+  local i=1
+  while i<=#(screen._gen2PictureChanges or {})do
     local p=screen._gen2PictureChanges[i]
     if p.row==row then
-      if runner then p.runner=runner else remove(screen,i,true) end
-    end
+      if runner then p.runner=runner;i=i+1 else remove(screen,i,true)end
+    else i=i+1 end
   end
 end
 
