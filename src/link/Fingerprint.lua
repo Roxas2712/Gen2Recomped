@@ -176,7 +176,10 @@ for _, field in ipairs({ "index", "gen3Effect", "secondaryChance", "target", "fl
 end
 Fingerprint.GBA_MOVE_FIELDS = GBA_MOVE_FIELDS
 local function fieldsFor(kind)
-  return kind == "moves" and nativeBattleRevision() and GBA_MOVE_FIELDS or RECORD_FIELDS[kind]
+  -- A GSC command revision must not silently select the newer cartridge
+  -- record shape. Preserve each generation's existing field allowlist.
+  return kind == "moves" and require('src.core.GameVersion').generation()>=3
+    and GBA_MOVE_FIELDS or RECORD_FIELDS[kind]
 end
 
 local function writeSection(out, data, kind)

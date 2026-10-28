@@ -74,6 +74,15 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
  -- the same round and cannot change its first side.
  b:beginTurn();b:executeAction(b.player,b.enemy,{special='recharge'})
  T.eq(b._gen2ProtectionFirst,'player','next round records its actual first side')
+ -- First-side identity must survive replacement of that side's wrapper.
+ b:beginTurn()
+ local withdrawn=b.player
+ b:executeAction(withdrawn,b.enemy,{special='playerSwitch',mon=b.game.save.party[2]})
+ T.check(b.player~=withdrawn,'real native switch replaces the first wrapper')
+ b.enemy.protectRun=2
+ b:executeAction(b.enemy,b.player,{id='QA_ENDURE',pp=20})
+ T.eq(b.enemy.enduring,nil,'second actor cannot Endure after opponent switches')
+ T.eq(b.enemy.protectRun,0,'switch-first failure resets actual counter')
  run.release()
 end
 -- Existing Gen1/GBA behavior is deliberately untouched by the GSC owner.
