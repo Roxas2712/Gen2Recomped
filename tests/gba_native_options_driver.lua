@@ -18,6 +18,12 @@ return function(game)
     game.input:overlayPressed(key);U.wait(1);game.input:overlayReleased(key);U.wait(wait or 8)
   end
   local function shot(name)
+    local top=game.stack:top();local native=top.rsNative
+    if native and version=='emerald'then
+      local pages=native.scene._st.pages
+      assert(pages and pages[1].title==native.load('src.core.game3.rom_text').plain('gText_Option'),
+        'Original option title changed across a host callback')
+    end
     local before=Save.encode(game.save);local rng=love.math.getRandomState()
     assert(require('src.render.GraphicsScope').call(game.stack:top().draw,game.stack:top()))
     assert(before==Save.encode(game.save)and rng==love.math.getRandomState(),'Option draw changed save/RNG')
