@@ -6,12 +6,23 @@ coordinate stage still read Emerald's table, rejected it and left the
 single/double rows absent. The renderer consequently used the single anchor
 twice.
 
+The front-picture symbol also named the back-coordinate table, and the
+renderer aligned opaque feet instead of the original 64x64 frame centre.
+Correct both symbols and use the imported front/back offsets and elevation
+around the native frame centre for RS. Other editions and custom image sizes
+retain their existing placement. Keep native target blink and healthbox
+bounce without the generic yellow outline.
+
 Read each edition's table through its own `GetBattlerSpriteCoord` literal:
 
 | USA edition | Coordinate table | Reader | Checked pointer offset |
 | --- | --- | --- | --- |
 | Ruby | `0x37F578` | `0x077ABC` | `+0x64` |
 | Sapphire | `0x37F508` | `0x077AC0` | `+0x64` |
+
+Front/back MonCoords tables: Ruby `0x1E7C74` / `0x1E9114`; Sapphire
+`0x1E7C04` / `0x1E90A4`. These are distinct records; a front offset cannot
+substitute for a back offset.
 
 The two rows contain four padded four-byte records each. Singles are
 `(72,80), (176,40), (48,40), (112,80)`; doubles are

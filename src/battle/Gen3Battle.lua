@@ -1668,7 +1668,10 @@ local function drawHUDs(battle, slide)
           local edge = row.player and Gen3Battle.extra(battle) or 0
           local px, py = pos.x - 32 + edge, pos.y - 16+Selection.offset(battle,'hb',b)
           drawStatusPanel(battle, b, px, py, row.player)
-          if b == aimed and math.floor((battle.frame or 0) / 8) % 2 == 0 then
+          -- RS uses the native target sprite blink / healthbox bounce above.
+          -- Its two-sprite panel is not the generic 64-pixel outline below.
+          local rs=constants and constants.gen3RsHealthbox
+          if not rs and b == aimed and math.floor((battle.frame or 0) / 8) % 2 == 0 then
             love.graphics.setColor(1, 1, 0.3, 1)
             love.graphics.rectangle("line", px - 1, py - 1, 66, h + 2)
             love.graphics.setColor(1, 1, 1, 1)
@@ -2994,6 +2997,9 @@ end
 -- species that never touch the ground.
 function Gen3Battle.picPlacement(battle, battler, img, path, scale)
   scale = scale or 1
+  local rx,ry=require('src.battle.Gen3RsBattlerPlacement').place(
+    battle,battler,img,scale,Gen3Battle.fieldOffset(battle))
+  if rx then return rx,ry end
   local spots = Gen3Battle.platforms(battle)
   local spot = battler.isPlayer and spots.player or spots.opponent
   -- AND IN A DOUBLE, WHICH OF THE TWO PLACES ON THAT SIDE.

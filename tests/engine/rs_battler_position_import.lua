@@ -8,6 +8,8 @@ for _,e in ipairs{{'ruby',0x37f578,0x77abc},{'sapphire',0x37f508,0x77ac0}}do
   local f=assert(io.open('tools/rom_manifest_'..e[1]..'.json'));local m=J.decode(f:read('*a'));f:close()
   local x=X.new('',e[1],m);local C=X.BATTLER_COORDS
   T.eq(C.AT,e[2]);T.eq(C.READER,e[3]);T.eq(C.POINTER_AT,0x64)
+  T.eq(m.symbols.gMonFrontPicCoords,e[1]=='ruby'and 0x1e7c74 or 0x1e7c04,'real front table, not the back table')
+  T.eq(m.symbols.gMonBackPicCoords,e[1]=='ruby'and 0x1e9114 or 0x1e90a4,'separate back table')
   local bytes={}
   for r=1,2 do for i,p in ipairs(rows[r])do
     local at=e[2]+(r-1)*16+(i-1)*4

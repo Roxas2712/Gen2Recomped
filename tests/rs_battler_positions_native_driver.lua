@@ -32,16 +32,20 @@ return function(game)
   local coords=assert(game.data.constants.gen3BattlerCoords)
   assert(#coords.singles==4 and #coords.doubles==4,'Imported position rows absent')
   local placed={}
+  local expected={{0,49},{168,4},{58,70},{120,-3}}
   for id=0,3 do
     local battler=assert(b:battlerAt(id));local img=assert(b:picImage(battler.sprite))
     local scale=B.resolveBattleScale(game.data,battler.isPlayer and'back'or'front',battler.sprite,battler.mon.species)
     local x,y=N.picPlacement(b,battler,img,battler.sprite,scale)
+    assert(x==expected[id+1][1]and y==expected[id+1][2],
+      'RS sprite must use original frame centre and front/back offset')
     placed[id+1]={x=x,y=y,species=battler.mon.species}
   end
   assert(placed[1].x~=placed[3].x and placed[2].x~=placed[4].x,'Native double sprites overlap at one anchor')
   shot('native-rs-double-left-command')
   press('a');assert(b.phase=='moveSelect');press('a');assert(b.phase=='targetSelect')
   shot('native-rs-double-first-target');press('right');shot('native-rs-double-second-target')
+  U.wait(8);shot('native-rs-double-second-target-blink')
   press('a');assert(b.phase=='menu'and b:menuBattler()==b:battlerAt(2),'Second battler did not receive its own command')
   shot('native-rs-double-right-command');press('b');assert(b.phase=='menu'and b:menuBattler()==b:battlerAt(0))
   shot('native-rs-double-back-to-left')

@@ -228,7 +228,7 @@
     "gMonBackPicTable": 2004980,
     "gMonPaletteTable": 2008500,
     "gMonShinyPaletteTable": 2012020,
-    "gMonFrontPicCoords": 2003220,
+    "gMonFrontPicCoords": 1997940,
     "gTrainerFrontPicTable": 2016572,
     "gTrainerFrontPicPaletteTable": 2017236,
     "gMonIconTable": 3915040,
@@ -280,7 +280,8 @@
     "sWeatherCycleRoute119": 3779796,
     "sWeatherCycleRoute123": 3779800,
     "sWindowFrames": 3629552,
-    "gMonIconPaletteTable": 3917240
+    "gMonIconPaletteTable": 3917240,
+    "gMonBackPicCoords": 2003220
   },
   "pokedexEntrySize": 36,
   "stageOverrides": {
