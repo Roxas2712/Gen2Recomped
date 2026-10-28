@@ -6,13 +6,37 @@ local Model = {}
 local screens = setmetatable({}, { __mode = 'kv' })
 local ended = setmetatable({}, { __mode = 'k' })
 
+local function owner(model)
+  return assert(screens[model], 'native Gen2 model is not attached to a battle')
+end
+
 function Model.bind(model, screen)
   screens[model] = screen
+  rawset(model, '_nativeRandom', function(n) return owner(model).rng(n) - 1 end)
+  -- Source GSC's LOVE-style view normalizes missing/small bounds and reversed
+  -- ranges. Resolve the current native function at invocation, not at bind:
+  -- link setup and scoped native owners can replace that function later.
+  rawset(model, '_nativeLoveRng', function(lo, hi)
+    local rng = owner(model).rng
+    if hi == nil then return rng(math.max(1, lo or 1)) end
+    if hi < lo then lo, hi = hi, lo end
+    return rng(lo, hi)
+  end)
   return model
 end
 
-local function owner(model)
-  return assert(screens[model], 'native Gen2 model is not attached to a battle')
+function Model:roller()
+  owner(self)
+  local roller = rawget(self, '_nativeRoller')
+  if not roller then
+    -- BattleRandom's zero-based domain over the same existing stream.
+    -- Keep the closure on its transient model, never in a global weak-key
+    -- cache whose value could root the model on LuaJIT.
+    local random = rawget(self, '_nativeRandom')
+    roller = function(n) return random(n) end
+    rawset(self, '_nativeRoller', roller)
+  end
+  return roller
 end
 
 local function active(screen, mon)
