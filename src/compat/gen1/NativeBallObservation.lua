@@ -15,7 +15,18 @@ function M.read(screen,ball,key)
   end
   return key=='battler'and id or(id%2==0 and'player'or'enemy')
  end
- if key=='rot'then return 0 end -- The existing native painter is unrotated.
+ if key=='rot'then
+  -- Presentation consumers use the unwrapped send-out angle as their flight
+  -- coordinate. Project the actual native throw clock; never advance a second
+  -- animation or infer progress from a screen-space position.
+  if ball.sendOut=='player'and ball.phase=='throw'then
+   local duration=ball.send and ball.send.frames or 25
+   if type(duration)=='number'and duration>0 and duration<math.huge then
+    return math.min(1,(ball.phaseFrame or 0)/duration)*(625/256)*math.pi*2
+   end
+  end
+  return 0
+ end
  if key=='scale'then return 1 end -- Native ball cells draw at their own size.
  if key=='alpha'then return 1-(ball.whiteout or 0)end
 end
