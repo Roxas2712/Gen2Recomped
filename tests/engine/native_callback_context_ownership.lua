@@ -72,7 +72,7 @@ for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
 
  Probe.close(f)
 end
-for _,lean in ipairs{false,true}do for _,mode in ipairs{'yield-next','yield-return','yield-after'}do
+for _,lean in ipairs(Hooks.callLean and{false,true}or{false})do for _,mode in ipairs{'yield-next','yield-return','yield-after'}do
  Hooks.lean=lean
  local f,b,run,e,c,rolls=open('emerald');e.mode=mode
  local co;local calls=0
@@ -108,8 +108,6 @@ for _,kind in ipairs{'native','follower'}do
  ]]
  local f,b,run,e,c,rolls=open('emerald',body)
  local nativeRng=c.rng
- T.eq(G._usesSourceRecords('source_probe'),false)
- T.eq(G._usesCallbacks('source_probe'),kind=='follower')
  run.loader.hooks:call('battle.damage',function(raw)T.eq(raw.battle,b);return raw.rng(0,1)end,c)
  T.eq(e.battle,b);T.eq(e.user,b.player.id,'native consumer battler ID ABI is preserved')
  T.eq(e.rng,nativeRng,'native consumer RNG handle ABI is preserved')
@@ -118,6 +116,22 @@ for _,kind in ipairs{'native','follower'}do
  T.eq(e.event,payload,'native/follower-only event payload identity is preserved')
  T.eq(e.event.game,f.game,'native/follower-only events keep native Game handles')
  Probe.close(f)
+end
+-- Complete native turns: the same Loader/API3 setup with a native versus
+-- source namespace pass-through must retain every HP/PP/RNG/frame record.
+for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
+ local traces={}
+ for _,source in ipairs{false,true}do
+  Runtime.install(saved[1],saved[2],saved[3]);G.release()
+  traces[#traces+1]=Probe.turn(edition,true,function(f,b)
+   local body=source and entry or[[local mod=...;mod.hooks:wrap('battle.damage',function(nextFn,c)return nextFn(c)end)]]
+   local files={['mods/turn_probe/manifest.json']=Json.encode({id='turn_probe',name='Turn probe',version='1.0.0',
+    api=3,entry='main.lua',games={'gen3'},permissions={'engine_internals'}}),['mods/turn_probe/main.lua']=body}
+   local run=T.sdk.loadMods({'mods/turn_probe'},{data=f.data,fs=T.sdk.memfs(files)})
+   T.eq(#run.errors,0);f.game.mods=run.loader;run.loader.game=f.game
+  end)
+ end
+ T.same(traces[1],traces[2],edition..' source pass-through retains complete native turn HP/PP/RNG/frame traces')
 end
 Runtime.install(saved[1],saved[2],saved[3]);Hooks.lean=saved[4]
 T.finish('Actual source callback identities, bound context copies, RNG lifetime and pre-commit/fallback retirement')

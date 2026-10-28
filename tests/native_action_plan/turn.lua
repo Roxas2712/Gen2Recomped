@@ -22,9 +22,10 @@ local function close(f)
  while f.game.stack:top()do f.game.stack:pop()end
  f.close();B._service.release();require('src.core.Game3').release()
 end
-local function turn(edition,observe)
+local function turn(edition,observe,prepare)
  local f,b=open(edition);local rolls={}
  b.rng=function(lo,hi)rolls[#rolls+1]={lo,hi};return lo or 0 end
+ if prepare then prepare(f,b)end
  if not observe then package.loaded['src.core.game3.battle']=nil end
  b:resolveTurn(b.player.mon.moves[1])
  package.loaded['src.core.game3.battle']=B
