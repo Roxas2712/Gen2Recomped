@@ -42,7 +42,7 @@ function P.items(self)
 end
 function P.update(self)
   local enabled=not self._settings or self:_settings().modCompassEnabled~=false
-  if not enabled or self.section~='mods' then
+  if not enabled or (self.section~='mods' and not self._gameModsVersion) then
     if self._presentationJob then self._presentationJob:cancel();self._presentationJob=nil end
     if not enabled then self._presentation=nil;self._presentationAt=nil;self._presentationWall=nil;self._presentationNext=nil end
     return
