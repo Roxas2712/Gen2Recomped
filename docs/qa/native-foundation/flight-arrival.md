@@ -40,7 +40,7 @@ no pending build). Inspected output is upright; mod errors are empty. The same
 run measures240 frames without diagnostic readbacks: mean18.002ms (55.5FPS),
 median17.084ms, p95 26.115ms, max61.864ms. This is a bounded stationary Metal run,
 not a controlled before/after, sustained/all-map or OS-window qualification.
-Ruby qualification is in progress. The prepared visit is isolated QA rather
+Actual Ruby `b5377502a8`, the same frozen source `05a6bfc199`, also completes native atlas/cancel/reopen/flight to Littleroot5,9. It observes192 opaque preparation frames, reaches ready, publishes the upright355050-vertex exterior and reports no mod/renderer errors. Its240-frame stationary Metal sample is NOT a performance pass: mean20.894ms (47.9FPS), median16.964ms, p95 27.587ms, max495.491ms (492.990ms in draw). Functional arrival readiness is qualified; this long field-render stall remains unresolved and a separate CPU/JIT diagnostic is in progress. The prepared visit is isolated QA rather
 than evidence of continuous-story field-move admission.
 
 Private mod/runtime files and player saves remain unchanged. QA preserves20GiB
