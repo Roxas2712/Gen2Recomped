@@ -44,6 +44,7 @@ function A.source(source,hasPosition)
 end
 local unpack=table.unpack or unpack
 local originals=setmetatable({},{__mode='k'})
+local ignored=setmetatable({},{__mode='k'})
 local records,hooks={},{}
 local sourceBytes=0
 local stats={compiled=0,lateDraws=0,retired=0,failures=0}
@@ -52,11 +53,13 @@ local function find(shader)
  if not shader then return end
  local record=originals[shader]
  if record then return record end
+ if ignored[shader]then return end
  for _,candidate in ipairs(records)do
   if candidate.lease:peek()==shader then
    originals[shader]=candidate;candidate.aliases[shader]=true;return candidate
   end
  end
+ ignored[shader]=true
 end
 local function sweep()
  if raw.getStackDepth()~=0 then return end
@@ -157,15 +160,15 @@ function A.install()
   local shader=raw.newShader(a,b,c)
   local first,second=read(a),read(b)
   local size=(type(first)=='string'and #first or 0)+(type(second)=='string'and #second or 0)
-  if size>262144 then return shader end
+  if size>262144 then ignored[shader]=true;return shader end
   local hasPosition=projected(first)or projected(second)
   local adapted,changed=A.source(first,hasPosition)
   local adapted2,changed2=A.source(second,hasPosition)
-  if not(changed or changed2)then return shader end
+  if not(changed or changed2)then ignored[shader]=true;return shader end
   sweep()
-  if #records>=32 or sourceBytes+size>2*1024*1024 then return shader end
+  if #records>=32 or sourceBytes+size>2*1024*1024 then ignored[shader]=true;return shader end
   local ok,late=pcall(raw.newShader,changed and adapted or a,changed2 and adapted2 or b,c)
-  if not ok then stats.failures=stats.failures+1;return shader end
+  if not ok then stats.failures=stats.failures+1;ignored[shader]=true;return shader end
   local h=hook(shader);local lease=love.thread.newChannel();lease:push(shader)
   local record={late=late,hook=h,lease=lease,bytes=size,aliases=setmetatable({},{__mode='k'})}
   originals[shader]=record;record.aliases[shader]=true;records[#records+1]=record;sourceBytes=sourceBytes+size;stats.compiled=stats.compiled+1
