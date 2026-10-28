@@ -2737,6 +2737,7 @@ function BattleState:updateQueue()
   end
   if self.animPlaying then
     self.animPlayer:update()
+    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
     if self.animPlayer.pollEffects and self.applyAnimEffect then
       for _, ev in ipairs(self.animPlayer:pollEffects()) do
         self:applyAnimEffect(ev)
@@ -2776,6 +2777,7 @@ function BattleState:updateQueue()
     return true
   end
   if not self.current then
+    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
     local item = table.remove(self.queue, 1)
     if not item then return false end
     if item.fn then
@@ -3020,6 +3022,10 @@ function BattleState:updateQueue()
         if item.hit then
           self:applyHitFx(item.hit)
         end
+      end
+      if GameVersion.isGen2() then
+        require('src.battle.Gen2PicturePresentation').admitted(self,item,
+          self.animPlaying and self.anim or nil)
       end
       self.current = nil
       return true
@@ -4175,6 +4181,14 @@ end
 -- frame if one is up, otherwise the still.  Placement is always measured off
 -- the still (same dimensions, same ground padding), so only the texture
 -- changes -- see drawBattlerPic and the enemy branch of drawPics.
+function BattleState:pictureSprite(battler)
+  return battler.sprite
+end
+
+function BattleState:pictureStill(battler)
+  return self:picImage(self:pictureSprite(battler))
+end
+
 function BattleState:battlerPic(battler)
   local still = self:picImage(battler.sprite)
   local anim = battler and battler.picAnim
@@ -11694,6 +11708,10 @@ function BattleState:drawBattlerPic(battler, x, y, scale)
   if not ok then error(err) end
 end
 
+function BattleState:substituteVisible(battler)
+  return battler and battler.substituteHP
+end
+
 function BattleState:drawBattlerPicAt(battler, x, y, scale)
   local shakeX, shakeY = self:gen3AnimShake(battler)
   x, y = x + shakeX, y + shakeY
@@ -11729,7 +11747,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
     end
   end
   local img = self:battlerPic(battler)
-  if battler.substituteHP and not self:fxFaintActive(battler)
+  if self:substituteVisible(battler) and not self:fxFaintActive(battler)
      and not battler.fainted then
     self:drawSubstituteDoll(battler)
     return
@@ -12340,7 +12358,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
      -- ball's timeline: it shrinks into the ball and comes back out of it,
      -- and once it is inside there is nothing to draw at all.
      and not ((self:gen3BallFor(self.enemy) or {}).monHidden) then
-    local img = self:picImage(self.enemy.sprite)
+    local img = self:pictureStill(self.enemy)
     love.graphics.setColor(1, 1, 1, 1)
     local ex, ey = enemyPicXY(img, slide, sx, sy)
     local s = BattleState.resolveBattleScale(self.data, "front",
@@ -12467,13 +12485,14 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
      -- air there is no Pokemon on that side to draw; without this it stood
      -- there at full size waiting for its own ball to arrive.
      and not ((self:gen3BallFor(self.player) or {}).monHidden) then
-    local img = self:picImage(self.player.sprite)
+    local img = self:pictureStill(self.player)
     love.graphics.setColor(1, 1, 1, 1)
     -- feet flush on the text box top (y=96), ignoring baked-in padding
-    local pad = imagePadBottom[self.player.sprite] or 0
-    local padL = imagePadLeft[self.player.sprite] or 0
+    local handle = self:pictureSprite(self.player)
+    local pad = imagePadBottom[handle] or 0
+    local padL = imagePadLeft[handle] or 0
     local s = BattleState.resolveBattleScale(self.data, "back",
-      imagePathOf(self.player.sprite),
+      imagePathOf(handle),
       self.player.mon and self.player.mon.species)
     local gs = self:growInScale(self.player)
     local ballOut = self:gen3BallFor(self.player)
@@ -12496,7 +12515,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       local dx, dy
       if self:gen3Layout() then
         dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                         imagePathOf(self.player.sprite), s)
+                                         imagePathOf(handle), s)
       else
         dx, dy = BattleState.backPlacement(img:getWidth(), img:getHeight(),
                                            pad, padL, s)
@@ -12516,7 +12535,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       love.graphics.setColor(1, 1, 1, 1)
     elseif self:gen3Layout() then
       local dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                             imagePathOf(self.player.sprite), s)
+                                             imagePathOf(handle), s)
       self:drawBattlerPic(self.player, dx + sx, dy + sy, s)
     else
       local dx, dy = BattleState.backPlacement(img:getWidth(),
@@ -13050,5 +13069,6 @@ require('src.battle.Gen2BattleScene').install(BattleState)
 
 -- Compose after native/source view installers, retaining their real draw owners.
 require('src.battle.Gen2BgPictures').install(BattleState)
+require('src.battle.Gen2PicturePresentation').install(BattleState)
 
 return BattleState
