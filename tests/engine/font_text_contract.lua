@@ -15,7 +15,7 @@ Assets.image=function(path)
   return img
 end
 G.draw=function(image,quad,x,y)
-  draws[#draws+1]={image=image.path,x=x,y=y,quad={quad:getViewport()}}
+  draws[#draws+1]={image=image.path,x=x,y=y}
 end
 G.print=function(text,x,y)prints[#prints+1]={text=text,x=x,y=y}end
 G.newFont=function(file,size)return oldNewFont(type(file)=='string'and size or file)end
