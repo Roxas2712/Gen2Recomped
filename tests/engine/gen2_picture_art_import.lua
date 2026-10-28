@@ -55,7 +55,7 @@ for _,edition in ipairs({'gold','silver','crystal','prism'})do
         'staging cannot repaint actor before update command')
       if a.stagedActorPic then T.eq(r.actorPic[side],kind,'real VM owns staged tile identity')end
       local steps=0
-      while r.frames<4 and steps<100 do p:update();steps=steps+1 end
+      while r.frames<5 and steps<100 do p:update();steps=steps+1 end
       T.eq(r.picOverride[side],a.stagedActorPic and kind or (kind=='transform'and'transform'or nil),
         'real copy command publishes the staged identity only on capable ROMs')
       p:start('PROBE',not back)

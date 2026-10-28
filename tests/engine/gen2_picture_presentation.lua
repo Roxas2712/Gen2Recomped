@@ -143,7 +143,7 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','new-program','
    T.eq(s.player.mon,incoming,'native switch retains actual incoming mon')
    T.eq(Pictures.species(s,s.player),'FIXMON_B','old transform cannot repaint replacement slot')
  elseif mode=='stopped'then
-   s:updateQueue();s.anim.stop=true;s:updateQueue()
+   s:updateQueue();s.anim.stopped=true;s:updateQueue()
  elseif mode=='new-program'then
    s:updateQueue()
    local retired=s.anim

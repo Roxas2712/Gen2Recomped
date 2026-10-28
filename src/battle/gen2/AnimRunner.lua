@@ -337,7 +337,7 @@ C.updateactorpic = function(self)
   end
 end
 -- GS $e8/$e9 are ret. Crystal's $e9 fills vTiles0 without repainting the
--- actor; $e8 copies those staged tiles into its BG slot 48 frames later in
+-- actor; $e8 copies those staged tiles into its BG slot after its wait in
 -- the actual Minimize program. The ROM importer declares that capability.
 C.minimize = function(self)
   local art=self.data.pictureArt
