@@ -16,3 +16,4 @@ jobs:
           luajit tests/engine/gen2_species_names.lua
           luajit tests/engine/gen2_species_runtime.lua
           luajit tests/engine/gen2_species_gameplay.lua
+          luajit tests/engine/gen2_appearance_identity.lua
