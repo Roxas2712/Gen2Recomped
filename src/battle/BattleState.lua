@@ -10,6 +10,7 @@
 -- bide, recharge, confusion, screens, substitute, transform, ...) is
 -- ported from engine/battle/core.asm; see docs/behavior-porting-notes.md.
 
+local nativeMoveUsed = {} -- identity passed only by the native announcement producer
 local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Assets = require("src.render.Assets")
@@ -2423,12 +2424,15 @@ end
 
 -- insert message right after the currently-executing queue item (the
 -- counter is reset by updateQueue before each fn item runs)
-function BattleState:sayNext(text)
+function BattleState:sayNext(text, provenance)
   if GameVersion.isGen2() then
     return Gen2Queue.afterCurrent(self,{kind='message',text=text})
   end
   self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { text = text })
+  local row = { text = text }
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+  if sequence and provenance==nativeMoveUsed then sequence._nativeMessage(row)end
+  table.insert(self.queue, self.nextInsert, row)
 end
 
 -- insert a UI push right after the current queue item (dex page, the
@@ -8904,7 +8908,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       if GameVersion.isGen2() then
         Gen2Queue.afterCurrent(self,{kind='move',text=text,move=move.id,
           side=user.isPlayer and 'player' or 'enemy',deferAnim=true})
-      else self:sayNext(text) end
+      else self:sayNext(text, nativeMoveUsed) end
     end
     -- the move's animation plays right after the announcement; the
     -- damage path attaches the target's hit blink to this row so the
@@ -8919,6 +8923,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
                            animContext = animContext }
       if GameVersion.isGen2() and releasing then Gen2Vanish.releaseRow(self,user,self.moveAnimRow) end
       require("src.battle.Gen3SubstitutePresentation").mark(self, self.moveAnimRow, user)
+      local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+      if sequence then sequence._nativeMove(self.moveAnimRow)end
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
