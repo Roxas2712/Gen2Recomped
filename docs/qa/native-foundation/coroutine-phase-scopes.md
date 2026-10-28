@@ -37,3 +37,20 @@ The shared script helper is also offered in #282 with identical source bytes.
 This offer contains the narrow Game3 phase/attribution integration and both
 ROM-free contract cases. Its game-owner fixture uses Emerald, which the older
 public tree already admits; it does not claim positive live RS scene acceptance.
+
+## Frozen combined qualification
+
+Native code `52a40875` / frozen `22c20c029b` passes all121 selected CPU groups.
+Exact older-public composition `27cb70b9bb` passes54 groups, including48
+phase tests,30 callback/game tests and467 real script-space ownership checks.
+It applies only the shared once-only helper and published Game3 adapter changes;
+older native controller bodies remain unchanged. The first raw script-PR probe
+retains a missing NativeSession prerequisite; it is not claimed as an integrated
+pass. The raw offered phase helper separately passes48 checks.
+
+The unchanged private package completes Ruby new-game/naming, real native map
+cancel/reopen and flight on this frozen source in run `353d5c5f1d`. Landing setup
+is ready under the opaque transition, then the player reaches Littleroot5,9 with
+free input,355050 vertices and no mod/renderer errors. Its stationary240-frame
+Metal observation averages16.330ms, with p95 24.786ms and max142.098ms. This is
+not a stable-sixty-FPS, all-view, continuous-story or visible-desktop claim.
