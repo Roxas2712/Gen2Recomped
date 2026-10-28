@@ -81,5 +81,22 @@ end
 local frame
 local adapter=setmetatable({scene={},load=function()return{setFrameType=function(f)frame=f end}end},Menu)
 adapter:setFrame(19);T.eq(frame,19);T.eq(adapter.scene.frameType,19,'options-return frame belongs to original menu too')
+-- The original scene-kit indexes named effects directly, while other
+-- consumers use resolve(). Both must reach the same original numeric ID.
+V.set('emerald');local newCanvas=love.graphics.newCanvas
+love.graphics.newCanvas=function()return{setFilter=function()end}end
+local played={};local songs={SE_SELECT=5,SE_SAVE=55,SE_APPLAUSE=56}
+game.data.constants.gen3EmeraldCredits={fonts='owned-fixture/'}
+game.data.constants.gen3EmeraldPresentation={songIds=songs}
+local context=require('src.ui.Gen3EmeraldSceneContext').new(game,{textIR={},bindings={
+ ['src.core.game3.audio']={playSe=function(id)played[#played+1]=id end}}})
+local se=context.load('src.core.game3.se_ids')
+local kit=context.load('src.ui.game3.rse.scene_kit')
+for _,name in ipairs{'SE_SELECT','SE_SAVE','SE_APPLAUSE'}do
+ kit.playSe(name);T.eq(played[#played],songs[name],'original named effect reaches native ID')
+ T.eq(se.resolve(name),songs[name]);T.eq(se.resolve(songs[name]),songs[name])
+end
+T.eq(#played,3,'one call per original effect')
+love.graphics.newCanvas=newCanvas
 Fs.read,love.filesystem.load=oldRead,oldLoad;V.set(oldVersion)
 T.finish('Emerald original main menu labels, save view, native geometry and mod fallback')

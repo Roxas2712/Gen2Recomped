@@ -30,3 +30,17 @@ Four focused suites pass 202 assertions: original-symbol label extraction,
 readiness composition, save-view gates, original geometry, frame return,
 mod fallback, and existing movie/Hall resource contracts. Native acceptance
 is recorded separately after running the final renderer fixture.
+
+The final renderer fixture passes at
+`f4d97e1dddcadd2e3c02c95128935f829675263d`: a fresh full Emerald import,
+eight captures, both genders, first/last frames, empty and saved menus,
+highlight/dimming, clamped cursor, direct CONTINUE, real options return,
+title cancel and launcher exit. Draws preserve save bytes and host RNG;
+the frozen runtime is unchanged. Custom mod rows and strict national-dex
+gating also pass. This is prepared menu acceptance, not a story run.
+
+The first native attempt found that the private Emerald context exposed
+only `se_ids.resolve`, whereas the original scene-kit indexes named effects
+directly. Both forms now reach the same original numeric IDs. The correction
+also restores the Hall controller's named applause cue. No sound data or
+reference controller bytes are replaced.

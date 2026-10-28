@@ -39,11 +39,14 @@ return function(game)
   local function disk()return love.filesystem.read(IO.saveFilename(edition))end
   assert(game:writeSave()==true);local original=disk();assert(original)
   local actualWrite=game.writeSave;local mode='false';local attempts=0
-  local Sound=require('src.core.Sound');local play=Sound.playId;local saveSounds=0
+  local Sound=require('src.core.Sound');local play=Sound.playId;local saveSounds=0;local applauseSounds=0
   local saveSe=game.data.constants.gen3EmeraldPresentation.songIds.SE_SAVE
+  local applauseSe=assert(game.data.constants.gen3EmeraldPresentation.songIds.SE_APPLAUSE)
   Sound.playId=function(data,id,...)
     if id==saveSe then saveSounds=saveSounds+1 end
-    return play(data,id,...)
+    local source=play(data,id,...)
+    if id==applauseSe then assert(source,'Native Hall applause did not create audio');applauseSounds=applauseSounds+1 end
+    return source
   end
   game.writeSave=function(g)
     local hall=g.stack:top();assert(hall.savingDrawn and hall.saveEnding,'League IO preceded rendered saving')
@@ -145,6 +148,7 @@ return function(game)
     U.wait(1)
   end
   local menu=game.stack:top();assert(getmetatable(menu)==require('src.ui.Gen3MainMenu'))
+  assert(menu.rsNative,'Ending must return through the original Emerald common menu')
   assert(menu.items[menu.index].key=='continue','Automatic League save did not offer CONTINUE')
   U.wait(90);shot('native-emerald-league-continue-menu')
   local leagueSave=game.save;press('a')
@@ -169,6 +173,8 @@ return function(game)
   game.writeSave=actualWrite;Sound.playId=play
   report.automaticLeagueSave=true;report.failedWritesPreserveDisk=true;report.writeAttempts=attempts
   report.saveSounds=saveSounds;report.nativeTitleAndHostContinue=true;report.correctGenderBedroom=true
+  assert(applauseSounds==1,'Original Hall applause must play once')
+  report.nativeApplauseSounds=applauseSounds;report.originalMainMenuDirectContinue=true
   report.status='pass';report.actualGameClearSpecial=true;report.fullImportedCreditRoll=true
   report.nativeHallPartyMembers=6;report.nativeHallConfetti=true;report.nativePlayerPortrait=true
   report.playerGender=game.save.player.gender
