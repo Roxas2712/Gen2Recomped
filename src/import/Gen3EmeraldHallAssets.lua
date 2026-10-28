@@ -6,7 +6,7 @@ local names={'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_T
 function M.resources()
   local paths={};for _,name in ipairs{'manifest.lua','bands.rgba','stripes.rgba','confetti.rgba'}do paths[#paths+1]=M.ROOT..name end
   for i=0,19 do paths[#paths+1]=M.ROOT..'frame_'..i..'.rgba'end
-  paths[#paths+1]=M.ROOT..'message_box.rgba';paths[#paths+1]=M.ROOT..'emerald.lua';return paths
+  paths[#paths+1]=M.ROOT..'message_box.rgba';paths[#paths+1]=M.ROOT..'egg.rgba';paths[#paths+1]=M.ROOT..'emerald.lua';return paths
 end
 function M.extract(x)
   assert(x.version=='emerald');x:beginStage('Emerald original Hall of Fame')
@@ -34,6 +34,11 @@ function M.extract(x)
   local chrome=load('src.import.gba.rse.text_chrome_extract')
   for i=0,19 do cache:write(resource('frame_'..i..'.rgba'),chrome.extractUserFrame(rom,i).rgba)end
   local box=chrome.extractMessageBox(rom);cache:write(resource('message_box.rgba'),box.rgba)
+  local Lz=load('src.import.gba.lz77');local Bake=load('src.import.gba.bg_bake')
+  local function lz(symbol)return Lz.decompress(function(off)return rom:get(off)end,V.sym(symbol))end
+  local egg,palette=lz('gMonFrontPic_Egg'),lz('gMonPalette_Egg')
+  assert(Bake.byteLen(egg)>=2048 and Bake.byteLen(palette)==32,'Invalid original Emerald egg image')
+  cache:write(resource('egg.rgba'),Bake.bakeSpriteRgba(egg,Bake.loadPalBanks(palette,1)[0],0,64,64,false,false))
   local text={};local IR=load('src.core.game3.scripting.text_ir')
   for _,name in ipairs(names)do
     local at=V.sym(name);local raw={}
@@ -50,7 +55,7 @@ function M.extract(x)
 end
 function M.valid(spec,version)
   if version~='emerald'or type(spec)~='table'or spec.format~=1 or spec.version~='emerald'
-    or spec.manifest~=M.ROOT..'emerald.lua'or type(spec.resources)~='table'or#spec.resources~=26
+    or spec.manifest~=M.ROOT..'emerald.lua'or type(spec.resources)~='table'or#spec.resources~=27
     or type(spec.textIR)~='table'or type(spec.trainerPics)~='table'
     or type(spec.trainerPics.boy)~='string'or type(spec.trainerPics.girl)~='string'then return false end
   for _,name in ipairs(names)do if type(spec.textIR[name])~='table'or#spec.textIR[name]==0 then return false end end

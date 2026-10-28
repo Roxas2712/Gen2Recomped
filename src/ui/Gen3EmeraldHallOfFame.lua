@@ -24,6 +24,7 @@ function M.new(game,onDone)
       name=def.name,personality=mon.personality or mon.pid or 0,otId=mon.otId or player.id or 0,
       otSecretId=mon.otSecretId or 0,_hostMon=mon}end
   end
+  local self
   local bindings={
     ['src.core.game3.scripting.flags']={forVersion=function()return{IDS={FLAG_SYS_GAME_CLEAR=assert(flags.FLAG_SYS_GAME_CLEAR)}}end},
     ['src.import.gba.extract_island1']={CACHE_ROOT='data/generated/gba'},
@@ -47,7 +48,13 @@ function M.new(game,onDone)
       end,
       monFrontPic=function(mon)
         local raw=mon._hostMon;local path
-        if raw and(raw.isEgg or raw.egg)then path=assert(data.field.egg.pic,'Emerald egg portrait missing')
+        if raw and(raw.isEgg or raw.egg)then
+          if not self.eggImage then
+            local bytes=assert(love.filesystem.read(require('src.import.Gen3EmeraldHallAssets').ROOT..'egg.rgba'))
+            assert(#bytes==64*64*4,'Emerald egg portrait missing')
+            self.eggImage=love.graphics.newImage(love.image.newImageData(64,64,'rgba8',bytes));self.eggImage:setFilter('nearest','nearest')
+          end
+          return{image=self.eggImage}
         else path=require('src.pokemon.Sprites').path(data,row(mon.species).id,'front',{mon=raw,kind='hof'})end
         return path and{image=require('src.render.Assets').image(path)}or nil
       end},
@@ -55,7 +62,7 @@ function M.new(game,onDone)
   local ui={frames={manifest=spec.manifest,userCount=20,user=require('src.import.Gen3EmeraldHallAssets').ROOT..'frame_%d.rgba',std='user',sign=false,
     dialogue={path=require('src.import.Gen3EmeraldHallAssets').ROOT..'message_box.rgba',layout='message_box',manifestKey='message_box'},
     dialogueWindow={left=2,top=15,width=27,height=4}}}
-  local self=setmetatable(require('src.ui.Gen3EmeraldSceneContext').new(game,{bindings=bindings,textIR=spec.textIR,ui=ui}),M)
+  self=setmetatable(require('src.ui.Gen3EmeraldSceneContext').new(game,{bindings=bindings,textIR=spec.textIR,ui=ui}),M)
   self.onDone,self.session=onDone,session
   self.load('src.ui.game3.chrome').setFrameType(math.max(0,((save.options or{}).gen3Frame or 1)-1))
   self.scene=self.load('src.ui.game3.hall_of_fame')
@@ -63,5 +70,9 @@ function M.new(game,onDone)
   -- Emerald's atomic ending save/reset is a separate integration step.
   self.scene.start({session=session,dontSave=true,warp=false,credits=false,onDone=function()self:finish()end})
   return self
+end
+function M:exit()
+  Rs.exit(self)
+  if self.eggImage then self.eggImage:release();self.eggImage=nil end
 end
 return M

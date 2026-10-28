@@ -36,7 +36,7 @@ return function(game)
         assert(sprite.dx==({120,56,184})[hall.index]and sprite.dy==64,'Small team used full-team coordinates')
         if count==3 and hall.index==2 then
           local native=hall.load('src.core.game3.pokemon');assert(native.isEgg(hall.scene.getCurrentMon()))
-          assert(native.monFrontPic(hall.scene.getCurrentMon()).image==require('src.render.Assets').image(game.data.field.egg.pic),
+          assert(native.monFrontPic(hall.scene.getCurrentMon()).image==hall.eggImage and hall.eggImage:getWidth()==64,
             'Egg presentation exposed the unhatched species')
         end
         shot('native-emerald-hall-small-'..count..'-member-'..hall.index);observed[hall.index]=true
