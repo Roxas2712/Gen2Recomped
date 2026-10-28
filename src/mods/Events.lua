@@ -92,10 +92,22 @@ function Events:emit(name, payload)
     local close = FrameProfile.section(label)
     local facade = package.loaded['src.core.Game3']
     local ok, err
+    -- Native lifecycle/UI option changes are synchronous transactions. Capture only
+    -- the current bus's real subscriber; preserve coroutine callback ABI by
+    -- leaving non-main dispatch on its existing path. Frame events stay lean.
+    local lifecycle=name=='mods.loaded'or name=='game.ready'
+    local options=(lifecycle or name=='mod.options_changed'or name=='mod.option_action')
+      and Runtime.events==self and(lifecycle or owner~=nil and owner~='base')
+    if options then local co,main=coroutine.running();options=not co or main end
+    local seams=options and package.loaded['src.mods.ModSeams']
+    local seamOwner=owner
+    if seams and(owner==nil or owner=='base')then seamOwner='lifecycle:'..name end
     if facade and facade._usesCallbacks and facade._usesCallbacks(entry.owner) then
-      ok, err = pcall(facade._invokeEvent, entry.owner, name, entry.callback, payload)
+      if seams then ok,err=seams.run(seamOwner,facade._invokeEvent,owner,name,entry.callback,payload)
+      else ok,err=pcall(facade._invokeEvent,owner,name,entry.callback,payload)end
     else
-      ok, err = pcall(entry.callback, payload)
+      if seams then ok,err=seams.run(seamOwner,entry.callback,payload)
+      else ok,err=pcall(entry.callback,payload)end
     end
     close()
     if not ok then
