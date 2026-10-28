@@ -9,12 +9,13 @@ local SaveData=require('src.core.SaveData')
 local Task=require('src.cloud.Task')
 local Download=require('src.mods.ModDownload')
 local Auth=require('src.cloud.RetroCloud')
+local Strings=require('src.core.Strings')
 local function get(url)
   local headers={Accept='application/json',['User-Agent']='RetroRecomped/1.0'}
   local status,body=Http.request('GET',url,{headers=headers})
   if status==401 and url==C.FEED and Auth.expire then Auth.expire() end
   if status~=200 or type(body)~='string' or #body>4*1024*1024 then
-    return nil,'Catalogue request failed ('..tostring(status or 'offline')..').'
+    return nil,Strings('Catalogue request failed (%s).',tostring(status or Strings('offline')))
   end
   return body
 end
@@ -60,20 +61,20 @@ function C.resolve(entry,doc)
 end
 function C.describe(entry)
   local body=entry.description or entry.summary or ''
-  if entry.github then body=body..'\n\nRepository: '..entry.github end
-  if entry.thumbnailCredit then body=body..'\nPreview image: '..entry.thumbnailCredit end
-  if entry.sourceChecked then body=body..'\nCatalogue checked: '..entry.sourceChecked end
-  if entry.game_version then body=body..'\nEngine: '..entry.game_version end
-  if entry.games and #entry.games>0 then body=body..'\nGames: '..table.concat(entry.games,', ') end
-  if entry.permissions and #entry.permissions>0 then body=body..'\nPermissions: '..table.concat(entry.permissions,', ') end
+  if entry.github then body=body..'\n\n'..Strings('Repository: %s',entry.github) end
+  if entry.thumbnailCredit then body=body..'\n'..Strings('Preview image: %s',entry.thumbnailCredit) end
+  if entry.sourceChecked then body=body..'\n'..Strings('Catalogue checked: %s',entry.sourceChecked) end
+  if entry.game_version then body=body..'\n'..Strings('Engine: %s',entry.game_version) end
+  if entry.games and #entry.games>0 then body=body..'\n'..Strings('Games: %s',table.concat(entry.games,', ')) end
+  if entry.permissions and #entry.permissions>0 then body=body..'\n'..Strings('Permissions: %s',table.concat(entry.permissions,', ')) end
   if entry.latest then
-    body=body..'\n\nLATEST INSTALLABLE RELEASE · '..tostring(entry.latest.version)
+    body=body..'\n\n'..Strings('LATEST INSTALLABLE RELEASE · %s',tostring(entry.latest.version))
     if entry.latest.zip and entry.latest.zip.size then body=body..string.format(' · %.1f MB',entry.latest.zip.size/1048576) end
     body=body..'\n'..Update.cleanBody(entry.latest.body or '',12000)
   end
   if entry.update_check and entry.update_check:match('^error:') then body=body..'\n\n'..entry.update_check end
   local status,note=C.compatibility(entry)
-  return 'RETRORECOMPED · '..status..'\n'..note..'\n\n'..body
+  return 'RETRORECOMPED · '..Strings(status)..'\n'..Strings(note)..'\n\n'..body
 end
 function C.compatibility(entry,game)
   local V=require('src.core.Version')
@@ -81,7 +82,7 @@ function C.compatibility(entry,game)
   if entry.game_version then
     local ok,matches,why=pcall(require('src.mods.Semver').satisfies,V.engine,entry.game_version)
     if not ok or why then return 'NOT VERIFIED','Engine requirements are not documented as a readable version range.' end
-    if not matches then return 'INCOMPATIBLE','Requires engine '..tostring(entry.game_version)..'; this build is '..V.engine..'.' end
+    if not matches then return 'INCOMPATIBLE',Strings('Requires engine %s; this build is %s.',tostring(entry.game_version),V.engine) end
   end
   if game and entry.games and #entry.games>0 then
     local targets=require('src.mods.ModTargets').normalize(entry.games)
@@ -155,7 +156,7 @@ function C.pumpUpdates(self)
       self._communityUpdateJob=task
       if not task then
         self.modUpdateInfo[mod.id]={status='error',err=tostring(why)}
-        self.modNotice={ok=false,text='Repository check unavailable: '..tostring(why)}
+        self.modNotice={ok=false,text=Strings('Repository check unavailable: %s',tostring(why))}
       end
   end
 end
@@ -166,7 +167,7 @@ function C.backgroundUpdates()
   if not ok then
     if owner._communityUpdateJob then owner._communityUpdateJob:cancel() end
     owner._communityUpdateJob=nil;owner._communityUpdateQueue={}
-    owner.modNotice={ok=false,text='Repository update check stopped: '..tostring(why)}
+    owner.modNotice={ok=false,text=Strings('Repository update check stopped: %s',tostring(why))}
   end
   if not owner._communityUpdateJob and #(owner._communityUpdateQueue or {})==0 then C._updateOwner=nil end
 end
@@ -291,7 +292,7 @@ function C.install(RI)
     local job,why=Download.start(release)
     if not job then notice(self,tostring(why),false);return end
     self._communityDownload={job=job,id=id,release=release,title=title or id,repo=repo,phase='download',bytes=0,guestUpdate=guestUpdate}
-    notice(self,'Downloading '..(title or id)..' inside RetroRecomped...',true)
+    notice(self,Strings('Downloading %s inside RetroRecomped…',title or id),true)
   end
   function RI:_findInstall(entry)
     local release,why=Index.releaseFor(entry)
@@ -403,8 +404,8 @@ function C.install(RI)
     if state then
       local total=tonumber(state.release.zip.size)
       local bytes=state.bytes or 0
-      local label=state.phase=='install' and ('Installing '..state.title..'...')
-        or ('Downloading '..state.title..' · '..string.format('%.1f',bytes/1048576)..' MB'..(total and (' / '..string.format('%.1f',total/1048576)..' MB') or ''))
+      local label=state.phase=='install' and Strings('Installing %s…',state.title)
+        or (Strings('Downloading %s…',state.title)..' · '..string.format('%.1f',bytes/1048576)..' MB'..(total and (' / '..string.format('%.1f',total/1048576)..' MB') or ''))
       love.graphics.setFont(self.hintFont);U.col(RI.palette().link)
       love.graphics.printf(label,x,y+used,math.max(60,w-110*s),'left')
       if state.phase=='download' then self._communityCancelRect=self:_chipButton(x+w-100*s,y+used,'CANCEL',{w=100*s,h=30*s}) end
@@ -427,7 +428,7 @@ function C.install(RI)
         for _,entry in ipairs(self.findIndex.mods or {}) do if entry.catalogueId==week.catalogue_id then
           if not entry._communityResolved then self:_findThumb(entry) end
           if C.weekCompatible(entry) then
-            local r=self:_chipButton(x,y+used,'MOD OF THE WEEK · '..entry.title,{w=w,h=48*self._s,kind='accent'})
+            local r=self:_chipButton(x,y+used,Strings('MOD OF THE WEEK · %s',entry.title),{w=w,h=48*self._s,kind='accent'})
             r.entry=entry;self._communityWeekRect=r;used=used+60*self._s
           end
           break
@@ -500,8 +501,8 @@ function C.install(RI)
             options.modInstallSources[download.id]={repo=download.repo,version=version,tag=download.release.tag,sha256=download.digest}
             SaveData.saveOptions(options)
           end
-          self:_refreshMods();notice(self,mismatch or ('Installed '..download.title..' '..tostring(version)..'. Enable it in Installed mods.'),not mismatch)
-        else notice(self,'Install failed: '..tostring(version),false) end
+          self:_refreshMods();notice(self,mismatch or Strings('Installed %s %s. Enable it in Installed mods.',download.title,tostring(version)),not mismatch)
+        else notice(self,Strings('Install failed: %s',Strings(tostring(version))),false) end
       else
         local result=download.job:poll()
         if result.kind=='done' then download.phase='install';download.path=result.path;download.bytes=result.bytes;download.digest=result.digest
@@ -520,12 +521,12 @@ function C.install(RI)
       local entry=self._communityConfirmPending;self._communityConfirmPending=nil
       if entry and result.kind=='done' and C.resolve(entry,result.first) then
         self._findDetails=nil;confirm(self,entry)
-      else notice(self,'Could not resolve the latest ZIP: '..tostring(result.error or result.second),false) end
+      else notice(self,Strings('Could not resolve the latest ZIP: %s',Strings(tostring(result.error or result.second))),false) end
     end)
     pump('_communityFindJob',function(result)
       if result.kind=='done' and result.first then
         self.findIndex=result.first;self.findCategory=nil
-        self.findNotice=result.second and {ok=false,text=result.second} or {ok=true,text='ModCompass · '..#result.first.mods..' mods. Releases are checked from the original repositories.'}
+        self.findNotice=result.second and {ok=false,text=result.second} or {ok=true,text=Strings('ModCompass · %d mods. Releases are checked from the original repositories.',#result.first.mods)}
         C.enrich(self)
       else self.findNotice={ok=false,text=#(self.findIndex and self.findIndex.mods or {})>0 and 'Connection interrupted. Showing the saved catalogue; retry to check for changes.' or 'Catalogue unavailable. Retry to load the mod cards.'} end
     end)

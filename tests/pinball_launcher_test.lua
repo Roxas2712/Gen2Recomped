@@ -2,6 +2,8 @@
 -- Contributions by Roxas2712.
 package.path='./?.lua;'..package.path
 love=require('tests.love_stub');love.filesystem.getSource=function()return '/pinball-qa-no-assets'end
+local Translation=require('src.translation.Service')
+Translation.setLauncher({launcherLanguage='de'})
 local noop=function()end;local checks,connections,started,cancelled=0,0,0,0
 local function check(ok,why)assert(ok,why);checks=checks+1 end
 package.loaded['src.cloud.Task']={new=function(fn)return{poll=function()local a,b=fn();return{kind='done',first=a,second=b}end,cancel=function()cancelled=cancelled+1 end}end}
@@ -52,7 +54,7 @@ end
 local advancedHidden=true
 for _,button in ipairs(ui._pinButtons)do if button.label:find('IP / Port',1,true)then advancedHidden=false end end
 check(advancedHidden,'manual IP entry is hidden in the normal friend flow')
-click('ERWEITERTE VERBINDUNG · LAN / EIGENER RELAY')
+click('ERWEITERTE VERBINDUNG · LAN / EIGENES RELAY')
 click('ONLINE / LAN · DIREKT HOSTEN')
 check(connections==0 and ui._pinConnectJob,'button queues connection instead of doing account I/O in the click handler')
 ui:update(.016);check(connections==1 and started==1 and ui._pinPlayer.net==lastNet,'completed transport launches the actual player path')
@@ -67,6 +69,14 @@ check(ui._launcherSequence and ui._pinPendingNet==lastNet,'animated launch retai
 lastNet:close();ui._launcherSequence.onComplete()
 check(started==1 and not ui._pinPlayer,'closed invitation during animation never starts a guest')
 ui._launcherSequence=nil;ui._pinPendingNet=nil;ui._pinOpen=true;ui.section='games'
+Translation.setLauncher({launcherLanguage='en'})
+ui._pinAdvanced=false;ui:_sbDrawContent(0,0,1000,700)
+local english={};for _,button in ipairs(ui._pinButtons)do english[button.label]=true end
+check(english['ADVANCED CONNECTION · LAN / CUSTOM RELAY']and not english['ERWEITERTE VERBINDUNG · LAN / EIGENES RELAY'],
+ 'the actual English page does not force German connection copy')
+check(english['DUEL TABLE: RUBY']and not english['DUELL-TISCH: RUBIN'],
+ 'the actual table selector follows the English launcher language')
+Translation.setLauncher({launcherLanguage='de'})
 M.session=function()return nil end
 ui:_sbDrawContent(0,0,1000,700)
 local importButton,playButton=false,false

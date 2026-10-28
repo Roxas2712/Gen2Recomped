@@ -93,4 +93,12 @@ ui._pinOpen=true;ui.previews=0;ui:_sbDrawContent(0,0,1000,5000)
 check(ui.previews==0 and #ui._gameModsActions==0,'native Pinball never receives incompatible RPG package buttons')
 ui._pinOpen=false;ui._xyOpen=true;ui._xyEdition='x';ui:_sbDrawContent(0,0,1000,5000)
 check(ui.previews==0,'native X/Y keeps its separate mod-format workflow')
+local Translation=require('src.translation.Service')
+Translation.setLauncher({launcherLanguage='de'})
+ui=fixture();ui.mods[1].name='SIGN IN';ui.findIndex.mods[1].title='INSTALL';ui.findIndex.mods[1].summary='SIGN IN'
+prints={};ui:_drawGamePanel('red',0,0,1000,5000,true)
+local seen={};for _,value in ipairs(prints)do seen[value]=true end
+check(seen['SIGN IN']and seen['INSTALL'],'publisher titles and summaries matching UI keys remain unchanged')
+check(seen['Für dieses Spiel installiert · 1'],'formatted module-page counts use the launcher language')
+Translation.setLauncher({launcherLanguage='en'})
 print('Game mods page: '..checks..' layout, routing and install-context checks passed')

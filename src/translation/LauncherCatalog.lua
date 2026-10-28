@@ -650,4 +650,12 @@ for language,rows in pairs(require("src.translation.CommunityCatalog"))do
  catalog[language]=catalog[language]or{}
  for key,value in pairs(rows)do catalog[language][key]=value end
 end
+for language,rows in pairs(require("src.translation.LauncherPolishCatalog"))do
+ catalog[language]=catalog[language]or{}
+ for key,value in pairs(rows)do catalog[language][key]=value end
+end
+for language,rows in pairs(require("src.translation.PinballCatalog"))do
+ catalog[language]=catalog[language]or{}
+ for key,value in pairs(rows)do catalog[language][key]=value end
+end
 return catalog
