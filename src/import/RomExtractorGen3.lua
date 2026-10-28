@@ -49466,6 +49466,10 @@ function RomExtractorGen3:extractBattlerCoords()
   self:beginStage("Gen3 battler coords")
   local C = RomExtractorGen3.BATTLER_COORDS
   local rom = self.rom
+  if C.POINTER_AT then
+    assert(rom:u32(C.READER + C.POINTER_AT) == 0x08000000 + C.AT,
+      'Native battler coordinate reader does not reference its edition table')
+  end
   local rows = {}
   for row = 0, 1 do
     local out = {}

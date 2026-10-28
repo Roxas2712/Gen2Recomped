@@ -128,6 +128,12 @@ for _, version in ipairs({ "red", "blue", "yellow", "gold", "silver", "crystal",
       T.eq(e.state.faints, 1, "native double flank faint emits once")
       T.check(e.state.awards > 0, "native double flank faint awards EXP once")
       b = f.reset({ double = true })
+      local leftFoe,rightFoe=b:battlerAt(1),b:battlerAt(3)
+      local nativeAward,foeAwards=b.awardExp,{}
+      b.awardExp=function(self,foe)
+        foeAwards[foe]=(foeAwards[foe]or 0)+1
+        return nativeAward(self,foe)
+      end
       e.state.requests = {
         { side = "enemy", battlerId = 1, amount = 99999 },
         { side = "enemy", battlerId = 3, amount = 99999 },
@@ -136,7 +142,9 @@ for _, version in ipairs({ "red", "blue", "yellow", "gold", "silver", "crystal",
       f.drain()
       T.eq(b.result, "win", "native doubles field wipe resolves victory")
       T.eq(e.state.faints, 2, "native doubles field wipe announces both foes")
-      T.eq(e.state.awards, 2, "native doubles field wipe awards each foe once")
+      T.eq(foeAwards[leftFoe],1,"native doubles field wipe awards left foe once")
+      T.eq(foeAwards[rightFoe],1,"native doubles field wipe awards right foe once")
+      T.eq(e.state.awards, 4, "two native participants each receive EXP from both foes")
       for _, reverse in ipairs({ false, true }) do
         b = f.reset({ double = true })
         local requests = {}

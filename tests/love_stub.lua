@@ -12,15 +12,13 @@ function Image:getDimensions() return self.w, self.h end
 function Image:getWidth() return self.w end
 function Image:getHeight() return self.h end
 
--- Shared methods keep equivalent quad traces comparable while retaining
--- mutable viewports for the native animation owner.
-local Quad = {}
-Quad.__index = Quad
-function Quad:setViewport(x,y,w,h,sw,sh)
-  self.x,self.y,self.w,self.h=x,y,w,h
-  self.sw,self.sh=sw or self.sw,sh or self.sh
+-- Equal quad records share their API methods just as Image records do.
+-- Per-instance closures make otherwise identical renderer traces unequal.
+local function setQuadViewport(self,a,b,c,d,e,f)
+  self.x,self.y,self.w,self.h=a,b,c,d
+  self.sw,self.sh=e or self.sw,f or self.sh
 end
-function Quad:getViewport()return self.x,self.y,self.w,self.h end
+local function getQuadViewport(self)return self.x,self.y,self.w,self.h end
 
 -- read PNG dimensions from the file header (no decoder needed)
 local function pngSize(path)
@@ -55,7 +53,8 @@ stub.graphics = {
     return setmetatable({ w = w, h = h, path = path }, Image)
   end,
   newQuad = function(x,y,w,h,sw,sh)
-    return setmetatable({x=x,y=y,w=w,h=h,sw=sw,sh=sh},Quad)
+    return {x=x,y=y,w=w,h=h,sw=sw,sh=sh,
+      setViewport=setQuadViewport,getViewport=getQuadViewport}
   end,
   newCanvas = function(w, h)
     return setmetatable({ w = w, h = h, setFilter = noop }, Image)
