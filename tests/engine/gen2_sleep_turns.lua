@@ -53,10 +53,13 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   b.charging={id='FLY'};b.chargeReady=true;b.invulnerable=true;b.hiddenAs='air'
   b.bideTurns,b.bideDamage,b.thrashTurns,b.rampRun=2,8,2,3
   b.rampMove='ROLLOUT'
+  require('src.battle.Gen2VanishPresentation').charge(s,b,nil)
+  T.eq(s:fxHidden(b),true,'real native picture owner observes a charged Fly')
   local allowed=Status.beforeMove(b,s.rng,s,{id='FLY'})
   T.eq(allowed,false);T.eq(b.sleepTurns,2);T.eq(b.mon.sleepTurns,2)
   T.eq(b.charging,nil);T.eq(b.chargeReady,nil);T.eq(b.invulnerable,nil);T.eq(b.hiddenAs,nil)
   T.eq(b.bideTurns,nil);T.eq(b.bideDamage,nil);T.eq(b.thrashTurns,nil);T.eq(b.rampRun,nil)
+  T.eq(s:fxHidden(b),false,'cancelled Fly cannot leave the real native picture hidden')
   s,b,t=fixture(edition,'FIX_TACKLE',side);asleep(b,3)
   pp,hp=b.curMoves[1].pp,t.mon.hp
   s:executeAction(b,t,b.curMoves[1])
