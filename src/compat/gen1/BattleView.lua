@@ -25,7 +25,7 @@ local monKeys={'species','nickname','level','hp','maxHp','attack','defense','spe
 local battlerKeys={'id','side','flank','mon','species','type1','type2','ability','item','status','fainted','stages','partyIndex','expLockedMove','expEncoreMove'}
 local stateKeys={'player','enemy','battlers','party','playerParty','enemyParty','turn','wild','double','over','result',
  'weather','weatherTurns','session','playerIndex','enemyIndex','trainerClass','trainerName','trainerPicId',
- 'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng'}
+ 'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng','interactiveChoices'}
 local reserved={}
 for _,key in ipairs(stateKeys)do reserved[key]=true end
 function M.new(game,screen,valid,identifiers)
@@ -71,6 +71,10 @@ function M.new(game,screen,valid,identifiers)
      mon.status=value>0 and(value<=7 and'SLP'or inverse[value])or nil
      mon.sleepTurns=value>0 and value<=7 and value or nil;mon.toxic=value==128 or nil
     end
+   elseif kind=='state'and key=='interactiveChoices'then
+    local engine=package.loaded['src.core.game3.battle.engine']
+    assert(engine and engine._setInteractiveChoices,'native move choice policy is unavailable')
+    engine._setInteractiveChoices(e.context.screen,t,value)
    elseif kind=='state'and not reserved[key]then
     -- Presentation extensions belong to this view; they cannot replace the
     -- controller's command queue, party aliases or completion result.
@@ -198,6 +202,11 @@ function M.new(game,screen,valid,identifiers)
     e.kinds=e.kinds or{};e.kinds.tutorial=raw.pokedudeDemo and'pokedude'or(raw.demo and'oldMan'or nil);return e.kinds
    end
    if key=='rng'then return e.rng end
+   if key=='interactiveChoices'then
+    local engine=package.loaded['src.core.game3.battle.engine']
+    if engine and engine._interactiveChoices then return engine._interactiveChoices(raw,e.view)end
+    return raw.interactiveChoices
+   end
   end
  end
  e.read=read
