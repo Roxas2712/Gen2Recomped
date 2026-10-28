@@ -109,6 +109,11 @@ function C.install(loader, api, owner, generation)
   local ids = Ids.new(loader)
   local api3 = (api.manifest.api or 1) >= 3
   local extra = api3 and Api3Catalog
+  local function records(name)
+    local facade=package.loaded['src.core.Game3']
+    local source=api3 and generation==3 and facade and facade._usesSourceRecords and facade._usesSourceRecords(owner)
+    return Records.new(loader,name,generation,api3,source),source
+  end
   for _, kind in ipairs({ "pokemon", "moves", "items" }) do
     ids:entries(kind)
   end
@@ -129,13 +134,21 @@ function C.install(loader, api, owner, generation)
     local wrapped = callback
     if not custom(name) and not nativeEvents[name] then
       wrapped = function(payload)
-        local boundary = Records.new(loader, name, generation, api3)
-        local public = boundary.view(payload, name == "pokemon.before_give" and "gift" or "context")
-        local values = pack(callback(public))
-        if name == "pokemon.before_give" then
-          boundary.commit()
+        local boundary, source = records(name)
+        local public
+        if source then
+          local ok,value=pcall(boundary.view,payload,name=='pokemon.before_give'and'gift'or'context')
+          if not ok then boundary.close();error(value,0)end
+          public=value
+        else public=boundary.view(payload,name=='pokemon.before_give'and'gift'or'context')end
+        local values = pack(pcall(callback,public))
+        if values[1] and name == "pokemon.before_give" then
+          local ok,why=pcall(boundary.commit)
+          if not ok then values={n=2,false,why}end
         end
-        return unpack(values, 1, values.n)
+        boundary.close()
+        if not values[1]then error(values[2],0)end
+        return unpack(values, 2, values.n)
       end
     end
     if once then
@@ -161,7 +174,7 @@ function C.install(loader, api, owner, generation)
       check(C.hooks, name)
       assert(type(callback) == "function", "hook callback must be a function")
       return loader.hooks:wrap(name, function(nextFn, ...)
-        local boundary = Records.new(loader, name, generation, api3)
+        local boundary, source = records(name)
         local portableEnemy = api3 and generation == 3 and name == "battle.enemy_action"
         local roles = portableEnemy and { false, "enemySlot" } or positions[name] or {}
         local function translate(args)
@@ -191,7 +204,7 @@ function C.install(loader, api, owner, generation)
               v = boundary.native(role == "itemId" and "items" or role, v, original[i])
             elseif role then
               local identity = api3 and (name == "shiny.roll" or name == "gender.roll")
-              v = boundary.restore(v, role, identity and original[i] or nil)
+              v = boundary.restore(v, role, (identity or source and role=='context')and original[i]or nil)
             end
             out[i] = v
           end
@@ -200,7 +213,12 @@ function C.install(loader, api, owner, generation)
           end
           return out
         end
-        local public = translate(original)
+        local public
+        if source and #roles>0 then
+          local ok,value=pcall(translate,original)
+          if not ok then boundary.close();error(value,0)end
+          public=value
+        else public=translate(original)end
         local called, downstream, publicResult = false, nil, nil
         local active = true
         local function nextPublic(...)
