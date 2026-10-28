@@ -132,7 +132,10 @@ Status.RECORDS = {
     id = "SLP", label = "SLP", hudLabel = "SLP",
     catchBonus = 25, shakeBonus = 10,
     beforeMovePriority = 40,
-    beforeMove = function(battler)
+    beforeMove = function(battler,rng,battle,move)
+      if require('src.core.GameVersion').isGen2()then
+        return require('src.battle.Gen2Sleep').beforeMove(battler,rng,battle,move)
+      end
       battler.sleepTurns = (battler.sleepTurns or 1) - 1
       if battler.sleepTurns <= 0 then
         battler.mon.status = nil
@@ -141,8 +144,10 @@ Status.RECORDS = {
       return false, { Strings("%s\nis fast asleep!", name(battler)) }, nil, nil, "sleep"
     end,
     onInflict = function(battle, target, opts, display)
-      target.sleepTurns = battle.rng(rule(battle, "sleepTurnsMin"),
-                                     rule(battle, "sleepTurnsMax"))
+      local low,high=rule(battle,'sleepTurnsMin'),rule(battle,'sleepTurnsMax')
+      if require('src.core.GameVersion').isGen2()then
+        require('src.battle.Gen2Sleep').inflict(battle,target,low,high)
+      else target.sleepTurns=battle.rng(low,high)end
       return { Strings("%s\nfell asleep!", display) }
     end,
   },
@@ -245,7 +250,7 @@ end
 -- The active status record's beforeMove runs at its priority slot: above
 -- VOLATILE_PRIORITY before the held/disable/confusion block (sleep,
 -- freeze), at or below after it (paralysis) -- the original's order.
-function Status.beforeMove(battler, rng, battle)
+function Status.beforeMove(battler, rng, battle, move)
   local mon = battler.mon
   -- Haze curing this mon's sleep/freeze forfeits its pending move for
   -- the turn, silently (haze.asm writes $ff/CANNOT_MOVE to the selected
@@ -254,7 +259,8 @@ function Status.beforeMove(battler, rng, battle)
     battler.skipMove = nil
     return false, {}
   end
-  if battler.flinched then
+  local gsc=require('src.core.GameVersion').isGen2()
+  if battler.flinched and not gsc then
     battler.flinched = false
     return false, { Strings("%s\nflinched!", name(battler)) }
   end
@@ -271,7 +277,7 @@ function Status.beforeMove(battler, rng, battle)
   end
   local function runStatus()
     local statusId=mon.status
-    local canMove,statusMsgs,selfHit,reason,kind=handler(battler,rng,battle)
+    local canMove,statusMsgs,selfHit,reason,kind=handler(battler,rng,battle,move)
     for _,m in ipairs(statusMsgs or {})do msgs[#msgs+1]=m end
     if kind==nil and (reason=='sleep' or reason=='confused')then kind=reason end
     if statusMsgs and #statusMsgs>0 and (kind=='sleep' or kind=='confused')then describe(kind,#msgs)end
@@ -282,6 +288,12 @@ function Status.beforeMove(battler, rng, battle)
     local canMove,selfHit,reason=runStatus()
     if not canMove or selfHit then return canMove,msgs,selfHit,reason,presentation end
     handler = nil
+  end
+  if gsc and battler.flinched then
+    battler.flinched=false
+    msgs[#msgs+1]=Strings('%s\nflinched!',name(battler))
+    require('src.battle.Gen2Sleep').cancel(battler,move)
+    return false,msgs,false,nil,presentation
   end
   if battler.boundTurns and battler.boundTurns > 0 then
     battler.boundTurns = battler.boundTurns - 1

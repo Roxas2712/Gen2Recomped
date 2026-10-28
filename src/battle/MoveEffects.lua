@@ -288,6 +288,7 @@ MoveEffects.primary = {
       mon.hp = mon.stats.hp
       mon.status = "SLP"
       user.sleepTurns = 2
+      if GameVersion.isGen2()then require('src.battle.Gen2Sleep').rest(user)end
       user.toxicCounter = nil
       return { Strings("%s\nstarted sleeping!", displayName(user)) }
     end

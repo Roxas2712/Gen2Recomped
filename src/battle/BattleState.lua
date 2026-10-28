@@ -7938,8 +7938,9 @@ function BattleState:executeAction(user, target, action)
     if action.special == "recharge" then
       -- only reaching .HyperBeamCheck consumes the flag (core.asm:3384-
       -- 3392): sleep/freeze/held/flinch keep the mon recharging next turn
-      if self:preRechargeChecks(user, target) then return end
+      if not GameVersion.isGen2() and self:preRechargeChecks(user, target) then return end
       user.mustRecharge = nil
+      if GameVersion.isGen2()then require('src.battle.Gen2Sleep').cancel(user,action)end
       self:sayNext(self:romText("_MustRechargeText", "%s\nmust recharge!", displayName(user)))
       return
     end
@@ -7964,7 +7965,7 @@ function BattleState:executeAction(user, target, action)
       return
     end
 
-    if self:statusInterrupt(user, target) then return end
+    if self:statusInterrupt(user, target, action) then return end
     -- PLATINUM / HGSS: Gravity and Heal Block refuse a move outright
     if self.g4fx and require("src.battle.Gen4MoveEffects").beforeMove(self, user, target, action) then
       return
@@ -8106,7 +8107,7 @@ end
 
 -- Runs Status.beforeMove plus the shared interruption bookkeeping;
 -- returns true when the user's action is interrupted.
-function BattleState:statusInterrupt(user, target)
+function BattleState:statusInterrupt(user, target, move)
   -- TRUANT, before the conditions.  SLAKING and SLAKOTH move every OTHER
   -- turn: the cartridge sets a flag after a move and reads it before the
   -- next one, which is why this is a toggle rather than "every second turn
@@ -8120,7 +8121,7 @@ function BattleState:statusInterrupt(user, target)
     end
     user.truantLoafing = true
   end
-  local canMove,msgs,selfHit,reason,presentation=Status.beforeMove(user,self.rng,self)
+  local canMove,msgs,selfHit,reason,presentation=Status.beforeMove(user,self.rng,self,move)
   for i,m in ipairs(msgs)do
     self:sayStatusMsg(user,m,presentation and presentation.index==i and presentation.kind or nil)
   end
