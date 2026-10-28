@@ -1,0 +1,38 @@
+name: Native region picker and flight boundary
+on:
+  pull_request:
+    paths:
+      - 'src/compat/gen1/NativeRegionMap.lua'
+      - 'src/world/Gen3FlyTargets.lua'
+      - 'src/ui/Gen3RegionMap.lua'
+      - 'src/ui/Gen3RsRegionMap.lua'
+      - 'src/ui/game3/region_map.lua'
+      - 'src/ui/game3/rse/region_map.lua'
+      - 'src/core/game3/field.lua'
+      - 'src/world/OverworldController.lua'
+      - 'tests/engine/native_region_map_observations.lua'
+      - 'tests/engine/native_fly_boundary.lua'
+      - '.github/workflows/native-flight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-flight-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native observations and once-only departure
+        run: |
+          luajit tests/engine/native_region_map_observations.lua
+          luajit tests/engine/native_fly_boundary.lua
+          luajit tests/engine/native_field_observations.lua
+      - name: Existing native admission and other generations
+        run: |
+          luajit tests/engine/world_actions_api.lua
+          luajit tests/engine/gen2_fly_destinations.lua
+          luajit tests/engine/gen2_battle_scene.lua

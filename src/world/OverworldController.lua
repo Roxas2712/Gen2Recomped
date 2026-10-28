@@ -6741,6 +6741,14 @@ function OverworldState:flyTo(mapId, mon)
   local flyWarps = (Game.data.field or {}).flyWarps or {}
   local spot = flyWarps[mapId]
   if not spot then return end
+  local field=package.loaded['src.core.game3.field']
+  if GameVersion.isGen3()and field then
+    return field._dispatchFly(Game,self,mapId,mon,spot,function()return OverworldState._flyToBody(self,mapId,mon,spot)end)
+  end
+  return OverworldState._flyToBody(self,mapId,mon,spot)
+end
+
+function OverworldState:_flyToBody(mapId,mon,spot)
   require("src.core.Sound").play(Game.data, "Fly")
   Game.save.onBike = false
   self:clearBikeFlags() -- HandleFlyWarpOrDungeonWarp res BIT_ALWAYS_ON_BIKE
