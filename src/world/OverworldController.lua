@@ -10020,6 +10020,15 @@ function OverworldState:checkGen3Current()
     return false
   end
   local way = map:currentAt(p.cellX, p.cellY)
+  -- The waterfall is a southward current too. Its predicate lives in the
+  -- shared forced-movement table, outside the four sea-current predicates.
+  -- Without it a surfer can paddle up the entire fall without using the HM.
+  local waterfall = Game.data.constants and Game.data.constants.gen3Waterfall
+  if not way and waterfall and map.cellBehaviour and map.forcedMovementAt
+     and map:cellBehaviour(p.cellX, p.cellY) == waterfall.behaviour then
+    local row = map:forcedMovementAt(p.cellX, p.cellY)
+    way = row and row.way
+  end
   if not way then
     self.gen3Current = nil
     return false
@@ -11660,7 +11669,11 @@ function OverworldState:tryWaterfallOW()
     self:gen3FieldText("WATERFALL", "ask")
       or Strings("It's a large waterfall.\nWould you like to use\nWATERFALL?"),
     nil, { choice = function(yes)
-      if yes then self:gen3UseWaterfall(fx, fy, behaviour) end
+      if yes then
+        self:gen3ShowFieldMove(self:partyKnows("WATERFALL"), function()
+          self:gen3UseWaterfall(fx, fy, behaviour)
+        end)
+      end
     end }))
   return true
 end
