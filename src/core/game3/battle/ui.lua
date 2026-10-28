@@ -138,7 +138,11 @@ setmetatable(Ui,{__index=function(_,key)
   if key=='_menuIndex'then return screen.menuIndex end
   if key=='_moveIndex'then return screen.moveIndex end
   if key=='_active'then return screen:choosingSlotNow()end
-  if key=='_swap'then return screen.moveSwapIndex end
+  if key=='_swap'then
+    local index=screen.moveSwapIndex
+    return index and{cursor=index-1}or nil
+  end
+  if key=='_swapIndex'then return screen.moveSwapIndex end
   if key=='_mode'then return({menu='menu',moveSelect='moves',mimicSelect='moves',targetSelect='target'})[screen.phase]or'none'end
 end,__newindex=function(t,key,value)
  if key=='_menuIndex'or key=='_moveIndex'then
@@ -150,7 +154,7 @@ end,__newindex=function(t,key,value)
   assert(screen.phase==phase,'native battle cursor is not active')
   assert(type(value)=='number'and value==value and value%1==0 and value>=1 and value<=math.min(4,limit),'invalid native battle cursor')
   if key=='_menuIndex'then screen.menuIndex=value else screen.moveIndex=value end
- elseif key=='_st'or key=='_mode'or key=='_active'or key=='_swap'then
+ elseif key=='_st'or key=='_mode'or key=='_active'or key=='_swap'or key=='_swapIndex'then
   error('native battle UI observation is read-only: '..key,2)
  else rawset(t,key,value)end
 end})
