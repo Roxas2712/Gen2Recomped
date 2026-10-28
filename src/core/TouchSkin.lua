@@ -702,9 +702,32 @@ function TouchSkin.load(root, id)
   return skin
 end
 
+local mountedArchives = {}
+local function unmountZip(archive)
+  local point = mountedArchives[archive]
+  if not point then return true end
+  if not (love and love.filesystem and love.filesystem.unmount) then
+    return nil, "cannot release mounted skin archive"
+  end
+  local ok, removed = pcall(love.filesystem.unmount, archive)
+  if not ok or removed ~= true then return nil, "skin archive is still in use" end
+  mountedArchives[archive] = nil
+  if TouchSkin.active and TouchSkin.active.root == point then TouchSkin.setActive(nil) end
+  for key in pairs(imageCache) do
+    if key:sub(1, #point + 1) == point .. "/" or key:sub(1, 6) == "bytes:" then
+      imageCache[key] = nil
+    end
+  end
+  return true
+end
+
 local function mountZip(archive, point)
   if not (love and love.filesystem and love.filesystem.mount) then return false end
+  -- PhysFS rejects a second mount of an already-mounted archive. A library
+  -- refresh must keep its existing entry instead of making it disappear.
+  if mountedArchives[archive] == point and findConfig(point) then return true end
   local ok, mounted = pcall(love.filesystem.mount, archive, point)
+  if ok and mounted == true then mountedArchives[archive] = point end
   return ok and mounted == true
 end
 
@@ -770,6 +793,8 @@ function TouchSkin.installArchive(name, data)
 
   pcall(wfs().createDirectory, TouchSkin.USER_ROOT)
   local dest = TouchSkin.USER_ROOT .. "/" .. name
+  local released, releaseError = unmountZip(dest)
+  if not released then return nil, releaseError end
   local ok, err = wfs().write(dest, data)
   if not ok then return nil, tostring(err) end
 
@@ -780,6 +805,7 @@ function TouchSkin.installArchive(name, data)
   end
   local skin = TouchSkin.load(entry.root, entry.id)
   if skin and require("src.core.DeltaSkin").needsConversion(skin) then
+    unmountZip(dest)
     wfs().remove(dest)
     return nil, TouchSkin.PDF_ONLY_MESSAGE
   end
@@ -802,6 +828,10 @@ function TouchSkin.remove(id)
   if entry.source ~= "user" then return nil, "bundled skins cannot be deleted" end
   if not (love and love.filesystem and love.filesystem.remove) then
     return nil, "no writable filesystem"
+  end
+  if entry.archive then
+    local released, err = unmountZip(entry.archive)
+    if not released then return nil, err end
   end
   local function removeTree(path)
     if isDir(path) and love.filesystem.getDirectoryItems then

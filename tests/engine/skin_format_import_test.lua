@@ -496,12 +496,17 @@ love.filesystem.write("skins/wrapped.deltaskin/MySkin/portrait.png", "\137PNG\r\
 
 local wrappedId, wrappedErr = TouchSkin.installArchive("wrapped.deltaskin", "PK\3\4stub")
 eq(wrappedId, "wrapped", "a .deltaskin installs under its bare name: " .. tostring(wrappedErr))
+eq(TouchSkin.find('wrapped').id,'wrapped','refresh retains an already-mounted archive')
+eq(TouchSkin.find('wrapped').id,'wrapped','repeated refresh still retains the archive')
 local wrapped = assert(TouchSkin.load("skins/_mounted/wrapped", "wrapped"))
 eq(wrapped.format, "delta", "the mounted archive is recognised as a Delta skin")
 eq(wrapped.name, "Wrapped", "and its name comes from info.json")
 eq(wrapped.pages[1].imagePath, "MySkin/portrait.png",
    "the wrapping folder is prefixed onto assets and the real file name wins")
 eq(#wrapped.pages[1].controls, 1, "the wrapped items parsed")
+eq(TouchSkin.installArchive('wrapped.deltaskin','PK\3\4replacement'),'wrapped',
+   'replacement releases the previous mount before installing')
+check(TouchSkin.find('wrapped') ~= nil,'replacement is visible on a subsequent refresh')
 
 love.filesystem.write("skins/vector.deltaskin/info.json", PDF_JSON)
 local vectorId, vectorErr = TouchSkin.installArchive("vector.deltaskin", "PK\3\4stub")
@@ -711,5 +716,13 @@ for _, entry in ipairs(TouchSkin.list()) do
 end
 eq(listedRoot, "skins/collide", "so the export cannot shadow the skin it came from")
 check(not listedExport, "and the export folder is not a skin of its own")
+
+local oldUnmount=love.filesystem.unmount
+love.filesystem.unmount=function() return false end
+eq(TouchSkin.remove('wrapped'),nil,'a busy mounted archive is not deleted')
+check(love.filesystem.read('skins/wrapped.deltaskin') ~= nil,'busy archive bytes are retained')
+love.filesystem.unmount=oldUnmount
+check(TouchSkin.remove('wrapped'),'removal releases its mount before deleting archive bytes')
+eq(TouchSkin.find('wrapped'),nil,'removed archive is absent on subsequent refresh')
 
 T.finish("skin_format_import")

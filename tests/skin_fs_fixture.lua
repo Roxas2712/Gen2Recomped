@@ -33,7 +33,15 @@ local function fixture()
     end
     table.sort(out);return out
   end
-  function fs.mount(archive,point) mounts[#mounts+1]={archive=archive,point=point};return true end
+  function fs.mount(archive,point)
+    if not files[archive] then return false end
+    for _,m in ipairs(mounts) do if m.archive==archive then return false end end
+    mounts[#mounts+1]={archive=archive,point=point};return true
+  end
+  function fs.unmount(archive)
+    for i=#mounts,1,-1 do if mounts[i].archive==archive then table.remove(mounts,i);return true end end
+    return false
+  end
   function fs.createDirectory() return true end
   function fs.newFileData(bytes,name) return {contents=bytes,name=name} end
   function fs.getSaveDirectory() return '/memory-only-skin-fixture' end
