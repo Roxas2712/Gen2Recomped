@@ -875,6 +875,10 @@ local function imagePathOf(img)
 end
 
 -- the image a battler pic actually draws with this frame
+-- The native image cache keeps static display bakes separate from transient
+-- hardware BGP. Resolve that byte at the actual battle picture draw boundary.
+-- At most 256 immutable index maps; no per-picture register-map allocation.
+local gen2PicRegisterMaps={}
 function BattleState:picImage(img)
   local PaletteFX = require("src.render.PaletteFX")
   if GameVersion.isGen2() then
@@ -913,7 +917,20 @@ function BattleState:picImage(img)
   if self.blackedOut or (self.introSlide or 0) > 0 then
     return blackImage(self.data, img)
   end
-  return fadeImage(img, self:activeBgp())
+  img=fadeImage(img,self:activeBgp())
+  if GameVersion.isGen2()then
+    local byte=PaletteFX.bgp()
+    if byte then
+      local map=gen2PicRegisterMaps[byte]
+      if not map then
+        local shades=PaletteFX.bgpShades(byte)
+        map={[0]=shades[1],shades[2],shades[3],shades[4]}
+        gen2PicRegisterMaps[byte]=map
+      end
+      img=fadeImage(img,map)
+    end
+  end
+  return img
 end
 
 -- Gen 1 trainer Pokémon have fixed DVs (engine/battle/core.asm);
