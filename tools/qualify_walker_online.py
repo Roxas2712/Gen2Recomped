@@ -16,6 +16,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--love', type=Path, required=True)
     parser.add_argument('--label', required=True)
+    parser.add_argument('--conflict', action='store_true', help='Render the explicit complete-snapshot conflict chooser.')
     args = parser.parse_args()
     assert args.label.replace('-', '').isalnum()
     import qa_storage as qa
@@ -48,7 +49,7 @@ def main():
         image = output / (label + '.png')
         with (output / (label + '.log')).open('w') as log:
             child = qa.qa_popen([str(args.love), str(host)], cwd=ROOT,
-                                env=os.environ | {'WALKER_PREVIEW_CAPTURE': str(image), 'WALKER_PREVIEW_GUEST': '1' if guest else '0'}, stdout=log, stderr=log)
+                                env=os.environ | {'WALKER_PREVIEW_CAPTURE': str(image), 'WALKER_PREVIEW_GUEST': '1' if guest else '0', 'WALKER_PREVIEW_CONFLICT': '1' if args.conflict else '0'}, stdout=log, stderr=log)
             try:
                 deadline = time.monotonic() + 60
                 while child.poll() is None and time.monotonic() < deadline:

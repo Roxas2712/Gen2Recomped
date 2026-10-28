@@ -83,4 +83,44 @@ invalid=S.decode(walkRaw);invalid.state.walking.source.slot='injected'
 check(not C.decode(S.encode(invalid)),'remote device-local slot injection is rejected')
 fs=fsB;W.live=nil;filesB[W.FILE]='damaged';filesB[W.FILE..'.bak']=nil;filesB[W.FILE..'.tmp']=nil
 check(not C.sync(store)and filesB[W.FILE]=='damaged','an unreadable local walker blocks cloud replacement and preserves the damaged bytes')
+-- A recovery chooser selects one complete branch and binds both hashes.
+for _,data in ipairs{filesA,filesB,remote}do for key in pairs(data)do data[key]=nil end end
+fs=fsA;files=filesA;W.live=nil;links=linksA
+local localState=W.load();localState.watts=10;assert(W.save(localState));assert(C.sync(store)=='uploaded')
+fs=fsB;files=filesB;W.live=nil;assert(C.sync(store,true)=='restored')
+localState=W.load();localState.watts=20;assert(W.save(localState));assert(C.sync(store)=='uploaded')
+fs=fsA;files=filesA;W.live=nil;localState=W.load();localState.watts=30;assert(W.save(localState))
+local preview=assert(C.review(store))
+check(preview.localWatts==30 and preview.cloudWatts==20,'review shows complete local and cloud branches')
+localState.watts=31;assert(W.save(localState));local prior=remote[C.PATH]
+check(not C.resolve(store,preview,'local')and remote[C.PATH]==prior,'changed local preview cannot overwrite cloud')
+preview=assert(C.review(store));local remoteDoc=S.decode(remote[C.PATH]);remoteDoc.state.watts=40;remote[C.PATH]=S.encode(remoteDoc)
+prior=filesA[W.FILE]
+check(not C.resolve(store,preview,'cloud')and filesA[W.FILE]==prior,'changed cloud preview cannot overwrite local progress')
+preview=assert(C.review(store));failWrite=true;prior=remote[C.PATH]
+check(not C.resolve(store,preview,'local')and remote[C.PATH]==prior and W.load().watts==31,'HTTP revision failure preserves both branches')
+failWrite=false
+local write=fsA.write
+fsA.write=function(p,b)if p:find('walker/conflicts/',1,true)then return false,'disk full'end;return write(p,b)end
+check(not C.resolve(store,preview,'cloud')and W.load().watts==31,'recovery backup failure blocks replacement')
+fsA.write=write
+check(C.resolve(store,preview,'cloud')=='restored'and W.load().watts==40,'explicit cloud choice restores its exact balance without merging')
+check(not W.check(localState),'cloud choice retires old screen state')
+local localBackup,cloudBackup=false,false
+for path,raw in pairs(filesA)do
+ if path:match('walker/conflicts/local%-.*%.lua$')then localBackup=localBackup or C.decode(raw).state.watts==31 end
+ if path:match('walker/conflicts/cloud%-.*%.lua$')then cloudBackup=cloudBackup or C.decode(raw).state.watts==40 end
+end
+check(localBackup and cloudBackup,'both chosen and rejected versions have complete recovery copies')
+check(C.sync(store)=='current','chosen branch updates normal sync history')
+fs=fsB;W.live=nil;assert(C.sync(store,true)=='restored');localState=W.load();localState.watts=50;assert(W.save(localState));assert(C.sync(store)=='uploaded')
+fs=fsA;W.live=nil;localState=W.load();localState.watts=60;assert(W.save(localState));preview=assert(C.review(store))
+check(C.resolve(store,preview,'local')=='uploaded'and C.decode(remote[C.PATH]).state.watts==60,'explicit local choice uploads one whole version without adding rewards')
+check(not C.resolve(store,preview,'local'),'a choice token cannot be replayed after resolution')
+preview={accountId='18',localHash=preview.localHash,remoteHash=preview.remoteHash}
+check(not C.resolve(store,preview,'cloud'),'another account cannot apply a retained choice')
+race=function()id='18';race=nil end;prior=filesA[W.FILE]
+check(not C.review(store)and filesA[W.FILE]==prior and not W.syncing,'account changes during review release locks and preserve progress')
+id='17'
+check(not C.resolve(store,{},'merge'),'balance merging is never a supported recovery choice')
 print('Pokéwalker cloud: '..n..' simulated two-device persistence checks passed')
