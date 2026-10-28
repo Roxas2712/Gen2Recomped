@@ -10,6 +10,7 @@ import sys
 import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cartridge_secondary import expected_observations
+from cartridge_completion import expected_completion
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from qa_report_storage import write_report
@@ -178,11 +179,16 @@ def main():
                 expected, corrections = expected_observations(values["gen1"], version, mode)
                 accepted = same_observations(expected, values["gen2"])
                 oracle = "cartridge-secondary-v1"
+            elif len(values) == 2 and mode in ("post_hit_items_execution", "spit_up"):
+                expected, corrections = expected_completion(values["gen1"], version, mode)
+                accepted = same_observations(expected, values["gen2"])
+                oracle = "cartridge-completion-v1"
             failed |= not accepted
             report["comparisons"].append({"version": version, "api": api, "mode": mode, "equal": equal,
                                            "accepted": accepted, "oracle": oracle,
                                            "corrected_rows": corrections, "observations": values})
-            description = (f"cartridge secondary oracle ({len(corrections)} corrected reference rows)"
+            label = "cartridge secondary oracle" if oracle == "cartridge-secondary-v1" else "cartridge completion oracle"
+            description = (f"{label} ({len(corrections)} corrected reference rows)"
                            if oracle else "identical complete contract observations")
             print(f"{'PASS' if accepted else 'FAIL'} {version}/API {api}/{mode}: {description}")
     report["passed"] = not failed
