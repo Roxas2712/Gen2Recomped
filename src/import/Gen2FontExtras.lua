@@ -20,6 +20,21 @@ local function ink(raw, width, height, bits)
   end
   return image
 end
+function M.patchExtra(e, image)
+  if e.manifest and e.manifest.fontSheets then return end
+  -- LoadFontsExtra does not load FontExtra's unused bold A/B/C at $60-$62.
+  -- GS uses a paired 1bpp black/up-arrow source; Crystal separates them and
+  -- stores the arrow in 2bpp. Both load the Pokegear telephone at $62.
+  for _, row in ipairs{
+    {'FontsExtra_SolidBlackAndUpArrowGFX', 16, 16, 1, 0},
+    {'FontsExtra_SolidBlackGFX', 8, 8, 1, 0},
+    {'FontsExtra2_UpArrowGFX', 16, 8, 2, 8},
+    {'PokegearPhoneIconGFX', 16, 8, 2, 16},
+  } do
+    local raw = read(e, row[1], row[2])
+    if raw then Writer.blit(image, ink(raw, row[3], 8, row[4]), row[5], 0, 0, 0, row[3], 8) end
+  end
+end
 function M.extract(e)
   local record = {}
   -- Hack manifests can change the VRAM loading program entirely (including

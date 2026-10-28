@@ -49,6 +49,29 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   e.rom.bytes=function()error('out of ROM')end
   T.same(M.extract(e),{},'unreadable optional input retains original font')
 end
+-- Drive the actual existing atlas importer, not just the extension module:
+-- unused bold A/B/C must be replaced by the cartridge's black/arrow/phone.
+for _,edition in ipairs{'gold','silver','crystal'}do
+  local symbols={Font={1,0x4000},FontExtra={2,0x4000},Frames={3,0x4000},PokegearPhoneIconGFX={6,0x4000}}
+  if edition=='crystal'then
+    symbols.FontsExtra_SolidBlackGFX={4,0x4000};symbols.FontsExtra2_UpArrowGFX={5,0x4000}
+  else symbols.FontsExtra_SolidBlackAndUpArrowGFX={4,0x4000}end
+  local e=E.new(nil,edition,{symbols=symbols});local images={}
+  e.saveImage=function(_,image,path)images[path]=image end
+  e.rom={bytes=function(_,bank,at,count)
+    local raw={};for i=1,count do raw[i]=bank==2 and 255 or 0 end
+    if bank==4 then raw[1]=128;if count==16 then raw[9]=64 end end
+    if bank==5 then raw[1],raw[2]=64,64 end
+    if bank==6 then raw[1],raw[2]=32,32 end
+    return raw
+  end}
+  T.check(e:extractFontSheets(),edition..' real ordinary font importer completes')
+  local image=assert(images['fonts/font_extra.png'])
+  for tile,x in ipairs{0,1,2}do
+    T.same({image:getPixel((tile-1)*8+x,0)},{0,0,0,1},edition..' correct ROM source for special tile '..tile)
+    T.same({image:getPixel((tile-1)*8+7,0)},{0,0,0,0},edition..' transparent paper replaces unused bold glyph')
+  end
+end
 -- The real readiness gate must reject an old generated font record, so a
 -- pre-existing private install imports the new sheets rather than hiding the
 -- setting forever. No ROM or save data is bundled in the test.
