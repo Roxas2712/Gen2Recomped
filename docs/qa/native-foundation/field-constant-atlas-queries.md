@@ -37,7 +37,7 @@ older-public composition `ece2b98080` (head239d5270) passes48 groups over its ow
 older native bodies, including92 constants,305 atlas/region and155 flight checks.
 Later RS native controller bodies are not overlaid onto that composition; real
 RS metadata/art/controller acceptance remains conditional on its native owner.
-An actual unchanged-mod Ruby atlas/map/flight probe is in progress.
+Actual unchanged-mod Ruby `6dd335c10c`, source `63edafa7ab`, opens/cancels/reopens the real native RS fly picker, reads a detached28x15 atlas without changing save/RNG, executes one48-frame departure and arrives at native Littleroot5,9 with input unlocked. The settled renderer publishes RU_LITTLEROOT_TOWN (355050 vertices, no pending build). Its240-frame readback-free Metal sample averages16.875ms (59.3FPS), median16.633ms, p95 19.540ms and max48.216ms. The source wrapper performs13 departure-preparation slices, while landing setup still remains waiting. This prepared fresh-profile run does not establish continuous-story, complete UI, all-map or sustained performance acceptance.
 
 The preceding FireRed flight source `10d00485d3`, actual run `591d5ee763`, reaches
 native Pallet6,8 and a settled upright exterior. A readback-free240-frame Metal
