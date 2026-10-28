@@ -78,42 +78,150 @@ local function serializer() return require("src.core.SaveSerializer") end
 -- minigames all hold the same table, so none of them writes over another's
 -- watts with a stale copy. W.reload() reads the disk again.
 W.live = nil
+local stateScopes=setmetatable({},{__mode='k'})
+local stateErrors=setmetatable({},{__mode='k'})
+local liveFs
+function W.storage()
+  return require('src.core.SaveData').persistenceFs()
+end
+function W.check(st)
+  if W.transferError then return nil,W.transferError end
+  if stateErrors[st]then return nil,stateErrors[st]end
+  local fs=W.storage()
+  local policy=package.loaded['src.storage.AccountStorage']
+  if policy and policy.enabled then
+    local allowed,why=policy.saveCheck();if not allowed then return nil,why end
+  end
+  if W.syncing and (coroutine.running()or 'main')~=W.syncTask then
+    return nil,'Pokéwalker sync is running. Try again when it finishes.'
+  end
+  if stateScopes[st]~=nil and stateScopes[st]~=fs then
+    return nil,'The Pokéwalker profile changed. Reopen it before continuing.'
+  end
+  stateScopes[st]=fs
+  return true
+end
+function W.peek()
+  if liveFs~=W.storage() then
+    if W.live then stateScopes[W.live]=false end
+    W.live=nil;liveFs=nil;W.recoveryError=nil;W.transferError=nil
+  end
+  return W.live
+end
+function W.exists()
+  local fs=W.storage()
+  if not fs then return false end
+  if require('src.pokewalker.WalkerTransfer').pending(fs)then return true end
+  for _,name in ipairs{W.FILE,W.FILE..'.tmp',W.FILE..'.bak'}do
+    if fs.getInfo(name)and require('src.pokewalker.WalkerStorage').read(fs,name)~=nil then return true end
+  end
+  -- The first open will migrate an unbound, device-local legacy guest walk.
+  local base=fs._profileBase
+  if fs._accountPrefix=='profiles/guest/'and base and not base.read('storage_account.lua')then
+    return base.getInfo(W.FILE)~=nil or base.getInfo(W.FILE..'.bak')~=nil or base.getInfo(W.FILE..'.tmp')~=nil
+  end
+  return false
+end
 
 function W.load()
-  if W.live then return W.live end
+  if W.peek() then return W.live end
+  local fs=W.storage()
+  local Storage=require('src.pokewalker.WalkerStorage')
+  local migrated,migrationError=Storage.migrateGuest(fs,W.FILE)
+  local recovered,transferError=require('src.pokewalker.WalkerTransfer').recover(fs,W.FILE)
+  W.transferError=not recovered and transferError or nil
+  if not recovered then migrated=false;migrationError=transferError end
+  local damaged=false
   -- the state file, then its staged and previous copies: a phone killing the
   -- app mid-write must not cost the walking Pokemon (it left its PC box when
   -- it was sent) -- SaveSafety.atomicWrite in W.save keeps both
   for _, name in ipairs({ W.FILE, W.FILE .. ".tmp", W.FILE .. ".bak" }) do
     local okT, t = false, nil
-    if love and love.filesystem and love.filesystem.getInfo(name) then
-      okT, t = pcall(serializer().decode, love.filesystem.read(name) or "")
+    local raw,readError
+    if fs and fs.getInfo(name)then raw,readError=Storage.read(fs,name)end
+    if readError then damaged=true;migrationError=readError end
+    if raw then
+      damaged=true
+      okT, t = pcall(serializer().decode, raw)
     end
     if okT and type(t) == "table" then
       local fresh = W.newState()
       for k, v in pairs(fresh) do if t[k] == nil then t[k] = v end end
-      W.live = t
+      W.live = t;liveFs=fs;stateScopes[t]=fs;W.recoveryError=nil
+      if not migrated then
+        W.recoveryError=migrationError or 'Pokéwalker storage needs recovery. Existing files were preserved.'
+        stateErrors[t]=W.recoveryError
+      end
       return t
     end
   end
-  W.live = W.newState()
+  W.live = W.newState();liveFs=fs;stateScopes[W.live]=fs
+  if damaged or not migrated then
+    W.recoveryError=migrationError or 'Pokéwalker storage needs recovery. Existing files were preserved.'
+    stateErrors[W.live]=W.recoveryError
+  end
   return W.live
 end
 
-function W.reload() W.live = nil return W.load() end
+function W.reload()
+  if W.live then stateScopes[W.live]=false end
+  W.live = nil;W.recoveryError=nil;return W.load()
+end
 
 function W.save(st)
-  if st then W.live = st end
-  if love and love.filesystem then
+  st=st or W.peek()
+  if type(st)~='table'then return false,'No Pokéwalker state to save.'end
+  local allowed,why=W.check(st);if not allowed then return false,why end
+  local fs=W.storage()
+  if fs then
     local okS, Safety = pcall(require, "src.core.SaveSafety")
     if okS then
-      return Safety.atomicWrite(love.filesystem, W.FILE, serializer().encode(st),
+      local ok,err=Safety.atomicWrite(fs, W.FILE, serializer().encode(st),
         { bak = W.FILE .. ".bak", decode = Safety.decodeAny })
+      if ok then W.live=st;liveFs=fs end
+      return ok,err
     else
-      return love.filesystem.write(W.FILE, serializer().encode(st))
+      local ok,err=fs.write(W.FILE, serializer().encode(st))
+      if ok then W.live=st;liveFs=fs end
+      return ok,err
     end
   end
   return false, 'walker storage unavailable'
+end
+
+-- A restored snapshot invalidates screen/run references to the old table.
+-- They must reopen rather than overwriting the restored rewards later.
+function W.adopt(st)
+  local previous=W.peek()
+  local ok,why=W.save(st)
+  if ok and previous and previous~=st then stateScopes[previous]=false end
+  return ok,why
+end
+
+-- Keep existing screen references only after both durable participants verify.
+function W.transfer(st,version,slot,before,save,nextState)
+  local allowed,why=W.check(st);if not allowed then return false,why end
+  local fs=W.storage();local T=require('src.pokewalker.WalkerTransfer')
+  if not fs then return false,'walker storage unavailable'end
+  local source=st.walking and st.walking.source
+  if source and source.version==version and source.slot==slot
+    and serializer().decode(before).walkerTransfer~=st.transferReceipt then
+    return false,"The source save's Pokémon transfer changed. Sync or recover the Pokéwalker before continuing."
+  end
+  local previous=fs.read(W.FILE)
+  local called,ok,value=pcall(T.commit,fs,W.FILE,version,slot,before,save,nextState)
+  if not called then value=ok;ok=nil end
+  if not ok then
+    local examined,pending=pcall(T.pending,fs)
+    if not examined or pending or fs.read(W.FILE)~=previous then
+      W.transferError=tostring(value or 'Pending Pokémon transfer needs recovery.');W.recoveryError=W.transferError
+    end
+    return false,value
+  end
+  for key in pairs(st)do st[key]=nil end
+  for key,v in pairs(value)do st[key]=v end
+  W.live=st;liveFs=fs;stateScopes[st]=fs
+  return true
 end
 
 -- the walker's own finds (Dowsing, the Poke Radar, a find): three of each, as

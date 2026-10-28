@@ -60,6 +60,11 @@ function Storage.install(RI)
         if not synced then return nil,bankWhy end
         message=message..' · Bank '..tostring(synced)..' entries.'
       end
+      if target.kind=='retro' then
+        local walker,walkerWhy=require('src.pokewalker.WalkerCloud').sync(target,restoreOnly)
+        if not walker then return nil,walkerWhy end
+        if walker~='empty' then message=message..' · '..require('src.core.Strings')('Pokéwalker: %s',require('src.core.Strings')(walker)) end
+      end
       local profile
       if not restoreOnly and options.modProfileSync then
         local profileWhy

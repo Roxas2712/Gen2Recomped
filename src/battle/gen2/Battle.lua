@@ -34,19 +34,31 @@ function Model:stageTables()
     end
   end})
 end
-local volatileViews=setmetatable({}, {__mode='k'})
 local volatileNames={substitute='substituteHP',protect='protecting',mist='mist',
-  confusion='confused',confusionTurns='confusionTurns',flinch='flinched'}
+  confusion='confused',confusionTurns='confusionTurns',flinch='flinched',
+  -- Canonical source GSC fields must drive the actual shared controller.
+  confuseCount='confusedTurns',flinched='flinched',endure='enduring',
+  recharge='mustRecharge',protectCount='protectRun',
+  focusEnergy='focusEnergy',xAccuracy='xAccuracy'}
 function Model:volatile(mon)
-  local b=assert(active(owner(self),mon),'volatile state requires an active battler')
-  if not volatileViews[b] then
+  local screen=owner(self)
+  local b=assert(active(screen,mon),'volatile state requires an active battler')
+  -- A global weak-key cache still roots its battlers on LuaJIT when the
+  -- value's closures retain their key. Keep views on the transient model,
+  -- never on a serialized battler or party mon, and retire withdrawn owners.
+  local views=rawget(self,'_nativeVolatileViews')
+  if not views then views={};rawset(self,'_nativeVolatileViews',views)end
+  for previous in pairs(views)do
+    if previous~=screen.player and previous~=screen.enemy then views[previous]=nil end
+  end
+  if not views[b] then
     local extensions={}
-    volatileViews[b]=setmetatable({}, {
+    views[b]=setmetatable({}, {
       __index=function(_,key)local field=volatileNames[key];if field then return b[field] end;return extensions[key]end,
       __newindex=function(_,key,value)local field=volatileNames[key];if field then b[field]=value else extensions[key]=value end end,
     })
   end
-  return volatileViews[b]
+  return views[b]
 end
 
 function Model:battlerName(mon)
@@ -61,7 +73,7 @@ function Model:effectiveSpeed(mon)
   return require('src.battle.TurnOrder').effectiveSpeed(assert(active(owner(self),mon)),owner(self))
 end
 function Model:movePriority(id)
-  return (self:moveDef(id)or {}).priority or 0
+  return require('src.battle.Gen2MovePriority').get(self:moveDef(id))
 end
 function Model:markMissed()
   return owner(self):markMissed()

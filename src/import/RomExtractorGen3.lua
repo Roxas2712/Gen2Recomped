@@ -27815,6 +27815,10 @@ function RomExtractorGen3:extractTilesets()
     assert(raw, why)
     constants.gen3SourceBehaviorFlags = { version = 1, raw = raw, romSha1 = self.manifest.romSha1 }
   end
+  local doorEdition=type(self.version)=='table'and self.version.id or self.version
+  local doorMetadata,doorWhy=require('src.import.Gen3DoorMetadata').read(self.rom,doorEdition,self.manifest.romSha1)
+  constants.gen3DoorMetadata=doorMetadata
+  if not doorMetadata then Logger.warn('Gen3 door metadata: %s',doorWhy)end
   self._constants = constants
   self:write("constants", constants)
   Logger.info("Gen3 tileset pairs: %d (the unit a metatile actually draws from)",
@@ -59589,6 +59593,8 @@ function RomExtractorGen3:run()
   -- a successful, permanently blank Emerald fallback cache.
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
+  require('src.import.Gen3FrlgHallAssets').extract(self)
+  require('src.import.Gen3FrlgCreditsAssets').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
   -- Script and late UI stages can add prose after the initial scan. Snapshot

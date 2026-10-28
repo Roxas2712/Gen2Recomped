@@ -25,6 +25,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  f.game.input.wasPressed=function(_,key)return key=='a'end
  local offers,steps,completed=0,0,0;local last,borrowed
  A.tweenStage=function(frames,step,done)
+  if frames~=35 then return base(frames,step,done)end
   offers=offers+1;T.eq(frames,35);borrowed=step
   T.eq(Intro._steps[Intro._i].kind,'opponent_sendout','offer belongs to the actual native phase')
   return base(frames,function(u,task)

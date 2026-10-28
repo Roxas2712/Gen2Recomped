@@ -32,13 +32,14 @@ end
 -- fonts by scale, rebuilt only when the scale moves
 local fontCache = {}
 function G.fonts(s)
-  local key = math.floor(s * 20 + 0.5)
+  local pixelKey = math.floor(s * 20 + 0.5)
+  local key=tostring(require('src.translation.Service').launcherTarget or 'en')..':'..pixelKey
   local hit = fontCache[key]
   if hit then return hit end
   local file
   pcall(function() file = require("src.translation.Service").launcherFont end)
   local function f(px)
-    px = math.max(8, math.floor(px * key / 20 + 0.5))
+    px = math.max(8, math.floor(px * pixelKey / 20 + 0.5))
     local ok, font = pcall(function() return file and love.graphics.newFont(file, px) or love.graphics.newFont(px) end)
     return ok and font or love.graphics.newFont(px)
   end
@@ -140,7 +141,7 @@ function G.tick(t) proxy.t = t end
 
 -- the course backdrop, the same one the Pokewalker's walk page shows
 function G.scene(x, y, w, h, courseName, scroll)
-  local P = screen()
+  local P = not G.contentActive and screen()
   if P and P.scene then
     local ok = pcall(P.scene, proxy, x, y, w, h, courseName, scroll or 0)
     if ok then return end
@@ -153,6 +154,9 @@ end
 -- the art module, or nil headless
 local Art
 local function art()
+  -- The hub pins a reviewed, profile-local provider for its whole lifetime.
+  -- Basic mode deliberately cannot fall through to imported game media.
+  if G.contentActive then return G.contentProvider end
   if Art == nil then
     local ok, A = pcall(require, "src.pokewalker.WalkerArt")
     Art = ok and A or false
@@ -253,6 +257,11 @@ end
 -- an item, drawn: balls are balls, berries are berries, the rest a bag
 function G.item(name, cx, cy, r)
   local g = love.graphics
+  if G.contentActive and not G.contentProvider then
+    -- Independent token, rather than a recognisable game-item illustration.
+    setc(G.GOLD);g.polygon('fill',cx,cy-r,cx+r,cy,cx,cy+r,cx-r,cy)
+    setc(G.INK);g.circle('line',cx,cy,r*.35);return
+  end
   name = tostring(name or ""):lower()
   if name:find("ball") then
     local top = name:find("great") and { 0.25, 0.45, 0.95 } or name:find("ultra") and { 0.20, 0.20, 0.22 }

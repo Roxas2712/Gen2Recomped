@@ -407,8 +407,9 @@ Ev.readSave = readSave
 local function backup(version, slotId, bytes)
   if not (bytes and love and love.filesystem) then return end
   local dir = ("pokewalker_backups/%s"):format(version)
-  pcall(love.filesystem.createDirectory, dir)
-  pcall(love.filesystem.write, ("%s/%s_%s_event.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S")), bytes)
+  local fs=require('src.core.SaveData').persistenceFs()
+  pcall(fs.createDirectory, dir)
+  pcall(fs.write, ("%s/%s_%s_event.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S")), bytes)
 end
 
 -- the status of every event for one save: { [id] = reason or nil }
@@ -424,7 +425,7 @@ function Ev.statusFor(version, slotId)
 end
 
 -- Queue one event into a save on disk. Returns true, or false and why.
-function Ev.queue(version, slotId, ev)
+function Ev.queue(version, slotId, ev, prepareOnly)
   local save, bytes = readSave(version, slotId)
   if not save then return false, bytes end
   local why = Ev.blocked(ev, save, version)
@@ -433,6 +434,7 @@ function Ev.queue(version, slotId, ev)
   local s = state(save)
   s.claimed[ev.id] = os.time()
   s.pending[#s.pending + 1] = { id = ev.id, t = os.time() }
+  if prepareOnly then return true,nil,save,bytes end
   return require("src.core.SaveData").writeSlot(version, slotId, save)
 end
 

@@ -44,8 +44,9 @@ end
 local function backup(version, slotId, bytes, why)
   if not (bytes and love and love.filesystem) then return end
   local dir = ("pokewalker_backups/%s"):format(version)
-  love.filesystem.createDirectory(dir)
-  love.filesystem.write(("%s/%s_%s_%s.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S"), why or "walk"), bytes)
+  local fs=SaveData.persistenceFs()
+  fs.createDirectory(dir)
+  fs.write(("%s/%s_%s_%s.lua"):format(dir, slotId, os.date("%Y%m%d_%H%M%S"), why or "walk"), bytes)
 end
 
 local function norm(s) return (tostring(s or ""):upper():gsub("[^%w]", "")) end
@@ -136,6 +137,7 @@ end
 -- take a box Pokemon out of its save and onto the walker
 function L.send(st, entry, courseId)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   if st.walking then return false, "a Pokemon is already walking -- bring it home first" end
   local src = entry.source
   local save, bytes = readSave(src.version, src.slot)
@@ -144,20 +146,19 @@ function L.send(st, entry, courseId)
   if type(boxes) ~= "table" and type(save.box) == "table" then boxes = save.box.boxes or { save.box } end
   local box = boxes and boxes[src.box]
   local list = box and (box.mons or box)
-  if not (list and list[src.index] == entry.raw or (list and list[src.index]
-          and list[src.index].species == entry.raw.species and list[src.index].level == entry.raw.level)) then
+  if not (list and type(list[src.index])=='table'and type(entry.raw)=='table'
+          and Ser.encode(list[src.index])==Ser.encode(entry.raw)) then
     return false, "that Pokemon has moved -- reopen the list"
   end
   backup(src.version, src.slot, bytes, "send")
   local mon = list[src.index]
   list[src.index]=nil
-  local ok, err = SaveData.writeSlot(src.version, src.slot, save)
-  if not ok then return false, err end
   local entries, route = Courses.forGame(courseId, src.version)
-  entry.raw = mon
-  W.send(st, courseId, entry, entries, route)
-  W.save(st)
-  return true
+  local nextState=Ser.decode(Ser.encode(st))
+  local nextEntry=Ser.decode(Ser.encode(entry));nextEntry.raw=mon
+  local prepared,why=W.send(nextState,courseId,nextEntry,entries,route)
+  if not prepared then return false,why end
+  return W.transfer(st,src.version,src.slot,bytes,save,nextState)
 end
 
 -- Put a Pokemon back in a save's PC: its own slot if free, else the first free
@@ -190,7 +191,7 @@ local function placeInBox(save, version, source, mon)
 end
 
 -- write what came home into the source save's inbox
-local function deliver(version, slotId, parcel)
+local function deliver(version, slotId, parcel, prepareOnly)
   local save, bytes = readSave(version, slotId)
   if not save then return false, bytes end
   -- Applying a partial stack or a returning Pokemon mutates its table.
@@ -229,32 +230,45 @@ local function deliver(version, slotId, parcel)
   for _, it in ipairs(parcel.items or {}) do box.items[#box.items + 1] = it end
   local applied,why=Delivery.apply(save,version,data)
   if not applied then return false,"could not deliver presents: "..tostring(why) end
+  local pending=save.walkerInbox
+  local notice
+  if pending and (#(pending.mons or {})+#(pending.items or {})+#(pending.returning or {}))>0 then
+    notice="Unplaced presents remain safely in that save's delivery inbox."
+  end
+  if prepareOnly then return true,notice,save,bytes end
   local written,err=SaveData.writeSlot(version,slotId,save)
   if not written then return false,err end
-  local pending=save.walkerInbox
-  if pending and (#(pending.mons or {})+#(pending.items or {})+#(pending.returning or {}))>0 then
-    return true,"Unplaced presents remain safely in that save's delivery inbox."
-  end
-  return true
+  return true,notice
 end
 
 -- THE WATT SHOP's delivery (WalkerEconomy): { items = { { name, count } },
 -- caught = { { species, level } } } into any game's save, the same way
 L.deliverTo = deliver
 
+-- Item/Pokémon shop parcels and their debit share the same durable intent.
+function L.deliverPurchase(st,target,parcel,nextState)
+  if not(target and target.version and target.slot)then return false,'choose a game and save first'end
+  local ok,why,save,bytes=deliver(target.version,target.slot,parcel,true)
+  if not ok then return false,why end
+  local committed,err=require('src.pokewalker.Walker').transfer(st,target.version,target.slot,bytes,save,nextState)
+  return committed,not committed and err or why
+end
+
 -- RETURN FROM WALK (keep = false) or RECEIVE PRESENT (keep = true)
 function L.bringHome(st, keep)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   local w = st.walking
   if not w then return false, "no Pokemon is walking" end
   local src = w.source
   local parcel = { mon = (not keep) and w or nil, caught = st.caught, items = st.items, course = st.course }
-  local ok, err = deliver(src.version, src.slot, parcel)
+  local ok, err,save,bytes = deliver(src.version, src.slot, parcel,true)
   if not ok then return false, err end
-  W.takeHome(st, keep)
-  W.note(st, err or (keep and "Presents delivered to your PC and bag." or ("%s came home."):format(w.name or "Your Pokemon")))
-  W.save(st)
-  return true,err
+  local nextState=Ser.decode(Ser.encode(st))
+  W.takeHome(nextState, keep)
+  W.note(nextState, err or (keep and "Presents delivered to your PC and bag." or ("%s came home."):format(w.name or "Your Pokemon")))
+  local committed,why=W.transfer(st,src.version,src.slot,bytes,save,nextState)
+  return committed,not committed and why or err
 end
 
 -- one caught Pokemon (st.caught[index], or all of them with no index) home
@@ -262,18 +276,20 @@ end
 -- the walker stay. It reaches the PC when that game next loads (the inbox).
 function L.sendCaught(st, index)
   local W = require("src.pokewalker.Walker")
+  local allowed,why=W.check(st);if not allowed then return false,why end
   local w = st.walking
   if not w then return false, "no Pokemon is walking" end
   local list = st.caught or {}
   local send = index and { list[index] } or list
   if #send == 0 then return false, "nothing caught yet" end
-  local ok, err = deliver(w.source.version, w.source.slot, { caught = send, items = {}, course = st.course })
+  local ok, err,save,bytes = deliver(w.source.version, w.source.slot, { caught = send, items = {}, course = st.course },true)
   if not ok then return false, err end
-  if index then table.remove(list, index) else st.caught = {} end
-  W.note(st, #send == 1 and ("%s was sent to your game."):format(send[1].name or "A Pokemon")
+  local nextState=Ser.decode(Ser.encode(st))
+  if index then table.remove(nextState.caught, index) else nextState.caught = {} end
+  W.note(nextState, #send == 1 and ("%s was sent to your game."):format(send[1].name or "A Pokemon")
     or ("%d Pokemon were sent to your game."):format(#send))
-  W.save(st)
-  return true,err
+  local committed,why=W.transfer(st,w.source.version,w.source.slot,bytes,save,nextState)
+  return committed,not committed and why or err
 end
 
 return L
