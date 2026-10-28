@@ -196,6 +196,11 @@ setmetatable(M,{__index=function(_,key)
   if key=='_active'then return c~=nil end
   if key=='_st'then return c and c.views.view or runtime.last end
   if not c then return nil end
+  if key=='_actions'or key=='_actionI'then
+    local plan=package.loaded['src.battle.Gen3ActionPlan']
+    if key=='_actionI'then return plan and plan.cursor(c.screen)or 0 end
+    return plan and plan.snapshot(c.screen,c)
+  end
   if key=='_pendingEnd'then return c.screen.result end
   if key=='_phase'then return c.screen.result and'ending'or c.screen.phase end
 end})

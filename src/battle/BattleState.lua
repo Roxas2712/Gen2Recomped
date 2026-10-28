@@ -2844,7 +2844,8 @@ end
 
 function BattleState:runQueueAction(item)
   self.nextInsert=0
-  item.fn()
+  local plan=GameVersion.isGen3()and package.loaded['src.battle.Gen3ActionPlan']
+  if plan then plan.run(self,item)else item.fn()end
   self.nextInsert=nil
   self.current=nil
   local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
@@ -6232,8 +6233,12 @@ function BattleState:resolveTurn(playerAction)
   -- slot reads its entry from `order` when it runs, after that resort
   -- (src/battle/Gen4MoveEffects.lua G4.reorderRest)
   if pClaw or eClaw then order.claw = pClaw and self.player or self.enemy end
+  local nativePlan
+  if GameVersion.isGen3()and package.loaded['src.core.game3.battle']then
+    nativePlan=require('src.battle.Gen3ActionPlan').begin(self,order)
+  end
   for slot, entry in ipairs(order) do
-    self:act(function()
+    local nativeAction=function()
       if self.g4fx then
         require("src.battle.Gen4MoveEffects").reorderRest(self, order, slot)
         entry = order[slot]
@@ -6260,11 +6265,14 @@ function BattleState:resolveTurn(playerAction)
                  or self:defaultTargetFor(entry[1])
       end
       self:executeAction(entry[1], target, entry[3])
-    end)
+    end
+    self:act(nativeAction)
+    if nativePlan then require('src.battle.Gen3ActionPlan').attach(self,nativePlan,self.queue[#self.queue],slot,nativeAction)end
   end
   self:act(function()
     -- the collected choices belong to the turn that just ran, not the next
     self.pendingActions, self.chosenTargets, self._actionTargetOrder = nil, nil, nil
+    if nativePlan then require('src.battle.Gen3ActionPlan').retire(self)end
     self:endOfTurn()
   end)
 end
