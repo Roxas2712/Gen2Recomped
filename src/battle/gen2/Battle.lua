@@ -27,6 +27,10 @@ function Model:moveDef(move)
   return owner(self):moveDef(move)
 end
 
+function Model:movePriority(id)
+  return require('src.battle.Gen2MovePriority').get(self:moveDef(id))
+end
+
 function Model:speciesDef(mon)
   return mon and self.data.pokemon and self.data.pokemon[mon.species] or nil
 end

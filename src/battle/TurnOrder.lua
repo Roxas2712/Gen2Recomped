@@ -66,6 +66,9 @@ end
 local PRIORITY = { QUICK_ATTACK = 1, COUNTER = -1 }
 
 local function priority(move)
+  if require('src.core.GameVersion').isGen2() then
+    return require('src.battle.Gen2MovePriority').get(move)
+  end
   if not move then return 0 end
   if move.priority then return move.priority end
   return PRIORITY[move.id] or 0
