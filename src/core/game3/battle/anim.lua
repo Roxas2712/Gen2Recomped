@@ -67,13 +67,16 @@ local function read(d,id,key)
   if p[key]~=nil then return p[key]end
   if key=='id'then return id end
   if key=='side'then return Coords.sideOf(id)end
-  if key=='visible'then return not b.fainted and not screen:fxHidden(b)and not screen:gen3AnimMonBgHidden(b)end
+  local ball=(key=='visible'or key=='scale'or key=='oy')
+    and screen.gen3BallFor and screen:gen3BallFor(b)or nil
+  if key=='visible'then return not b.fainted and not(ball and ball.monHidden)
+    and not screen:fxHidden(b)and not screen:gen3AnimMonBgHidden(b)end
   if key=='invisible'or key=='battlerInvisible'then return screen:gen3AnimMonBgHidden(b)end
   if key=='ox'or key=='oy'then
     local x,y=screen:gen3AnimShake(b);local fx=screen.picFx and screen.picFx[b]
-    return(key=='ox'and x+(fx and fx.ox or 0)or y+(fx and fx.oy or 0))
+    return(key=='ox'and x+(fx and fx.ox or 0)or y+(fx and fx.oy or 0)+(ball and ball.monRise or 0))
   end
-  if key=='scale'then return screen:gen3AnimScale(b)or 1 end
+  if key=='scale'then return(screen:gen3AnimScale(b)or 1)*(ball and ball.monScale or 1)end
   if key=='sx'or key=='sy'then
     local x,y=screen:gen3AnimSquash(b);return(key=='sx'and x or y)or 1
   end
