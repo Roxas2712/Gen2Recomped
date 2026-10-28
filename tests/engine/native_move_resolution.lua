@@ -39,21 +39,22 @@ for _,changed in ipairs{'user','target','move','slot','state','extra'}do
  T.eq(rolls,0,'foreign resolver arguments cannot consume RNG');T.eq(#b.queue,0)
  E.resolveMove=base;Probe.close(f)
 end
-for _,changed in ipairs{'data','save','mods','stack','queue','definition','actor'}do
+for _,changed in ipairs{'data','save','mods','stack','queue','definition','actor','mon'}do
  local f,b=open('emerald');local pp=b.player.mon.moves[1].pp;local rolls=0
  b.rng=function(lo)rolls=rolls+1;return lo or 0 end
- local prior=changed=='definition'and b.data.moves.MOVE_033 or changed=='actor'and b.player or changed=='queue'and b.queue or f.game[changed]
+ local prior=changed=='definition'and b.data.moves.MOVE_033 or changed=='actor'and b.player or changed=='mon'and b.player.mon or changed=='queue'and b.queue or f.game[changed]
  E.resolveMove=function(...)
   if changed=='queue'then b.queue={}
   elseif changed=='definition'then b.data.moves.MOVE_033={}
   elseif changed=='actor'then local copy={};for k,v in pairs(b.player)do copy[k]=v end;b.player=copy
+  elseif changed=='mon'then local copy={};for k,v in pairs(b.player.mon)do copy[k]=v end;b.player.mon=copy
   else f.game[changed]={}end
   return base(...)
  end
  local ok=pcall(b.performMove,b,b.player,b.enemy,b.player.mon.moves[1])
  T.eq(ok,false,'changed '..changed..' cannot start a retained move')
  T.eq(rolls,0,'cohort guard precedes native RNG')
- if changed=='definition'then b.data.moves.MOVE_033=prior elseif changed=='actor'then b.player=prior elseif changed=='queue'then b.queue=prior else f.game[changed]=prior end
+ if changed=='definition'then b.data.moves.MOVE_033=prior elseif changed=='actor'then b.player=prior elseif changed=='mon'then b.player.mon=prior elseif changed=='queue'then b.queue=prior else f.game[changed]=prior end
  E.resolveMove=base;Probe.close(f)
 end
 -- Replacing the selected PP slot cannot redirect a lent native invocation.

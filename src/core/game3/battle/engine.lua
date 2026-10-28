@@ -28,7 +28,8 @@ local function live(lease)
   and game.stack:top()==screen and screen.queue==lease.queue and not screen.result
   and (type(game.mods)=='table'and game.mods.content or nil)==lease.content
   and lease.ids:valid(),'native move resolution cohort retired')
- assert(lease.user.position==lease.userPosition and lease.target.position==lease.targetPosition
+ assert(lease.user.mon==lease.userMon and lease.target.mon==lease.targetMon
+  and lease.user.position==lease.userPosition and lease.target.position==lease.targetPosition
   and screen:battlerAt(lease.userPosition)==lease.user
   and screen:battlerAt(lease.targetPosition)==lease.target
   and lease.state.battlers[lease.userPosition]==lease.publicUser
@@ -63,7 +64,7 @@ function M._native(screen,user,target,move,isCalled,suppressAnimation,spreadCont
  local game=screen.game
  local lease={game=game,screen=screen,state=state,data=screen.data,save=game.save,mods=game.mods,
   stack=game.stack,content=type(game.mods)=='table'and game.mods.content or nil,queue=screen.queue,edition=Version.get(),ids=Ids.new(screen.data),
-  user=user,target=target,userPosition=user.position,targetPosition=target.position,move=move,moveId=move.id,definition=screen.data.moves[move.id]}
+  user=user,target=target,userMon=user.mon,targetMon=target.mon,userPosition=user.position,targetPosition=target.position,move=move,moveId=move.id,definition=screen.data.moves[move.id]}
  lease.publicUser,lease.publicTarget=state.battlers[user.position],state.battlers[target.position]
  local selected,choices,resolver=ppOwner(move)
  lease.selected,lease.choices,lease.slotResolver=selected,choices,resolver
