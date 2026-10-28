@@ -44,6 +44,7 @@ local function actions(c)
  end
  return c.list
 end
+function M.isOpen()return require('src.compat.gen1.NativeModalObservation').find({'src.ui.Gen3PartyMenu'})~=nil end
 local function sync(c)
  if not c or not c:valid()or not c.screen.submenu then return end
  local list=actions(c);local rows={}

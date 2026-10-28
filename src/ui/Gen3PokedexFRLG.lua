@@ -55,6 +55,7 @@ end
 
 local function base(game, opts)
   local self = setmetatable({ game = game, opts = opts or {} }, Dex)
+  require('src.compat.gen1.NativeModalObservation').capture(self,game)
   self.rec = Dex.record(game)
   self.prefix = (game.save and game.save.nationalDex) and "national_" or "kanto_"
   self.cache = {}

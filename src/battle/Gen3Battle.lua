@@ -36,6 +36,7 @@
 -- the window edges fall.  Those are staging, and they are marked below.
 
 local Assets = require("src.render.Assets")
+local Selection = require("src.battle.Gen3SelectionPresentation")
 local Logger = require("src.core.Logger")
 local Theme = require("src.ui.Theme")
 local Font = require("src.render.Font")
@@ -1323,15 +1324,10 @@ local function drawSummaryRow(summary, side, party, age, extra)
   local cell = summary.ballSide or 8
   local barW = summary.barWidth or bar:getWidth()
   -- how far in the row has travelled: 0 is fully off its own edge, 1 home
-  local slide = Gen3Battle.SUMMARY_SLIDE_FRAMES
-  local p = 1
-  if age and slide > 0 then p = math.max(0, math.min(1, age / slide)) end
-  -- eased so it settles rather than stopping dead
-  local eased = 1 - (1 - p) * (1 - p)
   -- the foe's row lives on the left of the screen and enters from there; the
   -- player's lives on the right and enters from the right
-  local dir = side.flip and -1 or 1
-  local dx = dir * (1 - eased) * (barW + 16)
+  local slide = Gen3Battle.SUMMARY_SLIDE_FRAMES
+  local dx = Gen3Battle.summaryRowOffset(summary,side,age)
   love.graphics.setColor(1, 1, 1, 1)
   -- the strip, mirrored for the foe: drawn from its far corner with a
   -- negative x scale, which is what ST_OAM_HFLIP does to the four pieces
@@ -1371,6 +1367,26 @@ local function foeRowParty(battle)
   return battle.enemyParty
 end
 
+function Gen3Battle.partySummary(battle,player)
+  if not battle.introBalls then return end
+  local summary=summaryRecord(battle)
+  local row=summary and summary[player and'player'or'opponent']
+  if not row then return end
+  if not player and(not battle.enemyParty or battle.kind~='trainer'and battle.kind~='link')then return end
+  return summary,row,player and(battle.playerParty or battle.game.save.party)or foeRowParty(battle)
+end
+function Gen3Battle.summaryBarWidth(summary)
+  local bar=hudImage(summary.bar)
+  return summary.barWidth or bar and bar:getWidth()
+end
+function Gen3Battle.summaryRowOffset(summary,side,age)
+  local width=Gen3Battle.summaryBarWidth(summary)
+  if not width then return nil end
+  local p=1
+  if age and Gen3Battle.SUMMARY_SLIDE_FRAMES>0 then p=math.max(0,math.min(1,age/Gen3Battle.SUMMARY_SLIDE_FRAMES))end
+  local eased=1-(1-p)*(1-p)
+  return(side.flip and -1 or 1)*(1-eased)*(width+16)
+end
 local function drawIntroBalls(battle)
   if not battle.introBalls then return end
   if not require("src.core.GameVersion").isGen3() then
@@ -1498,6 +1514,22 @@ function Gen3Battle.healthboxGeometry(battle,id)
   return x,y,h
 end
 
+-- The same native visibility predicate serves drawing and typed observers.
+function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
+  if showStatus==nil then showStatus=StatusHUDVisibility.forBattle(battle)end
+  if not showStatus or slide~=0 then return false end
+  local double=battle.isDouble and battle:isDouble()
+  local b=id==0 and battle.player or id==1 and battle.enemy or battle:battlerAt(id)
+  if not b or id>=2 and not double then return false end
+  if double then
+    if not b.mon or b.fainted then return false end
+    if id%2==0 then return not battle.showPlayerBack end
+  elseif id==0 then
+    return not battle.safari and (not battle.demo or not not (battle.rsWally and not battle.rsWally.hideHud)) and not battle.showPlayerBack
+  elseif b.fainted then return false end
+  return not battle.showEnemyTrainer and not battle.enemySendingOut
+    and not battle:growInScale(b) and not battle.introBalls
+end
 local function drawHUDs(battle, slide)
   local showStatus = StatusHUDVisibility.forBattle(battle)
   local record = hudRecord(battle)
@@ -1509,18 +1541,15 @@ local function drawHUDs(battle, slide)
       require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
     else require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)end
   end
-  if showStatus and not double and battle.enemy and not battle.showEnemyTrainer
-      and not battle.enemySendingOut and not battle:growInScale(battle.enemy)
-      and slide == 0 and not battle.introBalls and not battle.enemy.fainted then
+  if not double and Gen3Battle.healthboxVisible(battle,1,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesOpponent",
                              hudImage(images.opponent), 8, 8)
-    drawStatusPanel(battle, battle.enemy, x, y, false)
+    drawStatusPanel(battle, battle.enemy, x, y+Selection.offset(battle,'hb',battle.enemy), false)
   end
-  if showStatus and not double and not battle.safari and battle.player and (not battle.demo or battle.rsWally and not battle.rsWally.hideHud)
-      and not battle.showPlayerBack and slide == 0 then
+  if not double and Gen3Battle.healthboxVisible(battle,0,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesPlayer",
                              hudImage(images.player), 112, 64)
-    drawStatusPanel(battle, battle.player, x, y, true)
+    drawStatusPanel(battle, battle.player, x, y+Selection.offset(battle,'hb',battle.player), true)
   end
   -- ...AND THE OTHER TWO PANELS.
   --
@@ -1567,15 +1596,8 @@ local function drawHUDs(battle, slide)
     --
     -- Same conditions, per side, so a double intro reads like two singles
     -- happening at once, which is what it is.
-    local enemyReady = not battle.showEnemyTrainer
-                       and not battle.enemySendingOut
-                       and not battle.introBalls
-    local playerReady = not battle.showPlayerBack
     for _, row in ipairs(pairs_) do
       local b = battle:battlerAt(row.pos)
-      local ready = row.player and playerReady
-                    or (not row.player and enemyReady
-                        and not (b and battle:growInScale(b)))
       -- ...AND IT STAYS UP WHILE THE BAR EMPTIES.
       --
       -- Reported from play: in a double battle a Pokemon's panel vanishes the
@@ -1589,7 +1611,7 @@ local function drawHUDs(battle, slide)
       -- cry and starts the slide, which runs AFTER the drain, so the bar has
       -- emptied by the time it turns true.  Both layouts now answer the same
       -- question, and an empty slot is still nil rather than a zeroed one.
-      if ready and b and b.mon and not b.fainted then
+      if Gen3Battle.healthboxVisible(battle,row.pos,slide,not not showStatus) then
         local panel = hudImage(row.img)
         local h = 32
         if panel and panel.getHeight then
@@ -1605,7 +1627,7 @@ local function drawHUDs(battle, slide)
           -- ride the right edge; opponentLeft and opponentRight are the
           -- left-hand pair (44 and 32) and stay put.
           local edge = row.player and Gen3Battle.extra(battle) or 0
-          local px, py = pos.x - 32 + edge, pos.y - 16
+          local px, py = pos.x - 32 + edge, pos.y - 16+Selection.offset(battle,'hb',b)
           drawStatusPanel(battle, b, px, py, row.player)
           if b == aimed and math.floor((battle.frame or 0) / 8) % 2 == 0 then
             love.graphics.setColor(1, 1, 0.3, 1)
@@ -2455,12 +2477,12 @@ end
 -- (20/30 and 40/50).  In singles, monbg copies are inserted between the exact
 -- OBJ priority bands: same-priority OBJ wins over BG, while splitbgprio can
 -- promote BG1 from priority 2 to priority 1.
-function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
+function Gen3Battle.moveOamObjects(battle, allowDouble)
   local anim = battle and battle.gen3AnimPlaying and battle.gen3Anim
   if not (anim and anim.oamEventDescriptors) then return false, "inactive" end
   if battle.isDouble then
     local ok, double = pcall(battle.isDouble, battle)
-    if ok and double then return false, "double-battler-slot" end
+    if ok and double and not allowDouble then return false, "double-battler-slot" end
   end
 
   local events, reason = anim:oamEventDescriptors(battle, Gen3Battle)
@@ -2486,6 +2508,12 @@ function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
   if not addBattler(battle.player, "player", 1)
      or not addBattler(battle.enemy, "enemy", 2) then
     return false, "unknown-battler-oam"
+  end
+  if allowDouble and battle.isDouble and battle:isDouble() then
+    if not addBattler(battle:battlerAt(2), "player", 3)
+       or not addBattler(battle:battlerAt(3), "enemy", 4) then
+      return false, "unknown-battler-oam"
+    end
   end
   for _, item in ipairs(events) do
     item.seed = 1000 + (item.index or 0)
@@ -2524,7 +2552,12 @@ function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
     if item.event and anim.oamRanks then anim.oamRanks[item.event] = i end
   end
   battle._gen3OamObjectRanks = previous
+  return objects,copies,anim
+end
 
+function Gen3Battle.drawMoveOamObjects(battle, slide, sx, sy)
+  local objects,copies,anim=Gen3Battle.moveOamObjects(battle,false)
+  if not objects then return false,copies end
   local function drawObject(item)
     if item.kind == "battler" then
       battle:drawPicsLayer(slide, sx, sy, item.side, true)
@@ -3157,6 +3190,12 @@ function Gen3Battle.drawBall(battle)
   return drawNativeBall(battle)
 end
 
+function Gen3Battle.introWindow(battle)
+  local fi=battle.frlgIntro
+  if not fi or fi.t>=60 then return end
+  local half=fi.t<=32 and fi.t or 32+(fi.t-32)*4
+  if half<80 then return 80-half,80+half end
+end
 function Gen3Battle.draw(battle)
   local g = love.graphics
   battle:drawBattleField()
@@ -3248,25 +3287,38 @@ function Gen3Battle.draw(battle)
   -- over them.  The methods dispatch back here (BattleState:drawHUDs and
   -- friends), so the implementation is still this file's; what changed is
   -- that there is now a door in front of it.
+  shaken(function()
+    local layer=package.loaded['src.core.game3.battle.level_up_streaks']
+    local draw=function()return require('src.battle.Gen3LevelUpStreaks').draw(battle)end
+    if layer then layer._nativeDraw(battle,draw)else draw()end
+  end)
   shaken(function() battle:drawHUDs(slide) end)
   -- the ball rides with the pics rather than with the windows: it is thrown
   -- across the field, and a screen shake moves the field
   shaken(function() Gen3Battle.drawBall(battle) end)
   battle:drawAnimLayer()
+  local voice=require('src.battle.Gen3VoiceoverPresentation')
+  local dim=voice.dim(battle)
+  if dim>0 then
+    g.setColor(0,0,0,dim);g.rectangle('fill',0,0,Gen3Battle.width(battle),Gen3Battle.HEIGHT)
+    g.setColor(1,1,1,1)
+    if voice.lit(battle)and Gen3Battle.healthboxVisible(battle,0,slide,not not StatusHUDVisibility.forBattle(battle))then
+      local record=hudRecord(battle);local image=hudImage(record and record.images and record.images.player)
+      local x,y=healthboxAt(battle,'singlesPlayer',image,112,64)
+      drawStatusPanel(battle,battle.player,x,y+Selection.offset(battle,'hb',battle.player),true)
+    end
+  end
   shaken(function() battle:drawTextArea() end)
 
   -- the window opening out of the middle: 1 row a side for 32 frames, then 4
   -- (BattleIntroSlide1 cases 2 and 3); nothing shows outside it
-  local fi = battle.frlgIntro
-  if fi and fi.t < 60 then
-    local half = fi.t <= 32 and fi.t or (32 + (fi.t - 32) * 4)
-    if half < 80 then
-      local W, H = Gen3Battle.WIDTH, Gen3Battle.HEIGHT
-      g.setColor(0, 0, 0, 1)
-      g.rectangle("fill", 0, 0, W, 80 - half)
-      g.rectangle("fill", 0, 80 + half, W, H - 80 - half)
-      g.setColor(1, 1, 1, 1)
-    end
+  local top,bottom=Gen3Battle.introWindow(battle)
+  if top then
+    local W,H=Gen3Battle.WIDTH,Gen3Battle.HEIGHT
+    g.setColor(0,0,0,1)
+    g.rectangle('fill',0,0,W,top)
+    g.rectangle('fill',0,bottom,W,H-bottom)
+    g.setColor(1,1,1,1)
   end
 
   if fx and fx.flash and fx.flash > 0 and battle.frame % 4 < 2 then

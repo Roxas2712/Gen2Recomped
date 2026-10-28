@@ -5,6 +5,52 @@ local Battle=require('src.core.game3.battle')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
+function Ui.drawMenuFrames(mode)return require('src.ui.game3.battle_chrome').drawMenuFrames(mode)end
+function Ui.voiceoverDim()
+ local screen=Battle._screen();return screen and require('src.battle.Gen3VoiceoverPresentation').dim(screen)or 0
+end
+function Ui.litHealthboxShown()
+ local screen=Battle._screen();return screen and require('src.battle.Gen3VoiceoverPresentation').lit(screen)or false
+end
+function Ui.moveTypeOf(mon,slot,def)
+ local types=mon and mon.moveTypes
+ if types and types[slot]~=nil then return types[slot]end
+ return def and def.type
+end
+function Ui.ppColorState(current,maximum)
+ current,maximum=tonumber(current)or 0,tonumber(maximum)or 0
+ if current~=current or maximum~=maximum or current==math.huge or maximum==math.huge
+  or current==-math.huge or maximum==-math.huge then return nil,'invalid PP observation'end
+ local palette=require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)
+ return palette==12 and 3 or palette-9
+end
+function Ui.quickBallPrompt()
+ local screen=Battle._screen();return screen and require('src.battle.QuickItem').prompt(screen)or nil
+end
+function Ui.ballQuad(ball,frame)
+ return require('src.core.game3.battle.ui_ball_art').quad(ball,frame)
+end
+local function selectionBattler(key)
+ if type(key)=='number' and (key~=key or key%1~=0 or key<0 or key>3) then return end
+ local screen=Battle._screen();if not screen then return end
+ local id=require('src.core.game3.battle.anim_coords').idOf(key)
+ if id==nil or id>=2 and not screen:isDouble() then return end
+ return screen,screen:battlerAt(id)
+end
+function Ui.targetHidden(key)
+ local screen,b=selectionBattler(key)
+ return screen and require('src.battle.Gen3SelectionPresentation').hidden(screen,b) or false
+end
+function Ui.bounceOffset(kind,key)
+ if kind~='hb' and kind~='mon' then return 0 end
+ local screen,b=selectionBattler(key)
+ return screen and require('src.battle.Gen3SelectionPresentation').offset(screen,kind,b) or 0
+end
+function Ui.previewCoeff(key)
+ local screen,b=selectionBattler(key)
+ local fx=screen and screen:gen3AnimSpecialMonState(b)
+ return math.max(0,math.min(16,(fx and fx.white or 0)*16))
+end
 -- Keep PP thresholds shared with the existing native summary renderer.
 function Ui.ppColorIndex(current,maximum)
  return require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)
