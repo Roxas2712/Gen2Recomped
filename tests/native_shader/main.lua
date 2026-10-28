@@ -343,6 +343,32 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
  send('send','gate',1);check(compare(),'macro-local shadow preserves independent native pixels at global one')
  check(S.status().sources==0,'macro-local declarations retain the original native program')
  reference:release();candidate:release();target:release();g.present()
+ local transitionCode=[[
+uniform float progress;uniform bool toggle;
+vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
+ float scaled=progress*.125;vec4 pixel=vec4(scaled,0.0,0.0,1.0);
+ if(progress>.5){pixel.r+=.5;}
+ if(toggle){pixel.g=.5;}
+ return pixel;
+}
+]]
+ local compiledBefore=S.status().compiled;local continuousBefore=S.status().continuousUniforms or 0
+ reference=g.newShader(transitionCode);candidate=g.newShader(transitionCode..string.rep(' \n',32768))
+ target=g.newCanvas(8,8,{dpiscale=1})
+ send('send','toggle',false);send('send','progress',0)
+ check(compare(),'initial transition endpoint retains exact native pixels')
+ check(S.status().compiled==compiledBefore+1,'initial endpoint is independently optimized')
+ send('send','progress',.25);check(compare(),'interior float retains its original dynamic arithmetic and branch')
+ local dynamicCompiled=S.status().compiled
+ send('send','progress',1);check(compare(),'completed transition retains independent native pixels')
+ check(S.status().compiled==dynamicCompiled,'endpoints of an observed continuous float do not manufacture another program')
+ send('send','progress',0);check(compare(),'returning transition reuses the dynamic native program')
+ check(S.status().compiled==dynamicCompiled,'repeated transition endpoint reuses the existing program')
+ send('send','toggle',true);check(compare(),'independent boolean flags remain independently optimized')
+ check(S.status().compiled==dynamicCompiled+1,'continuous float does not disable unrelated boolean optimization')
+ check(S.status().continuousUniforms==continuousBefore+1,'only the observed interior float is retained as continuous')
+ reference:release();candidate:release();target:release();g.present()
+ check(S.status().sources==0 and S.status().variants==0,'transition source and derivatives retire at the native boundary')
  check(g.getStackDepth()==0,'native adapter fixture leaves no graphics scope')
  print('SHADER_ADAPTER_PASS',count)
 end
