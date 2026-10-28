@@ -234,6 +234,7 @@ local function stateKey(store)
   if store.kind=='retro' and store.profileScope then return 'retro_'..C.hash(store.profileScope) end
   return store.kind
 end
+C.stateKey=stateKey
 
 local function asStore(target)
   if type(target) == "table" then return target end

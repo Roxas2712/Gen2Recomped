@@ -24,6 +24,9 @@ local Treasure = require('src.pokewalker.minigames.TreasureHunt')
 local Memory = require('src.pokewalker.minigames.MemoryMatch')
 local Rhythm = require('src.pokewalker.minigames.RhythmTap')
 local Hub = require('src.ui.WalkerMinigames')
+-- Pure rules/input regression; the real mandatory UI gate has its own suite.
+package.loaded['src.pokewalker.minigames.Enrollment'].accepted=function()return true end
+package.loaded['src.pokewalker.minigames.Content'].current=function()return{mode='basic'}end
 
 local NOW = 20000 * 86400 + 3600
 Rewards.clock = function() return NOW end
@@ -629,5 +632,19 @@ do
   check(got[1] == 'right', 'the stick reaches a game in play')
 end
 
+do
+  Rewards._economy=fakeEconomy()
+  local st=newState(true);local purse=Rewards.newPurse(st,'memory')
+  local one=Rewards.settle(purse,500,20,30);local balance=st.watts
+  local two=Rewards.settle(purse,500,20,30)
+  check(one==two and st.watts==balance and st.minigames.daily.plays==1,'a repeated settlement cannot award the same run twice')
+  Rewards._economy=fakeEconomy();Rewards._economy.save=function()return false,'disk full'end
+  st=newState(true);purse=Rewards.newPurse(st,'memory')
+  local prior=require('src.core.SaveSerializer').encode(st)
+  local result=Rewards.settle(purse,500,20,30)
+  check(result.blocked and result.watts==0 and result.error=='disk full','failed persistence reports no credited reward')
+  check(require('src.core.SaveSerializer').encode(st)==prior,'failed persistence restores the entire previous wallet, score and budget')
+  Rewards._economy=nil
+end
 print(('%d passed, %d failed'):format(PASS, FAIL))
 if FAIL > 0 then error('walker minigames check failed') end
