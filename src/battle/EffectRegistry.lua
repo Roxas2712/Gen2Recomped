@@ -44,6 +44,10 @@ EffectRegistry.displayName = displayName
 -- flags recorded (every Gen 1 and Gen 2 one) is affected, that generation's
 -- rule.
 function EffectRegistry.protectAffected(move)
+  -- GSC's self-protection effects do not target the defending side. Let
+  -- their own ProtectChance restriction run even when that foe protects.
+  if require('src.core.GameVersion').isGen2()
+      and (move.effect == 'PROTECT_EFFECT' or move.effect == 'ENDURE_EFFECT') then return false end
   if move.protectAffected ~= nil then return move.protectAffected ~= false end
   if move.gen4Effect ~= nil and tonumber(move.flags) then
     return math.floor(tonumber(move.flags) / 2) % 2 == 1

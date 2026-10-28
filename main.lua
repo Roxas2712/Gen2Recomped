@@ -211,15 +211,40 @@ local closeTouchControlsEditor  -- forward declaration
 
 local function openTouchControlsEditor()
   touchEditorHost = Importer
+  if touchEditorHost then touchEditorHost:prepareOverlayHandoff() end
   Importer = nil
   TouchEditor = require("src.ui.TouchControlsEditor")
   TouchEditor.load({ onClose = function() closeTouchControlsEditor() end })
+end
+
+local function openTouchSkinStudio()
+  touchEditorHost = Importer
+  if touchEditorHost then touchEditorHost:prepareOverlayHandoff() end
+  Importer = nil
+  TouchEditor = require('src.ui.SkinStudio')
+  local version = touchEditorHost and touchEditorHost.tab
+  local Version = require('src.core.GameVersion')
+  if not Version.VERSIONS[version] then version = Version.get() end
+  TouchEditor.load({version=version,
+    onClose=function() closeTouchControlsEditor() end,
+    onPlay=function(chosen)
+      closeTouchControlsEditor()
+      if Importer then Importer:play(chosen) end
+    end})
+end
+
+-- The default position editor and full skin studio share one suspended host.
+-- Optional events stay owned by the active editor even when it has no handler.
+local function touchEditorEvent(name, ...)
+  local fn = TouchEditor and TouchEditor[name]
+  if fn then return fn(...) end
 end
 
 function closeTouchControlsEditor()
   if TouchEditor and TouchEditor.unload then TouchEditor.unload() end
   TouchEditor = nil
   Importer = touchEditorHost
+  if Importer then Importer:resumeAfterOverlay() end
   touchEditorHost = nil
 end
 
@@ -400,6 +425,7 @@ local function openLauncher(forceImport)
     onEditSave = openEditor,
     onEditMaps = openMapEditor,
     onEditTouchControls = openTouchControlsEditor,
+    onEditTouchSkins = openTouchSkinStudio,
   })
 end
 
@@ -803,7 +829,7 @@ function love.gamepadpressed(joystick, button)
   require('src.cloud.AccountBadge').activity()
   -- and the dismissal that matters on the Switch.
   if bootReport then return dismissBootReport() end
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('gamepadpressed', joystick, button) end
   if editorMode then
     if EditorApp.gamepadpressed then return EditorApp.gamepadpressed(button) end
     return
@@ -815,7 +841,7 @@ function love.gamepadpressed(joystick, button)
 end
 
 function love.gamepadreleased(joystick, button)
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('gamepadreleased', joystick, button) end
   if editorMode then
     if EditorApp.gamepadreleased then return EditorApp.gamepadreleased(button) end
     return
@@ -828,7 +854,7 @@ end
 
 function love.gamepadaxis(joystick, axis, value)
   if math.abs(value)>0.25 then require('src.cloud.AccountBadge').activity() end
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('gamepadaxis', joystick, axis, value) end
   if editorMode then
     if EditorApp.gamepadaxis then return EditorApp.gamepadaxis(axis, value) end
     return
@@ -841,7 +867,7 @@ end
 
 function love.joystickpressed(joystick, button)
   if bootReport then return dismissBootReport() end
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('joystickpressed', joystick, button) end
   if editorMode then
     if EditorApp.joystickpressed then
       return EditorApp.joystickpressed(joystick, button)
@@ -855,7 +881,8 @@ function love.joystickpressed(joystick, button)
 end
 
 function love.joystickreleased(joystick, button)
-  if editorMode or TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('joystickreleased', joystick, button) end
+  if editorMode then return end
   if Importer then return Importer:joystickreleased(joystick, button) end
   if not Game then return end
   if RetroOverlay.game then return end
@@ -863,7 +890,7 @@ function love.joystickreleased(joystick, button)
 end
 
 function love.joystickaxis(joystick, axis, value)
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('joystickaxis', joystick, axis, value) end
   if editorMode then
     if EditorApp.joystickaxis then
       return EditorApp.joystickaxis(joystick, axis, value)
@@ -877,7 +904,7 @@ function love.joystickaxis(joystick, axis, value)
 end
 
 function love.joystickhat(joystick, hat, direction)
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('joystickhat', joystick, hat, direction) end
   if editorMode then
     if EditorApp.joystickhat then
       return EditorApp.joystickhat(joystick, hat, direction)
@@ -891,7 +918,8 @@ function love.joystickhat(joystick, hat, direction)
 end
 
 function love.joystickremoved(joystick)
-  if editorMode or TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('joystickremoved', joystick) end
+  if editorMode then return end
   if Importer then return end
   if not Game then return end
   Game:joystickremoved(joystick)
@@ -906,7 +934,8 @@ function love.focus(f)
   require("src.core.FrameCap").setFocus(f)
   -- a phone stops the frames in the background: the walker credits the gap
   walkerTick("focus", f)
-  if editorMode or TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('focus', f) end
+  if editorMode then return end
   if Importer then
     if Importer.focus then Importer:focus(f) end
     return
@@ -918,7 +947,8 @@ end
 -- v is true when the window becomes visible again, false on minimize.
 function love.visible(v)
   if bootReport then return end
-  if editorMode or TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('visible', v) end
+  if editorMode then return end
   if Importer then return end
   if not Game then return end
   Game:visible(v)
@@ -937,7 +967,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
   if TouchEditor then
     -- iOS synthesizes mousepressed for the primary touch (same as the
     -- launcher); Android drives the editor through love.touch directly.
-    if love.system.getOS() == "iOS" then return end
+    if love.system.getOS() == "iOS" and not TouchEditor.touchFirst then return end
     return TouchEditor.touchpressed(id, x, y)
   end
   if Importer then return Importer:touchpressed(id,x,y,dx,dy,pressure) end
@@ -954,7 +984,7 @@ function love.touchmoved(id, x, y, dx, dy, pressure)
     return
   end
   if TouchEditor then
-    if love.system.getOS() == "iOS" then return end
+    if love.system.getOS() == "iOS" and not TouchEditor.touchFirst then return end
     return TouchEditor.touchmoved(id, x, y)
   end
   if Importer then return Importer:touchmoved(id,x,y,dx,dy,pressure) end
@@ -969,7 +999,7 @@ function love.touchreleased(id, x, y, dx, dy, pressure)
     return
   end
   if TouchEditor then
-    if love.system.getOS() == "iOS" then return end
+    if love.system.getOS() == "iOS" and not TouchEditor.touchFirst then return end
     return TouchEditor.touchreleased(id, x, y)
   end
   if Importer then return Importer:touchreleased(id,x,y,dx,dy,pressure) end
@@ -983,7 +1013,7 @@ function love.wheelmoved(x, y)
     if EditorApp.wheelmoved then return EditorApp.wheelmoved(x, y) end
     return
   end
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('wheelmoved', x, y) end
   if Importer then return end
   if not Game then return end
   if RetroOverlay.game then RetroOverlay.wheel(x,y);return end
@@ -995,7 +1025,7 @@ local function nativeMousePressed(x, y, button, istouch)
   if TouchEditor then
     -- Android primary touch already arrived via love.touchpressed; a second
     -- mouse path would double-fire Done / begin a second drag.
-    if love.system.getOS() == "Android" then return end
+    if istouch and (TouchEditor.touchFirst or love.system.getOS() == "Android") then return end
     return TouchEditor.mousepressed(x, y, button)
   end
   if Importer then
@@ -1018,7 +1048,7 @@ end
 
 local function nativeMouseReleased(x, y, button, istouch)
   if TouchEditor then
-    if love.system.getOS() == "Android" then return end
+    if istouch and (TouchEditor.touchFirst or love.system.getOS() == "Android") then return end
     return TouchEditor.mousereleased(x, y, button)
   end
   if Importer then
@@ -1066,7 +1096,7 @@ local function nativeMouseMoved(x, y, dx, dy, istouch)
     return
   end
   if TouchEditor then
-    if love.system.getOS() == "Android" then return end
+    if istouch and (TouchEditor.touchFirst or love.system.getOS() == "Android") then return end
     return TouchEditor.mousemoved(x, y)
   end
   if editorMode then
@@ -1112,7 +1142,7 @@ end
 function love.textinput(text)
   require('src.cloud.AccountBadge').activity()
   if RetroOverlay.game then require('src.ui.FriendsMenu').text(RetroOverlay,text);return end
-  if TouchEditor then return end
+  if TouchEditor then return touchEditorEvent('textinput', text) end
   if Importer then return Importer:textinput(text) end
   if editorMode and EditorApp.textinput then
     return EditorApp.textinput(text)
@@ -1306,6 +1336,7 @@ function love.quit()
 end
 
 function love.filedropped(file)
+  if TouchEditor then return touchEditorEvent('filedropped', file) end
   if editorMode and EditorApp and EditorApp.filedropped then
     return EditorApp.filedropped(file)
   end
