@@ -5,7 +5,7 @@ local Font=require('src.render.Font')
 local Assets=require('src.render.Assets')
 local Unicode=require('src.translation.UnicodeFont')
 local G=love.graphics
-local oldImage,oldDraw,oldPrint,oldInfo=Assets.image,G.draw,G.print,love.filesystem.getInfo
+local oldImage,oldDraw,oldPrint,oldInfo,oldNewFont=Assets.image,G.draw,G.print,love.filesystem.getInfo,G.newFont
 local draws,prints={},{}
 -- Only atlas I/O is synthetic. Selection, layout, styles and dispatch use
 -- the real Font, including its normal load/invalidate and face lifecycle.
@@ -18,6 +18,7 @@ G.draw=function(image,quad,x,y)
   draws[#draws+1]={image=image.path,x=x,y=y,quad={quad:getViewport()}}
 end
 G.print=function(text,x,y)prints[#prints+1]={text=text,x=x,y=y}end
+G.newFont=function(file,size)return oldNewFont(type(file)=='string'and size or file)end
 local function data()
   return {font={image='main',imageExtra='extra',
     pages={main={image='main',base=128,widths={4,9,6,11}}},
@@ -89,4 +90,5 @@ T.same(Font.encode('Aé'),{65,63},'missing-font fallback keeps UTF8 whole')
 prints={};T.eq(Font.draw('Aé',0,0),16,'fallback draw width counts glyphs, not bytes')
 T.eq(prints[1]and prints[1].text,'Aé')
 Assets.image,G.draw,G.print,love.filesystem.getInfo=oldImage,oldDraw,oldPrint,oldInfo
+G.newFont=oldNewFont
 T.finish('font glyph ownership, reloads, native faces, Unicode and public hooks')
