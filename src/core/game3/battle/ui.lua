@@ -5,6 +5,9 @@ local Battle=require('src.core.game3.battle')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
 local Scope=require('src.render.GraphicsScope')
 local Ui={}
+function Ui.ballQuad(ball,frame)
+ return require('src.core.game3.battle.ui_ball_art').quad(ball,frame)
+end
 -- Keep PP thresholds shared with the existing native summary renderer.
 function Ui.ppColorIndex(current,maximum)
  return require('src.ui.Gen3SummaryLayout').ppColor(current,maximum)

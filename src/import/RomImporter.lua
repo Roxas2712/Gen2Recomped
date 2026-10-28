@@ -1348,6 +1348,7 @@ local function markerFor(version)
   end
   if version == 'ruby' or version == 'sapphire' then
     revision = revision .. 'rs-transition-classes-v1:rs-native-main-menu-v1:'
+    revision = revision .. 'rs-ball-art-v1:'
   end
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if GameVersion.generation(version)==2 then

@@ -55400,7 +55400,7 @@ function RomExtractorGen3:extractBallAnims(config, source)
     sounds = B.SOUNDS,
     cases = B.CASES,
     particleFrames = B.PARTICLE_FRAMES,
-    source = source or ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
+    source = source or B.SOURCE or ("ROM:gBallSpriteSheets %07X, palettes %07X, open frame %07X, "
               .. "sBallColors %07X, particles %07X; the send-out off "
               .. "SpriteCB_PlayerMonSendOut_1 %07X and "
               .. "SpriteCB_ReleaseMonFromBall %07X")
