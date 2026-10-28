@@ -133,7 +133,10 @@ Status.RECORDS = {
     id = "SLP", label = "SLP", hudLabel = "SLP",
     catchBonus = 25, shakeBonus = 10,
     beforeMovePriority = 40,
-    beforeMove = function(battler)
+    beforeMove = function(battler,rng,battle,move)
+      if require('src.core.GameVersion').isGen2()then
+        return require('src.battle.Gen2Sleep').beforeMove(battler,rng,battle,move)
+      end
       local gba = require("src.core.GameVersion").isGen3()
       local step = gba and require("src.battle.Abilities").sleepStep(battler) or 1
       battler.sleepTurns = (battler.sleepTurns or 1) - step
@@ -142,12 +145,14 @@ Status.RECORDS = {
         battler.mon.status = nil
         return gba, { Strings("%s\nwoke up!", name(battler)) }
       end
-      return false, { Strings("%s\nis fast asleep!", name(battler)) }
+      return false, { Strings("%s\nis fast asleep!", name(battler)) }, nil, nil, "sleep"
     end,
     onInflict = function(battle, target, opts, display)
       local low, high = rule(battle, "sleepTurnsMin"), rule(battle, "sleepTurnsMax")
       local gba = require("src.core.GameVersion").isGen3()
-      if gba and low == 2 and high == 5 then target.sleepTurns = battle.rng(0, 3) + 2
+      if require('src.core.GameVersion').isGen2()then
+        require('src.battle.Gen2Sleep').inflict(battle,target,low,high)
+      elseif gba and low == 2 and high == 5 then target.sleepTurns = battle.rng(0, 3) + 2
       else target.sleepTurns = battle.rng(low, high) end
       if gba then target.mon.sleepTurns = target.sleepTurns end
       return { Strings("%s\nfell asleep!", display) }
@@ -249,7 +254,9 @@ local function battleStatuses(battle)
   return battle and battle.data and battle.data.statuses
 end
 
--- Returns canMove, messages, selfHit (true -> hurt itself in confusion).
+-- The first four native results (canMove, messages, selfHit, reason) retain
+-- their ABI. The fifth is optional presentation metadata: kind, message
+-- index and the actual blocking status. None is inferred from translated text.
 -- The active status record's beforeMove runs at its priority slot: above
 -- VOLATILE_PRIORITY before the held/disable/confusion block (sleep,
 -- freeze), at or below after it (paralysis) -- the original's order.
@@ -263,7 +270,8 @@ function Status.beforeMove(battler, rng, battle, move)
     return false, {}
   end
   local gba = require("src.core.GameVersion").isGen3()
-  if battler.flinched and not gba then
+  local gsc = require('src.core.GameVersion').isGen2()
+  if battler.flinched and not gba and not gsc then
     battler.flinched = false
     return false, { Strings("%s\nflinched!", name(battler)) }
   end
@@ -271,30 +279,45 @@ function Status.beforeMove(battler, rng, battle, move)
   local handler = record and record.beforeMove
   local priority = handler and (record.beforeMovePriority or 0)
   local msgs = {}
+  local presentation
+  local function describe(kind,index,blocked)
+    if not (kind or blocked)then return end
+    presentation=presentation or {}
+    if kind then presentation.kind,presentation.index=kind,index end
+    if blocked then presentation.blockedStatus=blocked end
+  end
   local function runStatus()
-    local canMove, statusMsgs, selfHit, reason = handler(battler, rng, battle, move)
+    local statusId=mon.status
+    local canMove, statusMsgs, selfHit, reason, kind = handler(battler, rng, battle, move)
     for _, m in ipairs(statusMsgs or {}) do msgs[#msgs + 1] = m end
+    -- Gen1-style registered records already return the explicit kind in
+    -- slot four. Retain that value as the native reason as well.
+    if kind==nil and (reason=='sleep' or reason=='confused')then kind=reason end
+    if reason=='gen3_sleep' and not canMove then kind='sleep' end
+    if statusMsgs and #statusMsgs>0 and (kind=='sleep' or kind=='confused')then describe(kind,#msgs)end
+    if not canMove then describe(nil,nil,record.id or statusId)end
     return canMove, selfHit, reason
   end
   if handler and priority > VOLATILE_PRIORITY then
     local canMove, selfHit, reason = runStatus()
-    if not canMove or selfHit then return canMove, msgs, selfHit, reason end
+    if not canMove or selfHit then return canMove, msgs, selfHit, reason, presentation end
     handler = nil
   end
-  if gba and battler.flinched then
+  if (gba or gsc) and battler.flinched then
     battler.flinched = false
     msgs[#msgs + 1] = Strings("%s\nflinched!", name(battler))
-    return false, msgs, false, "gen3_flinch"
+    if gsc then require('src.battle.Gen2Sleep').cancel(battler,move)end
+    return false, msgs, false, gba and "gen3_flinch"or nil, presentation
   end
   if battler.boundTurns and battler.boundTurns > 0 then
     battler.boundTurns = battler.boundTurns - 1
     msgs[#msgs + 1] = Strings("%s\ncan't move!", name(battler))
-    return false, msgs
+    return false, msgs, nil, nil, presentation
   end
   if require("src.core.GameVersion").isGen3() and battler.disabledMove then
     if require("src.battle.Gen3Disable").blocked(battler, move) then
       msgs[#msgs + 1] = Strings("%s's\nmove is disabled!", name(battler))
-      return false, msgs, false, "gen3_disabled"
+      return false, msgs, false, "gen3_disabled", presentation
     end
   elseif battler.disabledTurns then
     battler.disabledTurns = battler.disabledTurns - 1
@@ -312,21 +335,22 @@ function Status.beforeMove(battler, rng, battle, move)
       table.insert(msgs, Strings("%s\nsnapped out of\nconfusion!", name(battler)))
     else
       table.insert(msgs, Strings("%s\nis confused!", name(battler)))
+      describe('confused',#msgs)
       -- GBA's attack canceller flips a two-value roll. Older games keep
       -- their byte-range convention; shared callbacks see the native ABI.
       local selfHit
       if require("src.core.GameVersion").isGen3() then selfHit = rng(0, 1) == 0
       else selfHit = rng(0, 255) < 128 end
       if selfHit then
-        return false, msgs, true -- hurt itself
+        return false, msgs, true, nil, presentation -- hurt itself
       end
     end
   end
   if handler then
     local canMove, selfHit, reason = runStatus()
-    if not canMove or selfHit then return canMove, msgs, selfHit, reason end
+    if not canMove or selfHit then return canMove, msgs, selfHit, reason, presentation end
   end
-  return true, msgs
+  return true, msgs, nil, nil, presentation
 end
 
 -- End-of-turn residual damage; opponent is needed for Leech Seed.

@@ -152,8 +152,9 @@ function Gen2AnimPlayer:start(moveId,attackerIsPlayer,opts)
       sound=function(_,panning,duration,id)
         local Sound=require('src.core.Sound')
         local audio=data and data.audio
-        local name=audio and audio.sfxIndex and audio.sfxIndex[tostring(id)]
-        if name and audio.sfx and audio.sfx[name]then return Sound.play(data,name)end
+        local name=audio and (audio.sfxIndex and audio.sfxIndex[tostring(id)]
+          or audio.sfxOrder and audio.sfxOrder[id+1])
+        if name and audio.sfx and audio.sfx[name]then return Sound.playStereo(data,name)end
         local def=data and data.moves and data.moves[moveId]
         if def and def.anim then return Sound.playMove(data,def.anim)end
       end,

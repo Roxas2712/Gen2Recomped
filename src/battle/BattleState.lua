@@ -2992,7 +2992,10 @@ function BattleState:advanceQueue()
     -- ball/send-out anims ignore the OPTIONS toggle: PlayMoveAnimation
     -- short-circuits to TossBallAnimation before its wOptions check
     -- (engine/battle/animations.asm:415)
-    if item.anim and (self:animationsOn() or BALL_ANIMS[item.anim]) then
+    local gen2Ids=GameVersion.isGen2() and self.animPlayer and self.animPlayer.anims
+      and self.animPlayer.anims.ids
+    local gen2Misc=gen2Ids and gen2Ids[item.anim] and not mdef
+    if item.anim and (self:animationsOn() or BALL_ANIMS[item.anim] or gen2Misc) then
       -- HOENN'S OWN ANIMATION, when the move has one.  It does not take the
       -- animPlaying path: that one belongs to the Game Boy players, which
       -- carry their own per-row sounds, and this one does not -- so the
@@ -3053,6 +3056,9 @@ function BattleState:advanceQueue()
             ok, started = pcall(self.animForMove, self, item.anim,
               item.attackerIsPlayer and 'player' or 'enemy',
               item.animParam, item.effectiveness, item.afterAnim)
+          elseif gen2Misc and not opts then
+            ok,started=pcall(self.animForId,self,item.anim,
+              item.attackerIsPlayer and 'player' or 'enemy',item.animParam)
           else
             ok, started = pcall(require('src.battle.Gen2MovePresentation').start,
               self, item.anim, item.attackerIsPlayer, opts)
@@ -8397,8 +8403,9 @@ function BattleState:executeAction(user, target, action)
     if action.special == "recharge" then
       -- only reaching .HyperBeamCheck consumes the flag (core.asm:3384-
       -- 3392): sleep/freeze/held/flinch keep the mon recharging next turn
-      if self:preRechargeChecks(user, target) then return end
+      if not GameVersion.isGen2() and self:preRechargeChecks(user, target) then return end
       user.mustRecharge = nil
+      if GameVersion.isGen2()then require('src.battle.Gen2Sleep').cancel(user,action)end
       self:sayNext(self:romText("_MustRechargeText", "%s\nmust recharge!", displayName(user)))
       return
     end
@@ -8492,17 +8499,19 @@ end
 -- (core.asm): side-specific SLP_*/CONF_* anims, not the Rest/Amnesia
 -- move rows.  Player sleep plays the anim before FastAsleepText;
 -- enemy sleep and both confusion sides print the text first.
-function BattleState:statusOnomatopoeia(user, kind)
+function BattleState:statusOnomatopoeia(user, kind, caption)
   local isPlayer = user.isPlayer
   local anim
-  if kind == "sleep" then
+  if GameVersion.isGen2() then
+    anim=kind=='sleep' and 'ANIM_SLP' or 'ANIM_CONFUSED'
+  elseif kind == "sleep" then
     anim = isPlayer and "SLP_PLAYER_ANIM" or "SLP_ANIM"
   else
     anim = isPlayer and "CONF_PLAYER_ANIM" or "CONF_ANIM"
   end
-  local text = kind == "sleep"
+  local text = caption or (kind == "sleep"
     and self:romText("_FastAsleepText", "%s\nis fast asleep!", displayName(user))
-    or self:romText("_IsConfusedText", "%s\nis confused!", displayName(user))
+    or self:romText("_IsConfusedText", "%s\nis confused!", displayName(user)))
   if kind == "sleep" and isPlayer then
     self:animNext(anim, isPlayer)
     self:sayNext(text)
@@ -8512,14 +8521,12 @@ function BattleState:statusOnomatopoeia(user, kind)
   end
 end
 
--- Queue status text (+ sleep/confusion FX when the line matches).
+-- Queue status text and the effect belonging to this actual status event.
 -- Wake / snap-out / flinch / etc. stay text-only.
-function BattleState:sayStatusMsg(user, msg)
+function BattleState:sayStatusMsg(user, msg, kind)
   local text = prefixEnemy(msg, user)
-  if msg:find("is fast asleep!", 1, true) then
-    self:statusOnomatopoeia(user, "sleep")
-  elseif msg:find("is confused!", 1, true) then
-    self:statusOnomatopoeia(user, "confused")
+  if kind then
+    self:statusOnomatopoeia(user, kind, text)
   else
     self:sayNext(text)
   end
@@ -8595,8 +8602,10 @@ function BattleState:statusInterrupt(user, target, move)
     end
     user.truantLoafing = true
   end
-  local canMove, msgs, selfHit, reason = Status.beforeMove(user, self.rng, self, move)
-  for _, m in ipairs(msgs) do self:sayStatusMsg(user, m) end
+  local canMove, msgs, selfHit, reason, presentation = Status.beforeMove(user, self.rng, self, move)
+  for i, m in ipairs(msgs) do
+    self:sayStatusMsg(user,m,presentation and presentation.index==i and presentation.kind or nil)
+  end
   if reason == "gen3_sleep" or reason == "gen3_flinch" then user.lastMove = nil end
   if reason == "gen3_disabled" then
     require("src.battle.Gen3Disable").cancel(user)
@@ -8625,8 +8634,7 @@ function BattleState:statusInterrupt(user, target, move)
     -- full paralysis (core.asm:3459-3464) clears bide/thrash/charge/
     -- trapping; sleep, freeze, flinch and held-in-place leave every
     -- volatile in place (a sleeping wrapper keeps its victim held)
-    if user.mon.status == "PAR" and msgs[#msgs]
-       and msgs[#msgs]:find("fully paralyzed", 1, true) then
+    if presentation and presentation.blockedStatus=='PAR' then
       self:clearVolatiles(user, false)
     end
     return true
