@@ -37,6 +37,6 @@ Evidence is local under `.local/qa/`:
 * `minigame-content-render-content-qualified/*-setup.png`, `*-review.png`,
   `*-installed.png`
 
-Reproduction commands and format/deployment details: [MINIGAME-CONTENT.md](../../MINIGAME-CONTENT.md).
+Reproduction commands and format/deployment details: [MINIGAME-CONTENT.md](../MINIGAME-CONTENT.md).
 No server deployment or database migration is necessary. These client
 changes require a new application build before they appear in an old demo.
