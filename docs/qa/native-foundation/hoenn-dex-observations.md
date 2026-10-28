@@ -48,7 +48,11 @@ Unchanged-mod Ruby run `0fe7c55780-ruby` completes the native trainer battle,
 paper/native/terrarium/native/paper view changes, move swap/restore/cancel and
 idle presentation cleanup with exit 0. Its images exposed the subsequent pen
 and prompt-selection fixes; it is not accepted as evidence of those later fixes.
-A fresh ROM-backed constructor/search and rendering recheck is in progress.
+Fresh runs `92d67353a1-ruby` and `1f2a1ba9d3-sapphire` both exit 0 on
+source `0f4111a361`: clean AP labels, all five trainer-battle views, native
+move swap/restore/cancel, actual RS dex constructors and parameter navigation,
+then native close and observation retirement. Those real RS constructors are
+qualified separately from the earlier typed-state CPU fixtures.
 No complete gameplay, all-map visual or sustained-FPS acceptance is inferred.
 QA uses owned disposable profiles, preserves player saves and enforces at least
 20 GiB free, exceeding the requested 8 GiB.

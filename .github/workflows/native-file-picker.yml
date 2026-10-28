@@ -1,0 +1,31 @@
+name: Native desktop file selection
+on:
+  pull_request:
+    paths:
+      - 'src/core/FilePicker.lua'
+      - 'src/core/HostShell.lua'
+      - 'src/import/RomImporter.lua'
+      - 'tests/engine/native_file_picker.lua'
+      - 'tests/*picker*'
+      - 'tests/rom_importer_android_mod_pick_test.lua'
+      - '.github/workflows/native-file-picker.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-file-picker-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Model desktop commands without opening dialogs
+        run: luajit tests/engine/native_file_picker.lua
+      - name: Preserve native pointer release and mobile fallback
+        run: |
+          luajit tests/parity_picker_pointer_grab.lua
+          luajit tests/rom_importer_no_picker_test.lua
+          luajit tests/rom_importer_android_mod_pick_test.lua
