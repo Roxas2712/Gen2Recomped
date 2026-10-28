@@ -99,10 +99,16 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   end
   local before,frame,random=decodes,p.frames,s.rng
   local images=uploads
-  draws={};local outside={};g.setShader(outside);P.setBgp(0)
+  draws={}
+  local outerColors={{251,239,227},{193,151,109},{83,61,47},{17,11,5}}
+  P.useRaw(outerColors);local outside=g.getShader();P.setBgp(0)
   p:draw();local once=draws
   T.eq(#once,13*rows,'both real picture strips reach the native OAM renderer')
   T.eq(g.getShader(),outside,'caller shader restored')
+  for i=1,4 do
+    T.same(outside.values['pal'..(i-1)],{outerColors[i][1]/255,outerColors[i][2]/255,outerColors[i][3]/255},
+      'caller palette uniforms survive reuse of the same indexed shader')
+  end
   local oam=runner:oam()
   for index,draw in ipairs(once)do
     local obj=oam[index]
@@ -137,6 +143,10 @@ for _,edition in ipairs{'gold','silver','crystal'}do
   local draw=g.draw;g.draw=function()g.setShader({});error('row draw failure')end
   T.raises(function()p:drawSprites(retained)end,'row draw failure')
   T.eq(g.getShader(),outside,'failed drawing also restores caller graphics state')
+  for i=1,4 do
+    T.same(outside.values['pal'..(i-1)],{outerColors[i][1]/255,outerColors[i][2]/255,outerColors[i][3]/255},
+      'failed drawing restores caller palette uniforms as well as shader identity')
+  end
   g.draw=draw
   p:release();T.eq(snapshot.image.released,true,'view retirement releases retained snapshot images')
   P.setBgp(nil);g.setShader()
