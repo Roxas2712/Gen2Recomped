@@ -1802,6 +1802,10 @@ function Loader:load(data)
     local LIFECYCLE = { ["mods.loaded"] = true, ["game.ready"] = true }
     events.emit = function(bus, name, payload)
       if not LIFECYCLE[name] then return emit0(bus, name, payload) end
+      -- The native bus attributes synchronous subscribers individually. Keep
+      -- the legacy aggregate for coroutine callers without changing their ABI.
+      local co,main=coroutine.running()
+      if not co or main then return emit0(bus,name,payload)end
       local token = ModSeams.open("lifecycle:" .. tostring(name))
       local ok, err = pcall(emit0, bus, name, payload)
       ModSeams.close(token)
