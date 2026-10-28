@@ -16,6 +16,10 @@ jobs:
   actual-host:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, armeabi-v7a, x86_64]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -29,14 +33,17 @@ jobs:
         run: >-
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install
           'platforms;android-34' 'build-tools;34.0.0' 'ndk;25.2.9519653'
-      - name: Build matching x86-64 VM candidates
+      - name: Install host multilib
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib
+      - name: Build matching VM candidates
         run: >-
           python3 tools/mobile-runtime-check/build_android.py
-          --ndk "$ANDROID_HOME/ndk/25.2.9519653" --abi x86_64
+          --ndk "$ANDROID_HOME/ndk/25.2.9519653" --abi '${{ matrix.abi }}'
           --output '${{ runner.temp }}/android-vm/candidate'
       - name: Build actual LÖVE apps in an owned source copy
         run: >-
           python3 tools/mobile-runtime-check/qualify_android_love.py build
+          --abi '${{ matrix.abi }}'
           --build '${{ runner.temp }}/android-vm/candidate'
           --output '${{ runner.temp }}/android-love/candidate'
       - name: Enable the owned emulator's KVM access
@@ -46,7 +53,7 @@ jobs:
         with:
           api-level: 30
           arch: x86_64
-          target: default
+          target: google_apis
           avd-name: gen2-love-runtime-qa
           emulator-port: 5554
           script: >-
@@ -57,7 +64,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: android-love-runtime-host
+          name: android-love-runtime-host-${{ matrix.abi }}
           path: |
             ${{ runner.temp }}/android-vm/candidate/report.json
             ${{ runner.temp }}/android-vm/candidate/*.log
