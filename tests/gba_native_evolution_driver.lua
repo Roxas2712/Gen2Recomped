@@ -11,6 +11,12 @@ return function(game)
  local Native=require('src.ui.Gen3NativeEvolution');local factory=require('src.ui.Gen3EvolutionState')
  local boot=game.data.field.boot;U.teleport(game,boot.startMap,boot.startX,boot.startY,boot.startFacing or'down')
  local world=game.overworld;local apply,learn=E.apply,E.learnEvolutionMoves;local applications,learnings=0,0
+ local bg=require('src.render.Assets').imageData(assert(game.data.constants.gen3BattleTerrain.evolutionBackground))
+ assert(bg:getWidth()==240 and bg:getHeight()==160)
+ for y=0,111 do for x=8,239 do
+  local r,g,b,a=bg:getPixel(x,y);local rr,gg,bb,aa=bg:getPixel(x%8,y)
+  assert(r==rr and g==gg and b==bb and a==aa,'Evolution wallpaper includes a battle platform')
+ end end
  E.apply=function(...)applications=applications+1;return apply(...)end
  E.learnEvolutionMoves=function(...)learnings=learnings+1;return learn(...)end
  local report={status='running',edition=edition,preparedFixture=true,ordinaryStory=false,cases={},captures={}}
@@ -29,7 +35,7 @@ return function(game)
   {id='held-trade',species='POLIWHIRL',target='POLITOED',level=25,via='TRADE',holdB=true,heldItem='KINGS_ROCK'},
  }do
   assert(game.stack:top()==world)
-  local raw=P.new(game.data,case.species,case.level);raw.nickname='A%{B}';raw.hp=raw.stats.hp-3;raw.item=case.heldItem
+  local raw=P.new(game.data,case.species,case.level);raw.nickname='A%BC';raw.hp=raw.stats.hp-3;raw.item=case.heldItem
   if case.id=='level'or case.id=='cancel'then raw.moves={{id='SPLASH',pp=40}}end
   game.save.party={raw};game.save.nationalDex=true;require('src.core.SaveData').validate(game.save,game.data)
   local before=S.encode(raw);local hpLost=raw.stats.hp-raw.hp;applications,learnings=0,0
@@ -41,20 +47,22 @@ return function(game)
    if calls>0 then break end
    if game.stack:top()==screen then
     local state=scene._state
-    if not captured.intro and state=='intro_msg'then captured.intro=true;shot(case.id..'-intro',screen)
+    local message=screen.load('src.ui.game3.message')
+    if not captured.intro and(state=='intro_msg'or state=='intro_cry'or state=='intro_sound'or state=='start_music')and message.isWaiting()then
+     captured.intro=true;shot(case.id..'-intro',screen)
     elseif state=='cycle'and not captured.cycle and scene._speed>=12 then
      captured.cycle=true;shot(case.id..'-silhouette',screen)
      if case.cancel or case.holdB then game.input:overlayPressed('b');bHeld=true end
-    elseif state=='cancel'and not captured.cancel then
+    elseif state=='cancel'and not captured.cancel and message.isWaiting()then
      assert(case.cancel and applications==0 and learnings==0 and S.encode(raw)==before,'Cancellation changed the party')
      captured.cancel=true;shot(case.id..'-cancel',screen)
     elseif state=='flash_reveal'and not captured.flash then
      assert(not case.cancel and applications==1 and learnings==0 and raw.species==case.target,'Native point of no return missed host mutation')
-     assert(raw.nickname=='A%{B}'and raw.stats.hp-raw.hp==hpLost,'Evolution lost nickname or damage')
+     assert(raw.nickname=='A%BC'and raw.stats.hp-raw.hp==hpLost,'Evolution lost nickname or damage')
      captured.flash=true;sawCommit=true;shot(case.id..'-reveal',screen)
-    elseif state=='congrats'and not captured.congrats then
+    elseif state=='congrats'and not captured.congrats and message.isWaiting()then
      local page=screen.load('src.ui.game3.message').currentPage()
-     assert(page:find('A%{B}',1,true),'Native message lost literal nickname characters')
+     assert(page:find('A%BC',1,true),'Native message lost literal nickname characters')
      captured.congrats=true;shot(case.id..'-congratulations',screen)
     end
     if bHeld and state~='cycle'then game.input:overlayReleased('b');bHeld=false end

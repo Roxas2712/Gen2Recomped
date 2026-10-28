@@ -9,7 +9,7 @@ function M.available(game,mon,target)
  local panel=c and(rs and c.gen3RsBattlePanel or c.gen3BattleTextbox);local bg=c and c.gen3BattleTerrain
  if not(versions[v]and type(text)=='table'and type(panel)=='table'and type(panel.images)=='table'
   and type(panel.images.message)=='string'and type(bg)=='table'and type(bg.images)=='table'
-  and type(bg.images.BUILDING)=='string'and(not rs or panel.version==v))then return false end
+  and bg.evolutionBackground==require('src.import.Gen3EvolutionBackground').PATH and(not rs or panel.version==v))then return false end
  for _,key in pairs(roles)do if type(text[key])~='string'or text[key]==''then return false end end
  return mon and d.pokemon[mon.species]and type(d.pokemon[mon.species].index)=='number'
   and d.pokemon[target]and type(d.pokemon[target].index)=='number'or false
@@ -66,7 +66,7 @@ function M.new(game,raw,target,onDone,via,evo)
  local monAnim=require('src.ui.Gen3EvolutionMonAnim').new(game,row,raw)
  local chrome={_installed=true}
  function chrome.drawCleanBg()
-  love.graphics.setColor(1,1,1,1);love.graphics.draw(require('src.render.Assets').image(data.constants.gen3BattleTerrain.images.BUILDING),0,0)
+  love.graphics.setColor(1,1,1,1);love.graphics.draw(require('src.render.Assets').image(data.constants.gen3BattleTerrain.evolutionBackground),0,0)
  end
  function chrome.drawPanel()
   local rec=(version=='ruby'or version=='sapphire')and data.constants.gen3RsBattlePanel or data.constants.gen3BattleTextbox

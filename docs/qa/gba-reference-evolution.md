@@ -9,8 +9,10 @@ cartridge pixel/timing accuracy for those effects.
 
 Each edition retains its own existing normal/battle font, building background,
 message panel, music enums and Pokemon pictures. Saved options and frame
-selection stay authoritative. This needs no additional extracted artwork or
-forced cache invalidation. The two added byte-exact sources join the hashed
+selection stay authoritative. A dedicated wallpaper layer is decoded from
+the native building tilemap, preserving its tile/palette/flip entries while
+separating the battle platforms. `gba-reference-evolution-v1` requires this
+layer and the three original messages before accepting the cache. The two added byte-exact sources join the hashed
 reference inventory (210 files).
 
 The controller receives temporary numeric species views. At its point of no

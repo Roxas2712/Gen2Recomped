@@ -42497,7 +42497,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
       "CAVE", "BUILDING", "PLAIN", "LINK", "GYM", "LEADER", "INDOOR_2",
       "INDOOR_1", "LORELEI", "BRUNO", "AGATHA", "LANCE", "CHAMPION",
     }
-    local images, written = {}, 0
+    local images, written, evolutionBackground = {}, 0, nil
     for i, name in ipairs(FRLG_NAMES) do
       local o = FRLG_TABLE + (i - 1) * 20
       local ok = pcall(function()
@@ -42514,6 +42514,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
         if not image then return end
         self:saveImage(image, ("battle/bg/%s.png"):format(name:lower()))
         images[name] = ("assets/generated/battle/bg/%s.png"):format(name:lower())
+        if name=='BUILDING'then evolutionBackground=require('src.import.Gen3EvolutionBackground').extract(self,tiles,tmap,colors)end
         written = written + 1
       end)
       if not ok then Logger.warn("gen3 battle backgrounds (FRLG): %s did not compose", name) end
@@ -42521,7 +42522,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
     if written > 0 then
       local constants = self._constants or {}
       constants.gen3BattleTerrain = {
-        order = FRLG_NAMES, images = images, paletteSlot = GEN3_TERRAIN_PAL_SLOT,
+        order = FRLG_NAMES, images = images, paletteSlot = GEN3_TERRAIN_PAL_SLOT,evolutionBackground=evolutionBackground,
         tableAt = FRLG_TABLE,
         source = ("ROM:sBattleTerrainTable %07X, %d rows"):format(FRLG_TABLE, #FRLG_NAMES),
       }
@@ -42562,7 +42563,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
     found.rows[i] = row
   end
 
-  local images, written = {}, 0
+  local images, written, evolutionBackground = {}, 0, nil
   for i, name in ipairs(GEN3_TERRAIN_NAMES) do
     local row = found.rows[i]
     local ok = pcall(function()
@@ -42576,6 +42577,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
       if not image then return end
       self:saveImage(image, ("battle/bg/%s.png"):format(name:lower()))
       images[name] = ("assets/generated/battle/bg/%s.png"):format(name:lower())
+      if name=='BUILDING'then evolutionBackground=require('src.import.Gen3EvolutionBackground').extract(self,row.tiles,row.map,colors)end
       written = written + 1
     end)
     if not ok then
@@ -42592,6 +42594,7 @@ function RomExtractorGen3:extractBattleBackgrounds()
   constants.gen3BattleTerrain = {
     order = GEN3_TERRAIN_NAMES,
     images = images,
+    evolutionBackground = evolutionBackground,
     paletteSlot = GEN3_TERRAIN_PAL_SLOT,
     source = ("ROM:gBattleTerrainTable %07X, %d rows")
              :format(found.at, #found.rows),
