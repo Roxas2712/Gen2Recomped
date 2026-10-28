@@ -109,6 +109,8 @@ function finish:initial()
 end
 function finish:later()self._text.TEXT_000000=plain end
 function finish:write(name,value)if name=='text_pointers'then emitted=value end end
+-- The short reader models required late text writes, preserving all four
+-- native stage owners and their order before actual final publication.
 local providers={
  require('src.import.Gen3RsPresentation'),
  require('src.import.Gen3EmeraldPresentation'),
