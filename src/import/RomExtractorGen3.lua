@@ -419,7 +419,10 @@ end
 function RomExtractorGen3:readText(off, maxBytes, spacers, structured, opts)
   -- Existing RS imports pass dialect options in the fourth slot. That path
   -- stays unstructured; IR callers can additionally supply fifth-slot options.
-  if type(structured) == 'table' then opts, structured = structured, false end
+  if type(structured) == 'table' then
+    opts = structured
+    structured = opts.structured == true
+  end
   local map = self:charmap()
   local out = {}
   local ir, pending, flush, node

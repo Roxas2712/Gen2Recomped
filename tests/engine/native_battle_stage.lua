@@ -40,7 +40,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  b.player.fainted=true;T.eq(box.visible,true,'native single player panel remains during completion')
  b.enemy.fainted=true;T.eq(stage.healthbox.enemy.visible,false)
  b.player.fainted=false;b.enemy.fainted=false
- b.demo=true;T.eq(box.visible,false);b.demo=nil;b.safari=true;T.eq(box.visible,false);b.safari=nil
+ b.demo=true;T.eq(box.visible,false)
+ b.rsWally={hideHud=false};T.eq(box.visible,true,'native Wally healthbox can be exposed during demo')
+ b.rsWally.hideHud=true;T.eq(box.visible,false);b.rsWally=nil
+ b.demo=nil;b.safari=true;T.eq(box.visible,false);b.safari=nil
  game.data.field=game.data.field or{};game.data.field.playerForms={boy={},girl={}}
  game.save.player.gender='girl';T.eq(trainer.gender,1)
  game.save.player.gender='boy';T.eq(trainer.gender,0)
