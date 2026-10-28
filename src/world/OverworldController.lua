@@ -1327,6 +1327,9 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- the zone's type-2 init script (0x2158AE0 -> 0x2158A90); read by
   -- Gen4ScriptVM's onEnter
   self.gen5Continuing = gen5Continuing
+  local version = GameVersion.get()
+  self.gen3RsContinuing = ((version == "ruby" or version == "sapphire")
+    and opts and opts.via == "boot" and self.continuingSave) and true or nil
   self.continuingSave = nil
   -- Clay's stacked mine (Gen5DriftveilGym): its level rule hooks on at entry
   local liftDef = Game and Game.data and Game.data.maps and Game.data.maps[mapId]
@@ -2033,15 +2036,17 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   self.gen3MapWeatherPending = GameVersion.isGen3() or nil
 
   -- ...AND THE SCRATCH FLAGS GO, on the same load.
-  self:clearGen3TempFlags()
+  if not self.gen3RsContinuing then self:clearGen3TempFlags() end
   -- ...and so does the ice.
   --
-  -- The gym's ON_TRANSITION writes its step counter back to 1 on every single
-  -- entry, unconditionally, so the puzzle restarts whenever you walk in.  The
+  -- The gym's ON_TRANSITION writes its step counter back to 1 on a fresh
+  -- entry. A saved RS CONTINUE skips that callback and restores its row masks.
+  -- Otherwise the puzzle restarts whenever you walk in. The
   -- cracked cells have to restart with it: the drawn tiles are rebuilt from
   -- the map layout on a load, so a remembered crack with no cracked tile
   -- under it is ice that looks whole and gives way anyway.
-  if GameVersion.isGen3() and Game.save and Game.save.gen3ThinIce then
+  if GameVersion.isGen3() and not self.gen3RsContinuing
+     and Game.save and Game.save.gen3ThinIce then
     Game.save.gen3ThinIce[mapId] = nil
   end
   -- ...and so does the plank that was down, for the same reason
@@ -2094,11 +2099,12 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- is asked anything -- the map-entered listeners, the onEnter chain and the
   -- frame table all read them.  ClearTempFieldEventData (0x0009D344) sits at
   -- exactly this point in both of the cartridge's map-load paths.
-  if GameVersion.isGen3() and Game and Game.save then
+  if GameVersion.isGen3() and Game and Game.save and not self.gen3RsContinuing then
     pcall(function()
       require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)
     end)
   end
+  require("src.world.Gen3RsIce").enter(self, Game, self.gen3RsContinuing)
   -- ...and Sinnoh / Johto's, from the same call (field_warp_tasks.c, on every
   -- warp and every connection).  See Gen4Commands.clearTempFieldEventData for
   -- the Twinleaf report it fixes.
@@ -3895,6 +3901,7 @@ function OverworldState:update(dt)
   self:tickLavaridgeLaunch()
   -- ...and the flash window, which opens a pixel a frame after `animateflash`
   if GameVersion.isGen3() then
+    require("src.world.Gen3RsIce").tick(self, Game)
     require("src.world.Gen3Flash").tick(Game)
     -- ...and the Mirage Tower's collapse, when Route 111 is running it
     if self.g3MirageTower or self.g3MirageCrumbles then
@@ -9396,6 +9403,8 @@ function OverworldState:checkAshGrass()
 end
 
 function OverworldState:checkThinIce()
+  local rs = require("src.world.Gen3RsIce").step(self, Game)
+  if rs ~= nil then return rs end
   if not GameVersion.isGen3() then return false end
   local map, p = self.map, self.player
   if not (map and map.isThinIceCell) then return false end
