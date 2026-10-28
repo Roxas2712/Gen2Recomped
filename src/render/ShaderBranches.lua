@@ -31,7 +31,10 @@ end
 function B.plan(source)
  if type(source)~='string'then return nil,'source is not text'end
  local clean=uncomment(source);if not clean then return nil,'unfinished comment'end
+ if clean:find('##',1,true)then return nil,'token-pasted names are not qualified'end
  local code=withoutDirectives(clean)
+ local macros={}
+ for name in clean:gmatch('#%s*define%s+([%a_][%w_]*)')do macros[name]=true end
  local declarations,names={},{}
  local at=1
  while true do
@@ -60,8 +63,8 @@ function B.plan(source)
  end
  -- Uniform arithmetic remains dynamic. Reject possible shadow declarations,
  -- member names and macros before substituting any read in an if condition.
- -- A comma may introduce another local declaration; conservatively reject
- -- that spelling even when it is merely a function argument.
+ -- Commas may introduce local declarators; retain the conservative guard.
+ -- Macro arguments are also unknown: expansion may declare shadow names.
  local pieces,previous={},1
  for _,r in ipairs(declarations)do
   pieces[#pieces+1]=clean:sub(previous,r[1]-1)
@@ -73,9 +76,24 @@ function B.plan(source)
  for _,r in ipairs(conditions)do
   for name in clean:sub(r[1],r[2]):gmatch('%f[%w_][%w_]+%f[^%w_]')do used[name]=true end
  end
- local rejected={};local pos=1
+ local rejected={};local pos,scanned=1,1
+ local parents,macroDepth={},0
  while true do
   local a,b=outside:find('%f[%w_][%w_]+%f[^%w_]',pos);if not a then break end
+  for i=scanned,a-1 do
+   local char=code:sub(i,i)
+   if char=='('then
+    local last=i-1;while last>0 and code:sub(last,last):match('%s')do last=last-1 end
+    local first=last;while first>0 and code:sub(first,first):match('[%w_]')do first=first-1 end
+    local callee=code:sub(first+1,last)
+    local row={macro=macros[callee]or false}
+    parents[#parents+1]=row;if row.macro then macroDepth=macroDepth+1 end
+   elseif char==')'and #parents>0 then
+    if parents[#parents].macro then macroDepth=macroDepth-1 end
+    parents[#parents]=nil
+   end
+  end
+  scanned=b+1
   local name=outside:sub(a,b)
   if names[name]and not rejected[name]then
    -- Inspect the predecessor of this actual token. Searching an unanchored
@@ -84,7 +102,7 @@ function B.plan(source)
    local before=a-1
    while before>0 and outside:sub(before,before):match('%s')do before=before-1 end
    local predecessor=outside:sub(before,before)
-   if predecessor:match('[,%.]')or before<a-1 and predecessor:match('[%w_]')
+   if predecessor:match('[,%.]')or macroDepth>0 or before<a-1 and predecessor:match('[%w_]')
     or code:sub(a,b)~=clean:sub(a,b)then rejected[name]=true end
   end
   pos=b+1

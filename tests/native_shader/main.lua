@@ -323,6 +323,26 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){if(gate>.5)return tint;return vec4(1.
  check(exact and actual==candidate,'late foreign send owner falls back to original values and pixels')
  methods.send=ownedSend;g.setShader();g.present()
  reference:release();candidate:release();target:release()
+ g.present()
+ -- A macro may declare a local with the uniform's spelling. Its first
+ -- argument has no preceding type/comma, so a token-only guard misses it.
+ local macroCode=[[
+uniform float gate;
+float globalValue(){float value=gate*.25;return value;}
+#define DECLARE_LOCAL(a,b) float a=0.0,b=1.0
+vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
+ vec4 pixel=vec4(globalValue(),0.0,0.0,1.0);
+ DECLARE_LOCAL(gate,other);
+ if(gate>.5){pixel.g=.5;}
+ return pixel;
+}
+]]
+ reference=g.newShader(macroCode);candidate=g.newShader(macroCode..string.rep(' \n',32768))
+ target=g.newCanvas(8,8,{dpiscale=1})
+ send('send','gate',0);check(compare(),'macro-local shadow preserves independent native pixels at global zero')
+ send('send','gate',1);check(compare(),'macro-local shadow preserves independent native pixels at global one')
+ check(S.status().sources==0,'macro-local declarations retain the original native program')
+ reference:release();candidate:release();target:release();g.present()
  check(g.getStackDepth()==0,'native adapter fixture leaves no graphics scope')
  print('SHADER_ADAPTER_PASS',count)
 end
