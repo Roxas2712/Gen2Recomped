@@ -36,8 +36,9 @@ Its tests therefore exercise the native picture layer; optional public-capture
 assertions run on the fork where that boundary already exists. The upstream
 adaptation uses its existing inline queue admission, not a copied fork queue.
 
-This change does not qualify every battle picture. Minimize ROM art, complete
-GSC doll placement/palette and resize composition, full per-hit Beat Up combat
-sequencing, send-out events, natural-move GPU comparisons, Windows and packaged
+The follow-up [native picture-art implementation](native-gen2-picture-art.md)
+adds Minimize/Substitute ROM art, GSC placement/palette/resize composition and
+Crystal's staged actor copy. Full per-hit Beat Up combat sequencing, battler-row
+OAM drawing, send-out events, natural-move GPU comparisons, Windows and packaged
 release validation remain separate work. No supplied mod, protected instance,
 ROM or player save is changed. No new release is implied by these CPU tests.
