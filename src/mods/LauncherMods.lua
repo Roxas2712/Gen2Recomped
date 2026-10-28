@@ -1426,6 +1426,19 @@ function LauncherMods._installZipInner(source, opts)
     return nil, ("zip is for '%s', expected '%s'")
       :format(manifest.id, opts.expectId)
   end
+  -- Module-page recommendations must also match the actual ZIP manifest,
+  -- before replacing any installed files. Catalogue metadata is not enough.
+  if opts.expectGame then
+    local game=require('src.core.GameVersion').info(opts.expectGame)
+    if not game or game.external or not ModTargets.supports(manifest,opts.expectGame)
+      or not ModGens.allows(manifest,game.generation) then
+      cleanup();return nil,'Mod archive does not support the selected game.'
+    end
+    if manifest.api>Version.modApi
+      or manifest.game_version and not Semver.satisfies(Version.engine,manifest.game_version) then
+      cleanup();return nil,'Mod archive is incompatible with this engine.'
+    end
+  end
 
   -- Ordinary imports keep independent copies. Both the directory AND the
   -- manifest id must be unique: changing only a folder leaves Loader ignoring
@@ -1603,7 +1616,7 @@ end
 -- Install (or replace) a mod from a GitHub release zip URL.
 -- Returns true, version  |  nil, errString. Soft-fails: download / install /
 -- cleanup errors never throw into the launcher UI.
-function LauncherMods.installFromRelease(modId, release, downloadedPath)
+function LauncherMods.installFromRelease(modId, release, downloadedPath, expectedGame)
   local ok, result, err, mismatch = pcall(function()
     if type(modId) ~= "string" or modId == "" then
       return nil, "missing mod id"
@@ -1626,6 +1639,7 @@ function LauncherMods.installFromRelease(modId, release, downloadedPath)
     local installed, res, version = LauncherMods.installZip(localPath, {
       replace = true, expectId = sourceId or modId,
       installId = sourceId and modId or nil,
+      expectGame = expectedGame,
     })
     pcall(love.filesystem.remove, localPath)
     if not installed then return nil, res end

@@ -487,7 +487,12 @@ function C.install(RI)
     local download=self._communityDownload
     if download then
       if download.phase=='install' then
-        local installed,version,mismatch=require('src.mods.LauncherMods').installFromRelease(download.id,download.release,download.path)
+        if download.gameAccount and (not Auth.signedIn() or Auth.accountId()~=download.gameAccount) then
+          if download.path then love.filesystem.remove(download.path) end
+          self:_communityCancelDownload();notice(self,'The account or selected game changed. Choose the mod again.',false)
+          return update(self,dt,...)
+        end
+        local installed,version,mismatch=require('src.mods.LauncherMods').installFromRelease(download.id,download.release,download.path,download.gameVersion)
         self._communityDownload=nil
         if installed then
           if download.repo then
@@ -529,10 +534,11 @@ function C.install(RI)
       if entry then
         if result.kind~='done' or not C.resolve(entry,result.first) then
           entry._communityResolved=true;entry.update_check='error: '..tostring(result.error or result.second or 'Repository unavailable')
+          C.catalogueRevision=(C.catalogueRevision or 0)+1
         end
       end
     end)
-    if Auth.signedIn() and not self._communityResolveJob and self.section=='mods' and self._communityResolveQueue and #self._communityResolveQueue>0 then
+    if Auth.signedIn() and not self._communityResolveJob and (self.section=='mods' or self._gameModsVersion) and self._communityResolveQueue and #self._communityResolveQueue>0 then
       local entry=table.remove(self._communityResolveQueue,1)
       self._communityResolving=entry
       self._communityResolveJob=Task.new(function() return resolveEntry(entry) end)

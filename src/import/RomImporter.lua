@@ -12028,5 +12028,6 @@ require("src.import.NativeLanguageSetup").install(RomImporter)
 
 require("src.import.LauncherPokemonXY").install(RomImporter)
 require("src.import.LauncherPinball").install(RomImporter)
+require("src.import.LauncherGameMods").install(RomImporter)
 
 return RomImporter
