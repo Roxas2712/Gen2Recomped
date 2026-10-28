@@ -68,6 +68,7 @@ jobs:
           path: |
             ${{ runner.temp }}/android-vm/candidate/report.json
             ${{ runner.temp }}/android-vm/candidate/*.log
+            ${{ runner.temp }}/android-vm/candidate/artifacts/
             ${{ runner.temp }}/android-love/candidate/report.json
             ${{ runner.temp }}/android-love/candidate/*.log
             ${{ runner.temp }}/android-love/candidate/*.apk

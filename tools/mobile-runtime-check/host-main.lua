@@ -22,7 +22,7 @@ function love.load()
     end
     return previousPrint(line, ...)
   end
-  arg = {tostring(config.capacity), not config.jit and 'interpreter-only' or nil}
+  arg = {tostring(config.capacity), config.platform == 'ios' and 'interpreter-only' or nil}
   local ok, why = pcall(assert(love.filesystem.load('check.lua')))
   print, arg = previousPrint, previousArg
   assert(ok, why)

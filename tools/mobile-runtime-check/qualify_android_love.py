@@ -125,13 +125,13 @@ def main():
             payload = host/'app/src/embed/assets/game.love'
             payload.parent.mkdir(parents=True, exist_ok=True)
             config = {'capacity': capacity, 'identity': identity,'platform':'android',
-                      'arch':{'arm64-v8a':'arm64','armeabi-v7a':'arm','x86_64':'x64'}[args.abi],'jit':True}
+                      'arch':{'arm64-v8a':'arm64','armeabi-v7a':'arm','x86_64':'x64'}[args.abi],'jit':args.abi=='x86_64'}
             with zipfile.ZipFile(payload, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
                 for target, original in (('main.lua', probe_names[0]), ('thread.lua', probe_names[1]),
                                          ('check.lua', probe_names[2]), ('host-c-api.lua', probe_names[3]), ('src/link/Json.lua', probe_names[4])):
                     archive.writestr(target, probes[original])
                 archive.writestr('config.lua', 'return {capacity='+str(capacity)+',identity='+json.dumps(identity)+
-                                 ',platform="android",arch='+json.dumps(config['arch'])+',jit=true}\n')
+                                 ',platform="android",arch='+json.dumps(config['arch'])+',jit='+str(config['jit']).lower()+'}\n')
                 archive.writestr('conf.lua', 'function love.conf(t) t.identity='+json.dumps(identity)+
                     ";t.version='11.5';t.window=false;t.modules.graphics=false;t.modules.audio=false;"+
                     't.modules.joystick=false;t.modules.physics=false end\n')
@@ -208,7 +208,9 @@ def main():
                     time.sleep(2)
                 if not result or result.get('passed') is not True:
                     raise RuntimeError('Actual Android LÖVE host gate failed: '+str(result))
-                for key in ('jitActive', 'cApiPassed', 'ffiCallbackPassed', 'threadVmPassed', 'filesystemPassed'):
+                if result.get('jitActive') is not (abi=='x86_64'):
+                    raise ValueError('Actual host startup JIT mode changed')
+                for key in ('cApiPassed', 'ffiCallbackPassed', 'threadVmPassed', 'filesystemPassed'):
                     if result.get(key) is not True:
                         raise ValueError('Actual host proof missing: '+key)
                 if result.get('capacity') != capacity or result.get('identity') != entry['identity'] or result.get('arch') != {'arm64-v8a':'arm64','armeabi-v7a':'arm','x86_64':'x64'}[abi]:
