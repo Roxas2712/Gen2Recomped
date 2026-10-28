@@ -14,6 +14,7 @@ function M.record(id, base)
   base = require("src.battle.Gen3TripleKick").builtin(id, base)
   base = require("src.battle.Gen3MirrorMove").builtin(id, base)
   base = require("src.battle.Gen3ChoiceBand").builtin(id, base)
+  base = require("src.battle.Gen3Phazing").builtin(id, base)
   return require("src.battle.Gen3SleepTalk").builtin(id, base)
 end
 function M.install(registry, owner)
