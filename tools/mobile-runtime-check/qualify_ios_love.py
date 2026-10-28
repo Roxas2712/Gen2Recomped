@@ -27,19 +27,20 @@ def main():
  if out.exists() or any(out.is_relative_to(x) or x.is_relative_to(out) for x in (build,love,engine)):p.error('Choose a new owned output separate from inputs')
  if subprocess.check_output(['git','rev-parse','HEAD'],cwd=love,text=True).strip()!=LOVE:p.error('Pinned prepared LOVE source required')
  manifest=build/'report.json';report=json.loads(manifest.read_text());manifest_hash=sha(manifest)
- run=subprocess.run
+ run=subprocess.run;popen=subprocess.Popen
  if not os.getenv('GITHUB_ACTIONS'):
   sys.path.insert(0,str(ROOT/'tools'));import qa_storage as qa
   qa._storage=qa.Storage(ROOT);atexit.register(qa._storage.close)
   for path in (ROOT,engine,build,love):qa.qa_source(path)
-  qa.qa_cache(out.parent);qa.qa_copy(out);run=qa.qa_run
+  qa.qa_cache(out.parent);qa.qa_copy(out);run=qa.qa_run;popen=qa.qa_popen
  out.mkdir(parents=True)
- def command(label,argv,timeout=300):
+ def command(label,argv,timeout=300,required=True):
   r=run([str(x) for x in argv],capture_output=True,text=True,timeout=timeout)
   (out/(label+'.log')).write_text(r.stdout+r.stderr)
   if r.returncode:print((r.stdout+r.stderr)[-9000:],flush=True)
-  r.check_returncode();return r.stdout.strip()
- def sim(label,*args,timeout=300):return command(label,['xcrun','simctl',*args],timeout)
+  if required:r.check_returncode()
+  return r.stdout.strip()
+ def sim(label,*args,timeout=300,required=True):return command(label,['xcrun','simctl',*args],timeout,required)
  runtimes=json.loads(sim('runtimes','list','runtimes','-j'))['runtimes']
  runtime=next(x for x in reversed(runtimes) if x.get('isAvailable') and '.iOS-' in x['identifier'])
  types=json.loads(sim('device-types','list','devicetypes','-j'))['devicetypes']
@@ -82,22 +83,27 @@ def main():
     z.writestr('conf.lua',f'function love.conf(t) t.identity="{identity}";t.version="12.0";t.window.width=128;t.window.height=128;t.modules.audio=false;t.modules.joystick=false;t.modules.physics=false end\n')
    command(variant+'-sign',['codesign','--force','--deep','--sign','-','--timestamp=none',app])
    sim(variant+'-install','install',udid,app)
-   console=(out/(variant+'-console.log')).open('w')
-   launcher=subprocess.Popen(['xcrun','simctl','launch','--console',udid,package],stdout=console,stderr=subprocess.STDOUT)
    container=Path(sim(variant+'-container','get_app_container',udid,package,'data'))
+   report_path=container/'Documents/runtime-capacity-result.json'
+   console=(out/(variant+'-console.log')).open('w')
+   launcher=popen(['xcrun','simctl','launch','--console',udid,package],
+     env={**os.environ,'SIMCTL_CHILD_ROXAS_RUNTIME_REPORT':str(report_path)},stdout=console,stderr=subprocess.STDOUT)
    deadline=time.monotonic()+180;result=None
    while time.monotonic()<deadline:
-    paths=list(container.rglob('runtime-capacity-result.json'))
+    paths=[report_path] if report_path.exists() else list(container.rglob('runtime-capacity-result.json'))
     if paths:
      try:result=json.loads(paths[0].read_text())
      except json.JSONDecodeError:pass
      else:break
     if launcher.poll() is not None:break
     time.sleep(2)
-   if launcher.poll() is None:launcher.terminate()
-   launcher.wait(timeout=30);console.close()
    sim(variant+'-system-log','spawn',udid,'log','show','--style','compact','--last','3m','--predicate','process == "love"',timeout=120)
    sim(variant+'-screenshot','io',udid,'screenshot',out/(variant+'-screen.png'))
+   sim(variant+'-terminate','terminate',udid,package,required=False)
+   if launcher.poll() is None:launcher.terminate()
+   try:launcher.wait(timeout=5)
+   except subprocess.TimeoutExpired:launcher.kill();launcher.wait(timeout=5)
+   console.close()
    if not result or result.get('passed') is not True:
     raise RuntimeError('iOS app host gate failed: '+str(result)+'\n'+(out/(variant+'-console.log')).read_text()[-9000:])
    assert result['capacity']==capacity and result['identity']==identity and result['arch']==lua_arch

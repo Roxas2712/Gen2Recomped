@@ -3,7 +3,14 @@ local config = require('config')
 local Json = require('src.link.Json')
 local function publish(value)
   value.capacity, value.identity, value.schema = config.capacity, config.identity, 2
-  assert(love.filesystem.write('runtime-capacity-result.json', Json.encode(value)))
+  local report = os.getenv('ROXAS_RUNTIME_REPORT')
+  if report then
+    local file=assert(io.open(report,'wb'))
+    assert(file:write(Json.encode(value)))
+    assert(file:close())
+  else
+    assert(love.filesystem.write('runtime-capacity-result.json', Json.encode(value)))
+  end
 end
 function love.load()
   local major, minor = love.getVersion()
@@ -68,5 +75,5 @@ function love.errorhandler(why)
   local message = debug.traceback(tostring(why), 2)
   pcall(publish, {passed=false,error=message})
   io.stderr:write(message .. '\n')
-  return function() return 1 end
+  return function() if love.timer then love.timer.sleep(.05) end end
 end
