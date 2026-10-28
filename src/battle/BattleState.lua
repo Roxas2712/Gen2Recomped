@@ -3864,6 +3864,7 @@ function BattleState:syncSides()
     require("src.battle.HeldItemRead").bind(battler, self)
     Gen2Read.bind(battler, self)
   end
+  require('src.battle.Gen3ExpParticipants').observe(self)
 end
 
 -- IS THIS SIDE STILL ARRIVING?
@@ -9599,9 +9600,10 @@ function BattleState:awardExp(fallen)
   -- a mon that fainted mid-fight has had its gain-exp flag cleared
   -- (RemoveFaintedPlayerMon), so it drops out of the divisor and only
   -- the surviving participants are counted and paid
+  local sentIn=require('src.battle.Gen3ExpParticipants').forFallen(self,foe)or self.participants
   local participants, alive = 0, {}
   for _, mon in ipairs(self:playerPartyView()) do
-    if self.participants and self.participants[mon] then
+    if sentIn and sentIn[mon] then
       participants = participants + 1
       if mon.hp > 0 then table.insert(alive, mon) end
     end
