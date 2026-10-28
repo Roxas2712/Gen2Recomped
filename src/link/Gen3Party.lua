@@ -7,6 +7,9 @@ function C.signature(mon)
   for _, k in ipairs({ "personality", "abilitySlot", "level", "exp", "otId", "otSecretId", "happiness" }) do
     out[#out + 1] = tostring(mon[k] or 0)
   end
+  -- Native friendship commands read this alias first. Raw authored writes
+  -- can leave happiness unchanged, but must still enter the fatal hash.
+  out[#out + 1] = tostring(mon.friendship or mon.happiness or 0)
   for _, kind in ipairs({ "ivs", "evs" }) do
     for _, k in ipairs(STATS) do
       out[#out + 1] = tostring((mon[kind] or {})[k] or 0)
