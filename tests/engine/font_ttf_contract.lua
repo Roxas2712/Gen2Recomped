@@ -49,6 +49,13 @@ T.same(spans[4],{from=5,to=7,code=BASE+28450})
 T.same(spans[5],{from=8,to=11,code=BASE+128578})
 T.eq(Font.glyphCount(text),7)
 T.eq(Font.width(text),52,'proportional TTF and tile advances')
+T.eq(Font.fit('WiW',11),'.','narrow retained glyph cannot pay for a wider ellipsis')
+T.eq(Font.fit('WiW',12),'W.','actual ellipsis advance is reserved')
+for _,label in ipairs{'WiW','漢🙂W','#MON#MON'}do
+  for budget=0,60 do
+    T.check(Font.width(Font.fit(label,budget))<=budget,'truncation fits proportional budget')
+  end
+end
 local before=load.face.reads
 T.eq(Font.width(text),52);T.eq(load.face.reads,before,'glyph metric reuse')
 local previous=oldNewFont(8);G.setFont(previous)

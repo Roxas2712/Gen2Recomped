@@ -833,8 +833,13 @@ function Font.fit(text, pixels)
   local spans = Font.split(text or "")
   local n = Font.spansFitting(spans, pixels)
   if n >= #spans then return text or "" end
+  -- The ellipsis is another glyph, not necessarily as wide as the last
+  -- retained character. Budget its actual advance for TTF and GBA faces.
+  local dotWidth = Font.width(".")
+  if dotWidth > pixels then return "" end
+  n = Font.spansFitting(spans, pixels - dotWidth)
   local out = {}
-  local i,last = 1,math.max(0,n-1)
+  local i,last = 1,n
   while i<=last do
     local span=spans[i]
     local raw=(text or ""):sub(span.from,span.to)
