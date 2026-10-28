@@ -44,9 +44,9 @@ party-wide effects, EXP/EXP.ALL and defeat decisions. Never replace or reorder
 
 The standalone `native_trainer_party_scope` regression drives actual older-host
 constructors, generation-appropriate menus, AI, Heal Bell/Beat Up, EXP and defeat
-across its supported editions. This prerequisite is tested on this offered host;
-the corresponding fork result is not inherited. Execution status is recorded
-in the draft PR before qualification.
+across its supported editions. Qualification requires execution on this offered
+host; the corresponding fork result is not inherited. Execution status is
+recorded in the draft PR.
 
 ## Validation
 
