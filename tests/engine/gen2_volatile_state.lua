@@ -76,8 +76,11 @@ for _,version in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
  probe.write(model,mon,'recharge',nil)
  local hp=mon.hp
  probe.write(model,mon,'endure',true)
- b:applyDamage(b.player,100000)
+ b:applyDamage(b.player,100000,true)
  T.eq(mon.hp,1,'source Endure caps actual incoming damage at one HP')
+ mon.hp=hp
+ b:applyDamage(b.player,100000,false)
+ T.eq(mon.hp,0,'Endure does not absorb native residual damage')
  probe.write(model,mon,'endure',nil);mon.hp=hp
  local low={id='QA_LOW_ACCURACY',accuracy=1,type='NORMAL'}
  local function accuracy()return Damage.accuracyRoll({oneIn256Miss=true},low,b.player,b.enemy,function()return 255 end,nil,b.data)end
