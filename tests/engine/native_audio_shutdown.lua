@@ -63,9 +63,10 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
    -- Exercise the same portable callback shape as a native boot wrapper.
    local base=G._handleBootAction;local calls=0
    G._handleBootAction=function(view,action)A.stopAll();return base(view,action)end
-   local ok,why=pcall(G._dispatch,'_handleBootAction',g,function(_,action)calls=calls+1;return action.value,nil,9 end,{value='boot'})
+   local ok,why,hole,last=pcall(G._bootAction,g,{action='new_game'},function()calls=calls+1;return 'boot',nil,9 end)
    G._handleBootAction=base
-   T.eq(ok,true,tostring(why));T.eq(why,'boot');T.eq(calls,1,'native boot body executes once after source shutdown')
+   T.eq(ok,true,tostring(why));T.eq(why,'boot');T.eq(hole,nil);T.eq(last,9)
+   T.eq(calls,1,'native boot body executes once after source shutdown')
    S.invalidate();Music.stop();Stream.shutdown();G.release();Host.currentMod=nil
   end
   return environment
