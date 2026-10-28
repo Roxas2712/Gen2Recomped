@@ -4,7 +4,8 @@ local Loader = {}
 local ROOT = 'compat/gen1-rs/reference/'
 
 function Loader.new(version, bindings)
-  assert(version == 'ruby' or version == 'sapphire' or version == 'emerald', 'Native Hoenn version required')
+  assert(version == 'ruby' or version == 'sapphire' or version == 'emerald'
+    or version == 'firered' or version == 'leafgreen', 'Native GBA version required')
   local loaded = {}
   bindings = bindings or {}
   local function load(name)
