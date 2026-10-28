@@ -28,3 +28,14 @@ real Hall-room scripting and failed/refused/successful atomic writes. It
 also checks all native maps, both player/rival sheets, four original cries,
 unchanged live world/player, THE END, title and actual CONTINUE. This remains
 a prepared ending fixture; full ordinary FR/LG stories are separate work.
+
+Validation on runtime `e559fb7d2cb7c28c4422cc67c122aec1e2f39c76`:
+both fresh full USA imports pass the actual-renderer ending fixture with 36
+captures each. All 66 commands, Indigo plus the thirteen native map scenes,
+the selected boy/girl and rival sheets, four Pokemon poses/cries, copyright,
+THE END, title and actual CONTINUE complete. The earlier refused/raised/successful
+League writes still preserve prior disk bytes until success and emit one
+actual save-audio source. Live world/player, draw save/RNG and frozen-source
+checks pass. Inspected native map/staff text, both player sheets and Pokemon
+captures. Nine relevant CPU suites pass 805 assertions; syntax and all 208
+reference-file hashes pass. No ordinary complete FR/LG story is claimed.
