@@ -49,7 +49,13 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   -- round as the earlier turn-start callback, not a per-move/frame counter.
   local first,second=b.queue[1],b.queue[2]
   T.check(first and second and first.fn and second.fn,'native planner queues both actual actions')
-  b:runQueueAction(first);b:runQueueAction(second)
+  -- This older host executes action rows inline in updateQueue; the newer
+  -- runQueueAction helper belongs to a separately offered prerequisite.
+  -- Execute the actual planner-owned closures with that host's insertion
+  -- context, rather than adding a fake helper or a second move executor.
+  for _,item in ipairs{first,second}do
+   b.nextInsert=0;item.fn();b.nextInsert=nil;b.current=nil
+  end
   T.eq(b.player.mon.moves[1].pp,pp-1,'actual native move spends PP once')
   T.eq(probe.read(model),round,'both actual moves share one round')
   b:endOfTurn()
