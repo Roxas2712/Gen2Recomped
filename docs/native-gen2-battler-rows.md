@@ -15,8 +15,10 @@ from the bottom of the seven-tile front slot; player head comes from the top
 of the six-tile back slot. Five/six-tile native fronts have the cartridge's
 one-tile left padding. The VM retains its actual command timing, descriptors,
 OAM positions, flips and palettes. No second interpreter or battle state is
-introduced. Source image data is shared/read-only; copying performs no GPU
-readback. Repeated drawing does not decode or upload images.
+introduced. Source image data is shared/read-only where the native shared
+decoder is available; older upstream uses its existing owned decoder once
+per copy. Copying performs no GPU readback. Repeated drawing does not decode
+or upload images.
 
 OBJ colour zero is removed before palette application, independently of BG
 register changes. Custom RGB art keeps its alpha and opts out of indexed

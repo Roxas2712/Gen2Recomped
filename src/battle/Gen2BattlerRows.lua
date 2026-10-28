@@ -5,7 +5,8 @@ local Assets=require('src.render.Assets')
 local M={}
 function M.snapshot(source,entry)
   if not(source and source.path and love.image and love.image.newImageData)then return end
-  local raw=Assets.imageDataShared(source.path)
+  local shared=Assets.imageDataShared
+  local raw=(shared or Assets.imageData)(source.path)
   local w,h=raw:getDimensions()
   local x0=0
   if source.crop then w=source.crop.width;x0=(source.crop.index-1)*w end
@@ -36,6 +37,7 @@ function M.snapshot(source,entry)
   end end
   local image=love.graphics.newImage(out)
   if out.release then out:release()end
+  if not shared and raw.release then raw:release()end
   image:setFilter('nearest','nearest')
   return {image=image,rows=rows,cols=cols,trueColor=source.trueColor,quads={}}
 end

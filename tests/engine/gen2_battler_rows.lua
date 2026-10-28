@@ -163,6 +163,47 @@ sources.rgb:mapPixel(function(x)return x<48 and 0 or 1,.4,.2,.75 end)
 local rgb=Rows.snapshot({path='rgb',trueColor=true,crop={index=2,width=48}},{battler='player',rows=2})
 T.same({rgb.image:getPixel(0,0)},{1,.4,.2,.75});T.eq(rgb.trueColor,true)
 T.eq(Rows.quad(rgb,12),nil,'out-of-range OAM cells are not invented')
+do
+  local s,p=make('crystal',2,'player')
+  local original=s:gen2ObjectPictureSource('player').path
+  local row={anim='PROBE'};s.moveAnimRow=row;s.queue={row}
+  require('src.battle.Gen2PicturePresentation').transform(s,s.player,s.enemy)
+  T.eq(s:gen2ObjectPictureSource('player').path,original,
+    'queued Transform reads the pinned old picture, not its future resolved sprite')
+  p:start('PROBE',true);p:update()
+  local entry=p.runtime.loaded[2]
+  T.check(p.view.battlerRows[entry]~=nil,'pending picture snapshot still uses actual command')
+  local originalProvider=s.gen2ObjectPictureSource
+  sources['rgb-live']=F.image(96,48)
+  sources['rgb-live']:mapPixel(function(x)return x<48 and 0 or 1,.4,.2,.75 end)
+  function s:gen2ObjectPictureSource(side)
+    if side=='player'then return {path='rgb-live',trueColor=true,crop={index=2,width=48}}end
+    return originalProvider(self,side)
+  end
+  p:start('PROBE',true);p:update();draws={};p:draw()
+  T.eq(#draws,26)
+  for i=15,26 do
+    T.same(draws[i].colors,{},'actual custom RGB OAM clears preceding indexed shader')
+    T.same({draws[i].image:getPixel(0,0)},{1,.4,.2,.75},'actual OBJ copy retains selected RGB frame')
+  end
+  s.gen2ObjectPictureSource=originalProvider
+  -- A real raisesub command precedes the copy, and therefore the doll is
+  -- the current BG source. A later dropsub cannot alter these copied cells.
+  local code=p.anims.scripts[1].code
+  table.insert(code,1,{op='raisesub'})
+  p.anims.pictureArt={version=1,substitute={player='qa-doll-back',enemy='qa-doll-front'}}
+  sources['qa-doll-back']=picture(48,48,2);sources['qa-doll-front']=picture(56,56,1)
+  p:start('PROBE',true);p:update()
+  T.eq(s:gen2ObjectPictureSource('player').path,'qa-doll-back','source follows real VM replacement state')
+  local copied=p.view.battlerRows[p.runtime.loaded[2]].image
+  local expected={sources['qa-doll-back']:getPixel(0,0)}
+  if expected[1]>.83 then expected[4]=0 end
+  T.same({copied:getPixel(0,0)},expected,'real native copy uses replacement pixels')
+  p.runtime.picOverride.player=false
+  T.eq(s:gen2ObjectPictureSource('player').path,original,'drop reveals native pinned Pokemon source')
+  T.same({copied:getPixel(0,0)},expected,'later visible picture change cannot mutate earlier OBJ copy')
+  p:release()
+end
 Assets.imageData,love.image,g.newImage,g.draw,g.newShader=oldData,oldImage,oldNew,oldDraw,oldShader
 Assets.invalidate();V.set(oldVersion)
 T.finish('native GSC battler-row copy pixels, actual OAM, palettes, snapshots and lifetime')
