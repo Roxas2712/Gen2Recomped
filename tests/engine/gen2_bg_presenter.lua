@@ -47,7 +47,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
     calls,rects={},{}
     local external={};g.setShader(external);g.setColor(.2,.3,.4,.5)
     local frame=s.anim.frames
-    if width==304 then Wide.draw(s)else s:drawScene()end
+    if width==304 then Wide.draw(s)else s:drawSceneBody()end
     local blits={}
     for _,row in ipairs(calls)do
       if row.image==s.animView.canvas then blits[#blits+1]=row end
@@ -61,7 +61,11 @@ for _,edition in ipairs({'gold','silver','crystal'})do
     for _,row in ipairs(blits)do T.eq(row.shader,nil,'already-coloured canvas rows bypass a caller shader')end
     T.eq(s.anim.frames,frame,'scene rendering never advances the native VM')
     T.eq(g.getShader(),external,'native composition restores caller shader')
-    T.same({g.getColor()},{.2,.3,.4,.5},'native composition restores caller tint')
+    if width==304 then
+      T.same({g.getColor()},{1,1,1,1},'outer native scene sets neutral tint for final overlays')
+    else
+      T.same({g.getColor()},{.2,.3,.4,.5},'native scene body restores caller tint')
+    end
   end
   s.animView:release();s.animPlayer:release()
 end
