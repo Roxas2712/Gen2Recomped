@@ -83,6 +83,13 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   T.eq(row.quad,10+math.floor(w*(1-1/3)/2),'entry picture compensation stays on integer native pixels')
   T.eq(row.x,20+math.floor(h*(1-1/3)),'entry keeps its bottom edge pinned to the native box')
   local bg=s.anim.bg;bg.picSize.player=nil
+  local read=s.animPicState
+  s.animPicState=function(self,side)
+    local state=read(self,side);state.slide=3;return state
+  end
+  calls={};s:drawBattlerPic(b,10,20,1)
+  T.eq(calls[#calls].quad,13,'public picture-state slide override reaches the actual native draw')
+  s.animPicState=read
   bg.monShade.player=0xf8;bg.monShade.enemy=0xfc
   Palette.setBgp(0x1b);calls={}
   if s.drawPic then s:drawPic(b.mon,false)else s:drawBattlerPic(b,10,20,1)end
