@@ -50,7 +50,9 @@ function F.draw(text,x,y,opts)
     local colors=opts.colors or F.COLOR.NORMAL
     local toned=Font.beginTwoTone(opts.color or colors.fg or F.COLOR.NORMAL.fg,colors.shadow or F.COLOR.NORMAL.shadow)
     local good,width=pcall(function()
-      if Pen.has(text)then return Pen.layout(text,opts,function(glyph,dx,dy)Font.draw(glyph,x+dx,y+dy)end)end
+      if Pen.has(text)then return Pen.layout(text,opts,function(glyph,dx,dy,code)
+        if code then Font.drawCode(code,x+dx,y+dy)else Font.draw(glyph,x+dx,y+dy)end
+      end)end
       local max,lineY,count=0,y,0
       for line in(tostring(text or'')..'\n'):gmatch('(.-)\n')do
         local xx=x

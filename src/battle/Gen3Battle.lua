@@ -2064,12 +2064,9 @@ end
 -- Font.draw expands brace tags for ordinary host text; the cartridge's
 -- compound glyph must keep its original width in the narrow action column.
 function Gen3Battle.drawSafariLabel(label,x,y)
-  if label~='{POKEBLOCK}'then Font.draw(label,x,y);return Font.width(label)end
-  local pen=x
-  for code=0x55,0x59 do
-    Font.drawCode(code,pen,y);pen=pen+Font.advanceOf(code)
-  end
-  return pen-x
+  local pen=require('src.render.Gen3TextPen')
+  if not pen.isCompound(label)then Font.draw(label,x,y);return Font.width(label)end
+  return pen.layout(label,nil,function(_,dx,dy,code)Font.drawCode(code,x+dx,y+dy)end)
 end
 
 local function drawCommandMenu(battle)
