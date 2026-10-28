@@ -41,6 +41,9 @@ function Bridge.extract(extractor)
   require('src.import.Gen3RsStarterAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsBattlePanelAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsHealthboxAssets').extract(extractor,load,rom,cache)
+  local positions=extractor._constants.gen3BattlerCoords
+  assert(positions and positions.singles and #positions.singles==4
+    and positions.doubles and #positions.doubles==4,'RS native battler positions absent')
   require('src.import.Gen3RsPokenavAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsStorageAssets').extract(extractor,load,rom,cache)
   require('src.import.Gen3RsPokedexAssets').extract(extractor,load,rom,cache)

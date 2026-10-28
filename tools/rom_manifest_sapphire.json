@@ -336,6 +336,12 @@
       "FUNCS": 3210032,
       "WALK_DRIVER": 362992,
       "SLIDE_DRIVER": 363376
+    },
+    "BATTLER_COORDS": {
+      "AT": 3667208,
+      "READER": 490176,
+      "POINTER_AT": 100,
+      "HEALTHBOX": {}
     }
   },
   "scenes": [],
