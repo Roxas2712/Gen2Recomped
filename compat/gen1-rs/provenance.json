@@ -216,7 +216,8 @@
     "src/ui/game3/option_menu.lua": "7961ded2bd530cebbfa2f051aacba8fbed407f298ccb23f74bc83f3bc5754a17",
     "src/import/gba/rse/menus_extract.lua": "33dde1ad4f5caa531c160a35f9257fda9548733411f6bcdf428081341a93ad2f",
     "src/ui/game3/rse/bag_chrome.lua": "1e4180390807d76f5006c7230542c92547dca86eeb08f03f79daaa32c8dc43ed",
-    "src/ui/game3/list_menu.lua": "ac67ca2414857fc2dc0757805b7385b710b772871eebd9638b6f6d5937df45bd"
+    "src/ui/game3/list_menu.lua": "ac67ca2414857fc2dc0757805b7385b710b772871eebd9638b6f6d5937df45bd",
+    "src/ui/game3/hall_of_fame_pc.lua": "4b240bc785361025151b4e888bbbf20b6769c0524de36d7c60caba335c74faf1"
   },
   "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison; original Emerald common main-menu presentation and callback adapter"
 }

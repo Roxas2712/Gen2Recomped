@@ -2,6 +2,11 @@
 -- Persist the native ceremony's compact roster through the host save writer.
 -- The induction count remains numeric; records retain stable host species IDs.
 local M={LIMIT=50}
+function M.number(save)
+ local n=type(save.gen3Stats)=='table'and tonumber(save.gen3Stats[10])
+ if not n or n<=0 then n=tonumber(save.hallOfFame)or 0 end
+ return math.max(0,math.min(999,math.floor(n)))
+end
 local function uint(value,max)
  value=tonumber(value)or 0
  assert(value%1==0 and value>=0 and value<=(max or 4294967295),'Invalid native Hall identity')
@@ -50,8 +55,10 @@ function M.nativeTeams(save,data)
   for j,mon in ipairs(team)do
    local def=type(mon)=='table'and data.pokemon[mon.species]
    if not(def and type(def.index)=='number'and type(mon.nickname)=='string')then return nil,'Unknown Gen3 Hall member'end
+   local raw={species=mon.species,isEgg=mon.isEgg,nickname=mon.nickname,level=mon.level,
+    otId=mon.trainerId,otSecretId=mon.otSecretId,personality=mon.personality}
    out[j]={species=mon.isEgg and 412 or def.index,nickname=mon.nickname,level=mon.level,
-    trainerId=mon.trainerId,otSecretId=mon.otSecretId,personality=mon.personality,_hostMon=mon}
+    trainerId=mon.trainerId,otSecretId=mon.otSecretId,personality=mon.personality,_hostMon=raw}
   end
   teams[i]=out
  end
