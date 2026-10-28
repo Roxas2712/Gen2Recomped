@@ -13718,7 +13718,7 @@ function OverworldState:hatchEgg(hatched)
   -- ElmPhoneCalleeScript tests (`checkevent $2D / iffalse .next / checkevent
   -- $54 / iftrue .egghatched`), so without it ringing Elm after the EGG
   -- hatched could never reach ElmPhoneEggHatchedText.
-  if GameVersion.isGen2() and hatched.species == "SPECIES_175" and Game.save.flags then
+  if GameVersion.isGen2() and require('src.core.Gen2SpeciesNames').same(Game.data,hatched.species,'SPECIES_175') and Game.save.flags then
     Game.save.flags[require("src.script.Gen2Flags").eventFlag(0x54)] = true
   end
   local name = def and def.name or hatched.species
