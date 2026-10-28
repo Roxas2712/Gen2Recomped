@@ -140,6 +140,8 @@ function Gen3MainMenu.new(game, opts)
   self.items = items
   local RsMenu=require('src.ui.Gen3RsMainMenu')
   if RsMenu.available(self)then self.rsNative=RsMenu.new(self)end
+  local EmeraldMenu=require('src.ui.Gen3EmeraldMainMenu')
+  if EmeraldMenu.available(self)then self.rsNative=EmeraldMenu.new(self)end
   if GameVersion.isFRLG() then
     -- Read once on construction. A draw must never recover/write a save.
     self.frlgSave = false

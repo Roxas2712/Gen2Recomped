@@ -16,11 +16,11 @@ function M.available(owner)
   end
   return seen.newGame and seen.option and seen.exit or false
 end
-function M.snapshot(game,save)
+function M.snapshot(game,save,nativeConstants)
   if type(save)~='table'then return nil end
   local data=game.data;local player=save.player or{}
   local load=require('compat.gen1-rs.Loader').new(require('src.core.GameVersion').get())
-  local C=require('compat.gen1-rs.Constants').new(load)
+  local C=nativeConstants or require('compat.gen1-rs.Constants').new(load)
   local flags=save.flags or{};local vars=save.gen3Vars or{}
   local function flag(n)local v=flags[n];if v==nil then v=flags[('FLAG_G3_%04X'):format(n)]end;return v==true or v==1 end
   local dex=save.pokedex or{}

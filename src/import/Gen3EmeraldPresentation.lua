@@ -36,6 +36,7 @@ function Bridge.missing()
   end
   for _,path in ipairs(require('src.import.Gen3EmeraldCreditsAssets').missing())do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3EmeraldHallAssets').missing())do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3EmeraldMainMenuAssets').missing())do absent[#absent+1]=path end
   return absent
 end
 
@@ -71,6 +72,7 @@ function Bridge.extract(extractor)
     title=paths[1],intro=paths[2]}
   require('src.import.Gen3EmeraldCreditsAssets').extract(extractor)
   require('src.import.Gen3EmeraldHallAssets').extract(extractor)
+  require('src.import.Gen3EmeraldMainMenuAssets').extract(extractor)
   local audio=assert(extractor._audio)
   audio.special=audio.special or {}
   for role,name in pairs({intro='MUS_INTRO',introBattle='MUS_INTRO_BATTLE',title='MUS_TITLE'})do
