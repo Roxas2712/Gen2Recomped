@@ -93,25 +93,36 @@ end
 local function hook(shader)
  local methods=debug.getmetatable(shader).__index
  if hooks[methods]then return hooks[methods]end
- local h={hasUniform=methods.hasUniform,release=methods.release}
+ local h={hasUniform=methods.hasUniform,release=methods.release,send=methods.send,sendColor=methods.sendColor,wrapped={}}
  hooks[methods]=h
  for _,name in ipairs{'send','sendColor'}do
   local method=methods[name]
-  if method then methods[name]=function(self,...)
+  if method then h.wrapped[name]=function(self,...)
    local record=find(self)
    if not record or record.disabled then return method(self,...)end
    local args={n=select('#',...),...}
    -- The original must accept the write first. A rejected native write must
    -- neither alter the companion nor change the public error/return contract.
    return mirrored(record,method,args,method(self,...))
-  end end
+  end;methods[name]=h.wrapped[name]end
  end
  methods.release=function(self,...)
   local record=find(self)
   if record then return released(record,h.release(self,...))end
   return h.release(self,...)
  end
+ h.wrapped.release=methods.release
  return h
+end
+function A.ownsShaderMethods(methods)
+ local h=hooks[methods]
+ return h and methods.send==h.wrapped.send and methods.sendColor==h.wrapped.sendColor
+  and methods.release==h.wrapped.release and methods.hasUniform==h.hasUniform or false
+end
+function A.followsShaderMethods(methods,prior,hasUniform)
+ local h=hooks[methods]
+ return A.ownsShaderMethods(methods)and h.send==prior.send and h.sendColor==prior.sendColor
+  and h.release==prior.release and h.hasUniform==hasUniform or false
 end
 local function depthTarget()
  local target=raw.getCanvas()
@@ -119,6 +130,14 @@ local function depthTarget()
  local depth=rawget(target,'depthstencil')
  if type(depth)=='table'then depth=depth[1]end
  return depth and depth.getFormat and depth:getFormat():match('^depth')~=nil or false
+end
+-- Derivative programs owned by another native compiler adapter can select
+-- this exact path once, without creating a second companion or changing
+-- programs around every draw. Colour-only targets retain their own program.
+function A.fragmentDepthTarget()
+ if not installed then return false end
+ local _,writes=raw.getDepthMode()
+ return writes and depthTarget()or false
 end
 local function restored(shader,ok,...)
  raw.setShader(shader)
@@ -149,6 +168,7 @@ function A.install()
  installed=true
  raw={newShader=g.newShader,getShader=g.getShader,setShader=g.setShader,
   getCanvas=g.getCanvas,getDepthMode=g.getDepthMode,getStackDepth=g.getStackDepth,present=g.present}
+ A.compileNative=raw.newShader
  local function read(arg)
   if type(arg)=='string' and not arg:find('\n',1,true) then
    local fs=love.filesystem

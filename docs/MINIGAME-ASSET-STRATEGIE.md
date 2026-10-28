@@ -1,12 +1,15 @@
 # Strategie für optionale Minispiel-Assets
 
-Stand: 28. Oktober 2026. Konzept von Roxas2712; noch keine rechtliche Freigabe
-und keine vollständig implementierte Asset-Umstellung.
+Stand: 28. Oktober 2026. Konzept von Roxas2712; noch keine rechtliche Freigabe.
+Die gemeinsame Einrichtung und Grafikpakete für die fünf Walker-Spiele sind
+in [MINIGAME-CONTENT.md](MINIGAME-CONTENT.md) dokumentiert. Die vollständige
+Umstellung der separat entwickelten Spiele Slide/Warsheep steht noch aus.
 
 ## Ziel und rechtliche Grenzen
 
-Alle Minispiele bleiben ohne Konto und ohne fremde Grafiken oder Sounds
-spielbar. Ein zentraler Asset-Vertrag gilt für alle im Spielkatalog
+Die Minispiele benötigen kein Konto. Nach der aktualisierten Produktvorgabe
+bleibt der Einstieg jedoch bis zur ausdrücklichen Annahme der Inhaltshinweise
+gesperrt, auch im vorgesehenen Standardmodus. Ein zentraler Asset-Vertrag gilt für alle im Spielkatalog
 registrierten Minispiele, einschließlich weiterer Spiele wie Schiffe oder
 Slide. Die Anzahl der Einträge darf nicht als fest verdrahtete Neun in einer
 Zustimmungsabfrage stehen.
@@ -35,7 +38,7 @@ Primärquellen:
 
 | Weg | Inhalt | Verhalten |
 | --- | --- | --- |
-| Standard | Eigene, eigenständige Figuren, Formen, Hintergründe, Titel und synthetisierte Klänge; zusätzlich nur nachvollziehbar lizenzierte Inhalte | Sofort spielbar, keine Anmeldung und keine Rechteerklärung nötig |
+| Standard | Eigene, eigenständige Figuren, Formen, Hintergründe, Titel und synthetisierte Klänge; zusätzlich nur nachvollziehbar lizenzierte Inhalte | Nach Annahme der Einstiegshinweise spielbar, keine Anmeldung erforderlich |
 | Lokaler Import | Vom Spieler gewählte Dateien bzw. unterstützte lokale Cartridge-Daten; keine pauschale Zusage zulässiger Weiterverwendung | Lokal prüfen und vorbereiten; getrennte Freigabe vor erster Verwendung |
 | Geprüftes Downloadpaket | Nur Inhalte, für deren konkreten Einsatz die Rechte dokumentiert sind | Quelle, Rechteinhaber, Lizenz und Credits vor Download anzeigen |
 
@@ -47,10 +50,15 @@ Motive sein; bloßes Nachzeichnen oder Umfärben ersetzt diese Prüfung nicht.
 
 ## Erststart und spätere Auswahl
 
-Vor der ersten Nutzung eines optionalen Pakets erscheint eine Auswahl:
+Vor dem ersten Einstieg in die Minispiele erscheint ein verpflichtender,
+nicht vorab bestätigter Hinweisdialog. Ohne Annahme wird zur vorherigen Ansicht
+zurückgekehrt. Die Nutzungsbestätigung zu selbst bereitgestellten Dateien ist
+keine Behauptung, alle Rechte an einem Spiel oder an Pokémon zu besitzen.
 
-1. **Mit Standardgrafiken spielen** — immer direkt verfügbar, gleichwertig
-   erreichbar und ohne Netzwerkzugriff.
+Die gesonderte Auswahl optionaler Pakete sieht folgende Wege vor:
+
+1. **Mit Standardgrafiken spielen** — nach Annahme der Einstiegshinweise,
+   gleichwertig erreichbar und ohne Netzwerkzugriff.
 2. **Eigene Dateien importieren** — Dateiauswahl, unterstützte Formate,
    lokale Verarbeitung und konkrete verwendete Kategorien erläutern.
 3. **Lizenzierte Zusatzpakete** — nur tatsächlich geprüfte Angebote; keine
@@ -69,8 +77,42 @@ kein Haftungsausschluss gegenüber Rechteinhabern.
 Die Bestätigung gilt **einmal je Gerät, Paketfassung und Nutzungsumfang**.
 Kein Dialog vor jedem Spielstart. Ein geänderter Paketinhalt, eine neue
 Asset-Kategorie oder ein wesentlich anderer Nutzungszweck erfordert eine neue
-Auswahl. Ablehnen oder Widerrufen schaltet auf Standardassets zurück; es
-entzieht weder Zugang zu den Minispielen noch Fortschritt oder Online-Rechte.
+Auswahl. Die Ablehnung der verpflichtenden Einstiegshinweise lässt die
+Minispiele gesperrt; gespeicherter Fortschritt wird nicht gelöscht. Ein Widerruf
+schließt eine offene Minispielansicht ohne neue Rundenauszahlung und erfordert
+erneute Annahme vor dem nächsten Einstieg. Das Ablehnen eines einzelnen
+optionalen Asset-Pakets kann auf Standardassets zurückschalten, sobald der
+eigenständige Standardmodus vollständig umgesetzt und geprüft ist.
+
+Eine Haftungsbegrenzung auf Takedown-Anfragen wird nicht zugesagt. Nach
+[§ 97 UrhG](https://www.gesetze-im-internet.de/urhg/__97.html) kommen insbesondere
+Unterlassung und bei Verschulden Schadensersatz in Betracht; nach
+[§ 97a UrhG](https://www.gesetze-im-internet.de/urhg/__97a.html) können bei einer
+berechtigten Abmahnung notwendige Aufwendungen verlangt werden. Ein Dialog
+zwischen Projekt und Spielern bindet einen fremden Rechteinhaber nicht.
+
+## Bereits umgesetzter gemeinsamer Einstieg
+
+`src/pokewalker/minigames/Enrollment.lua` sperrt den gemeinsamen Minispiel-Hub
+vor dem Initialisieren von Spielkontext, Belohnungsbudget und Spielgrafiken.
+Ein nicht vorab angekreuztes Häkchen und anschließendes ausdrückliches
+**Annehmen & weiter** sind erforderlich. Ohne Annahme kehrt man zurück; ein
+fehlgeschlagener Speichervorgang lässt den Einstieg gesperrt.
+
+Der lokale Datensatz `minigames/enrollment.lua` ist nach Konto/Gastprofil
+getrennt. Er enthält Hinweisversion, Katalogkennung, Sprache und Zeitpunkt,
+keinen Login-Token. Er wird nicht als Bestandteil des Pokéwalker-Snapshots
+hochgeladen. Eine neue Hinweisversion oder ein geänderter registrierter
+Spielkatalog erfordern erneute Annahme. Unter **Freunde & Cloud** kann die
+Annahme widerrufen werden. Lokales Spielen benötigt weiterhin kein Konto.
+
+Dies implementiert die verpflichtende Einstiegshinweis-Annahme. Die folgende
+gemeinsame Inhaltseinrichtung ergänzt lokale Grafikpakete, einfache
+prozedurale Darstellungen und eine getrennte Bestätigung je Paketfassung
+für die fünf Walker-Spiele. Eine vollständige Inventur und rechtliche Freigabe
+aller anderen Inhalte sind damit nicht verbunden.
+Insbesondere macht der Dialog bereits vorhandene oder später lokal kombinierte
+fremde Inhalte nicht automatisch zulässig.
 
 ## Gemeinsamer technischer Vertrag
 

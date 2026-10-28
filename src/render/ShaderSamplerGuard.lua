@@ -5,6 +5,7 @@
 local G={uniform='pokeportBranchSamplerGuard'}
 function G.rewrite(source,clean,hasUniform)
  assert(not clean:find(G.uniform,1,true),'sampler guard name already present')
+ assert(not clean:find('pokeportBranchVertexSample',1,true)and not clean:find('pokeportBranchPixelSample',1,true),'sampler helper name already present')
  assert(not clean:find('%f[%w_]buffer%f[^%w_]'),'storage buffers stay native')
  assert(not clean:find('uniform%s+Image%s+[%w_]+%s*%['),'sampler arrays stay native')
  for kind in clean:gmatch('uniform%s+([%w_]+)%s+')do
@@ -50,7 +51,9 @@ function G.rewrite(source,clean,hasUniform)
   local samples={};for _,name in ipairs(names[stage])do samples[#samples+1]='Texel('..name..',vec2(0.0))'end
   return #samples>0 and table.concat(samples,'+')or'vec4(0.0)'
  end
- local prefix='uniform float '..G.uniform..';\n'
+ -- A valid source may declare a stage sampler after position(). Prototypes
+ -- keep the injected call legal there; definitions follow all declarations.
+ local prefix='uniform float '..G.uniform..';\n#ifdef VERTEX\nvec4 pokeportBranchVertexSample();\n#endif\n#ifdef PIXEL\nvec4 pokeportBranchPixelSample();\n#endif\n'
  local pragma,rest=source:match('^(#pragma[^\n]*\n)(.*)$')
  source=pragma and(pragma..prefix..rest)or(prefix..source)
  local outputs,maxOutput={},0
@@ -59,16 +62,16 @@ function G.rewrite(source,clean,hasUniform)
  for slot=0,maxOutput do outputs[#outputs+1]='love_Canvases['..slot..']=pokeportBranchSample;'end
  local n
  source,n=source:gsub('(void%s+effect%s*%(%s*%)%s*{)',function(entry)
-  return entry..'\n#ifdef PIXEL\nif('..G.uniform..'>.5){vec4 pokeportBranchSample='..sum('pixel')..';'..table.concat(outputs)..'return;}\n#endif\n'
+  return entry..'\n#ifdef PIXEL\nif('..G.uniform..'>.5){vec4 pokeportBranchSample=pokeportBranchPixelSample();'..table.concat(outputs)..'return;}\n#endif\n'
  end,1)
  if n==0 then
   source=source:gsub('(vec4%s+effect%s*%([^)]*%)%s*{)',function(entry)
-   return entry..'\n#ifdef PIXEL\nif('..G.uniform..'>.5)return '..sum('pixel')..';\n#endif\n'
+   return entry..'\n#ifdef PIXEL\nif('..G.uniform..'>.5)return pokeportBranchPixelSample();\n#endif\n'
   end,1)
  end
  source=source:gsub('(vec4%s+position%s*%([^)]*%)%s*{)',function(entry)
-  return entry..'\n#ifdef VERTEX\nif('..G.uniform..'>.5)return '..sum('vertex')..';\n#endif\n'
+  return entry..'\n#ifdef VERTEX\nif('..G.uniform..'>.5)return pokeportBranchVertexSample();\n#endif\n'
  end,1)
- return source
+ return source..'\n#ifdef VERTEX\nvec4 pokeportBranchVertexSample(){return '..sum('vertex')..';}\n#endif\n#ifdef PIXEL\nvec4 pokeportBranchPixelSample(){return '..sum('pixel')..';}\n#endif\n'
 end
 return G

@@ -51,7 +51,7 @@ A.FRONT_ORDER, A.WALK_ORDER = FRONTS, WALKS
 local cache
 
 function A.forget()
-  cache = { images = {}, boxes = {}, data = {}, dex = {}, ids = {} }
+  cache = { images = {}, boxes = {}, data = {}, dex = {}, ids = {}, sources=setmetatable({}, {__mode='k'}) }
 end
 A.forget()
 
@@ -158,6 +158,7 @@ local function image(entry, rel)
       img:setFilter("nearest", "nearest")
       hit = img
       cache.boxes[img] = box
+      cache.sources[img] = {prefix=prefixOf(entry),rel=rel}
     end
   end
   cache.images[key] = hit
@@ -364,6 +365,12 @@ end
 
 -- the opaque part of a picture this module loaded: { x, y, w, h } or nil
 function A.bounds(img) return cache.boxes[img] end
+
+-- Local pack preparation reads the original imported bytes, never a screenshot.
+function A.bytes(img)
+  local source=cache.sources[img]
+  return source and readCache(source.prefix,source.rel) or nil
+end
 
 -- the menu icon (two frames stacked in one image) and its frame height
 function A.icon(dex, version)

@@ -13,6 +13,7 @@ for _,version in ipairs{'firered','leafgreen'}do
  T.eq(V.address(0x471A4C),expected.standard,'own edition standard window agrees with independent metadata')
  T.eq(type(load('src.import.gba.league_extract').run),'function','original Hall extractor dependencies load before ROM work')
  T.eq(type(load('src.import.gba.text_chrome_extract').extractLatinNormal),'function','original font extractor dependencies load')
+ T.eq(type(load('src.import.gba.credits_extract').run),'function','original credits extractor dependencies load')
  local labels=require('src.import.gba.text_labels.'..version)
  for _,key in ipairs(require('src.import.Gen3FrlgHallAssets').LABELS)do
   T.eq(V.NAMED_TEXTS[key],labels[key],'relocated original label agrees with host edition catalog: '..key)
