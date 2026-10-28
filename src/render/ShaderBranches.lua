@@ -63,25 +63,36 @@ function B.plan(source)
  -- member names and macros before substituting any read in an if condition.
  -- A comma may introduce another local declaration; conservatively reject
  -- that spelling even when it is merely a function argument.
- local outside=clean
- local ranges={};for _,r in ipairs(declarations)do ranges[#ranges+1]=r end
- table.sort(ranges,function(a,b)return a[1]>b[1]end)
- for _,r in ipairs(ranges)do outside=outside:sub(1,r[1]-1)..blank(outside:sub(r[1],r[2]))..outside:sub(r[2]+1)end
+ local pieces,previous={},1
+ for _,r in ipairs(declarations)do
+  pieces[#pieces+1]=clean:sub(previous,r[1]-1)
+  pieces[#pieces+1]=blank(clean:sub(r[1],r[2]));previous=r[2]+1
+ end
+ pieces[#pieces+1]=clean:sub(previous)
+ local outside=table.concat(pieces)
+ local used={}
+ for _,r in ipairs(conditions)do
+  for name in clean:sub(r[1],r[2]):gmatch('%f[%w_][%w_]+%f[^%w_]')do used[name]=true end
+ end
  local order={}
  for name in pairs(names)do
   local use=pattern(name)
-  local shadow=outside:find('[%w_]+%s+'..name..'%f[^%w_]')
-   or outside:find('[,%.]%s*'..name..'%f[^%w_]')
-  local macro=false;local pos=1
+  local shadow,macro=false,false;local pos=1
   while true do
    local a,b=outside:find(use,pos);if not a then break end
+   -- Inspect the predecessor of this actual token. Searching an unanchored
+   -- word+whitespace pattern rescans every suffix of long GLSL identifiers
+   -- for every candidate, even when the candidate is absent there.
+   local before=a-1
+   while before>0 and outside:sub(before,before):match('%s')do before=before-1 end
+   local predecessor=outside:sub(before,before)
+   if predecessor:match('[,%.]')or before<a-1 and predecessor:match('[%w_]')then shadow=true;break end
    if code:sub(a,b)~=clean:sub(a,b)then macro=true;break end
    pos=b+1
   end
   if shadow or macro then names[name]=nil
   else
-   local used=false;for _,r in ipairs(conditions)do if clean:sub(r[1],r[2]):find(use)then used=true;break end end
-   if used then order[#order+1]=name else names[name]=nil end
+   if used[name]then order[#order+1]=name else names[name]=nil end
   end
  end
  table.sort(order)
@@ -103,26 +114,22 @@ function B.key(plan,values)
  return constants,table.concat(key,';'),#key
 end
 function B.rewrite(plan,constants)
- local source=plan.source
- for i=#plan.conditions,1,-1 do
-  local range=plan.conditions[i];local first,last=range[1],range[2]
-  local lexical=plan.clean:sub(first,last);local original=source:sub(first,last)
-  local changes={}
-  for _,name in ipairs(plan.order)do
-   local value=constants[name]
+ local source,pieces,previous=plan.source,{},1
+ for _,range in ipairs(plan.conditions)do
+  local first,last=range[1],range[2]
+  local lexical=plan.clean:sub(first,last);local at=1
+  while true do
+   local a,b=lexical:find('%f[%w_][%w_]+%f[^%w_]',at);if not a then break end
+   local name=lexical:sub(a,b);local value=plan.kinds[name]and constants[name]
    if value then
     assert(value=='0.0'or value=='1.0'or value=='true'or value=='false','unqualified literal')
-    local at=1
-    while true do
-     local a,b=lexical:find(pattern(name),at);if not a then break end
-     changes[#changes+1]={a,b,value};at=b+1
-    end
+    local start,finish=first+a-1,first+b-1
+    pieces[#pieces+1]=source:sub(previous,start-1);pieces[#pieces+1]=value;previous=finish+1
    end
+   at=b+1
   end
-  table.sort(changes,function(a,b)return a[1]>b[1]end)
-  for _,c in ipairs(changes)do original=original:sub(1,c[1]-1)..c[3]..original:sub(c[2]+1)end
-  source=source:sub(1,first-1)..original..source:sub(last+1)
  end
- return source
+ pieces[#pieces+1]=source:sub(previous)
+ return table.concat(pieces)
 end
 return B
