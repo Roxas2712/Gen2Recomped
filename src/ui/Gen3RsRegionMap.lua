@@ -17,11 +17,7 @@ function M.new(host)
     mapDef=kit.mapView(host.game.overworld and host.game.overworld.map and host.game.overworld.map.def),
     frameType=(tonumber((host.game.save.options or {}).gen3Frame)or 1)-1,
     onPick=function(section,info)
-      local destination=self.native.flyWarpDestination(kit.session,section,info.posWithinMapSec)
-      if not destination then
-        local row=self.native.flyHealLocation(self.state,section,info.posWithinMapSec)
-        destination=row and (host.game.data.constants.gen3HealLocations or {})[row.healLocation]
-      end
+      local destination=self:destination(section,info.posWithinMapSec)
       assert(destination and destination.map,'Missing native RS fly destination '..section)
       self.closed=true;host.game.stack:pop()
       if host.onFly then host.onFly(destination.map,{map=destination.map,x=destination.x,y=destination.y,nativeRs=true})end
@@ -29,6 +25,16 @@ function M.new(host)
     onClose=function(picked)if not picked then self.closed=true;host:close()end end})
   self.native.Host._s=self.state;self:sync()
   return self
+end
+-- Both the actual picker and observations resolve the same native special
+-- heal locations (gender, League position and Battle Tower included).
+function M:destination(section,pos)
+  local destination=self.native.flyWarpDestination(self.kit.session,section,pos)
+  if not destination then
+    local row=self.native.flyHealLocation(self.state,section,pos)
+    destination=row and(self.host.game.data.constants.gen3HealLocations or{})[row.healLocation]
+  end
+  return destination
 end
 function M:sync()
   self.host.cx,self.host.cy=self.state.cursorX-1,self.state.cursorY-2
