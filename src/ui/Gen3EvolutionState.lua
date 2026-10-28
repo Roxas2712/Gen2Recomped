@@ -106,6 +106,8 @@ local function frontSprite(game, species, mon)
 end
 
 function Gen3EvolutionState.new(game, mon, newSpecies, onDone, via, evo)
+  local Native=require('src.ui.Gen3NativeEvolution')
+  if Native.available(game,mon,newSpecies)then return Native.new(game,mon,newSpecies,onDone,via,evo)end
   local self = setmetatable({}, Gen3EvolutionState)
   self.game = game
   self.mon = mon
