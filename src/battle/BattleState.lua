@@ -10,6 +10,7 @@
 -- bide, recharge, confusion, screens, substitute, transform, ...) is
 -- ported from engine/battle/core.asm; see docs/behavior-porting-notes.md.
 
+local nativeMoveUsed = {} -- identity passed only by the native announcement producer
 local BattleQueuePhase = require("src.battle.BattleQueuePhase")
 local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Assets = require("src.render.Assets")
@@ -2423,12 +2424,15 @@ end
 
 -- insert message right after the currently-executing queue item (the
 -- counter is reset by updateQueue before each fn item runs)
-function BattleState:sayNext(text)
+function BattleState:sayNext(text, provenance)
   if GameVersion.isGen2() then
     return Gen2Queue.afterCurrent(self,{kind='message',text=text})
   end
   self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { text = text })
+  local row = { text = text }
+  local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+  if sequence and provenance==nativeMoveUsed then sequence._nativeMessage(row)end
+  table.insert(self.queue, self.nextInsert, row)
 end
 
 -- insert a UI push right after the current queue item (dex page, the
@@ -2848,7 +2852,8 @@ end
 
 function BattleState:runQueueAction(item)
   self.nextInsert=0
-  item.fn()
+  local plan=GameVersion.isGen3()and package.loaded['src.battle.Gen3ActionPlan']
+  if plan then plan.run(self,item)else item.fn()end
   self.nextInsert=nil
   self.current=nil
   local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.switch_seq']
@@ -6266,8 +6271,12 @@ function BattleState:resolveTurn(playerAction)
   -- slot reads its entry from `order` when it runs, after that resort
   -- (src/battle/Gen4MoveEffects.lua G4.reorderRest)
   if pClaw or eClaw then order.claw = pClaw and self.player or self.enemy end
+  local nativePlan
+  if GameVersion.isGen3()and package.loaded['src.core.game3.battle']then
+    nativePlan=require('src.battle.Gen3ActionPlan').begin(self,order)
+  end
   for slot, entry in ipairs(order) do
-    self:act(function()
+    local nativeAction=function()
       if self.g4fx then
         require("src.battle.Gen4MoveEffects").reorderRest(self, order, slot)
         entry = order[slot]
@@ -6294,11 +6303,14 @@ function BattleState:resolveTurn(playerAction)
                  or self:defaultTargetFor(entry[1])
       end
       self:executeAction(entry[1], target, entry[3])
-    end)
+    end
+    self:act(nativeAction)
+    if nativePlan then require('src.battle.Gen3ActionPlan').attach(self,nativePlan,self.queue[#self.queue],slot,nativeAction)end
   end
   self:act(function()
     -- the collected choices belong to the turn that just ran, not the next
     self.pendingActions, self.chosenTargets, self._actionTargetOrder = nil, nil, nil
+    if nativePlan then require('src.battle.Gen3ActionPlan').retire(self)end
     self:endOfTurn()
   end)
 end
@@ -8896,7 +8908,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
       if GameVersion.isGen2() then
         Gen2Queue.afterCurrent(self,{kind='move',text=text,move=move.id,
           side=user.isPlayer and 'player' or 'enemy',deferAnim=true})
-      else self:sayNext(text) end
+      else self:sayNext(text, nativeMoveUsed) end
     end
     -- the move's animation plays right after the announcement; the
     -- damage path attaches the target's hit blink to this row so the
@@ -8911,6 +8923,8 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
                            animContext = animContext }
       if GameVersion.isGen2() and releasing then Gen2Vanish.releaseRow(self,user,self.moveAnimRow) end
       require("src.battle.Gen3SubstitutePresentation").mark(self, self.moveAnimRow, user)
+      local sequence=GameVersion.isGen3()and package.loaded['src.core.game3.battle.anim_seq']
+      if sequence then sequence._nativeMove(self.moveAnimRow)end
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
