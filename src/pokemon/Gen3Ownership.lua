@@ -1,4 +1,5 @@
--- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+-- Native OT predicate factored from Gen3SummaryMenu; existing upstream rights apply.
+-- Added observation glue (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- The native summary's existing OT-name/ID ownership decision, shared by
 -- typed battle observations. Missing historical OT fields remain unknown-own.
 local M={}
