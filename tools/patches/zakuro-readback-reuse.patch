@@ -1,0 +1,100 @@
+diff --git a/crates/zakuro-gpu/src/raster/hardware.rs b/crates/zakuro-gpu/src/raster/hardware.rs
+index efbbdd7..41f7382 100644
+--- a/crates/zakuro-gpu/src/raster/hardware.rs
++++ b/crates/zakuro-gpu/src/raster/hardware.rs
+@@ -682,6 +682,8 @@ struct Capture {
+     watched: bool,
+     /// the last pictures read out, and the batches that drew them.
+     pictures: VecDeque<(u64, Arc<Vec<u8>>)>,
++    /// One retired snapshot, reusable after the presenter releases its Arc.
++    spare_picture: Option<Arc<Vec<u8>>>,
+ }
+ 
+ /// kinds of work the GPU does, to tell where its time goes.
+@@ -4377,7 +4379,7 @@ impl Hardware {
+         let size = (width * height * 4) as u64;
+         if self.surfaces[index].capture.is_none() {
+             let buffer = self.buffer(size, vk::BufferUsageFlags::TRANSFER_DST, true)?;
+-            self.surfaces[index].capture = Some(Capture { buffer, batch: 0, current: false, watched: false, pictures: VecDeque::new() });
++            self.surfaces[index].capture = Some(Capture { buffer, batch: 0, current: false, watched: false, pictures: VecDeque::new(), spare_picture: None });
+         }
+         self.end_rendering();
+         self.barrier();
+@@ -4420,7 +4422,7 @@ impl Hardware {
+         let size = (width * height * 4) as u64;
+         if self.surfaces[index].screen.is_none() {
+             let buffer = self.buffer(size, vk::BufferUsageFlags::STORAGE_BUFFER, true)?;
+-            self.surfaces[index].screen = Some(Capture { buffer, batch: 0, current: false, watched: false, pictures: VecDeque::new() });
++            self.surfaces[index].screen = Some(Capture { buffer, batch: 0, current: false, watched: false, pictures: VecDeque::new(), spare_picture: None });
+         }
+         let (layout, pipeline) = self.upright_pipeline()?;
+         self.end_rendering();
+@@ -4713,10 +4715,7 @@ impl Hardware {
+         // SAFETY: the batch that filled the buffer is done, and nothing
+         // writes it again before this returns
+         let data = unsafe { std::slice::from_raw_parts(buffer.mapped, buffer.size as usize) };
+-        capture.pictures.push_back((capture.batch, Arc::new(data.to_vec())));
+-        while capture.pictures.len() > 2 {
+-            capture.pictures.pop_front();
+-        }
++        keep_picture(&mut capture.pictures, &mut capture.spare_picture, capture.batch, data);
+         Ok(())
+     }
+ 
+@@ -5368,6 +5367,56 @@ unsafe impl Send for Hardware {}
+ /// the part of a buffer's upright picture a screen shows. a row of the
+ /// buffer is a column of the picture, and a row's first pixels are the
+ /// bottom of the screen, a longer row reaches past its top.
++/// Keep the two batch snapshots required by display transfers, plus at most
++/// one retired allocation. Never mutate bytes still borrowed by a presenter.
++/// Integration by Roxas2712; avoids large malloc/madvise churn during swaps.
++fn keep_picture(pictures: &mut VecDeque<(u64, Arc<Vec<u8>>)>, spare: &mut Option<Arc<Vec<u8>>>, batch: u64, data: &[u8]) {
++    let mut image = spare.take().unwrap_or_else(|| Arc::new(Vec::new()));
++    if let Some(bytes) = Arc::get_mut(&mut image) {
++        bytes.resize(data.len(), 0);
++        bytes.copy_from_slice(data);
++    } else {
++        image = Arc::new(data.to_vec());
++    }
++    pictures.push_back((batch, image));
++    while pictures.len() > 2 {
++        *spare = pictures.pop_front().map(|(_, image)| image);
++    }
++}
++
++#[cfg(test)]
++mod readback_pool_tests {
++    use super::*;
++
++    #[test]
++    fn recycles_only_retired_exclusive_allocations() {
++        let (mut pictures, mut spare) = (VecDeque::new(), None);
++        for batch in 0..3 { keep_picture(&mut pictures, &mut spare, batch, &[batch as u8; 32]); }
++        let ptr = spare.as_ref().unwrap().as_ptr();
++        keep_picture(&mut pictures, &mut spare, 3, &[3; 32]);
++        assert_eq!(pictures.back().unwrap().1.as_ptr(), ptr);
++        assert_eq!(pictures.iter().map(|(batch, _)| *batch).collect::<Vec<_>>(), [2, 3]);
++    }
++
++    #[test]
++    fn a_presenter_keeps_immutable_pixels_across_later_frames() {
++        let (mut pictures, mut spare) = (VecDeque::new(), None);
++        keep_picture(&mut pictures, &mut spare, 0, &[7; 32]);
++        let held = pictures[0].1.clone();
++        for batch in 1..20 { keep_picture(&mut pictures, &mut spare, batch, &[batch as u8; 32]); }
++        assert_eq!(held.as_slice(), &[7; 32]);
++        assert_eq!(pictures.len(), 2);
++        assert!(spare.is_some());
++    }
++
++    #[test]
++    fn resized_snapshots_have_no_stale_tail() {
++        let (mut pictures, mut spare) = (VecDeque::new(), Some(Arc::new(vec![9; 100])));
++        keep_picture(&mut pictures, &mut spare, 1, &[3; 8]);
++        assert_eq!(pictures[0].1.as_slice(), &[3; 8]);
++    }
++}
++
+ fn crop(image: Arc<Vec<u8>>, screen: ScreenRef, scale: u32) -> Arc<Vec<u8>> {
+     let (row_pixels, rows) = screen.size;
+     let (first, count) = screen.rows;

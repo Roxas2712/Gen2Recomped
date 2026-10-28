@@ -50,6 +50,7 @@ Protocol.plainCopy = plainCopy
 -- mon as traded (boosted EXP, high-level disobedience).  Omitting them made
 -- a received mon show the receiver as its OT (#215).
 function Protocol.packMon(mon)
+  if require('src.core.GameVersion').generation()>=4 then return require('src.link.NdsParty').pack(mon,plainCopy)end
   if require("src.core.GameVersion").isGen3() then
     return require("src.link.Gen3Party").pack(mon, plainCopy)
   end
@@ -80,6 +81,7 @@ end
 -- peers have agreed on a verdict: a mon that cannot be rebuilt identically
 -- is rejected by name instead of quietly mutated into something else.
 function Protocol.unpackMon(data, packed, opts)
+  if require('src.core.GameVersion').generation()>=4 then return require('src.link.NdsParty').unpack(data,packed,opts,plainCopy)end
   if require("src.core.GameVersion").isGen3() then
     return require("src.link.Gen3Party").unpack(data, packed, opts, plainCopy)
   end
@@ -121,7 +123,7 @@ function Protocol.unpackMon(data, packed, opts)
     local mdef = data.moves[mv.id]
     if mdef and #moves < 4 then
       local ppUps = math.max(0, math.min(3, math.floor(mv.ppUps or 0)))
-      local maxPP = mdef.pp + ppUps * math.floor(mdef.pp / 5)
+      local maxPP = require("src.pokemon.Pokemon").maxPP(mdef, { ppUps=ppUps }, data.constants and data.constants.gen)
       local entry = { id = mv.id,
                       pp = math.max(0, math.min(maxPP, math.floor(mv.pp or 0))) }
       if mv.ppUps ~= nil then entry.ppUps = ppUps end

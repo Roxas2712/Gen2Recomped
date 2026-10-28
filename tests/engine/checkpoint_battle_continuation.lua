@@ -52,6 +52,15 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
     battle.leveledUp={[game.save.party[1]]=true}
     battle:picFxFor(battle.player).minimized=true
     stack.states = { world, battle }
+    if require("src.core.GameVersion").isGen2() then
+      battle:chooseMenu("fight")
+      T.eq(battle.phase, "moves", "Gen2 checkpoint captures the actual native move selector")
+    end
+    if require('src.core.GameVersion').isFRLG()then
+      battle.gen3Voiceover={phase='out',coefficient=1,healthboxCoefficient=1,clock=0,cue={text='Native'}}
+      T.raises(function()B.capture(game,battle,copy)end,'special battle has no qualified continuation')
+      battle.gen3Voiceover=nil
+    end
     local cp, code, detail = f.checkpoints:capture(game)
     T.check(
       cp ~= nil,
@@ -68,6 +77,7 @@ for _, edition in ipairs(require("src.core.GameVersion").ORDER) do
       T.check(ok, "restores native decision: " .. tostring(why) .. " " .. tostring(detail))
       if ok then
         local fresh = stack:top()
+        T.eq(fresh.phase, battle.phase, "native decision phase survives reconstruction")
         T.check(fresh ~= battle, "fresh native battle controller")
         T.eq(fresh.player.mon, game.save.party[1], "party Pokemon identity rebound")
         T.eq(fresh.player.curStats, game.save.party[1].stats, "native stat alias rebound")

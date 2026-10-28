@@ -91,7 +91,7 @@ trap 'rm -rf "$STAGE"' EXIT
 # build scripts, the tools, the tests, the docs, the port projects -- is
 # development material and has no business inside a shipped payload.
 #
-# tools/ is development material EXCEPT two things the game itself loads:
+# tools/ is development material EXCEPT the runtime helpers listed here:
 #   * tools/save-editor -- main.lua's own header calls it "part of the
 #     shipped app, not a dev-only script"; it puts
 #     tools/save-editor/?.lua and tools/save-editor/panels/?.lua on
@@ -107,15 +107,30 @@ trap 'rm -rf "$STAGE"' EXIT
 #     offers MAP EDITOR, and the require fails the moment it is pressed --
 #     and the failures are SILENT where they are pcall'd, which is how the
 #     EXPORT button came to be a control that draws and does nothing.
+#   * the X/Y import helpers and their storage dependencies. They are source
+#     code only; private 3DS binaries, generated game code and ROMs stay out.
 CONTENT=(
   main.lua
   conf.lua
   src
+  compat
   data
   assets
   mods
   tools/save-editor
   tools/map-editor
+  tools/pokemon_x_backend.py
+  tools/pokemon_x_preflight.py
+  tools/pokemon_xy_library.py
+  tools/pokemon_xy_runtime.py
+  tools/qa_storage.py
+  tools/qa_legacy_storage.py
+  tools/qa_love_storage.py
+  tools/qa_preserved.py
+  tools/qa_release_storage.py
+  tools/qa_build_storage.py
+  tools/pinball_rs.py
+  tools/pinball-rs-native
 )
 
 # The ROM symbol manifests: src/core/GameVersion.lua names one per cartridge
@@ -244,6 +259,7 @@ find "$STAGE" -type f \( \
 # build log ("skipping absent mods") and no other sign at all, which is how
 # that lasted.  A contract entry turns it into a failed build.
 for required in main.lua conf.lua src/core/Version.lua \
+                compat/gen1-rs/Loader.lua compat/gen1-frlg/Loader.lua \
                 tools/save-editor/App.lua tools/save-editor/Kit.lua \
                 tools/save-editor/panels/Party.lua \
                 tools/map-editor/MapEdits.lua \

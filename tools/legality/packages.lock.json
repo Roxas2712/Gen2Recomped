@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "PKHeX.Core": {
+        "type": "Direct",
+        "requested": "[26.10.18, )",
+        "resolved": "26.10.18",
+        "contentHash": "WjN9C13YCHk9hOL3RtLdPLAEYH+/YsB8Bx+RXoiACpS4UEig5fAmcp0N0ttjbVqHtjzzTbzgyY5aGTAbYNnWGw=="
+      }
+    }
+  }
+}

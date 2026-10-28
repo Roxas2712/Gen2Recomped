@@ -6,7 +6,8 @@ local function color(rgb,a) love.graphics.setColor(rgb[1]/255,rgb[2]/255,rgb[3]/
 local function shade(rgb,k) return {rgb[1]*k,rgb[2]*k,rgb[3]*k} end
 
 function Hardware.kind(version)
-  local info=Versions.info(version)
+  if version=="x" or version=="y" then return "3ds" end
+  local info=Versions.info(version) or require("src.import.LauncherExternalGames").info(version)
   local gen=info and info.generation or 1
   return gen>=4 and 'nds' or gen==3 and 'gba' or gen==2 and 'gbc' or 'gb'
 end
@@ -15,6 +16,8 @@ function Hardware.cartModel(version)
   local kind=Hardware.kind(version)
   if kind=='gba' then return {w=156,h=90,depth=6,labelY=25,family='agb',
     face={4,0,152,0,156,4,156,17,150,17,150,84,144,90,12,90,6,84,6,17,0,17,0,4}} end
+  if kind=='3ds' then return {w=112,h=102,depth=3,labelY=12,family='ctr',
+    face={4,0,112,0,112,17,106,17,106,98,102,102,4,102,0,98,0,4}} end
   if kind=='nds' then return {w=108,h=102,depth=3,labelY=12,family='ntr',
     face={4,0,91,0,108,17,108,54,103,54,103,64,108,64,108,98,104,102,4,102,0,98,0,4}} end
   -- Gold/Silver use the original notched dual-compatible GB mould, while
@@ -58,7 +61,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   local accent,name=Library.edition(version)
   local appearance=options and options.appearance or Hardware.appearance(self,version)
   local design=appearance.design
-  local shell=design.shell or accent
+  local shell=design.shell or (Hardware.kind(version)=="3ds" and {228,233,240}) or accent
   local label=design.label or shade(accent,0.32)
   name=design.name and design.name~='' and design.name or name
   local model=Hardware.cartModel(version)
@@ -78,7 +81,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   color({0,0,0},0.13);g.line(w-2,27,w-2,h-10)
   local kind=Hardware.kind(version)
   local labelY=model.labelY
-  local labelH=h-labelY-(kind=='nds' and 16 or kind=='gba' and 13 or 18)
+  local labelH=h-labelY-((kind=='nds' or kind=='3ds') and 16 or kind=='gba' and 13 or 18)
   if model.family=='cgb' then
     color({38,83,70},.4);g.rectangle('fill',12,20,w-24,h-30,6,6)
     color({18,36,39},.4);g.rectangle('fill',w*.48,24,38,18,2,2)
@@ -129,7 +132,7 @@ local function drawCartridge(self,version,cx,cy,maxW,maxH,angle,options)
   -- Gold edge connector catches the light as the cartridge turns.
   -- Contacts sit on the lower/back edge; the front is a solid moulded shell.
   color(shade(shell,.3));g.rectangle('fill',w*.22,h-2,w*.56,2,1,1)
-  if kind~='nds' then
+  if kind~='nds' and kind~='3ds' then
     color({0,0,0},0.2);g.polygon('fill',w*.46,h-10,w*.54,h-10,w*.5,h-5)
   end
   color({255,255,255},0.055);g.polygon('fill',6,18,w*0.4,12,6,h*0.62)
@@ -187,7 +190,7 @@ function Hardware.deviceGeometry(version,cx,cy,s)
   local kind=Hardware.kind(version)
   local w,h,top
   if kind=='gba' then w,h,top=330*s,165*s,cy+20*s
-  elseif kind=='nds' then w,h,top=220*s,275*s,cy-100*s
+  elseif kind=='nds' or kind=='3ds' then w,h,top=(kind=='3ds' and 240 or 220)*s,275*s,cy-100*s
   else w,h,top=170*s,264*s,cy-60*s end
   return {kind=kind,x=cx-w/2,y=top,w=w,h=h,slotX=cx,slotY=top}
 end
@@ -199,6 +202,7 @@ end
 
 function Hardware.screenRect(geometry)
   local kind=geometry.kind
+  if kind=='3ds' then local scale=geometry.w/240;return geometry.x+31*scale,geometry.y+23*scale,178*scale,96*scale end
   local base=kind=='gba' and 330 or kind=='nds' and 220 or 170
   local s=geometry.w/base
   local px=kind=='gba' and 80 or kind=='nds' and 32 or 33
@@ -210,6 +214,7 @@ end
 function Hardware.nativeResolution(version)
   local kind=Hardware.kind(version)
   if kind=='gba' then return 240,160,1 end
+  if kind=='3ds' then return 400,240,2 end
   if kind=='nds' then return 256,192,2 end
   return 160,144,1
 end
@@ -239,7 +244,7 @@ function Hardware.device(self,version,geometry,connected,effects)
   local accent=require('src.import.LauncherLibrary').edition(version)
   local x,y,w,h=geometry.x,geometry.y,geometry.w,geometry.h
   local kind=geometry.kind
-  local baseW=kind=='gba' and 330 or kind=='nds' and 220 or 170
+  local baseW=kind=='gba' and 330 or kind=='3ds' and 240 or kind=='nds' and 220 or 170
   local s=w/baseW
   local powered=effects and effects.powered or (not effects and connected)
   local showLogo=not effects or effects.logo==true
@@ -257,6 +262,15 @@ function Hardware.device(self,version,geometry,connected,effects)
     dpad(34,78,17)
     color({166,166,185});g.circle('fill',291,62,12);g.circle('fill',272,91,12)
     color({30,34,48});g.ellipse('fill',44,124,8,4);g.ellipse('fill',61,128,8,4)
+  elseif kind=='3ds' then
+    color({18,23,33});g.rectangle('fill',12,12,216,112,10,10)
+    screen(self,31,23,178,96,powered,accent,showLogo)
+    color(shade(shell,.6));g.rectangle('fill',0,130,240,12,5,5)
+    color({21,27,38});g.rectangle('fill',53,151,134,107,8,8)
+    screen(self,60,158,120,93,powered,accent,showLogo)
+    color({162,171,185});g.circle('fill',27,168,10);dpad(27,210,12)
+    color({24,29,42});for _,p in ipairs{{211,181},{225,195},{197,195},{211,209}}do g.circle('fill',p[1],p[2],6)end
+    color({118,137,164});g.circle('fill',120,18,2)
   elseif kind=='nds' then
     color({21,27,38});g.rectangle('fill',20,14,180,106,9,9)
     screen(self,32,24,156,82,powered,accent,showLogo)
@@ -283,9 +297,9 @@ end
 
 -- The same device family, reduced to a recognizable library-card symbol.
 function Hardware.symbol(self,kind,cx,cy,height)
-  local version=({gb='red',gbc='crystal',gba='emerald',nds='heartgold'})[kind]
+  local version=({gb='red',gbc='crystal',gba='emerald',nds='heartgold',['3ds']='x'})[kind]
   if not version then return end
-  local ratio=kind=='gba' and 2 or kind=='nds' and 220/275 or 170/264
+  local ratio=kind=='gba' and 2 or kind=='3ds' and 240/275 or kind=='nds' and 220/275 or 170/264
   local w=height*ratio
   Hardware.device(self,version,{kind=kind,x=cx-w/2,y=cy-height/2,w=w,h=height},false)
 end

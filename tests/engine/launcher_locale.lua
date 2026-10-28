@@ -15,3 +15,71 @@ check(not T.launcherLookup(W.pages[3].tips[1]):find('→',1,true),'guide navigat
 check(T.launcherLookup('PlayerName#1234')=='PlayerName#1234','unknown user-provided names remain unchanged')
 T.setLauncher({launcherLanguage='en'});check(T.launcherLookup('SIGN IN')=='SIGN IN','language changes do not retain the previous catalog')
 print('Launcher locale: '..n..' checks passed')
+-- Dynamic templates are localized before private values are inserted.
+T.setLauncher({launcherLanguage='de'})
+check(T.launcherFormat('GAME · %s','SIGN IN#1234')=='SPIEL · SIGN IN#1234','friend names and tags are never translated as UI labels')
+check(T.launcherCount(1,'%d NEW FRIEND REQUEST','%d NEW FRIEND REQUESTS')=='1 NEUE FREUNDSCHAFTSANFRAGE','singular request')
+check(T.launcherCount(0,'%d NEW FRIEND REQUEST','%d NEW FRIEND REQUESTS')=='0 NEUE FREUNDSCHAFTSANFRAGEN','zero uses plural')
+check(T.launcherCount(30,'%d NEW FRIEND REQUEST','%d NEW FRIEND REQUESTS')=='30 NEUE FREUNDSCHAFTSANFRAGEN','plural request')
+T.launcherCatalog['Unreviewed %s']='Broken %d %d'
+check(T.launcherFormat('Unreviewed %s','Name#1234')=='Unreviewed Name#1234','malformed cached formats fall back safely')
+local extra=require('src.translation.CommunityCatalog').de
+local function signature(value)
+ local out={};for kind in value:gmatch('%%[-+ #0]*%d*%.?%d*([cdeEfgGiouXxsq%%])')do if kind~='%'then out[#out+1]=kind end end
+ return table.concat(out)
+end
+for source,target in pairs(extra)do
+ if source:find('%%[dsf]')then check(signature(source)==signature(target),'reviewed template substitutions retain types and order: '..source)end
+end
+check(T.launcherLookup('TAKE OVER RUNNING BATTLE ON THIS DEVICE')=='KAMPF HIER FORTSETZEN','short actionable German takeover label')
+check(T.launcherLookup('The independent legality checker is not available yet.'):find('Prüfdienst',1,true),'disabled private checker has a clear localized explanation')
+-- Render the actual origin page: both normal and failed-check paths, no ROM.
+local shown={};local oldPrint=love.graphics.printf
+love.graphics.printf=function(value)shown[#shown+1]=tostring(value)end
+local entry={id=string.rep('a',64),source={version='red',slot=1},mon={nickname='SIGN IN',species='PIKACHU',level=30,otId=2712}}
+local ui={hintFont={getWrap=function(_,value)return 700,{value}end,getHeight=function()return 12 end}}
+local f={mode='details',inspected={entry=entry},bankCheck={bank_digest=entry.id,current=true,state='illegal',report={moves={{valid=false}},provenance={receipt='unattested',notice='Imported history is self-reported. A legal encounter does not prove that this particular Pokémon was caught legitimately.'}}}}
+local function output(value)shown[#shown+1]=T.launcherLookup(value)end
+require('src.import.BankPages').draw(ui,f,0,0,700,1500,1,output,output,function()end)
+love.graphics.printf=oldPrint
+local rendered=table.concat(shown,'\n')
+check(rendered:find('SIGN IN',1,true)and not rendered:find('ANMELDEN',1,true),'stored nickname survives real Bank drawing')
+check(rendered:find('SPIEL · ',1,true)and rendered:find('Attacke 1',1,true),'actual origin and failed move detail are translated')
+check(rendered:find('STANDARDREGELN',1,true)and rendered:find('Selbstauskünfte',1,true),'legality status and provenance notice are localized')
+T.setLauncher({launcherLanguage='en'})
+check(T.launcherFormat('GAME · %s','SIGN IN#1234')=='GAME · SIGN IN#1234','English remains the unmodified default')
+print('Community locale: '..n..' checks passed')
+
+T.setLauncher({launcherLanguage='de'})
+local sidebar=require('src.import.LauncherSidebar')
+check(sidebar.nameOf('red')=='Pokémon Rot','library edition titles use the selected launcher language')
+check(sidebar.metaText({badges=8,timeText='24:00',dexCount=45})=='8 Orden - 24:00 - 45 gefangen','actual library save summary is localized')
+for _,category in ipairs(require('src.import.LauncherWorkspace').CATEGORIES)do
+ check(T.launcherLookup(category.note)~=category.note,'workspace category help has reviewed German: '..category.id)
+end
+T.setLauncher({launcherLanguage='en'})
+check(sidebar.nameOf('red')=='Pokemon Red','English library title remains unchanged')
+print('Library locale: '..n..' checks passed')
+
+local catalogues={'LauncherCatalog','NativeLanguageCatalog','SetupCatalog','PinballCatalog','LauncherPolishCatalog'}
+local translated=0
+for _,name in ipairs(catalogues)do
+ for lang,rows in pairs(require('src.translation.'..name))do
+  for source,target in pairs(rows)do
+   check(type(source)=='string'and type(target)=='string','text keys and values: '..name..'/'..lang)
+   check(T.formatSignature(source)==T.formatSignature(target),'format types/order: '..name..'/'..lang..' '..source)
+   check(not target:find('\239\191\189',1,true),'no replacement characters: '..name..'/'..lang..' '..source)
+   translated=translated+1
+  end
+ end
+end
+T.setLauncher({launcherLanguage='de'})
+T.launcherCatalog['Unchecked %s']='Wrong %d'
+check(T.launcherLookup('Unchecked %s')=='Unchecked %s','indirect formatting also rejects bad cached types')
+T.launcherCatalog['Unchecked value']={}
+check(T.launcherLookup('Unchecked value')=='Unchecked value','bad cached values cannot reach graphics')
+check(T.launcherFormat('Installed %s %s. Enable it in Installed mods.','SIGN IN','1.2'):find('SIGN IN 1.2 installiert',1,true),'dynamic mod notice translates the template before private values')
+check(T.launcherLookup('DUEL TABLE: RUBY')=='DUELL-TISCH: RUBIN','native Pinball uses launcher language')
+T.setLauncher({launcherLanguage='en'})
+check(T.launcherLookup('DUEL TABLE: RUBY')=='DUEL TABLE: RUBY','English Pinball has no forced German copy')
+print('Catalogue integrity: '..translated..' translations; '..n..' total checks passed')

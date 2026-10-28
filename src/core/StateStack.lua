@@ -2,6 +2,7 @@
 -- (so a text box can overlay the overworld, a battle replaces it, etc).
 -- States are tables with optional enter/exit/update/draw/isOpaque.
 
+local NativeScreenOverlay = require("src.render.NativeScreenOverlay")
 local Runtime = require("src.mods.Runtime")
 local Logger = require("src.core.Logger")
 
@@ -330,7 +331,7 @@ function StateStack:draw()
   local plan = modalRenderPlan(self)
   for i = self:visibleBase(plan), #self.states do
     local state = self.states[i]
-    if self:renderVisible(state, plan) and state.draw then state:draw() end
+    if self:renderVisible(state, plan) and state.draw then NativeScreenOverlay.screen(state) end
   end
 end
 

@@ -47,4 +47,17 @@ check(G.keep(receipt).id==digest,'replaying the receipt restores the same Bank i
 local count=0;for path in pairs(files) do if path:match('^bank/entries/[a-f0-9]+%.lua$') then count=count+1 end end
 check(count==1,'retrying a redemption never adds a second local Bank entry')
 permitted=false;check(not G.keep(receipt),'gift storage requires a linked confirmed account')
+require('src.core.GameVersion').set('emerald')
+local issued=S.decode(original);issued.source.version='emerald';issued.origin.generation=3
+local materialized=assert(B.convert(issued,'emerald',data))
+local current={source={version='emerald'},origin=issued.origin,canonical={dex=25},mon=materialized}
+local Verify=require('src.storage.RewardVerification')
+check(Verify.check(issued,current,data,'emerald')=='verified','a frozen server receipt regenerates the actual native gift genetics')
+local forged=S.decode(S.encodeExact(current));forged.mon.ivs.hp=(forged.mon.ivs.hp+1)%32
+check(Verify.check(issued,forged,data,'emerald')=='mismatch','copying a genuine gift origin cannot authenticate edited IVs')
+forged=S.decode(S.encodeExact(current));forged.mon.personality=forged.mon.personality+1
+check(Verify.check(issued,forged,data,'emerald')=='mismatch','copying the receipt cannot authenticate another personality')
+forged=S.decode(S.encodeExact(current));forged.mon.level=10;forged.mon.evs.hp=12
+check(Verify.check(issued,forged,data,'emerald')=='verified','normal levels and EV training do not change original genetics')
+check(Verify.check(nil,current,data,'emerald')=='not_applicable','a self-reported origin alone is never treated as a server receipt')
 print('Gift codes: '..n..' checks passed')

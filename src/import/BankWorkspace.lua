@@ -66,6 +66,7 @@ function W.trade(self,action,exchange)
   f.notice=f.tradeJob and 'Connecting to the Bank exchange service...' or 'Background networking is unavailable.'
 end
 function W.close(self)
+  if self._bankOverlay and self._bankOverlay.bankCheckJob then self._bankOverlay.bankCheckJob:cancel()end
   local f=self._bankOverlay
   if f and f.tradeJob then f.tradeJob:cancel() end
   self._bankOverlay=nil
@@ -104,7 +105,7 @@ function W.place(self,payload,target,allow)
     return nil,why
   end
   box[target.slot]=mon;panel.dirty=true;f.adapt=nil
-  f.notice='Copy staged. Save a new slot to keep it; originals stay intact.'..(why and (' '..why) or '')
+  f.notice=L('Copy staged. Save a new slot to keep it; originals stay intact.')..(why and (' '..why) or '')
   return true
 end
 function W.save(self,panelName)
@@ -114,7 +115,7 @@ function W.save(self,panelName)
   if not id then return nil,why end
   panel.slot=id;panel.label=Versions.info(panel.version).label..' / '..id;panel.dirty=nil
   f.slots=W.slots(self);self:_refreshSlots(panel.version);self._settingsCache=nil
-  f.notice='Saved as '..panel.label..'. The base save and Bank originals are unchanged.'
+  f.notice=L('Saved as ')..panel.label..'. The base save and Bank originals are unchanged.'
   return true
 end
 local function sprite(self,entry,data)
@@ -209,7 +210,7 @@ function W.draw(self)
         local iw,ih=image:getDimensions();local edge=math.min(iw,ih);local scale=(size-14*s)/edge
         col(255,255,255);g.draw(image,g.newQuad(0,0,edge,edge,iw,ih),cx+(size-4*s-edge*scale)/2,cy+2*s,0,scale,scale)
       else text(tostring(entry.mon.species):sub(1,7),cx+3*s,cy+size*.3,size-10*s) end
-      text('Lv.'..tostring(entry.mon.level or '?'),cx+4*s,cy+size-18*s,size-10*s,false,{62,100,104})
+      text(L('Lv.')..tostring(entry.mon.level or '?'),cx+4*s,cy+size-18*s,size-10*s,false,{62,100,104})
     end
   end
   for pi,kind in ipairs(panels) do
@@ -229,13 +230,13 @@ function W.draw(self)
       local perPage=portrait and (available<cell*math.ceil(30/cols) and cols*math.max(1,math.min(3,math.floor(available/cell))) or 30) or 30
       f.bankSlices=math.ceil(30/perPage);f.bankSlice=math.min(f.bankSlice or 0,f.bankSlices-1)
       button('<',px+10*s,gy,navW,'bankPage',{delta=-1})
-      text('Box '..f.page..' / '..pages..(f.bankSlices>1 and (' · '..(f.bankSlice+1)..'/'..f.bankSlices) or ''),px+navText,gy+8*s,cw-2*navText)
+      text(L('Box ')..f.page..' / '..pages..(f.bankSlices>1 and (' · '..(f.bankSlice+1)..'/'..f.bankSlices) or ''),px+navText,gy+8*s,cw-2*navText)
       button('>',px+cw-10*s-navW,gy,navW,'bankPage',{delta=1});gy=gridTop
       local size=math.min(cell,(ph-(gy-top)-30*s)/math.ceil(perPage/cols))
       local first=f.bankSlice*perPage+1
       for pos=first,math.min(30,first+perPage-1) do local entry=f.bank[(f.page-1)*30+pos];local n=pos-first
         monCell(entry,nil,px+10*s+(n%cols)*size,gy+math.floor(n/cols)*size,size,{bank=true}) end
-      text(#f.bank..' Pokémon · originals preserved',px+10*s,top+ph-24*s,cw-20*s)
+      text(#f.bank..L(' Pokémon · originals preserved'),px+10*s,top+ph-24*s,cw-20*s)
     else
       local panel=f[kind.name]
       button(panel.label or 'CHOOSE SAVE',px+10*s,gy,cw-20*s,'choose',{panel=kind.name});gy=gy+(portrait and buttonH+8*s or 44*s)
@@ -252,7 +253,7 @@ function W.draw(self)
         local perPage=partyCompact and 3 or portrait and (available<cell*rows and cols*visibleRows or capacity) or capacity
         local slices=panel.box==0 and (partyCompact and 2 or 1) or math.ceil(capacity/perPage);panel.slice=math.min(panel.slice or 0,slices-1)
         button('<',px+10*s,gy,navW,'box',{panel=kind.name,delta=-1,slices=portrait and slices,perPage=perPage,partySlices=portrait and available<88 and 2 or 1})
-        text((panel.box==0 and 'PARTY' or 'BOX '..panel.box)..(slices>1 and (' · '..(panel.slice+1)..'/'..slices) or ''),px+navText,gy+8*s,cw-2*navText)
+        text((panel.box==0 and 'PARTY' or L('BOX ')..panel.box)..(slices>1 and (' · '..(panel.slice+1)..'/'..slices) or ''),px+navText,gy+8*s,cw-2*navText)
         button('>',px+cw-10*s-navW,gy,navW,'box',{panel=kind.name,delta=1,slices=portrait and slices,perPage=perPage,partySlices=portrait and available<88 and 2 or 1});gy=portrait and firstGrid or gy+44*s
         local box=panel.box==0 and panel.save.party or B.boxMons(B.boxes(panel.save)[panel.box])
         local size=math.min((cw-20*s)/cols,(ph-174*s)/math.max(4,rows))
@@ -265,7 +266,7 @@ function W.draw(self)
         local first=portrait and panel.slice*perPage+1 or 1
         for pos=first,math.min(n,first+perPage-1) do
           local mon=box and box[pos]
-          local entry=mon and B.makeEntry(mon,panel.version,panel.slot,panel.box==0 and ('Party '..pos) or ('Box '..panel.box..' / '..pos),panel.data,panel.save)
+          local entry=mon and B.makeEntry(mon,panel.version,panel.slot,panel.box==0 and ('Party '..pos) or (L('Box ')..panel.box..' / '..pos),panel.data,panel.save)
           monCell(entry,panel.data,px+10*s+((pos-first)%cols)*size,gy+math.floor((pos-first)/cols)*size,size,{panel=kind.name,slot=pos})
         end
         if panel.dirty then button('SAVE AS NEW SLOT',px+10*s,top+ph-buttonH-8*s,cw-20*s,'save',{panel=kind.name}) end
@@ -284,12 +285,12 @@ function W.draw(self)
       if image then local iw,ih=image:getDimensions();local edge=math.min(iw,ih);local sc=(infoH-26*s)/edge
         col(255,255,255);g.draw(image,g.newQuad(0,0,edge,edge,iw,ih),x+26*s,iy+8*s,0,sc,sc) end
       local tx=x+infoH+24*s;local tw=w-infoH-70*s
-      text((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level,tx,iy+10*s,math.max(1,tw-100*s),true)
+      text((entry.mon.nickname or tostring(entry.mon.species))..L(' · Lv.')..entry.mon.level,tx,iy+10*s,math.max(1,tw-100*s),true)
       button('COPY ID',x+w-120*s,iy+8*s,100*s,'copyPokemonId')
-      text('ORIGIN · '..((Versions.info(origin.version or entry.source.version) or {}).label or 'Universal Bank')..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
-      text('SAVE ID · '..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..' · TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or type(entry.mon.ot)=='table' and entry.mon.ot.id or 'Unknown'),tx,iy+61*s,tw)
-      text('POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
-      text('HELD ITEM · '..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)
+      text(L('ORIGIN · ')..((Versions.info(origin.version or entry.source.version) or {}).label or 'Universal Bank')..' / '..tostring(origin.slot or '?')..' / '..tostring(origin.place or '?'),tx,iy+39*s,tw)
+      text(L('SAVE ID · ')..tostring(origin.saveId or entry.source.saveId or 'Legacy save')..L(' · TRAINER ID · ')..tostring(origin.trainerId or entry.mon.otId or type(entry.mon.ot)=='table' and entry.mon.ot.id or 'Unknown'),tx,iy+61*s,tw)
+      text(L('POKÉMON ID · ')..tostring(origin.recordId or entry.id or 'Available after deposit'),tx,iy+83*s,tw)
+      text(L('HELD ITEM · ')..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and (L('In Item Bank: ')..entry.mon.retroBankHeld.canonical) or 'None'),tx,iy+104*s,tw)
     else text('Select a Pokémon to inspect its origin, trainer, save identity and held item.',x+34*s,iy+26*s,w-68*s,true) end
   end
   if #panels==2 then button('SAVE A / SAVE B',x+18*s,y+h-56*s,180*s,'mobilePanel') end
@@ -434,12 +435,14 @@ function W.install(RI)
   RI.update=function(self,dt,...)
     local f=self._bankOverlay
     if f and not registered() then
+      if f.bankCheckJob then f.bankCheckJob:cancel();f.bankCheckJob=nil;f.bankCheck=nil end
       if f.tradeJob then f.tradeJob:cancel();f.tradeJob=nil end
       f.drag=nil;f.selected=nil
       return update(self,dt,...)
     end
     if f and f.drag and not f.drag.touch and love.mouse then f.drag.x,f.drag.y=love.mouse.getPosition() end
     if f then
+      require('src.import.BankPages').tick(f)
       if f.animation then f.animation.elapsed=f.animation.elapsed+dt;if f.animation.elapsed>=3.6 then f.animation=nil end end
       if f.tradeJob then
         local result=f.tradeJob:poll()

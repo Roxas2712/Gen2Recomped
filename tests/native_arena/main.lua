@@ -61,11 +61,11 @@ local function prepare()
  opts.vsync='off';opts.textSpeed='fast';opts.musicVolume=0;opts.soundVolume=0;opts.masterVolume=0
  Game:applyOptions(opts)
  Game.save.party={}
- for _,species in ipairs({'PIKACHU','PIDGEY','RATTATA'}) do
+ for _,species in ipairs(require('src.core.GameVersion').generation()>=4 and {25,16,19} or {'PIKACHU','PIDGEY','RATTATA'}) do
   local mon=require('src.pokemon.Pokemon').new(Game.data,species,50)
   local found
   for i,m in ipairs(mon.moves) do local d=Game.data.moves[m.id];if d and (tonumber(d.power) or 0)>0 then found=i;break end end
-  assert(found,'Native damaging move: '..species)
+  assert(found,'Native damaging move: '..tostring(species))
   mon.moves[1],mon.moves[found]=mon.moves[found],mon.moves[1]
   Game.save.party[#Game.save.party+1]=mon
  end
@@ -79,7 +79,7 @@ local function prepare()
  end
  local cup,match=cfg.cup,cfg.match
  cup.account_id=Auth.accountId()
- assert(require('src.link.CloudArena').queue(cup,match,'slot1'))
+ assert(require('src.link.CloudArena').queue(cup,match,'slot1',cfg.role=='left-target'))
  phase='preflight';require('src.link.CloudArena').consume(Game)
 end
 function love.update(dt)
@@ -106,6 +106,7 @@ function love.update(dt)
   return
  end
  if phase=='reporting' then
+  if cfg.scenario=='handoff'and cfg.role=='left'then return finish(true,'The fresh device took ownership; the original adventure was restored.')end
   require('src.link.ArenaResults').pump()
   if not proof then return finish(false,notice and notice.text or 'No native completion report') end
   if proof.status~='complete' and cfg.scenario~='abort' then return finish(false,notice and notice.text or 'Battle aborted') end
@@ -116,6 +117,7 @@ function love.update(dt)
   return
  end
  if phase=='verify-report' then return end
+ if cfg.measureTraffic and Game then require('src.cloud.Presence').tick();require('src.cloud.Play').tick(Game) end
  for _=1,6 do
   frames=frames+1
   local top=Game.stack:top()
@@ -126,7 +128,9 @@ function love.update(dt)
    end
    if not screenshot and (top.turnCount or 0)>=1 then screenshot=true;love.graphics.captureScreenshot('native-link-'..cfg.edition..'-'..cfg.role..'.png') end
   end
-  Game.input:keyreleased('return');Game.input:keypressed('return')
+  local transfer=cfg.scenario=='handoff'and cfg.role=='left'and top and top.kind=='link'and(top.turnCount or 0)>=2 and top.phase=='menu'
+  if transfer and not handoffReady then handoffReady=true;write(cfg.handoffReady,{ready=true})end
+  Game.input:keyreleased('return');if not transfer then Game.input:keypressed('return')end
   local ok,why=pcall(Game.step,Game,1/60)
   if not ok then return finish(false,why) end
   if phase=='reporting' then break end

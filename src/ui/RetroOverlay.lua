@@ -64,6 +64,7 @@ function O.action(id)
     if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.';Sync.set('cancelled',O.retry and O.retry.version,O.retry and O.retry.slot) end
     return
   end
+  if (id=='centerLobby'or O.page=='centerLobby')and require('src.ui.CenterLobby').action(O,id)then return end
   if (id=='friends' or O.page=='friends') and require('src.ui.FriendsMenu').action(O,id) then return end
   if id=='retryCloud' and O.retry then transfer(O.retry.version,O.retry.slot);return end
   if id=='resume' then O.close();return end
@@ -72,7 +73,7 @@ function O.action(id)
     if id=='options' then
       local ok,menu=pcall(function() return require('src.ui.OptionsMenu').new(game) end)
       O.options=ok and menu.rows or {}
-      if not ok then O.notice='Options could not be opened: '..tostring(menu) end
+      if not ok then O.notice=L('Options could not be opened: ')..tostring(menu) end
     end
     return
   end
@@ -99,7 +100,7 @@ function O.action(id)
       if row.activate then O.close();row.activate(game);return false end
       if row.step then return row.step(game,tonumber(direction)) end
     end)
-    if not ok then O.notice='Setting could not be changed: '..tostring(changed)
+    if not ok then O.notice=L('Setting could not be changed: ')..tostring(changed)
     elseif changed and game.writeOptions then game:writeOptions() end
     return
   end
@@ -161,6 +162,7 @@ end
 local function actions()
   if O.job then return {{id='cancel',label='Cancel upload'}} end
   if O.confirm then return {{id='library',label='Save & open library'},{id='cancel',label='Stay in this game'}} end
+  if O.page=='centerLobby'then return require('src.ui.CenterLobby').rows(O)end
   if O.page=='friends' then return require('src.ui.FriendsMenu').rows(O) end
   if O.page=='options' then
     local rows={}
@@ -172,15 +174,17 @@ local function actions()
   end
   if O.page=='home' then
     local opts=O.game.save.options or {}
-    return {{id='resume',label='Continue playing',note='Return to your adventure'},
+    local rows={{id='resume',label='Continue playing',note='Return to your adventure'},
       {id='friends',label='FRIENDS',note='Online friends · Meet on maps · Trade · Unranked battles'},
       {id='saves',label='SAVES & CLOUD',note='Save progress · Export .sav · Change game',large=true},
       {id='speed',minus='slower',label='Game speed',value=Speed.levelLabel(opts.speed)},
       {id='mute',label='Game audio',value=opts.audioMuted and 'MUTED' or 'ON'},
       {id='options',label='All game settings',note='Picture · Sound · Controls · Mod options'}}
+    if require('src.ui.CenterLobby').center(O.game)then table.insert(rows,2,{id='centerLobby',label='POKÉMON CENTER · LINK LOBBY',note='Ready friends · Find players · Nearby WLAN'})end
+    return rows
   end
   local rows={{id='save',label='Save game progress'},
-    {id='suspend',label='Save portable suspend · Beta',note='Qualified Gen 1–3 sessions · No loaded mods · Includes the running battle'},
+    {id='suspend',label='Save portable suspend · Beta',note='Gen 1–3 · Mods need a portable suspend adapter · Includes the running battle'},
     {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'},
     {id='export',label='Export battery .sav'},{id='cloud',label='Save & upload to cloud'},
     {id='library',label='Choose another game'}}
@@ -262,7 +266,7 @@ function O.draw(game)
   local w=math.min(760*s,ww-30*s);local h=math.min(660*s,hh-30*s);local x=(ww-w)/2;local y=(hh-h)/2
   g.setColor(.065,.09,.14,1);g.rectangle('fill',x,y,w,h,16*s,16*s)
   g.setColor(.45,.91,1,1);text('RETRORECOMPED',x+24*s,y+20*s,w-48*s,true)
-  g.setColor(.74,.78,.85,1);text(Versions.info().displayName..' · PAUSED',x+24*s,y+61*s,w-48*s)
+  g.setColor(.74,.78,.85,1);text(Versions.info().displayName..L(' · PAUSED'),x+24*s,y+61*s,w-48*s)
   local rows=actions();local layoutScroll=O.scroll or 0;local nextScroll=layoutScroll;local top=y+134*s-layoutScroll
   O.rects={};O.selected=math.min(O.selected or 1,math.max(1,#rows))
   for i,tab in ipairs({{'home','QUICK MENU'},{'saves','SAVES & CLOUD'},{'options','SETTINGS'},{'friends','FRIENDS'}}) do

@@ -135,11 +135,17 @@ function Experience.add(data, mon, gained)
 
   local cap = consts and consts.levelCap or 100
   local levels = {}
+  local growth = require('src.core.GameVersion').isGen3() and {} or nil
+  local function copyStats(stats)
+    local values={};for _,key in ipairs(Stats.ORDER_GEN3)do values[key]=stats[key]end;return values
+  end
   local newLevel = Growth.levelForExp(speciesDef.growthRate, mon.exp, cap,
                                       data.growth_rates)
   while mon.level < math.min(newLevel, cap) do
     mon.level = mon.level + 1
     local old = mon.stats
+    local before = growth and copyStats(old)
+    local reachedLevel=mon.level
     if Stats.isGen3(speciesDef) then
       mon.stats = Stats.calcGen3(speciesDef, mon.level, mon.ivs, mon.evs,
                                  mon.nature)
@@ -154,8 +160,9 @@ function Experience.add(data, mon, gained)
         learnable = Experience.movesLearnedAt(speciesDef, mon.level),
       })
     end
+    if growth then growth[reachedLevel]={old=before,new=copyStats(mon.stats)}end
   end
-  return levels, gained
+  return levels, gained, growth
 end
 
 -- Moves learned when reaching exactly `level`.

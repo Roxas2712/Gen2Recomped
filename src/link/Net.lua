@@ -121,8 +121,18 @@ function Net:host(port)
       port, tostring(ok and err or h))
     return false
   end
+  if port == 0 then
+    local addressOK, bound = pcall(function() return h:get_socket_address() end)
+    port = addressOK and tonumber(tostring(bound):match(":(%d+)$")) or nil
+    if not port or port == 0 then
+      pcall(function() h:destroy() end)
+      self.error = "Cannot determine the local link port"
+      return false
+    end
+  end
   self.enetHost = h
   self.mode = "hosting"
+  self.port = port
   self.address = ("%s:%d"):format(Net.lanIP() or "?", port)
   return true
 end
@@ -163,6 +173,17 @@ end
 -- isn't one of the four generic ones below lands in the normal inbox for
 -- the caller (LinkState, or Tournament.lua) to interpret.
 function Net:connectTCP(addr)
+  local Auth = require("src.cloud.RetroCloud")
+  if not Auth.signedIn() then
+    self.error = Strings("Sign in to connect with friends.")
+    return false
+  end
+  local account = Auth.accountId()
+  local profile, why = require("src.cloud.NativeAccount").request("GET", "/community/counts", nil, true)
+  if not profile or not Auth.signedIn() or account ~= Auth.accountId() or tostring(profile.account_id) ~= account then
+    self.error = why or Strings("The active account changed.")
+    return false
+  end
   if not socket then
     self.error = "online play needs luasocket (bundled with LOVE)"
     return false

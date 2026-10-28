@@ -33,15 +33,16 @@ def main():
     for name in ('backend', 'php', 'love-app', 'cert', 'key'):
         parser.add_argument('--' + name, type=Path, required=True)
     parser.add_argument('--cache', action='append', required=True, metavar='EDITION=PATH')
-    parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort'])
+    parser.add_argument('--scenario', action='append', choices=['complete', 'recovery', 'abort', 'handoff'])
     parser.add_argument('--independent-replay', action='store_true')
     parser.add_argument('--crypto-library', type=Path)
+    parser.add_argument('--measure-traffic', action='store_true', help='Count API payload bytes and normal presence polling; no headers or account data are retained')
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
     caches = {}
     for entry in args.cache:
         edition, directory = entry.split('=', 1)
-        if edition not in EDITIONS or edition in caches:
+        if edition not in EDITIONS and edition != 'platinum' or edition in caches:
             parser.error('Supply each supported edition at most once')
         caches[edition] = Path(directory).expanduser().resolve(strict=True)
     backend, php, runtime, cert, key = [p.resolve(strict=True) for p in
@@ -79,6 +80,9 @@ end
     database.touch(mode=0o600)
     import http.server
     proxy = http.server.ThreadingHTTPServer(('127.0.0.1', 0), Proxy)
+    if args.measure_traffic:
+        from qa_http_traffic import TrafficMeter
+        proxy.traffic_meter = TrafficMeter()
     with socket.socket() as available:
         available.bind(('127.0.0.1', 0))
         backend_port = available.getsockname()[1]
@@ -86,7 +90,7 @@ end
     worker_token = secrets.token_hex(32)
     worker_release = hashlib.sha256((ROOT / 'src/link/ArenaReplay.lua').read_bytes()).hexdigest()
     env = os.environ | dict(RETRO_ARENA_VERIFICATION_REQUIRED='true' if args.independent_replay else 'false',
-        RETRO_VERIFIER_TOKEN_SHA256=hashlib.sha256(worker_token.encode()).hexdigest(),RETRO_VERIFIER_RELEASE=worker_release, APP_ENV='testing', APP_DEBUG='false',
+        RETRO_NATIVE_DS_EDITIONS='platinum' if 'platinum' in caches else '', RETRO_VERIFIER_TOKEN_SHA256=hashlib.sha256(worker_token.encode()).hexdigest(),RETRO_VERIFIER_RELEASE=worker_release, APP_ENV='testing', APP_DEBUG='false',
         APP_KEY='base64:' + base64.b64encode(secrets.token_bytes(32)).decode(),
         APP_URL=url, LARAVEL_STORAGE_PATH=str(storage), DB_CONNECTION='sqlite',
         DB_DATABASE=str(database), DB_URL='', CACHE_STORE='array', SESSION_DRIVER='array',
@@ -157,10 +161,12 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                 match = cup['matches'][0]
                 print('NATIVE_ARENA_START ' + edition + ' ' + scenario, flush=True)
                 case_children = []
-                for role, person in people.items():
+                handoff_ready = output / (edition + '-' + scenario + '-handoff-ready.json')
+                def start_client(role, person):
                     identity = 'oasc-arena-qa-' + run_id + '-' + edition + '-' + scenario + '-' + role
                     qa_profile(Path.home() / 'Library/Application Support/LOVE' / identity)
                     config = dict(api=url + '/api/cloud/v1', edition=edition, role=role, scenario=scenario,
+                        handoffReady=str(handoff_ready), measureTraffic=args.measure_traffic,
                         cache=str(cache), cup=cup, match=match, email=person['email'], password=password,
                         result=str(output / (identity + '.json')))
                     config_path = output / (identity + '-config.json')
@@ -176,8 +182,15 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                             cwd=ROOT, env=child_env, stdout=log, stderr=log)
                     children.append(child)
                     case_children.append((child, Path(config['result'])))
+                for role, person in people.items():
+                    start_client(role, person)
+                target_started = False
                 deadline = time.monotonic() + args.timeout
                 while any(c.poll() is None for c, _ in case_children) and time.monotonic() < deadline:
+                    if scenario == 'handoff' and not target_started and handoff_ready.exists():
+                        start_client('left-target', people['left'])
+                        target_started = True
+                        print('NATIVE_ARENA_NEW_DEVICE ' + edition, flush=True)
                     if args.independent_replay:
                         job = call('POST','/verifier/jobs/claim',{},worker_token)['job']
                         if job:
@@ -210,7 +223,10 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
                 else:
                     assert battle['state'] == 'complete'
                     if args.independent_replay: assert battle['verification'] == 'server_native_replay'
-                    assert pair[0]['proof'] == pair[1]['proof'] and pair[0]['proof']['turns'] > 0
+                    scored = [p for p in pair if p.get('proof')]
+                    assert len(scored) == 2 and scored[0]['proof'] == scored[1]['proof'] and scored[0]['proof']['turns'] > 0
+                    if scenario == 'handoff':
+                        assert target_started and len(pair) == 3 and pair[0].get('proof') is None
                     assert sorted(p['points'] for p in profiles.values()) == [-25, 50]
                     assert all(c > 0 for c in wallets.values())
                 result = dict(edition=edition, scenario=scenario, battle_state=battle['state'],verification=battle['verification'],
@@ -221,6 +237,9 @@ $people[$role]=['email'=>$u->email,'id'=>(string)$u->id];}echo json_encode($peop
         assert all(hashlib.sha256((source / p).read_bytes()).hexdigest() == digest for p, digest in hashes.items())
         report = dict(passed=True, results=results, sourceSha256=hashes,
             scope='Independent macOS client profiles and private local HTTPS; no physical or cross-OS proof; ' + ('independent native server replay' if args.independent_replay else 'peer-attested results'))
+        if args.measure_traffic:
+            report['traffic'] = dict(groups=proxy.traffic_meter.snapshot(), elapsed_seconds=proxy.traffic_meter.elapsed_seconds(),
+                scope='Application request/response bodies, including account setup and background presence. Excludes HTTP headers, TLS/TCP and private game-cache transfers. Verifier HTTP polling is a fixture-only worker path, separate from clients.')
         (output / 'report.json').write_text(json.dumps(report, indent=2))
         print('NATIVE_ARENA_PASS ' + str(output), flush=True)
     finally:

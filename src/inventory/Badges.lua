@@ -26,9 +26,28 @@ local GEN2 = {
   { id = "VOLCANOBADGE" }, { id = "EARTHBADGE" },
 }
 
+-- The launcher reads saves before loading a cartridge's constants. Use the
+-- same native flags as the extractor: RS, Emerald and FRLG have different
+-- system-flag layouts even where their badge names agree.
+local GEN3 = {}
+for _, version in ipairs({"ruby", "sapphire", "emerald", "firered", "leafgreen"}) do
+  local kanto = version == "firered" or version == "leafgreen"
+  local names = kanto and {"BOULDER", "CASCADE", "THUNDER", "RAINBOW", "SOUL", "MARSH", "VOLCANO", "EARTH"}
+    or {"STONE", "KNUCKLE", "DYNAMO", "HEAT", "BALANCE", "FEATHER", "MIND", "RAIN"}
+  local first = kanto and 0x820 or (version == "emerald" and 0x867 or 0x807)
+  local list = {}
+  for i, name in ipairs(names) do
+    local flag = first + i - 1
+    list[i] = {id = name .. "BADGE", item = ("FLAG_G3_%04X"):format(flag), flag = flag}
+  end
+  GEN3[version] = list
+end
+
 function Badges.list(data, version)
   local list = data and data.constants and data.constants.badges
   if type(list) == "table" and #list > 0 then return list end
+  version = version or require("src.core.GameVersion").get()
+  if GEN3[version] then return GEN3[version] end
   if require("src.core.GameVersion").isGen2(version) then return GEN2 end
   if require('src.core.GameVersion').isGen4(version) then
     return {{id='BADGE_COAL'},{id='BADGE_FOREST'},{id='BADGE_COBBLE'},{id='BADGE_FEN'},

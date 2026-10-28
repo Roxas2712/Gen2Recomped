@@ -1,0 +1,1 @@
+{"qa_instrumentation":false,"seconds":0.53976225000000033,"phase":"startup","frame":1,"worker_ms":190.03383333333358,"stats":{"interpreted":49571795,"hardware":true,"sample_frame":1,"readback_ms":1.569083,"frames":141343,"top_blank":false,"emulation_ms":185.674083,"resolution":3,"emulation_cpu_ms":36.578625000000017,"recompiled":92988731048},"focused":true}

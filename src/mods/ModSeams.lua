@@ -39,14 +39,15 @@
 -- left as it is -- the next load sets it again, and guessing that a number is
 -- mod residue rather than engine state is how a teardown corrupts a game.
 --
--- WHAT IS NOT SEEN: anything a mod changes later, during play (a wrap made on
--- the first battle), and fields below the top level of a table.  Those are
--- still the mod's to guard; this takes away the common case, not the need.
+-- WHAT IS NOT SEEN: arbitrary later changes during play (a wrap made on
+-- the first battle), or fields below the top level of a table. Synchronous
+-- native option/action callbacks are captured by the current Events bus.
+-- Other later changes remain the mod's to guard.
 
 local ModSeams = {}
 -- Mutation journals must remain operable while an entry has temporarily
 -- replaced global iteration (including a wrapper that throws).
-local pairs,next=pairs,next
+local pairs,next,rawget,rawset=pairs,next,rawget,rawset
 
 -- every change, oldest first: { tbl, key, before, after, owner }
 local journal = {}
@@ -115,11 +116,14 @@ function ModSeams.open(owner)
     end
     -- an engine module required for the FIRST time inside this window is
     -- snapshotted the moment it loads, before the mod gets it back to wrap
-    local fresh = {}
+    local state={active=true,snap=snap,seen=seen,fresh={},owner=owner}
     local real = rawget(_G, "require")
     local function require2(name, ...)
+      if not state.active then return real(name,...)end
+      local snap,seen,fresh,owner=state.snap,state.seen,state.fresh,state.owner
       local had = package.loaded[name]
       local result = real(name, ...)
+      if not state.active then return result end
       if name=='src.core.game3.field_move_show_mon'and type(result)=='table'and result._observeMod then
         result._observeMod(owner)
       end
@@ -149,7 +153,7 @@ function ModSeams.open(owner)
       return result
     end
     rawset(_G, "require", require2)
-    return { owner = owner, snap = snap, require2 = require2, real = real }
+    return { owner = owner, snap = snap, require2 = require2, real = real, state=state }
   end)
   return ok and token or nil
 end
@@ -158,6 +162,10 @@ end
 -- changes recorded.
 function ModSeams.close(token)
   if not token then return 0 end
+  if token.state then
+    if not token.state.active then return 0 end
+    token.state.active=false
+  end
   local ok, count = pcall(function()
     if rawget(_G, "require") == token.require2 then
       rawset(_G, "require", token.real)
@@ -188,15 +196,17 @@ function ModSeams.close(token)
     end
     return n
   end)
+  if token.state then token.state.snap,token.state.seen,token.state.fresh,token.state.owner=nil,nil,nil,nil end
   return ok and count or 0
 end
 
 -- run fn(...) inside a window for owner; returns pcall-style results
 function ModSeams.run(owner, fn, ...)
   local token = ModSeams.open(owner)
-  local results = { pcall(fn, ...) }
+  local function pack(...)return {n=select("#",...),...}end
+  local results = pack(pcall(fn, ...))
   ModSeams.close(token)
-  return unpack(results)
+  return unpack(results,1,results.n)
 end
 
 local function unwind(filter)

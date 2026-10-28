@@ -5,11 +5,12 @@ local Ids=require('src.compat.gen1.BattleIds')
 local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
 local residents=setmetatable({},{__mode="k"})
-function M.nativeMon(view)
+function M.nativeMon(view,readOnly)
  local d=residents[view];if not d then return nil,false end
  local e=d.environment
  if not e.context or not e.valid()then return nil,true end
- e:flush();return d.entry.raw,true,e.context.game
+ if not readOnly then e:flush()end
+ return d.entry.raw,true,e.context.game,e.context.screen
 end
 local statNames={attack='attack',defense='defense',speed='speed',spAtk='spatk',spDef='spdef',hp='hp'}
 local statusBits={PSN=8,BRN=16,FRZ=32,PAR=64,TOX=128}
@@ -20,11 +21,11 @@ local function status(mon)
 end
 local function integer(v,lo,hi)return type(v)=='number'and v==v and v%1==0 and v>=lo and v<=hi end
 local monKeys={'species','nickname','level','hp','maxHp','attack','defense','speed','spAtk','spDef',
- 'moves','pp','maxPp','item','status','ability','personality','friendship','isEgg','otId','otSecretId'}
-local battlerKeys={'id','side','flank','mon','species','type1','type2','ability','item','status','fainted','stages','partyIndex'}
+ 'moves','pp','maxPp','item','status','ability','personality','friendship','isEgg','otId','otSecretId','otName','fatefulEncounter'}
+local battlerKeys={'id','side','flank','mon','species','type1','type2','ability','item','status','fainted','stages','partyIndex','expLockedMove','expEncoreMove'}
 local stateKeys={'player','enemy','battlers','party','playerParty','enemyParty','turn','wild','double','over','result',
  'weather','weatherTurns','session','playerIndex','enemyIndex','trainerClass','trainerName','trainerPicId',
- 'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng'}
+ 'link','safari','tutorial','oldManTutorial','pokedude','firstBattle','ghostBattle','kinds','rng','interactiveChoices'}
 local reserved={}
 for _,key in ipairs(stateKeys)do reserved[key]=true end
 function M.new(game,screen,valid,identifiers)
@@ -70,6 +71,10 @@ function M.new(game,screen,valid,identifiers)
      mon.status=value>0 and(value<=7 and'SLP'or inverse[value])or nil
      mon.sleepTurns=value>0 and value<=7 and value or nil;mon.toxic=value==128 or nil
     end
+   elseif kind=='state'and key=='interactiveChoices'then
+    local engine=package.loaded['src.core.game3.battle.engine']
+    assert(engine and engine._setInteractiveChoices,'native move choice policy is unavailable')
+    engine._setInteractiveChoices(e.context.screen,t,value)
    elseif kind=='state'and not reserved[key]then
     -- Presentation extensions belong to this view; they cannot replace the
     -- controller's command queue, party aliases or completion result.
@@ -106,7 +111,7 @@ function M.new(game,screen,valid,identifiers)
    for i,mv in ipairs(mon.moves or{})do
     d.moves[i]=ids:read('moves',mv.id);d.pp[i]=mv.pp;d.baseline[i]=mv.pp
     local def=(e.context.data.moves or{})[mv.id]
-    d.maxPp[i]=def and def.pp and def.pp+math.floor(def.pp/5)*(mv.ppUps or 0)or nil
+    d.maxPp[i]=def and def.pp and require("src.pokemon.Pokemon").maxPP(def,mv)or nil
     d.ids[i]=d.moves[i];d.maximum[i]=d.maxPp[i]
    end
    d.pending=true
@@ -127,6 +132,8 @@ function M.new(game,screen,valid,identifiers)
    if statNames[key]then return raw.stats and raw.stats[statNames[key]]end
    if key=='status'then return status(raw)end
    if key=='moves'or key=='pp'or key=='maxPp'then return moveArrays(raw)[key]end
+   if key=='fatefulEncounter'then return require('src.pokemon.Gen3Ownership').fateful(raw)end
+   if key=='otName'then return raw.ot end
    if key=='otId'then return raw.otId or raw.otID end
    if key=='otSecretId'then return raw.otSecretId or raw.secretId end
    if key=='friendship'then return raw.friendship or raw.happiness end
@@ -145,6 +152,21 @@ function M.new(game,screen,valid,identifiers)
    if key=='fainted'then return raw.fainted==true or raw.mon.hp<=0 end
    if key=='partyIndex'then return partyIndex(pos and pos%2==0 and party()or c.screen.enemyParty,raw.mon)or 1 end
    if key=='stages'then return proxy('stages',raw.stages or{})end
+   if key=='expLockedMove'then
+    local action=c.screen.menuLockedAction and c.screen:menuLockedAction(raw)
+    return action and(action.id or action.special)
+   end
+   if key=='expEncoreMove'then
+    local owner=package.loaded['src.battle.Gen3Encore']
+    if owner and owner.menu then local action=owner.menu(raw);return action and action.id end
+    -- The earlier native fight owner checks the live Encore fields and PP.
+    -- Observe that decision without invoking its invalid-encore cleanup.
+    if raw.encoreTurns and raw.encoreMove then
+     for _,move in ipairs(raw.curMoves or raw.mon.moves or{})do
+      if move.id==raw.encoreMove and(move.pp or 0)>0 then return move.id end
+     end
+    end
+   end
    if key=='type1'or key=='type2'then return ids:read('types',(raw.curTypes or{})[key=='type1'and 1 or 2])end
   elseif d.kind=='stages'then return raw[statNames[key]or key]
   elseif d.kind=='state'then
@@ -180,6 +202,11 @@ function M.new(game,screen,valid,identifiers)
     e.kinds=e.kinds or{};e.kinds.tutorial=raw.pokedudeDemo and'pokedude'or(raw.demo and'oldMan'or nil);return e.kinds
    end
    if key=='rng'then return e.rng end
+   if key=='interactiveChoices'then
+    local engine=package.loaded['src.core.game3.battle.engine']
+    if engine and engine._interactiveChoices then return engine._interactiveChoices(raw,e.view)end
+    return raw.interactiveChoices
+   end
   end
  end
  e.read=read

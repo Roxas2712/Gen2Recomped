@@ -218,7 +218,7 @@ function B.convert(entry,version,data,allowAdaptation)
     move.id=id;move.ppUps=clamp(move.ppUps,3)
     local pp=data.moves[id].pp
     if not tonumber(pp) then return nil,'Move PP data is unavailable.' end
-    move.pp=clamp(move.pp,pp+move.ppUps*math.floor(pp/5))
+    move.pp=clamp(move.pp,require("src.pokemon.Pokemon").maxPP(data.moves[id],move,gen))
   end
   if mon.heldItem and mon.heldItem~='' then
     local id=data.items[mon.heldItem] and mon.heldItem or named(data.items,info.item)

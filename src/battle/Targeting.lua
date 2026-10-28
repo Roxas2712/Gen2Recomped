@@ -312,6 +312,11 @@ end
 
 function Targeting.actionTargets(battle, user, move, chosen)
   local kind = kindOf(move)
+  if kind == Targeting.FOES_AND_ALLY and require('src.core.GameVersion').isGen3() then
+    -- Native iteration uses present slots, including a KO not yet removed by
+    -- its controller. HP-based convenience targeting is a different owner.
+    return require('src.battle.Gen3CalledMove').allOtherBattlers(battle, user)
+  end
   local abilities = require("src.battle.Abilities")
   local _, followMeActive = require("src.battle.Gen3FollowMe").center(battle, user)
   -- Gen 3 Lightning Rod redirects Electric selected attacks; it does not

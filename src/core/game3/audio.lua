@@ -89,6 +89,23 @@ function A.playCry(species,mode,pan)
     volume=type(mode)=='table'and mode.volume or nil})~=nil
 end
 function A.isCryFinished()if Sound.isCryFinished then return Sound.isCryFinished()end;return not Sound.anyPlaying('cry')end
+function A.stopCry()
+ if Native.game()then Sound.stopCry()end
+end
+-- The source boot/intro contract explicitly stops this native audio session.
+-- Keep playback, pending music and cry completion with their existing owners.
+function A.stopAll()
+ poll()
+ local g=Native.game();if not g then return end
+ local cohort={game=g,data=g.data,save=g.save,mods=g.mods,edition=Version.get()}
+ require('src.core.Music').stop()
+ -- A music-stopped hook may replace the game before the remaining stops.
+ if not current(cohort)then poll();return end
+ Sound.stopSe(g.data)
+ for src,r in pairs(records)do remove(src,r)end
+ Sound.stopCry()
+ poll()
+end
 A._seSources,A._seMeta=sources,metadata
 A._service={release=function()
  for src,r in pairs(records)do remove(src,r)end;poll()

@@ -143,7 +143,7 @@ for _, version in ipairs({ "red", "gold" }) do
   local canMove = require("src.battle.Status").beforeMove(user, function(lo)
     return lo
   end, nil, { id = "SLEEP_TALK" })
-  T.eq(canMove, false, "older-generation waking still forfeits the turn")
+  T.eq(canMove, V.isGen2(), "Gen2 wakes and acts; Gen1 still forfeits the waking turn")
   T.eq(user.mon.status, nil, "older-generation waking clears sleep")
 end
 V.set(before)

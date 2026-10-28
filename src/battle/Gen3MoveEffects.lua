@@ -862,6 +862,7 @@ F.WEATHER_BALL_EFFECT = {
     local copy = {}
     for k, v in pairs(ctx.move) do copy[k] = v end
     copy.type = newType
+    copy.gen3Type = ({ WATER = 11, FIRE = 10, ROCK = 5, ICE = 15 })[newType]
     ctx.move = copy
   end,
 }

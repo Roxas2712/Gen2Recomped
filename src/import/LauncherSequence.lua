@@ -143,7 +143,10 @@ function Sequence.install(RI)
         if self._latchSound then self._latchSound:stop();self._latchSound=nil end
         if self._powerSound then self._powerSound:stop();self._powerSound=nil end
         self._sequenceInputGuard = 0.15
-        if state.kind=='play' and not state.cancelled then return play(self, state.version) end
+        if state.kind=='play' and not state.cancelled then
+          if state.onComplete then return state.onComplete() end
+          return play(self, state.version)
+        end
       end
       return
     end
@@ -374,7 +377,8 @@ function Sequence.install(RI)
       g.setFont(self.labelFont);col(accent,hud)
       g.printf(Strings('ONE MORE ADVENTURE'),ox,oy+32*s,w,'center')
       g.setFont(self.gameNameFont);col(P.ink,hud)
-      local title=Versions.info(state.version).displayName
+      local info=Versions.info(state.version) or require('src.import.LauncherExternalGames').info(state.version)
+      local title=info and info.displayName or tostring(state.version)
       local ts=math.min(1.15,w*0.85/math.max(1,self.gameNameFont:getWidth(title)))
       g.print(title,cx-self.gameNameFont:getWidth(title)*ts/2,oy+76*s,0,ts,ts)
       local status=not stage.locked and 'INSERTING CARTRIDGE'

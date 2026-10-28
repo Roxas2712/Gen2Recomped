@@ -249,6 +249,7 @@ function Player:refreshFishTiles(data)
 end
 
 function Player:refreshForm(data)
+  require('src.world.Gen3RsBikeView').bind(self,data)
   local walkId = FieldDefaults.fieldValue(data, "playerSprites", "walk")
   local bikeId = FieldDefaults.fieldValue(data, "playerSprites", "bike")
   -- ...and the WATER, which used to be left out of this: surfSprite was built
@@ -920,6 +921,9 @@ end
 
 function Player:pose()
   local px, py = self.px, self.py
+  if GameVersion.isGen2() and self.fishingState then
+    py = py - (self.spriteYOffset or 0)
+  end
   local hopping = false
   -- ledge hops arc (set for 2 cells by the ledge handler); surfing bobs
   if self.hopFrames and self.hopFrames > 0 then
@@ -1023,6 +1027,11 @@ function Player:pose()
                  or self.sprite
   if sprite and sprite.def and sprite.def.fullCycle and (self.moving or self.freeWalking or self.stepLanded) then
     phase=math.floor((self.animClock or 0)/4)%4
+  end
+  if self.onBike and sprite==self.bikeSprite then
+    local Game=require('src.core.Game')
+    local body,frame,mirror=require('src.world.Gen3RsBikeView').pose(self,Game.save)
+    if body then sprite,phase,flip=body,frame,mirror end
   end
   return sprite, px, py, facing, phase, flip, hopping
 end

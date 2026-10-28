@@ -1,0 +1,14 @@
+// Digest-only X/Y first-run prompts, English console UI, resolution 1x..8x.
+// Sources: own X/Y dumps through the pinned renderer. No raster data bundled.
+// Hash the complete opaque label band x=50..345, y=120..139 in the top screen.
+// Columns: initial selected English, then the seven confirmed language labels.
+pub const PROMPTS:[[u64;8];8]=[
+ [0x3b46c9927808ce66,0x8014244c11c9be9a,0x4edfdbfde5dbf8b6,0xd5c43a14630ad53,0x656b884314db59bb,0xdec1a93affd5431a,0x473302bc3ce1ed2f,0x40c7bf6e17038096],
+ [0x159b3cb4607554fc,0x5353dd057aef8eef,0x30a762d3e22ebd49,0x2a1d9bccf607980f,0x6a4f4f1a4c7faed1,0xb7f38f40598db041,0xa3d8e43fe5d7fd59,0x75fd6b6f43c266c7],
+ [0xb9cd9f0700e37d37,0xd2b41931e15f2fe4,0x2f0d6fe7a52b2675,0x42d488407e310e0e,0x6a358e465b3f330c,0x3bfd707f50328af6,0x4973f5c128674a45,0x45226a4a410b09fb],
+ [0x95f9b89b06fc9f7d,0x9a988646a91e9b1b,0x4703c5c535a3cfb2,0x915f5d7ee3fe5a25,0x8c25068cf584357e,0x9ab74c512e832f20,0x70560330a4f604da,0x5a0ee2557c4ff92],
+ [0x3e5567b078f7ffc0,0xbbf1bc505dd80467,0xb184b26e3f260b8d,0x93ed63b35f862bb6,0x412675d51f821cf8,0x3cedac00e6e90d05,0xf94cffb9846ba3d1,0xce25fa614b7a5008],
+ [0xf1583886e10ae945,0xac20e2aaa977f390,0xddcc83effc4b1b72,0xe5381ce756a285bf,0x7a7d816ef40dc82a,0xf0e328d3e55dae5,0x1b95da6600e606e6,0x1b1b0786745e1e11],
+ [0x50c2c55b59d4e0ce,0xf530a152c49a25a3,0xa1667d847c652f39,0xadd5127272f9efc9,0xa5b684e898c00f84,0x331e3e7f67ea366a,0x77905155ea90a0e4,0x582fd56a288596ee],
+ [0xd701bdd8e1715d42,0x46d884f0696671b1,0x3863718d03d53544,0x1a145dca41ef2f12,0x8dff6758ef1d4cd0,0x9c51e8d6aeab04e2,0xe93fad9120b0d4bd,0xf94912168ce4704e],
+];

@@ -10,6 +10,7 @@ end
 function S.call(fn, ...)
   local G = love.graphics
   local canvas = pack(G.getCanvas())
+  local scissor = G.getScissor and pack(G.getScissor())
   local realPush, realPop = G.push, G.pop
   local before = G.getStackDepth and G.getStackDepth()
   local pushed, why = pcall(realPush, "all")
@@ -46,11 +47,16 @@ function S.call(fn, ...)
   for _ = 1, depth do
     pcall(realPop)
   end
-  local restored, err = pcall(realPop)
+  -- OpenGL applies scissor pixels using the currently bound canvas DPI.
+  -- Rebind the caller before restoring its saved logical graphics state.
   G.setCanvas(unpack(canvas, 1, canvas.n))
+  local restored, err = pcall(realPop)
   if not restored then
     return false, err
   end
+  -- A leaked push may already have restored the same logical rectangle
+  -- against another DPI. Reapply it after the entire stack is restored.
+  if scissor then G.setScissor(unpack(scissor, 1, scissor.n)) end
   return unpack(out, 1, out.n)
 end
 return S

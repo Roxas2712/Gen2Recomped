@@ -1,9 +1,10 @@
+local function F(...) return require('src.translation.Service').launcherFormat(...) end
 local function L(value) return require('src.translation.Service').launcherLookup(value) end
 -- Bank subpages share the native box workspace, not browser windows.
 local P={}
 local B=require('src.storage.PokemonBank')
 local Versions=require('src.core.GameVersion')
-local function versionLabel(v) return (Versions.info(v) or {}).label or 'Universal Bank' end
+local function versionLabel(v) return Versions.info(v)and require('src.translation.Service').editionName(v)or L('Universal Bank') end
 function P.draw(self,f,x,y,w,h,s,button,text,col)
   if f.mode=='bank' or not f.mode then return false end
   local g=love.graphics;local font=self.hintFont
@@ -15,20 +16,48 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
     if not entry then line('Select a Pokémon in Bank boxes first.',y+42*s)
     else
       local origin=entry.origin or entry.mon.retroBankOrigin or entry.source
-      local rows={entry.mon.nickname or tostring(entry.mon.species),'LEVEL · '..tostring(entry.mon.level),
-        'GAME · '..versionLabel(origin.version or entry.source.version),
-        'SAVE · '..tostring(origin.slot or entry.source.slot)..' / '..tostring(origin.saveId or entry.source.saveId or 'Legacy save'),
-        'TRAINER ID · '..tostring(origin.trainerId or entry.mon.otId or 'Unknown'),
-        'POKÉMON ID · '..tostring(origin.recordId or entry.id or 'Deposit to allocate'),
-        'ITEM · '..tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and ('In Item Bank: '..entry.mon.retroBankHeld.canonical) or 'None')}
+      local rows={{raw=entry.mon.nickname or tostring(entry.mon.species)},F('LEVEL · %s',entry.mon.level),
+        F('GAME · %s',versionLabel(origin.version or entry.source.version)),
+        F('SAVE · %s / %s',tostring(origin.slot or entry.source.slot),tostring(origin.saveId or entry.source.saveId or L('Legacy save'))),
+        F('TRAINER ID · %s',tostring(origin.trainerId or entry.mon.otId or L('Unknown'))),
+        F('POKÉMON ID · %s',tostring(origin.recordId or entry.id or L('Deposit to allocate'))),
+        F('ITEM · %s',tostring(entry.mon.item or entry.mon.heldItem or entry.mon.retroBankHeld and F('In Item Bank: %s',entry.mon.retroBankHeld.canonical) or L('None')))}
       local report=require('src.storage.LuaData').inspect(entry.mon)
       local fields={};for _,field in ipairs(report.fields) do fields[#fields+1]=field.name..' ('..field.kind..')' end
-      rows[#rows+1]='LUA · '..report.nodes..' data nodes · '..table.concat(fields,', ')
-      local top=y+42*s
-      for _,row in ipairs(rows) do
-        row=L(row);local _,lines=font:getWrap(row,w);g.setFont(font);col(37,68,79);g.printf(row,x,top,w,'left');top=top+#lines*font:getHeight()+12*s
+      rows[#rows+1]=F('LUA · %d data nodes · %s',report.nodes,table.concat(fields,', '))
+      local check=f.bankCheck and f.bankCheck.bank_digest==entry.id and f.bankCheck
+      if check then
+       local labels={legal='LEGAL ENCOUNTER · Independent native analysis passed',custom_verified='RETRORECOMP REWARD · Receipt and original genetics verified',illegal='STANDARD RULES · Native legality checks failed',unverifiable='UNVERIFIABLE · Origin data is incomplete or unsupported',pending='QUEUED · Waiting for the private checker',running='CHECKING · Independent native analysis',unchecked='NOT CHECKED',invalid_origin='INVALID ORIGIN · Receipt or original genetics do not match'}
+       rows[#rows+1]=labels[check.state]or tostring(check.state)
+       if not check.current then rows[#rows+1]='Checker release changed. Request a fresh check.'end
+       local report=check.report
+       if report and report.provenance then
+        rows[#rows+1]=F('ORIGIN RECEIPT · %s',L(tostring(report.provenance.receipt)))
+        rows[#rows+1]=report.provenance.notice
+       end
+       for _,row in ipairs(report and report.checks or{})do
+        if not row.valid then rows[#rows+1]=row.group..' · '..row.code:gsub('(%l)(%u)','%1 %2')end
+       end
+       for i,row in ipairs(report and report.moves or{})do if not row.valid then rows[#rows+1]=F('Move %d is not obtainable with this encounter and game history.',i)end end
       end
-      button('COPY POKÉMON ID',x,top,w,'copyPokemonId')
+      local gap=12*s;local half=(w-gap)/2
+      button('COPY POKÉMON ID',x,y+40*s,half,'copyPokemonId')
+      button(f.bankCheckJob and'CHECKING…'or'CHECK LEGALITY & ORIGIN',x+half+gap,y+40*s,half,'verifyBank')
+      local pages={{}};local used=0;local capacity=math.max(50*s,h-165*s)
+      for _,row in ipairs(rows)do
+       row=type(row)=='table'and row.raw or L(row);local _,lines=font:getWrap(row,w);local height=#lines*font:getHeight()+12*s
+       if used>0 and used+height>capacity then pages[#pages+1]={};used=0 end
+       pages[#pages][#pages[#pages]+1]={label=row,height=height};used=used+height
+      end
+      f.detailsPage=math.min(f.detailsPage or 0,#pages-1)
+      local top=y+100*s
+      for _,row in ipairs(pages[f.detailsPage+1])do
+       g.setFont(font);col(37,68,79);g.printf(row.label,x,top,w,'left');top=top+row.height
+      end
+      button('‹',x,bottom-42*s,42*s,'detailsPage',{delta=-1,max=#pages-1})
+      text(tostring(f.detailsPage+1)..' / '..#pages,x+48*s,bottom-32*s,50*s)
+      button('›',x+100*s,bottom-42*s,42*s,'detailsPage',{delta=1,max=#pages-1})
+      if check then button('REFRESH VERIFICATION',x+155*s,bottom-42*s,math.max(60*s,w-155*s),'refreshBankCheck')end
     end
   elseif f.mode=='interop' then
     require('src.import.BankInterchangeWorkspace').draw(self,f,x,y,w,h,s,button,text,col)
@@ -40,7 +69,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local row=f.items[i];local by=y+70*s+(i-from)*54*s
       col(211,231,249);g.rectangle('fill',x,by,w,46*s,8*s,8*s)
       col(255,209,91);g.circle('fill',x+22*s,by+22*s,10*s)
-      text(row.canonical..' · '..row.state,x+44*s,by+8*s,w-160*s)
+      text(row.canonical..' · '..L(row.state),x+44*s,by+8*s,w-160*s)
       text(Versions.info(row.version).label,x+44*s,by+27*s,w-160*s)
       if row.state=='available' then button(f.itemSelected==row.id and 'SELECTED' or 'CHOOSE',x+w-110*s,by+6*s,105*s,'itemSelect',{id=row.id}) end
     end
@@ -50,7 +79,7 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
     if f.itemSelected and f.inspected then button('ATTACH TO SELECTED POKÉMON',x+108*s,bottom-62*s,math.max(90*s,w-108*s),'itemEquip') end
   elseif f.mode=='dex' then
     line('GLOBAL POKÉDEX · ALL YOUR ADVENTURES',y,true)
-    line(tostring(f.dexOwned or 0)..' caught · '..tostring(#(f.dexRows or {}))..' seen · Shared across your saves and Bank.',y+32*s)
+    line(F('%d caught · %d seen · Shared across your saves and Bank.',f.dexOwned or 0,#(f.dexRows or {})),y+32*s)
     local columns=w>650*s and 5 or w>380*s and 3 or 2
     local rowHeight=55*s;local count=math.max(1,math.floor((h-142*s)/rowHeight));local pageSize=columns*count
     local byId={};for _,row in ipairs(f.dexRows or {}) do byId[row.id]=row end
@@ -75,30 +104,30 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       line('Registration and verified email are required for both trade modes.',y+45*s)
       button('REGISTER / SIGN IN',x,y+92*s,math.min(w,290*s),'tradeLogin');return true
     end
-    local own=profile and profile.recompiler_id or 'Connecting...'
-    text('THIS DEVICE · '..own,x,y+40*s,w-150*s)
+    local own=profile and profile.recompiler_id or L('Connecting...')
+    text(L('THIS DEVICE · ')..own,x,y+40*s,w-150*s)
     button('COPY MY ID',x+w-140*s,y+34*s,140*s,'copyDeviceId')
     local deviceCount=profile and #(profile.devices or {}) or 0
-    text(tostring(deviceCount)..' device IDs belong to this account. Exchanges follow the account; device IDs identify the endpoints.',x,y+78*s,w)
+    text(F('%d device IDs belong to this account. Exchanges follow the account; device IDs identify the endpoints.',deviceCount),x,y+78*s,w)
     local top=y+113*s
     if f.tradeChoose then
       local pageSize=math.max(1,math.floor((h-210*s)/(45*s)));local from=(f.tradeChoosePage or 0)*pageSize+1
       for i=from,math.min(#f.bank,from+pageSize-1) do
         local entry=f.bank[i]
-        button((entry.mon.nickname or tostring(entry.mon.species))..' · Lv.'..entry.mon.level..' · '..versionLabel(entry.source.version),x,top+(i-from)*45*s,w,'tradePick',{entry=entry})
+        button((entry.mon.nickname or tostring(entry.mon.species))..L(' · Lv.')..entry.mon.level..' · '..versionLabel(entry.source.version),x,top+(i-from)*45*s,w,'tradePick',{entry=entry})
       end
       button('‹',x,bottom-62*s,42*s,'tradePickPage',{delta=-1})
       button('›',x+52*s,bottom-62*s,42*s,'tradePickPage',{delta=1,max=math.max(0,math.ceil(#f.bank/pageSize)-1)})
       button('CANCEL',x+w-120*s,bottom-62*s,120*s,'tradePickCancel');return true
     end
     local selected=f.tradeSelected
-    button(selected and ((selected.mon.nickname or tostring(selected.mon.species))..' · Lv.'..selected.mon.level) or 'CHOOSE A BANK POKÉMON',x,top,w,'tradeChoose');top=top+46*s
+    button(selected and ((selected.mon.nickname or tostring(selected.mon.species))..L(' · Lv.')..selected.mon.level) or 'CHOOSE A BANK POKÉMON',x,top,w,'tradeChoose');top=top+46*s
     if not wonder and not f.replying then
-      button('TO · '..tostring(f.recipient or 'ENTER RECOMPILER ID')..(f.tradeFocus and ' |' or ''),x,top,w-90*s,'tradeRecipient')
+      button(L('TO · ')..tostring(f.recipient or 'ENTER RECOMPILER ID')..(f.tradeFocus and ' |' or ''),x,top,w-90*s,'tradeRecipient')
       button('PASTE',x+w-82*s,top,82*s,'tradePaste');top=top+46*s
     elseif f.replying then text('Reply to the selected incoming offer.',x,top,w);top=top+30*s end
-    local notice='Share this Bank copy, including nickname, trainer and origin information, with the other player. Original saves and Bank archives remain intact.'
-    if wonder then notice=notice..' Up to 30 active offers per account, including eggs. Results unlock after at least 10 minutes; after 6 hours without a partner you receive a random native Gen 1–5 encounter with OT RetroRecomp.' end
+    local notice=L('Share this Bank copy, including nickname, trainer and origin information, with the other player. Original saves and Bank archives remain intact.')
+    if wonder then notice=notice..' '..L('Up to 30 active offers per account, including eggs. Results unlock after at least 10 minutes; after 6 hours without a partner you receive a random native Gen 1–5 encounter with OT RetroRecomp.') end
     notice=L(notice);local _,lines=font:getWrap(notice,w);g.setFont(font);col(43,76,103);g.printf(notice,x,top,w,'left');top=top+#lines*font:getHeight()+10*s
     button(f.tradeConsent and '✓ I AGREE TO SHARE THIS COPY' or '□ I AGREE TO SHARE THIS COPY',x,top,w,'tradeConsent');top=top+45*s
     local half=(w-10*s)/2
@@ -112,8 +141,8 @@ function P.draw(self,f,x,y,w,h,s,button,text,col)
       local offered=row.offered or {};local reply=row.reply or {}
       local action=row.status=='completed' and 'tradeReceive' or row.status=='prepared' and row.sender and 'tradeConfirm' or row.status=='pending' and not row.sender and 'tradeReply' or nil
       local textWidth=math.max(1,w-(action and row.status~='completed' and 282 or 155)*s)
-      local partner=row.legacy_offer and 'Older offer · cancel and submit again' or row.system_partner and 'SYSTEM · OT RetroRecomp' or row.partner or 'Finding a partner · 10 min–6 h'
-      text(tostring(row.mode):upper()..' · '..row.status..' · '..tostring(partner),x+10*s,by+5*s,textWidth)
+      local partner=row.legacy_offer and L('Older offer · cancel and submit again') or row.system_partner and L('SYSTEM · OT RetroRecomp') or row.partner or L('Finding a partner · 10 min–6 h')
+      text(L(tostring(row.mode):upper())..' · '..L(row.status)..' · '..tostring(partner),x+10*s,by+5*s,textWidth)
       text(tostring(offered.nickname or offered.species or '?')..(row.reply and (' ⇄ '..tostring(reply.nickname or reply.species)) or ''),x+10*s,by+29*s,textWidth)
       if action and row.status~='completed' then button('CANCEL',x+w-264*s,by+12*s,118*s,'tradeCancel',{exchange=row.id}) end
       if action then button(action=='tradeReceive' and 'RECEIVE' or action=='tradeConfirm' and 'CONFIRM' or 'REPLY',x+w-136*s,by+12*s,126*s,action,{exchange=row.id})
@@ -127,7 +156,14 @@ end
 function P.press(self,W,r)
   local f=self._bankOverlay
   if require('src.import.BankInterchangeWorkspace').press(self,r) then return true end
-  if r.action=='mode' then W.mode(self,r.mode)
+  if r.action=='verifyBank'or r.action=='refreshBankCheck'then
+   if not f.bankCheckJob then
+    local entry=f.inspected and f.inspected.entry;local refresh=r.action=='refreshBankCheck'
+    f.bankCheckJob=require('src.cloud.Task').new(function()return require('src.cloud.BankVerification').request(entry,refresh)end)
+    f.notice=f.bankCheckJob and'Requesting independent Bank verification…'or'Background networking is unavailable.'
+   end
+  elseif r.action=='detailsPage'then f.detailsPage=math.max(0,math.min(r.max,(f.detailsPage or 0)+r.delta))
+  elseif r.action=='mode' then W.mode(self,r.mode)
   elseif r.action=='modePage' or r.action=='tradePage' or r.action=='tradePickPage' then
     local key=r.action=='modePage' and 'modePage' or r.action=='tradePage' and 'tradePage' or 'tradeChoosePage'
     f[key]=math.max(0,math.min(r.max or math.huge,(f[key] or 0)+r.delta))
@@ -160,6 +196,12 @@ function P.press(self,W,r)
   elseif r.action=='tradeCancel' then W.trade(self,'cancel',r.exchange)
   else return false end
   return true
+end
+function P.tick(f)
+ if f.bankCheckJob then
+  local result=f.bankCheckJob:poll()
+  if result then f.bankCheckJob=nil;f.bankCheck=result.kind=='done'and result.first or nil;f.notice=f.bankCheck and'Bank verification report updated.'or tostring(result.error or result.second or'Bank verification failed.')end
+ end
 end
 function P.animation(self,f,x,y,w,h,s)
   if not f.animation then return end

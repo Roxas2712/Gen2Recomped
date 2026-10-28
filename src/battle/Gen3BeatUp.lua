@@ -95,7 +95,9 @@ function B.nextDamage(ctx)
       if critical then
         amount = amount * 2
       end
-      amount = math.max(1, math.floor(amount * ctx.rng(85, 100) / 100))
+      if not require("src.battle.Gen3DamageAdjustment").rs() then
+        amount = math.max(1, math.floor(amount * ctx.rng(85, 100) / 100))
+      end
       return amount, { crit = critical, typeMult = 10, eventTypeMult = 10, gbaBeatUp = true }
     end
   end

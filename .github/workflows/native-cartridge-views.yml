@@ -1,0 +1,41 @@
+name: Native cartridge observation views
+on:
+  pull_request:
+    paths:
+      - 'src/battle/Gen3SafariText.lua'
+      - 'src/battle/Gen3Battle.lua'
+      - 'src/core/game3/mb.lua'
+      - 'src/core/game3/constants.lua'
+      - 'src/import/gba/field_label_facts.lua'
+      - 'tests/engine/native_constant_queries.lua'
+      - 'src/core/game3/rom_text.lua'
+      - 'src/core/game3/battle/profile.lua'
+      - 'src/core/game3/battle/healthbox.lua'
+      - 'tests/engine/native_safari_text_views.lua'
+      - 'tests/engine/native_rom_text_ir.lua'
+      - 'tests/engine/compatibility_cell_semantics.lua'
+      - '.github/workflows/native-cartridge-views.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-cartridge-views-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native authority and retired-view boundaries
+        run: |
+          luajit tests/engine/native_safari_text_views.lua
+          luajit tests/engine/native_constant_queries.lua
+          luajit tests/engine/compatibility_cell_semantics.lua
+          luajit tests/engine/native_rom_text_ir.lua
+          luajit tests/engine/native_battle_chrome.lua
+      - name: Existing native Gen2 presentation
+        run: |
+          luajit tests/engine/gen2_battle_window.lua
+          luajit tests/engine/gen2_battle_scene.lua

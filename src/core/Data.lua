@@ -1148,6 +1148,14 @@ function Data:seedDefaults()
       -- does not have.  Gen3Intro keeps the card and puts Emerald's own
       -- attract skies behind it.
       boot.screens.splash = "Gen3Intro"
+      local emerald=self.constants and self.constants.gen3EmeraldPresentation
+      if V.get()=='emerald'and emerald and emerald.version=='emerald'then
+        boot.screens.splash='Gen3EmeraldIntro'
+      end
+      local rs = self.constants and self.constants.gen3RsPresentation
+      if (V.get() == 'ruby' or V.get() == 'sapphire') and rs and rs.version == V.get() then
+        boot.screens.splash = 'Gen3RsIntro'
+      end
       -- FireRed has its own real boot intro -- pret's intro.c, not
       -- Emerald's bike ride -- and RomExtractorGen3:extractFireRedIntro
       -- extracts it under its own key so a cache that predates that stage
@@ -1200,9 +1208,20 @@ function Data:seedDefaults()
     end
     if boot.screens.title == BOOT_DEFAULTS.screens.title then
       boot.screens.title = "Gen3Title"
+      local emerald=(self.constants or {}).gen3EmeraldPresentation
+      if require('src.core.GameVersion').get()=='emerald'and emerald and emerald.version=='emerald'then
+        boot.screens.title='Gen3EmeraldTitle'
+      end
+      local rs = (self.constants or {}).gen3RsPresentation
+      if rs and rs.version == require('src.core.GameVersion').get() then
+        boot.screens.title = 'Gen3RsTitle'
+      end
     end
     if boot.screens.newGame == BOOT_DEFAULTS.screens.newGame then
       boot.screens.newGame = "BirchSpeech"
+    end
+    if boot.screens.newGame=='BirchSpeech'and require('src.ui.Gen3RsBirchSpeech').available(self)then
+      boot.screens.newGame='Gen3RsBirchSpeech'
     end
     -- FIRERED IS OAK'S, not Birch's: its own guide, Pikachu card and
     -- professor, and a rival the player names rather than the other gender.
@@ -1931,6 +1950,7 @@ function Data:seedDefaults()
     self:publishGen2TilesetNames()
     self:publishGen2Palettes()
     self:publishGen2MapMetadata()
+    require("src.core.Gen2SpeciesNames").canonicalize(self)
     require("src.core.Gen2SpeciesNames").publish(self)
     require("src.pokemon.Gen2Mail").load(self)
     require("src.compat.gen2.Decorations").useRegistry(self)

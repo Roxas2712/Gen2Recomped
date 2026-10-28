@@ -82,8 +82,8 @@ function C.new(game, record, onDone)
 end
 
 function C:enter()
-  local ok = pcall(Music.play, self.game.data, "Music_Credits")
-  if not ok then pcall(Music.play, self.game.data, "Music_HallOfFame") end
+  local ok = pcall(Music.play, self.game.data, Music.special(self.game.data, "credits"))
+  if not ok then pcall(Music.play, self.game.data, Music.special(self.game.data, "hallOfFame")) end
 end
 
 function C:loadScene(scene)

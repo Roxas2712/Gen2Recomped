@@ -22,6 +22,7 @@ local Logger = require("src.core.Logger")
 local Strings = require("src.core.Strings")
 
 local Gen2Commands = {}
+local Species=require('src.core.Gen2SpeciesNames')
 
 function Commands.g2_give_poke_mail(ctx,letter)
   if type(letter)~="table" or type(letter.message)~="string" then
@@ -427,7 +428,7 @@ local CUSTOM_ARG_DISPATCH = {
 function Commands.g2_give_poke(ctx,species,level,item)
   species=tonumber(species) or 0
   if species==0 then species=scriptVar(ctx) end
-  local id=("SPECIES_%03d"):format(species)
+  local id=Species.fromNumber(ctx.game.data,species)
   if not ctx.game.data.pokemon[id] then setScriptVar(ctx,2);return end
   if #(ctx.save.party or {})>=6 then
     local Boxes=require('src.pokemon.Boxes')
@@ -1892,7 +1893,7 @@ function Commands.g2_cry(ctx, species)
   -- a species of nil is Prism's GetScriptByteOrVar zero: "whatever the script
   -- variable holds", which is how the six Prism starter balls share one script
   if not species then
-    species = string.format("SPECIES_%03d", math.floor(scriptVar(ctx)) % 256)
+    species = Species.fromNumber(ctx.game.data,math.floor(scriptVar(ctx))%256)
   end
   require("src.core.Sound").playCry(ctx.game.data, species)
 end
@@ -1911,7 +1912,7 @@ function Commands.g2_pokepic(ctx, species)
   if not (ow and ctx.game) then return end
   -- `pokepic 0` reads wScriptVar instead of a literal
   if species == nil and type(ctx.g2Var) == "number" and ctx.g2Var > 0 then
-    species = string.format("SPECIES_%03d", ctx.g2Var)
+    species = Species.fromNumber(ctx.game.data,ctx.g2Var)
   end
   if not species then return end
   local path, trueColor =
@@ -2061,7 +2062,7 @@ end
 
 function Commands.g2_check_poke(ctx, species)
   for _, mon in ipairs(ctx.save.party or {}) do
-    if mon.species == species then
+    if Species.same(ctx.game.data,mon.species,species)then
       ctx.lastCheck = true
       ctx.g2Var = 1
       return
@@ -2488,13 +2489,13 @@ end
 -- no handler it always answered no, so walking into the lab with the hatched
 -- TOGEPI got Elm's old "how is the EGG doing" line for the rest of the game.
 function Commands.g2_find_party_species_own(ctx)
-  local want = string.format("SPECIES_%03d", math.floor(scriptVar(ctx)) % 256)
+  local want = Species.fromNumber(ctx.game.data,math.floor(scriptVar(ctx))%256)
   local player = ctx.save.player or {}
   local found = false
   for _, mon in ipairs(ctx.save.party or {}) do
     -- an EGG does not count: the ROM reads the species out of the party slot
     -- and an egg's slot species is the hatchling's, so the check has to skip it
-    if mon.species == want and not mon.isEgg then
+    if Species.same(ctx.game.data,mon.species,want)and not mon.isEgg then
       local ownName = mon.ot == nil or mon.ot == player.name
       local ownId = mon.otId == nil or mon.otId == player.id
       if ownName and ownId then found = true break end
@@ -2521,21 +2522,18 @@ function Commands.g2_give_odd_egg(ctx)
   end
   local row = eggs[pick] or eggs[1]
   local Pokemon = require("src.pokemon.Pokemon")
-  local mon = Pokemon.new(data, row.species, row.level or 5)
+  local eggDvs
   if type(row.dvs) == "table" and row.dvs[1] and row.dvs[2] then
     local one, two = row.dvs[1], row.dvs[2]
     local atk, dfn = math.floor(one / 16) % 16, one % 16
     local spd, spc = math.floor(two / 16) % 16, two % 16
-    mon.dvs = {
+    eggDvs = {
       attack = atk, defense = dfn, speed = spd, special = spc,
       hp = (atk % 2) * 8 + (dfn % 2) * 4 + (spd % 2) * 2 + (spc % 2),
     }
-    pcall(function()
-      mon.stats = require("src.pokemon.Stats")
-        .calc(data.pokemon[row.species], mon.level, mon.dvs, mon.statExp)
-      mon.hp = mon.stats.hp
-    end)
   end
+  local mon = Pokemon.new(data, row.species, row.level or 5, nil, nil,
+    eggDvs and {dvs=eggDvs} or nil)
   if row.moves then
     mon.moves = {}
     for _, id in ipairs(row.moves) do
@@ -3185,7 +3183,7 @@ function Commands.g2_return_nobus_aggron(ctx)
   runner:yield()
   local function result(n) ctx.g2Var, ctx.lastCheck = n, n ~= 0 end
   if not picked then return result(1) end
-  if picked.species ~= "SPECIES_045" or picked.otId ~= NOBU_OT_ID
+  if not Species.same(ctx.game.data,picked.species,"SPECIES_045")or picked.otId ~= NOBU_OT_ID
      or picked.ot ~= NOBU_OT then
     return result(0)
   end
@@ -3231,7 +3229,7 @@ function Commands.g2_select_mon_from_party(ctx)
     ctx.g2Var, ctx.lastCheck = 0xFF, true
     return
   end
-  local index = tonumber(tostring(picked.species or ""):match("(%d+)$")) or 0
+  local index=Species.number(ctx.game.data,picked)
   ctx.g2Var, ctx.lastCheck = index, index ~= 0
   -- the name the following text splices in
   ctx.g2MonName = picked.nickname or picked.species
@@ -3573,7 +3571,7 @@ function Commands.g2_seen_mon(ctx)
   local n = ctx.g2Var or 0
   if n < 1 then return end
   local dex = ctx.save.pokedex
-  if dex and dex.seen then dex.seen[string.format("SPECIES_%03d", n)] = true end
+  if dex and dex.seen then dex.seen[Species.fromNumber(ctx.game.data,n)] = true end
 end
 
 -- `GetFirstPokemonHappiness` (engine/happiness.asm): walks past EGGs to the
@@ -3727,7 +3725,7 @@ function Commands.g2_trade(ctx, index)
   if not picked then
     return say("declined", Strings("You don't want to\ntrade? Aww…"))
   end
-  if picked.species ~= trade.give then
+  if not Species.same(ctx.game.data,picked.species,trade.give)then
     return say("wrongMon", Strings("Huh? That's not\n%s.", giveName))
   end
   -- CheckTradeGender (3F:$4C23): only DORIS the DODRIO asks, and she asks for
@@ -3756,10 +3754,7 @@ function Commands.g2_trade(ctx, index)
   -- recalculates its stats from those DVs at that level).
   local Pokemon = require("src.pokemon.Pokemon")
   local sent = party[slot]
-  local newMon = Pokemon.new(data, trade.get, sent.level)
-  if trade.nickname and trade.nickname ~= "" then
-    newMon.nickname = trade.nickname
-  end
+  local tradeDvs
   -- The table's two DV bytes are the usual packed nibble pairs -- attack and
   -- defense in the first, speed and special in the second -- and the HP DV is
   -- the four low bits, exactly as Stats.randomDVs derives it.
@@ -3767,17 +3762,15 @@ function Commands.g2_trade(ctx, index)
     local one, two = trade.dvs[1], trade.dvs[2]
     local atk, dfn = math.floor(one / 16) % 16, one % 16
     local spd, spc = math.floor(two / 16) % 16, two % 16
-    local dvs = {
+    tradeDvs = {
       attack = atk, defense = dfn, speed = spd, special = spc,
       hp = (atk % 2) * 8 + (dfn % 2) * 4 + (spd % 2) * 2 + (spc % 2),
     }
-    newMon.dvs = dvs
-    pcall(function()
-      local speciesDef = data.pokemon[trade.get]
-      newMon.stats = require("src.pokemon.Stats")
-        .calc(speciesDef, newMon.level, dvs, newMon.statExp)
-      newMon.hp = newMon.stats.hp
-    end)
+  end
+  local newMon = Pokemon.new(data, trade.get, sent.level, nil, nil,
+    tradeDvs and {dvs=tradeDvs} or nil)
+  if trade.nickname and trade.nickname ~= "" then
+    newMon.nickname = trade.nickname
   end
   newMon.traded = true      -- boosted exp, and the Name Rater refuses it
   newMon.ot = (trade.ot ~= "" and trade.ot) or "TRAINER"
@@ -3833,7 +3826,7 @@ function Commands.g2_return_shuckie(ctx)
     ctx.g2Var, ctx.lastCheck = n, n ~= 0
   end
   if not picked then return result(1) end
-  if picked.species ~= "SPECIES_213" or picked.otId ~= SHUCKIE_OT_ID
+  if not Species.same(ctx.game.data,picked.species,"SPECIES_213")or picked.otId ~= SHUCKIE_OT_ID
      or picked.ot ~= SHUCKIE_OT then
     return result(0)
   end
@@ -4456,7 +4449,7 @@ function Gen2Commands.dayCareWithdraw(ctx, which)
     mon.status = nil
     for _, move in ipairs(mon.moves or {}) do
       local moveDef = game.data.moves and game.data.moves[move.id]
-      if moveDef then move.pp = moveDef.pp + (move.ppUps or 0) * math.floor(moveDef.pp / 5) end
+      if moveDef then move.pp = Pokemon.maxPP(moveDef, move, 2) end
     end
   end
   table.insert(save.party, mon)
@@ -4738,11 +4731,8 @@ local function pickPartyMon(ctx)
   return picked
 end
 
-local function speciesNumber(mon)
-  if not mon then return 0 end
-  if type(mon.species) == "number" then return mon.species end
-  local n = tostring(mon.species or ""):match("(%d+)$")
-  return tonumber(n) or 0
+local function speciesNumber(ctx,mon)
+  return mon and Species.number(ctx.game.data,mon)or 0
 end
 
 -- `special BillsGrandfather` ($4C).  Party menu; wScriptVar = species id.
@@ -4753,7 +4743,7 @@ function Commands.g2_bills_grandfather(ctx)
     ctx.lastCheck = false
     return
   end
-  ctx.g2Var = speciesNumber(picked)
+  ctx.g2Var = speciesNumber(ctx,picked)
   ctx.lastCheck = ctx.g2Var ~= 0
 end
 
@@ -5159,7 +5149,7 @@ function Commands.g2_init_roam_mons(ctx)
     if roamsInThisVersion(name) then
       ctx.save.g2Roam[name] = {
         mapId = startMap,
-        speciesId = ROAM_SPECIES_ID[name],
+        speciesId=Species.registryId(ctx.game.data.pokemon,ROAM_SPECIES_ID[name]),
         landmark = mapToLandmark(ctx.game, startMap) or LANDMARK_BY_MAP[startMap],
         active = true,
         -- InitRoamMons: `ld a, 40 / ld [wRoamMon1Level], a` for every beast,
@@ -5249,7 +5239,7 @@ function Commands.g2_ensure_roam_landmarks(ctx)
     if not roamsInThisVersion(name) then
       roam[name] = nil
     elseif type(info) == "table" and info.mapId then
-      info.speciesId = info.speciesId or ROAM_SPECIES_ID[name]
+      info.speciesId=Species.registryId(ctx.game.data.pokemon,info.speciesId or ROAM_SPECIES_ID[name])
       -- Saves released before the beasts could actually be MET have a slot
       -- with no level and no HP in it. Fill those in rather than leaving a
       -- beast that cannot be turned into an encounter.
@@ -5532,7 +5522,7 @@ function Commands.g2_rock_encounter(ctx)
       pick = pick - row.chance
       if pick < 0 then
         ctx.g2Wild = {species = row.species, level = row.level}
-        species = tonumber(row.species:match("(%d+)$")) or 0
+        species=Species.number(ctx.game.data,row.species)
         break
       end
     end
@@ -5931,7 +5921,7 @@ end
 -- extractor can see a zero on: `pokenamemem 0, 0` and `checkitem 0`
 function Commands.g2_getmonname_var(ctx, buffer)
   Commands.g2_getmonname(ctx,
-    string.format("SPECIES_%03d", math.floor(scriptVar(ctx)) % 256), buffer)
+    Species.fromNumber(ctx.game.data,math.floor(scriptVar(ctx))%256), buffer)
 end
 
 function Commands.g2_check_item_var(ctx)

@@ -32,6 +32,7 @@ jobs:
           # Headless dataset imports also load the launcher's cue sheet.
           sparse-checkout: |
             src
+            compat
             data
             tests
             assets/launcher

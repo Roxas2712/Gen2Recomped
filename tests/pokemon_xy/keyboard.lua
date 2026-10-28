@@ -1,0 +1,15 @@
+package.path='./?.lua;'..package.path
+local Keyboard=require('src.import.PokemonXYKeyboard')
+local checks=0;local function check(v,m)assert(v,m);checks=checks+1 end
+local answers={};local form=Keyboard.new({text='',max_length=5,buttons={'Cancel','OK'}},function(text,button)answers[#answers+1]={text,button}end)
+form:append('Mä');form:append('日')
+check(form.value=='Mä日','native typing retains multibyte characters')
+form:erase();check(form.value=='Mä','backspace removes a complete Unicode character')
+form:append('1234');check(form.value=='Mä','maximum text length is respected')
+form:gamepadpressed('a');check(form.value=='MäA','controller selects a visible key')
+form:gamepadpressed('x');form:gamepadpressed('dpright');form:gamepadpressed('a')
+check(form.value=='MäAb','controller case and navigation select the expected key')
+form:gamepadpressed('b');check(form.value=='MäA','controller B erases one character')
+form:gamepadpressed('start');check(answers[1][1]=='MäA'and answers[1][2]==1,'Start confirms through the applet callback')
+form:keypressed('escape');check(answers[2][2]==0,'Escape reports the cancel button')
+print('3DS software keyboard: '..checks..' checks passed')

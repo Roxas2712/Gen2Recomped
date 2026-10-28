@@ -354,6 +354,10 @@ function TrainerAI.chooseMove(battler, rng, battle)
   if #usable == 0 then
     return { id = "STRUGGLE", pp = 1, struggle = true }
   end
+  if nativeMask then
+    local chosen=require('src.battle.Gen3TrainerClass').brain(battle,battler,nativeMask)
+    if chosen then return chosen end
+  end
 
   -- wAILayer2Encouragement starts at 0 on each enemy send-out and gains
   -- 1 per executed enemy move, so layer 2 (which needs it == 1) only

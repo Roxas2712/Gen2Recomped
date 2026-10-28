@@ -137,7 +137,7 @@ do
   T.eq(extract(source:gsub('\r\n','\n'):gsub('\n','\r\n')),hook,'quit regression reads Windows CRLF checkouts')
   for _,veto in ipairs({true,false}) do
     local stopped,closed=0,0
-    local decisions,walkers,traces=0,0,0
+    local decisions,walkers,traces,processes=0,0,0,0
     local env={love={},editorMode=true,EditorApp={quit=function()return veto end},
       WindowFrame={shutdown=function()closed=closed+1 end},
       walkerTick=function()walkers=walkers+1 end,
@@ -145,6 +145,9 @@ do
       require=function(name)
         if name=='src.core.PlatformHooks' then return {quitToLauncher=function(next)
           decisions=decisions+1;return next()
+        end} end
+        if name=='src.core.SessionLifecycle' then return {endProcess=function()
+          processes=processes+1
         end} end
         assert(name=='src.core.DiscordPresence','unexpected quit dependency')
         return {shutdown=function()end}
@@ -157,6 +160,7 @@ do
     T.eq(decisions,veto and 0 or 1,'only accepted editor quit reaches launcher decision')
     T.eq(walkers,veto and 0 or 1,'only accepted editor quit flushes walker state')
     T.eq(traces,veto and 0 or 1,'only accepted editor quit finishes trace')
+    T.eq(processes,veto and 0 or 1,'only accepted editor quit ends process workers')
   end
 end
 T.finish('Native job data and cache transactions')

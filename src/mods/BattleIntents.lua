@@ -10,7 +10,7 @@ local FIELDS = {
   mimic = { index = true },
 }
 local MENU = { fight = true, party = true, item = true, run = true }
-local SAFARI = { ball = true, bait = true, rock = true, run = true }
+local SAFARI = { ball = true, bait = true, rock = true, pokeblock = true, go_near = true, run = true }
 local function integer(v, lo, hi)
   return type(v) == "number" and v == v and v % 1 == 0 and v >= lo and v <= hi
 end
@@ -98,6 +98,9 @@ local BATTLER_FLAGS = {
   "rageMove",
   "rage",
   "trappingTurns",
+  "gbaWrapTurns",
+  "gbaWrapMove",
+  "gbaWrapSource",
   "bideTurns",
   "encoreTurns",
   "encoreMove",

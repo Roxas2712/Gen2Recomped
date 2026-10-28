@@ -272,6 +272,16 @@ bleiben erhalten. Ein neuer Fingerprint über dem Budget wird abgelehnt, statt
 ungeprüft alte Quellen oder fertige Bibliotheken zu entfernen. Direkte Aufrufe
 an den Helfern vorbei haben keine laufende Budgetkontrolle.
 
+Der gebündelte X/Y-Compiler erhält zusätzlich ein 512-MiB-Cachebudget. Nach
+einem mit SHA-256 bestätigten erfolgreichen Link darf der Backend unter
+`session.lock` nur bytegleiche Cachekopien seiner bekannten Objektdateien
+entfernen. Zuvor werden Zigs lokale Hash-Manifeste bytegenau nach
+`compiler-cache/retired-manifests/<sha256>.txt` verschoben: Mehrere Quellen
+können dasselbe Objekt verwenden; zurückgelassene Manifeste können beim
+Neubau leere Objekte erzeugen. Fremde Dateien und Symlinks bleiben erhalten.
+`tools/qualify_pokemon_xy_cache.py --runtime <runtime-root>` prüft den echten
+Compile-/Link-/Bereinigungs-/Neubau-Zyklus ohne Spieldaten.
+
 QA-Profile und einzeln registrierte Testkopien erhalten ebenfalls laufende
 Budgets: 2 GiB je QA-Profil, 4 GiB je Testkopie. Auch ein kurzer erfolgreicher
 `qa_run` wird nach dem Kindende auf Überschreitung geprüft. Die laufende Kontrolle
@@ -297,3 +307,26 @@ Saves in gemischten entpackten Ordnern vor Ort behalten. Keep-Marker, echte
 Git-Checkouts, Symlinks und aktive Eingaben schützen. Releasepakete und
 entpackte Releaseeingaben vor Nutzung mit `qa_source` sperren; fremde Leser
 blockieren die Bereinigung über denselben nichtblockierenden Dateilock.
+
+
+## Große Berichte, Rust-Ausgaben und Vorschaukopien begrenzen
+
+Große JSON-Testberichte mit `qa_report_storage.write_report` streamen: ab
+32 MiB direkt gzip, maximal 128 MiB komprimiert / 4 GiB Originaldaten. Vollständige
+Nachweise bleiben verlustfrei erhalten; der JSON-Index nennt Archiv, SHA-256 und
+Testergebnis. Höchstens eine vorherige komprimierte Generation behalten.
+CI-Artefakte müssen `enemy-action-report.json*` einschließen.
+
+Nach erfolgreichem 3DS-Bridge-Build samt angeforderten Tests nur bekannte Cargo-
+Zwischenprodukte bereinigen, wenn die fertige Bibliothek mit der installierten
+bytegleich ist. Rust-/C-Quellen, Modelle, Saves und fertige Bibliotheken erhalten.
+Der Hintergrundhelfer prüft zusätzlich alle 15 Minuten mindestens eine Stunde
+ruhende Ausgaben. Alte `native-qualified-preview-<Zahl>/candidate`-Kopien erst
+nach verifizierter Sicherung entfernen; neueste Generation und aktueller
+Metadatenzeiger bleiben geschützt. Laufende Jobs und Keep-Marker sperren weiter.
+
+Abgeleitete LÖVE-Meshcaches ausschließlich unter
+`modstorage/VOXEL_ASCENDANT/gen2_mesh_cache` mitpflegen. Eigene QA-Meshcaches nach
+dem letzten Leser direkt am Testende bereinigen; Hintergrundpflege bleibt bei
+2 GiB / 24 Stunden mit einer Stunde Ruhezeit. HD-/Sprite-/Wardrobe-Inhalte,
+Modelle, Quellordner, ROMs und Spielstände bleiben vor Ort erhalten.

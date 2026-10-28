@@ -250,6 +250,15 @@ function Gen3SummaryMenu.new(game, opts)
   if not self.def then
     warnOnce("no species record for %s", tostring(self.mon and self.mon.species))
   end
+  local rsVersion = require('src.core.GameVersion').get()
+  if self.mon and (rsVersion == 'ruby' or rsVersion == 'sapphire')
+     and require('src.ui.Gen3RsSummary').available(game) then
+    self.wantsFillScale=function()return true end
+    self.wantsEdgeBleed=function()return false end
+    self.sgbPalettes=function()return {require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
+    self.rsNative=require('src.ui.Gen3RsSummary').new(self,opts)
+    return self
+  end
   self.pic = nil
   if self.mon then
     local ok, path = pcall(function()
@@ -514,6 +523,7 @@ function Gen3SummaryMenu:moveSelectInput(input)
 end
 
 function Gen3SummaryMenu:update(dt)
+  if self.rsNative then return self.rsNative:update()end
   if self.picAnim then self.picAnim:update(dt) end
   if self.monAnim then self.monAnim:update(dt) end
   local input = self.game.input
@@ -1210,17 +1220,7 @@ end
 -- gets a different half of the memo, and that is the point of the block --
 -- your game did not watch it be caught and does not claim it did.
 function Gen3SummaryMenu:memoOwnMon()
-  local mon, save = self.mon, self.game and self.game.save
-  local player = save and save.player
-  if not (mon and player) then return true end
-  if mon.ot == nil and mon.otId == nil then return true end
-  if mon.ot ~= nil and player.name ~= nil and mon.ot ~= player.name then
-    return false
-  end
-  if mon.otId ~= nil and player.id ~= nil and mon.otId ~= player.id then
-    return false
-  end
-  return true
+  return require('src.pokemon.Gen3Ownership').owns(self.mon,(self.game and self.game.save or{}).player)
 end
 
 -- Which of the eight the cartridge would choose, from the same facts
@@ -1947,6 +1947,7 @@ function Gen3SummaryMenu:drawFireRed(r)
 end
 
 function Gen3SummaryMenu:draw()
+  if self.rsNative then return self.rsNative:draw()end
   local frlg = Gen3SummaryMenu.frlgRecord(self.game)
   if frlg then return self:drawFireRed(frlg) end
   love.graphics.setColor(0.20, 0.42, 0.36, 1)
@@ -1984,6 +1985,9 @@ function Gen3SummaryMenu:draw()
 end
 
 Gen3SummaryMenu.STAT_ROWS = STAT_ROWS
+function Gen3SummaryMenu:exit()
+  if self.rsNative then self.rsNative:exit()end
+end
 Gen3SummaryMenu.FALLBACK_PAGES = FALLBACK_PAGES
 
 require("src.ui.Gen3SummaryLayout").apply(Gen3SummaryMenu)

@@ -13,6 +13,7 @@ local Font = require("src.render.Font")
 local UIVisibility = require("src.battle.UIVisibility")
 local Theme = require("src.ui.Theme")
 local Timing = require("src.core.Timing")
+local RsPlaceholders = require('src.core.Gen3RsTextPlaceholders')
 
 local TextBox = {}
 TextBox.__index = TextBox
@@ -164,14 +165,14 @@ end
 
 TextBox.TOKENS = {
   PLAYER = function(game) return game.save.player.name or "RED" end,
-  RIVAL = function(game) return game.save.player.rival or "BLUE" end,
+  RIVAL = function(game) return RsPlaceholders.gendered(game,'RIVAL') or game.save.player.rival or "BLUE" end,
   -- GEN 3 PLACEHOLDERS.  A GBA cartridge splices its own set in, and an
   -- unhandled token is left in the line verbatim -- so Birch's very first
   -- question would have read "You're BRENDAN{KUN} who's moving to my
   -- hometown of LITTLEROOT."  {KUN} is the Japanese honorific and is EMPTY
   -- in English, which is exactly what returning "" means here; the two
   -- version names are the cartridge's own.
-  KUN = function() return "" end,
+  KUN = function(game) return RsPlaceholders.gendered(game,'KUN') or "" end,
   -- ...and the three the SCRIPT fills in.  A Gen 3 line splices a buffered
   -- string with $FD 02/03/04, and the buffer commands that fill them
   -- (bufferitemname, bufferspeciesname, bufferstring and the rest) already
@@ -186,7 +187,13 @@ TextBox.TOKENS = {
   VAR1 = function(game) return gen3Buffer(game, 1) end,
   VAR2 = function(game) return gen3Buffer(game, 2) end,
   VAR3 = function(game) return gen3Buffer(game, 3) end,
-  VERSION = function() return "EMERALD" end,
+  VERSION = function(game) return RsPlaceholders.value(game,'VERSION') or "EMERALD" end,
+  EVIL_TEAM = function(game) return RsPlaceholders.value(game,'EVIL_TEAM') or "" end,
+  GOOD_TEAM = function(game) return RsPlaceholders.value(game,'GOOD_TEAM') or "" end,
+  EVIL_LEADER = function(game) return RsPlaceholders.value(game,'EVIL_LEADER') or "" end,
+  GOOD_LEADER = function(game) return RsPlaceholders.value(game,'GOOD_LEADER') or "" end,
+  EVIL_LEGENDARY = function(game) return RsPlaceholders.value(game,'EVIL_LEGENDARY') or "" end,
+  GOOD_LEGENDARY = function(game) return RsPlaceholders.value(game,'GOOD_LEGENDARY') or "" end,
   AQUA = function() return "AQUA" end,
   MAGMA = function() return "MAGMA" end,
   ARCHIE = function() return "ARCHIE" end,
@@ -291,6 +298,20 @@ function TextBox.paginate(text, maxCols, letterSpacing, maxPixels, softWrap)
       if fit >= #spans then break end
       -- a glyph wider than the whole box still has to advance by one
       fit = math.max(fit, 1)
+      -- A text command can emit several glyphs from one source byte. A
+      -- byte cut through that group would consume the entire command while
+      -- only budgeting part of its width. Move it to the next line intact.
+      -- An oversized command at the start still advances, like a wide glyph.
+      if spans[fit+1] and spans[fit+1].from==spans[fit].from
+          and spans[fit+1].to==spans[fit].to then
+        local first=fit
+        while first>1 and spans[first-1].from==spans[fit].from
+            and spans[first-1].to==spans[fit].to do first=first-1 end
+        if first>1 then fit=first-1 else
+          while spans[fit+1] and spans[fit+1].from==spans[fit].from
+              and spans[fit+1].to==spans[fit].to do fit=fit+1 end
+        end
+      end
       local cut = spans[fit].to
       for i = fit, 1, -1 do
         if line:sub(spans[i].from, spans[i].to) == " " then

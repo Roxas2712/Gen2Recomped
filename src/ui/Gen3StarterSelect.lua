@@ -121,6 +121,8 @@ end
 -- without one is not an error -- it is an older import -- so the caller falls
 -- back to a plain menu rather than refusing to hand over a starter.
 function Gen3StarterSelect.available(game)
+  local native=require('src.ui.Gen3RsStarterSelect').available(game)
+  if native then return native end
   local record = (game and game.data and game.data.constants or {}).gen3StarterSelect
   if type(record) ~= "table" then return nil end
   if not (record.background and record.sprites) then return nil end
@@ -131,6 +133,8 @@ function Gen3StarterSelect.available(game)
 end
 
 function Gen3StarterSelect.new(game, species, onChoose)
+  local native=require('src.ui.Gen3RsStarterSelect')
+  if native.available(game)then return native.new(game,species,onChoose)end
   local record = Gen3StarterSelect.available(game)
   if not record then return nil end
 

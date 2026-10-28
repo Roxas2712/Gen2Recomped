@@ -12,6 +12,7 @@ function P.request(method,path,payload)
 end
 function P.context(game)
  local context={available=false}
+ if not game and P.externalContext then return P.externalContext end
  if not game or not game.data or not game.save then return context end
  context.edition=Version.get()
  if P.data~=game.data or P.version~=context.edition then
@@ -33,11 +34,18 @@ function P.context(game)
  end
  return context
 end
+function P.setExternalContext(owner,context)
+ P.externalOwner=owner;P.externalContext=context
+end
+function P.clearExternalContext(owner)
+ if P.externalOwner==owner then P.externalOwner=nil;P.externalContext=nil;P.refresh(true)end
+end
 function P.read()
  if Auth.signedIn() and Auth.accountId()==P.account and P.doc and now()-(P.received or 0)<15 then return P.doc end
 end
 function P.refresh(invalidate) P.next=0;if invalidate then P.doc=nil end end
 function P.tick(game)
+ require('src.ui.CenterLobby').tick(game)
  local account=Auth.signedIn() and Auth.accountId() or nil
  if P.account~=account then
   if P.job then P.job:cancel() end
@@ -59,14 +67,14 @@ function P.tick(game)
    else P.error=tostring(r.second or r.error or 'Friend connection unavailable.');P.next=now()+5 end
   end
  elseif now()>=(P.next or 0) then
-  P.next=now()+(game and 1 or 20)
+  P.next=now()+((game or P.externalOwner or ctx.edition=='pinballrs')and 1 or 20)
   P.job=Task.new(function() return P.request('POST','presence',ctx) end)
  end
  local doc=P.read()
  local wager=package.loaded['src.link.FriendWager']
- if doc and (not blocked or wager and wager.readyInvite) and P.context(game).available then
+ if game and doc and (not blocked or wager and wager.readyInvite) and P.context(game).available then
   for _,invite in ipairs(doc.invites or {}) do
-   if invite.mode~='meet' and invite.state=='accepted' and (not blocked or wager.readyInvite==invite.id) and not (P.entered and P.entered[invite.id]) then
+   if invite.mode~='meet' and invite.mode~='pinball' and invite.state=='accepted' and (not blocked or wager.readyInvite==invite.id) and not (P.entered and P.entered[invite.id]) then
     local ok,why=require('src.link.FriendLink').start(game,invite)
     if ok then P.entered=P.entered or {};P.entered[invite.id]=true;blocked=false;break else P.error=why end
    end

@@ -11,6 +11,8 @@
 -- with their status lower right, a full-width message window, a split
 -- prompt/command window, and a 2x2 move menu with an attached PP/type panel.
 
+local BattleQueuePhase = require("src.battle.BattleQueuePhase")
+local MoveSelectionPhase = require("src.battle.MoveSelectionPhase")
 local Font = require("src.render.Font")
 local LevelDisplay = require("src.ui.LevelDisplay")
 local HudTiles = require("src.render.HudTiles")
@@ -81,9 +83,10 @@ local function inRegion(x, y, w, h, dx, dy, fn)
   g.setScissor(x, y, w, h)
   g.push()
   g.translate(dx, dy)
-  fn()
+  local ok,why=pcall(fn)
   g.pop()
   restoreScissor(saved)
+  if not ok then error(why,0)end
 end
 
 local function levelAt(battle, battler, x, y)
@@ -340,7 +343,7 @@ local function drawMoveDetails(battle, move)
   if not move then return end
   local def = battle.data.moves[move.id]
   if not def then return end
-  local maxPP = def.pp + (move.ppUps or 0) * math.floor(def.pp / 5)
+  local maxPP = require("src.pokemon.Pokemon").maxPP(def, move)
   love.graphics.setColor(0, 0, 0, 1)
   Font.draw(("PP %2d/%2d"):format(move.pp or 0, maxPP), 232, 112)
   Font.draw(fitName(TypeChart.displayName(def.type), 64), 232, 128)
@@ -375,11 +378,11 @@ end
 
 local function drawTextArea(battle)
   if not UIVisibility.bottomVisible(battle, true) then return end
-  if battle.phase == "messages" and (battle.current or battle.animPlaying) then
+  if BattleQueuePhase.active(battle) and (battle.current or battle.animPlaying) then
     drawMessageBox(battle)
   elseif battle.phase == "menu" then
     drawCommandMenu(battle)
-  elseif battle.phase == "moveSelect" then
+  elseif MoveSelectionPhase.active(battle) then
     drawMoveMenu(battle)
   elseif battle.phase == "mimicSelect" then
     drawMoveGrid(battle, battle.mimicMoves, battle.mimicIndex)
@@ -465,6 +468,21 @@ local function drawAnimationLayer(battle)
 end
 
 -- The whole 304x144 composition for one frame.
+-- Native picture regions are shared by the BG and lifted-OBJ passes.
+function WideBattle.drawPicRegions(battle,slide,sx,sy)
+  sx,sy=sx or 0,sy or 0
+  local previous=battle.wideRegion
+  battle.wideRegion = true
+  local ok,why=pcall(function()
+  inRegion(sx, 32 + sy, 160, WideBattle.FIELD_BOTTOM - 32, 20 + sx, 8 + sy,
+    function() battle:drawPicsLayer(slide, 0, 0, "player", true) end)
+  inRegion(160 + sx, sy, 144, WideBattle.FIELD_BOTTOM, 136 + sx, sy,
+    function() battle:drawPicsLayer(slide, 0, 0, "enemy", true) end)
+  end)
+  battle.wideRegion = previous
+  if not ok then error(why,0)end
+end
+
 local function drawPanel(battle,withObjects)
   local g = love.graphics
   -- The field is the display mode's paper.  Under a forced-mono mode the
@@ -477,7 +495,9 @@ local function drawPanel(battle,withObjects)
   else
     g.setColor(PaletteFX.paperShade(battle.data))
   end
-  g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
+  if not(type(battle.worldBackdrop)=='function'and battle:worldBackdrop())then
+    g.rectangle("fill",0,0,WideBattle.WIDTH,WideBattle.HEIGHT)
+  end
   -- AskName clears the field the same way the classic layout does
   if battle.blankForAskName then return end
 
@@ -498,12 +518,7 @@ local function drawPanel(battle,withObjects)
   -- each region's clip with its contents, so a pic pushed toward a region
   -- edge is not sheared off it (a vertical shake used to clip the player's
   -- feet at FIELD_BOTTOM).
-  battle.wideRegion = true
-  inRegion(sx, 32 + sy, 160, WideBattle.FIELD_BOTTOM - 32, 20 + sx, 8 + sy,
-    function() battle:drawPicsLayer(slide, 0, 0, "player", true) end)
-  inRegion(160 + sx, sy, 144, WideBattle.FIELD_BOTTOM, 136 + sx, sy,
-    function() battle:drawPicsLayer(slide, 0, 0, "enemy", true) end)
-  battle.wideRegion = nil
+  WideBattle.drawPicRegions(battle,slide,sx,sy)
 
   -- A battle sets rWY to 0 (engine/battle/core.asm), so the window the
   -- shakes move IS the whole screen: PredefShakeScreenHorizontally,

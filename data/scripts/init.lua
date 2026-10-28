@@ -22,7 +22,13 @@ local MapScripts = require("src.script.MapScripts")
 -- ROM's own cutscene wiring wins over the hand-ported stand-ins.
 local gen2Data = require("src.core.Data")
 local gen2VM = gen2Data.map_scripts and require("src.script.Gen2ScriptVM") or nil
-if gen2VM and not gen2VM.store(gen2Data) then gen2VM = nil end
+if gen2VM then
+  local pool = gen2VM.store(gen2Data)
+  -- The mod compose registry shares this namespace with decoded ROM data.
+  -- An unlabelled map contribution chain is not a Gen2 bytecode pool and
+  -- must not suppress the Gen1 story scripts underneath it.
+  if not (pool and type(pool.maps) == "table") then gen2VM = nil end
+end
 if gen2VM then gen2VM.register(gen2Data, "talk") end
 
 -- Gen3 ships its scripts the same way and lands in the same module, so the

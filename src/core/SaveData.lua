@@ -558,6 +558,8 @@ function SaveData.defaultOptions()
     -- launcher shipped with".
     launcherLogoCards = true,
     launcherCartDesigns = {},
+    launcherOriginalCartridges = false,
+    launcherOriginalCartridgesConsent = 0,
     cartridgeCloudSync = false,
     gameCacheUpload = false,
     gameCacheDownload = true,
@@ -969,8 +971,8 @@ end
 -- factored out so it is unit-testable with no filesystem: the player name
 -- (nil for an empty slot) and { badges, timeText, dexCount } -- the same
 -- fields the title screen's ContinueInfo derives.  The launcher has no
--- loaded Data, so `version` is what picks Badges' Kanto or Johto+Kanto
--- fallback list; without it a Gold save always summarised as zero badges.
+-- loaded Data, so `version` picks the generation's own badge flags; RS,
+-- Emerald and FRLG each use a different native flag block.
 -- HOW LONG THIS SAVE HAS BEEN PLAYED, IN SECONDS, WHATEVER SHAPE IT IS IN.
 --
 -- Reported from play, on the launcher's save list: "src/core/SaveData.lua:529:
@@ -2083,6 +2085,7 @@ end
 -- indexes; the level floor widens to 1 because a freshly caught level-1
 -- mon can legitimately sit in a save
 local function scrubKnownMon(mon, data)
+  mon.species=require('src.core.Gen2SpeciesNames').registryId(data.pokemon,mon.species)
   if type(mon.dvs) == "table" then
     for stat, v in pairs(mon.dvs) do mon.dvs[stat] = clamp(v, 0, 15, 0) end
   end
@@ -2090,6 +2093,7 @@ local function scrubKnownMon(mon, data)
     for stat, v in pairs(mon.statExp) do mon.statExp[stat] = clamp(v, 0, 65535, 0) end
   end
   mon.level = clamp(mon.level, 1, 100, 1)
+  require('src.pokemon.Pokemon').ensureIdentity(data,mon)
   -- Box mons imported from a real .sav carry NO stat block: box_struct stops
   -- before MON_LEVEL/MON_STATS, so src/save_convert/GenSave.lua decodeMon
   -- only fills `stats` for party slots.  Every HP-bar draw then nil-indexes
@@ -2223,6 +2227,13 @@ function SaveData.validate(save, data)
   for b, box in ipairs(save.boxes or {}) do
     scrubMonList(box, "box " .. b, save, data, report, Boxes.capacity())
   end
+  if GameVersion.isGen2() then
+    scrubMonList(save.g2SecondMonBackup,"held party",save,data,report)
+    local contest=type(save.g2BugContest)=='table'and save.g2BugContest
+    if contest then
+      scrubMonList(contest.party,"contest held party",save,data,report)
+    end
+  end
   local daycare = save.daycare
   if type(daycare) == "table" and type(daycare.mon) == "table" then
     if not known(data.pokemon, daycare.mon.species) then
@@ -2277,6 +2288,7 @@ function SaveData.validate(save, data)
     Mail.load(data);Mail.validate(save,report)
   end
   local dex = save.pokedex
+  require('src.core.Gen2SpeciesNames').normalizeDex(data,dex)
   if type(dex) == "table" then
     for _, key in ipairs({ "seen", "owned" }) do
       if type(dex[key]) == "table" then
@@ -2296,10 +2308,24 @@ function SaveData.validate(save, data)
     if type(entry) == "table" then
       for i = 1, #entry do
         local mon = entry[i]
-        if type(mon) == "table" and mon.species ~= nil
-            and not known(data.pokemon, mon.species) then
-          mon.species = nil
+        if type(mon) == "table" and mon.species ~= nil then
+          if known(data.pokemon, mon.species) then
+            mon.species = require('src.core.Gen2SpeciesNames').registryId(data.pokemon,mon.species)
+          else
+            mon.species = nil
+          end
         end
+      end
+    end
+  end
+  if GameVersion.isGen2() then
+    local Species=require('src.core.Gen2SpeciesNames')
+    if save.g2PokeonlySpecies~=nil then
+      save.g2PokeonlySpecies=Species.registryId(data.pokemon,save.g2PokeonlySpecies)
+    end
+    for _,roamer in pairs(type(save.g2Roam)=='table'and save.g2Roam or {})do
+      if type(roamer)=='table'and roamer.speciesId~=nil then
+        roamer.speciesId=Species.registryId(data.pokemon,roamer.speciesId)
       end
     end
   end

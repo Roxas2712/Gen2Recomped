@@ -1,9 +1,9 @@
-import importlib.util,json,plistlib,sys,tempfile,unittest,zipfile
+import importlib.util,io,json,plistlib,sys,tempfile,unittest,uuid,zipfile
 from pathlib import Path
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
-from qa_storage import qa_source
+from qa_storage import qa_source,qa_copy,qa_run
 import macos_distribution as mac
 qa_source(ROOT)
 spec=importlib.util.spec_from_file_location('preview',Path(__file__).parents[1]/'tools/build_native_preview.py');module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
@@ -13,7 +13,53 @@ class Payload(unittest.TestCase):
   with zipfile.ZipFile(p,'w')as z:
    for f in ('main.lua','conf.lua','src/preview/main.lua','src/preview/conf.lua','src/preview/release.json','src/core/NativePreview.lua',*extra):z.writestr(f,'test')
   return p
+ def test_committed_compat_bridges_survive_preview_staging_and_packing(self):
+  # Exercise the real preview source selection and shipping packer together.
+  # The ordinary payload test alone cannot catch omitted git-archive roots.
+  host=ROOT/'.local/qa'/('native-preview-source-'+uuid.uuid4().hex)/'source'
+  qa_copy(host,ephemeral=True);host.mkdir(parents=True)
+  source=host/'source';source.mkdir()
+  module.extract_preview_source('HEAD',source)
+  payload=host/'game.love'
+  result=qa_run(['bash',str(source/'scripts/pack_love.sh'),'--engine-only',
+                 '--version','0.8.53','--output',str(payload)],capture_output=True,text=True)
+  self.assertEqual(result.returncode,0,result.stdout+result.stderr)
+  with zipfile.ZipFile(payload)as archive:
+   for edition in ('gen1-rs','gen1-frlg'):
+    base=ROOT/'compat'/edition
+    provenance=json.loads((base/'provenance.json').read_text())
+    for relative in ['Loader.lua','provenance.json',*('reference/'+name for name in provenance['files'])]:
+     with self.subTest(edition=edition,path=relative):
+      self.assertEqual(archive.read('compat/'+edition+'/'+relative),(base/relative).read_bytes())
+
  def test_isolated_payload(self):module.verify_payload(self.archive())
+ def test_complete_windows_build_writes_matching_builtin_metadata(self):
+  host=ROOT/'.local/qa'/('native-preview-build-'+uuid.uuid4().hex)/'source'
+  qa_copy(host,ephemeral=True);host.mkdir(parents=True)
+  # A tiny runtime fixture keeps this a real export/pack/fuse/metadata test
+  # without downloading or executing a platform binary in the unit suite.
+  inner=io.BytesIO()
+  with zipfile.ZipFile(inner,'w')as archive:
+   archive.writestr('love-12.0-win64/love.exe',b'MZ-runtime-fixture')
+   archive.writestr('love-12.0-win64/lua51.dll',b'library-fixture')
+  runtime=dict(module.RUNTIMES['windows']);official=host/'runtime.zip'
+  with zipfile.ZipFile(official,'w')as archive:archive.writestr(runtime['inner'],inner.getvalue())
+  runtime['sha256']=module.sha(official);out=host/'build'
+  args=['build_native_preview.py','--platform','windows','--runtime',str(official),
+        '--source-ref','HEAD','--release-id','20261027.6','--engine-version','0.8.53','--out',str(out)]
+  with patch.dict(module.RUNTIMES,{'windows':runtime}),patch.object(sys,'argv',args),patch.object(module.subprocess,'run',side_effect=qa_run):
+   module.main()
+  metadata=json.loads((out/'build.json').read_text());payload=out/'Gen2Recomped-NativePreview.love'
+  with zipfile.ZipFile(payload)as archive:
+   builtin='mods/UNI_LANGUAGE_NATIVE/main.lua'in archive.namelist()
+   self.assertIn('compat/gen1-rs/Loader.lua',archive.namelist())
+   self.assertIn('compat/gen1-frlg/Loader.lua',archive.namelist())
+  self.assertIs(metadata['modsIncluded'],builtin)
+  self.assertEqual(metadata['builtinMods'],['UNI_LANGUAGE_NATIVE']if builtin else [])
+  self.assertEqual(metadata['payloadSha256'],module.sha(payload))
+  self.assertEqual(metadata['archiveSha256'],module.sha(out/metadata['archive']))
+  with zipfile.ZipFile(out/metadata['archive'])as archive:
+   self.assertTrue(archive.read('Gen2Recomped-NativePreview/Gen2Recomped-NativePreview.exe').endswith(payload.read_bytes()))
  def test_bundled_native_language_is_allowed_but_user_mods_and_game_bytes_are_not(self):
   module.verify_payload(self.archive(('mods/','mods/UNI_LANGUAGE_NATIVE/','mods/UNI_LANGUAGE_NATIVE/main.lua')))
   for name in ('mods/UNI_LANGUAGE_NATIVE_EXTRA/main.lua','mods/another/main.lua','mods/UNI_LANGUAGE_NATIVE/private.gba','mods/UNI_LANGUAGE_NATIVE/data/generated/secret.lua'):

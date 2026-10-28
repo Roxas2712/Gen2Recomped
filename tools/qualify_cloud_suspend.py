@@ -43,6 +43,7 @@ def main():
     parser.add_argument('--idle-ticks', type=int, default=0, help='Age the native battle before saving; 108000 ticks = 30 simulated minutes')
     parser.add_argument('--during-animation', action='store_true')
     parser.add_argument('--private-game-cache', action='store_true', help='Transfer the real imported game through the private API; target starts without game data')
+    parser.add_argument('--with-mod', action='store_true', help='Load the built-in language adapter and a stateful event-driven suspend probe on both devices')
     parser.add_argument('--timeout', type=int, default=180)
     args = parser.parse_args()
     caches = {}
@@ -69,6 +70,19 @@ def main():
     qa_copy(source, ephemeral=True)
     source.mkdir()
     shutil.copytree(ROOT / 'src', source / 'src')
+    if args.with_mod:
+        shutil.copytree(ROOT / 'mods/UNI_LANGUAGE_NATIVE', source / 'mods/UNI_LANGUAGE_NATIVE')
+        probe = source / 'mods/QA_SUSPEND_COUNTER'
+        probe.mkdir()
+        (probe / 'manifest.json').write_text(json.dumps(dict(id='qa_suspend_counter', name='QA suspend counter', version='1.0.0', api=2, entry='main.lua')))
+        (probe / 'main.lua').write_text("""return function(mod)
+ local state={turns=0,steps=0}
+ mod.events:on('battle.turn_ended',function()state.turns=state.turns+1 end)
+ mod.events:on('world.stepped',function()state.steps=state.steps+1 end)
+ mod.suspend:register({schema=1,capture=function()return {turns=state.turns,steps=state.steps}end,
+ restore=function(value)state={turns=value.turns,steps=value.steps}end})
+end
+""")
     for name in ('assets', 'data', 'tests', 'tools'):
         (source / name).symlink_to(ROOT / name, target_is_directory=True)
     (source / 'main.lua').write_bytes(driver.read_bytes())
@@ -140,7 +154,7 @@ if(!$u->hasVerifiedEmail())throw new RuntimeException('QA account must have a co
             for role in ('source', 'target'):
                 identity = 'oasc-suspend-qa-' + run_id + '-' + edition + '-' + role
                 qa_profile(profiles / identity)
-                config = dict(timeout=args.timeout, edition=edition, role=role, privateGameCache=args.private_game_cache, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
+                config = dict(timeout=args.timeout, withMod=args.with_mod, edition=edition, role=role, privateGameCache=args.private_game_cache, animation=args.during_animation, idleTicks=args.idle_ticks, trainer=args.trainer, move=args.move, email=email, password=password, cache=str(cache),
                               api=url + '/api/cloud/v1', library=str(runtime / 'Contents/Frameworks/love.framework/Versions/A/love'),
                               result=str(output / (edition + '-' + role + '.json')),
                               expected=str(output / (edition + '-expected.lua')))
@@ -210,6 +224,9 @@ class Proxy(http.server.BaseHTTPRequestHandler):
             response = error
         with response:
             data = response.read()
+            meter = getattr(self.server, 'traffic_meter', None)
+            if meter is not None:
+                meter.record(self.path.split('?', 1)[0], len(body), len(data), response.code)
             self.send_response(response.code)
             for key in ('Content-Type', 'ETag', 'Cache-Control'):
                 if response.headers.get(key):

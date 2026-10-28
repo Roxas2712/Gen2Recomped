@@ -1,3 +1,5 @@
+local function F(...) return require('src.translation.Service').launcherFormat(...) end
+local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local V={}
 local GOLD={245,196,98}
 local function icon(kind,x,y,s)
@@ -13,16 +15,16 @@ end
 function V.draw(self,f,x,y,w,text,button)
  local s,g=self._s,love.graphics;local doc=f.shop
  text('THE ARENA EXCHANGE',true,self.palette().ink)
- text(tostring(doc.coins)..' LIGA COINS',true,GOLD)
- text('+'..doc.win_coins..' per win / +'..doc.loss_coins..' per loss · '..doc.drop_percent..'% winner item-drop chance')
+ text(F('%d LIGA COINS',doc.coins),true,GOLD)
+ text(F('+%d per win / +%d per loss · %d%% winner item-drop chance',doc.win_coins,doc.loss_coins,doc.drop_percent))
  text(doc.notice);button('BACK TO THE ARENA','shopBack');button('REFRESH WALLET & PURCHASES','shop')
  local edition=f.shopEdition or 'crystal'
- button('ITEM EDITION: '..edition:upper()..' · CLICK TO CHANGE','shopEdition')
+ button(L('ITEM EDITION: ')..edition:upper()..L(' · CLICK TO CHANGE'),'shopEdition')
  button('COLLECT ALL PURCHASES & DROPS INTO ITEM BANK','shopCollect')
- if f.shopPending then button('RETRY PENDING PURCHASE: '..f.shopPending.item,'shopRetry') end
+ if f.shopPending then button(L('RETRY PENDING PURCHASE: ')..f.shopPending.item,'shopRetry') end
  if f.shopConfirm then
   local c=f.shopConfirm;text('CONFIRM PURCHASE',true,self.palette().link)
-  text(c.title..' · '..c.price..' coins · '..edition:upper())
+  text(F('%s · %d coins · %s',L(c.title),c.price,edition:upper()))
   button('BUY & KEEP IN MY ACCOUNT','shopConfirm');button('CANCEL','shopCancel')
  else
   for _,row in ipairs(doc.catalogue or {}) do
@@ -31,14 +33,14 @@ function V.draw(self,f,x,y,w,text,button)
    local at=y();local h=145*s;local p=require('src.import.LauncherLibrary').paint
    p.surface(x,at,w,h,12*s,supported and GOLD or self.palette().detail,false)
    icon(row.icon,x+42*s,at+43*s,s)
-   text(row.title..' · '..row.price..' COINS',true,supported and self.palette().ink or self.palette().detail,80*s)
-   text('GEN '..row.generation..'+ · '..row.description,false,nil,80*s)
+   text(F('%s · %d COINS',L(row.title),row.price),true,supported and self.palette().ink or self.palette().detail,80*s)
+   text(F('GEN %d+ · %s',row.generation,L(row.description)),false,nil,80*s)
    button(supported and (doc.coins>=row.price and 'CHOOSE ITEM' or 'MORE COINS NEEDED') or 'UNAVAILABLE IN THIS EDITION','shopBuy:'..row.id)
   end
  end
  text(f.notice)
  text('RECENT MATCH REWARDS',true,self.palette().link)
- for _,entry in ipairs(doc.earnings or {}) do text(entry.outcome:upper()..' · +'..entry.coins..' coins · '..entry.created_at) end
+ for _,entry in ipairs(doc.earnings or {}) do text(F('%s · +%d coins · %s',L(entry.outcome:upper()),entry.coins,entry.created_at)) end
  if #(doc.earnings or {})==0 then text('Finish a native league battle to earn your first coins.') end
 end
 return V

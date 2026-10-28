@@ -98,6 +98,19 @@ local Importer=require('src.import.RomImporter')
 local Cache=require('src.import.CacheFs')
 local read,exists,rootReport=Cache.read,Cache.exists,Cache.rootReport
 Cache.rootReport=function()return {kind='save'}end
+-- This contract isolates the object-sheet upgrade. Other native GBA
+-- components have independent damaged-cache tests; make them ready here
+-- without pretending their absent manifests are a complete cartridge.
+local nativeMissing={}
+for _,name in ipairs({'Gen3EmeraldPresentation','Gen3FrlgPresentation','Gen3RsPresentation',
+  'Gen3RsBag','Gen3RsSummaryAssets','Gen3RsPartyAssets','Gen3RsMapData',
+  'Gen3RsBirchAssets','Gen3RsStarterAssets','Gen3RsBattlePanelAssets',
+  'Gen3RsWallyAssets','Gen3RsPokenavAssets','Gen3RsStorageAssets',
+  'Gen3RsPokedexAssets','Gen3RsShopAssets','Gen3NativeHealthboxAssets','Gen3StatGrowthAssets','Gen3SafariAssets'})do
+  local module=require('src.import.'..name)
+  nativeMissing[#nativeMissing+1]={module,module.missing}
+  module.missing=function()return{}end
+end
 local function currentMarker(edition)
   if Importer.datasetContract then return Importer.datasetContract(edition).marker end
   -- Fixture-only access to the real format producer on older public hosts.
@@ -129,5 +142,6 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire','red'
     T.eq(Importer.readyReport(edition).ok,false,'previous object schema requests automatic cache regeneration')
   end
 end
+for _,row in ipairs(nativeMissing)do row[1].missing=row[2]end
 Cache.read,Cache.exists,Cache.rootReport=read,exists,rootReport
 T.finish('compact original object sheets')

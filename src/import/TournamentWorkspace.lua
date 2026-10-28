@@ -1,3 +1,4 @@
+local function F(...) return require('src.translation.Service').launcherFormat(...) end
 local function L(value) return require('src.translation.Service').launcherLookup(value) end
 local W={}
 local Auth=require('src.cloud.RetroCloud')
@@ -100,7 +101,7 @@ function W.action(self,id)
  elseif id=='egg' or id=='shiny' then f.form[id]=not f.form[id]
  elseif id=='saveCup' then
   local d=f.form
-  for _,key in ipairs({'capacity','team_size','level','prizeLevel'}) do if not tonumber(d[key]) then f.notice='Enter a number for '..key..'.';return end end
+  for _,key in ipairs({'capacity','team_size','level','prizeLevel'}) do if not tonumber(d[key]) then f.notice=L('Enter a number for ')..key..'.';return end end
   local payload={format=d.format or 'custom',title=d.title,edition=d.edition,capacity=tonumber(d.capacity),team_size=tonumber(d.team_size),level=tonumber(d.level),rules=d.rules,starts_at=d.starts_at}
   local reward,why=require('src.import.GiftDesigner').payload(d);if why then f.notice=why;return end
   if reward then payload.prize=reward elseif d.id then payload.clear_prize=true end
@@ -119,16 +120,16 @@ function W.action(self,id)
  elseif id=='start' then f.confirm={kind='start'}
  elseif id=='cancel' then f.confirm={kind='cancel',reason=''}
  elseif id=='dismiss' then f.accessForm=nil;f.confirm=nil;f.choose=nil;f.form=nil
- elseif id:match('^fight:') then
+ elseif id:match('^fight:') or id:match('^resumeFight:') then
   local index=tonumber(id:match(':(%d+)$'));local m=f.cup.matches[index]
-  if m and m.state=='ready' then f.choose=index;self.pageScroll=0 end
+  if m and m.state=='ready' then f.choose=index;f.resumeBattle=id:match('^resumeFight:')~=nil;self.pageScroll=0 end
  elseif id:match('^slot:') then
   local slot=id:sub(6);local cup=f.cup;local match=cup.matches[f.choose]
   job(self,'launch',function()
    local fresh,why=API.request('GET',cup.id);if not fresh then return nil,why end
    local current;for _,m in ipairs(fresh.matches or {}) do if m.id==match.id then current=m end end
    if not current then return nil,'This pairing is no longer available.' end
-   local ok,problem=require('src.link.CloudArena').queue(fresh,current,slot)
+   local ok,problem=require('src.link.CloudArena').queue(fresh,current,slot,f.resumeBattle)
    return ok and {edition=cup.edition} or nil,problem
   end)
  elseif id:match('^report:') or id:match('^resolve:') then
@@ -162,10 +163,10 @@ function W.tick(self)
    elseif purpose=='launch' then
     f.choose=nil;self._arenaLaunch=true
     local ok,why=pcall(self.play,self,doc.edition);self._arenaLaunch=nil
-    if not ok then require('src.link.CloudArena').cancelPending();f.notice='Battle launch failed: '..tostring(why) end
+    if not ok then require('src.link.CloudArena').cancelPending();f.notice=L('Battle launch failed: ')..tostring(why) end
     return
    elseif purpose=='league' then f.index=f.index or {arena={}};f.index.arena=f.index.arena or {};f.index.arena.league=doc;f.notice='League profile updated.'
-   elseif purpose=='eggs' then f.notice=tostring(#(doc.kept or {}))..' league eggs stored in your Bank. Compatible editions can receive them; unsupported species stay in the Bank.';f.nextRefresh=0
+   elseif purpose=='eggs' then f.notice=F('%d league eggs stored in your Bank. Compatible editions can receive them; unsupported species stay in the Bank.',#(doc.kept or {}));f.nextRefresh=0
    elseif purpose=='prize' then f.notice=doc.kind and 'Prize in your account inbox. Open Account > Gift codes to deliver it to a save copy.' or 'Prize restored to your Bank. Open the Bank to copy it to a compatible save.'
    elseif tostring(doc.account_id)~=f.account then f.notice='The account changed. Refresh the Arena.'
    elseif purpose=='arena' then
@@ -204,9 +205,9 @@ function W.draw(self,x,y,w,h)
  if f.form then
   local d=f.form;text(d.id and 'EDIT TOURNAMENT' or 'CREATE A CUP',true,P.ink)
   text('Community competition · Single elimination · Edition rules · Account-bound prizes')
-  button('BACK','dismiss');button('Edition: '..d.edition:upper(),'edition')
+  button('BACK','dismiss');button(L('Edition: ')..d.edition:upper(),'edition')
   local regional=false;for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) then regional=true end end
-  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) or c.id=='worlds' or not regional and not c.generation then button((d.format==c.id and '* ' or '')..c.title..' · '..c.team_size..' Pokémon','preset:'..c.id) end end
+  for _,c in ipairs(f.index and f.index.arena and f.index.arena.formats or {}) do if c.generation==Versions.generation(d.edition) or c.id=='worlds' or not regional and not c.generation then button((d.format==c.id and '* ' or '')..c.title..' · '..c.team_size..L(' Pokémon'),'preset:'..c.id) end end
   button('Custom rules','preset:custom');field('Title','title',d.title)
   field('Capacity (2–64)','capacity',d.capacity);field('Team size (1–6)','team_size',d.team_size);field('Battle level (1–100)','level',d.level)
   field('Rules shown to all players','rules',d.rules);field('Scheduled start · optional ISO date with timezone','starts_at',d.starts_at)
@@ -221,8 +222,8 @@ function W.draw(self,x,y,w,h)
   local c=f.cup;local names={};local mine
   for _,p in ipairs(c.players or {}) do names[p.id]=p.nickname;if p.id==f.account then mine=p end end
   local function name(id) return id and (names[id] or 'Unavailable player') or 'Awaiting winner' end
-  y=y+Art.hero(self,x,y,w,c.title,'GEN '..c.generation..' · '..c.edition:upper()..' · '..c.team_size..' Pokémon')
-  text('GEN '..c.generation..' · '..c.edition:upper()..' · '..c.state:upper()..' · '..c.entries..' / '..c.capacity..' players',false,P.link)
+  y=y+Art.hero(self,x,y,w,c.title,L('GEN ')..c.generation..' · '..c.edition:upper()..' · '..c.team_size..L(' Pokémon'))
+  text(F('GEN %d · %s · %s · %d / %d players',c.generation,c.edition:upper(),require('src.translation.Service').launcherState(c.state),c.entries,c.capacity),false,P.link)
   button('ALL TOURNAMENTS','back');button('REFRESH LOBBY','refresh')
   text(c.invite_only and 'INVITATION ONLY · Organizer approval required' or 'OPEN REGISTRATION · Eligible players may join')
   if f.accessForm and c.manage then
@@ -232,28 +233,28 @@ function W.draw(self,x,y,w,h)
    button(c.invite_only and 'ALLOW OPEN REGISTRATION' or 'REQUIRE ORGANIZER INVITATION','accessMode')
    field('Complete friend tag · Trainer#1234','accessTag',f.accessTag or '')
    button('ADD / INVITE PLAYER','access:add');button('REMOVE PLAYER FROM LOBBY','access:remove');button('BLOCK FROM THIS CUP','access:block');button('REMOVE CUP BLOCK / INVITATION','access:unblock')
-   for _,a in ipairs(c.access or {})do text(a.friend_tag..(a.blocked and ' · BLOCKED' or ' · INVITED'))end
+   for _,a in ipairs(c.access or {})do text(a.friend_tag..(a.blocked and L(' · BLOCKED') or L(' · INVITED')))end
    button('BACK TO LOBBY','accessBack');text(f.notice);return y-top
   end
-  text(c.team_size..' per team · Level '..c.level..' · Single elimination · Community results')
-  if c.starts_at then text('Scheduled: '..c.starts_at..' UTC') end
+  text(F('%d per team · Level %d · Single elimination · Community results',c.team_size,c.level))
+  if c.starts_at then text(L('Scheduled: ')..c.starts_at..L(' UTC')) end
   if c.rules~='' then text(c.rules) end
-  text('CHAMPION: '..require('src.import.GiftDesigner').describe(c.prize)..' + Champion achievement',false,P.link)
+  text(L('CHAMPION: ')..require('src.import.GiftDesigner').describe(c.prize)..L(' + Champion achievement'),false,P.link)
   text(f.notice)
-  if c.battle_gate~='native_rules' then text('NATIVE MODULE UNAVAILABLE · Direct league battles currently support generations 1–3. This bracket can still use community results.',false,P.link) else text('BANK PREFLIGHT · Native edition rules and two matching battle reports. Community result buttons do not award season points.',false,P.link) end
+  if c.battle_gate~='native_rules' then text('NATIVE MODULE UNAVAILABLE · This edition is not enabled by the private battle verifier. This bracket can still use community results.',false,P.link) else text('BANK PREFLIGHT · Native edition rules and two matching battle reports. Community result buttons do not award season points.',false,P.link) end
   if f.confirm then
-   local q=f.confirm;text('CONFIRM '..q.kind:upper(),true,P.ink)
-   if q.winner then text('Winner: '..name(q.winner)) end
+   local q=f.confirm;text(L('CONFIRM ')..q.kind:upper(),true,P.ink)
+   if q.winner then text(L('Winner: ')..name(q.winner)) end
    if q.kind=='cancel' or q.kind=='resolve' then field('Reason · recorded for organizers','reason',q.reason) end
    button('CONFIRM','confirm');button('GO BACK','dismiss');return y-top
   end
   if f.choose then
    text('CHOOSE YOUR BATTLE TEAM',true,P.link)
-   text('Uses a temporary copy of the selected save party. Exactly '..c.team_size..' members required; the battle sets level '..c.level..'. The adventure save stays intact. Gameplay mods must be disabled.')
-   if not self.ready[c.edition] then text('Import '..c.edition..' before entering this battle.')
+   text(F('Uses a temporary copy of the selected save party. Exactly %d members required; the battle sets level %d. The adventure save stays intact. Gameplay mods must be disabled.',c.team_size,c.level))
+   if not self.ready[c.edition] then text(F('Import %s before entering this battle.',c.edition))
    else
     local count=0;for _,slot in ipairs(require('src.core.SaveData').listSlots(c.edition)) do
-     if slot.exists and not slot.unreadable then button((slot.label or slot.name or slot.id)..' · ENTER LINK BATTLE','slot:'..slot.id);count=count+1 end
+     if slot.exists and not slot.unreadable then button((slot.label or slot.name or slot.id)..L(' · ENTER LINK BATTLE'),'slot:'..slot.id);count=count+1 end
     end
     if count==0 then text('No saved party available yet. Start this edition and save a team first.') end
    end
@@ -274,22 +275,24 @@ function W.draw(self,x,y,w,h)
   for _,p in ipairs(c.players or {}) do text((p.online and '[ON] ONLINE  ' or '[OFF] OFFLINE  ')..(p.ready and 'READY · ' or 'WAITING · ')..require('src.ui.PlayerRole').label(p.nickname,p),false,p.ready and P.link or P.detail) end
   local round
   for i,m in ipairs(c.matches or {}) do
-   if round~=m.round then round=m.round;y=y+14*s;text('ROUND '..round,true,P.link) end
+   if round~=m.round then round=m.round;y=y+14*s;text(L('ROUND ')..round,true,P.link) end
    local height=(m.can_report and 244 or 108)*s
+   if m.can_report and m.state=='ready' and c.battle_gate=='native_rules'then height=height+92*s end
    if c.manage and (m.state=='ready' or m.state=='disputed') then height=height+92*s end
    paint.surface(x,y,w,height,12*s,m.state=='disputed' and P.chooseTop or P.link,false)
-   y=y+14*s;text(name(m.left)..'  vs  '..name(m.right),true,P.ink)
-   text(m.state:upper()..(m.winner and ' · Winner: '..name(m.winner) or ''))
+   y=y+14*s;text(name(m.left)..L('  vs  ')..name(m.right),true,P.ink)
+   text(require('src.translation.Service').launcherState(m.state)..(m.winner and F(L(' · Winner: %s'),name(m.winner)) or ''))
    if m.can_report then
     if m.state=='ready' and c.battle_gate=='native_rules' then
      text('Both players enter here. Your frozen Bank teams connect through the account cloud; no room code is needed.')
      button('ENTER LINK BATTLE','fight:'..i)
+     button('TAKE OVER RUNNING BATTLE ON THIS DEVICE','resumeFight:'..i)
     end
     button('I WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'left' or 'right'))
     button('OPPONENT WON · CONFIRM RESULT','report:'..i..':'..(m.left==f.account and 'right' or 'left'))
    end
    if c.manage and (m.state=='ready' or m.state=='disputed') then
-    button('RESOLVE: '..name(m.left),'resolve:'..i..':left');button('RESOLVE: '..name(m.right),'resolve:'..i..':right')
+    button(L('RESOLVE: ')..name(m.left),'resolve:'..i..':left');button(L('RESOLVE: ')..name(m.right),'resolve:'..i..':right')
    end
    y=y+18*s
   end
@@ -303,8 +306,8 @@ function W.draw(self,x,y,w,h)
    local league=arena.league
    y=y+Art.progress(self,x,y,w,league or arena)
    if league then
-    text(league.season.title..' · '..league.season.starts_at..' to '..league.season.ends_at..' UTC',false,P.link)
-    text(league.registered and ('REGISTERED · Rank '..tostring(league.rank or '--')..' / '..league.participants) or 'JOIN THIS THREE-MONTH SEASON · Participation is optional')
+    text(league.season.title..' · '..league.season.starts_at..L(' to ')..league.season.ends_at..L(' UTC'),false,P.link)
+    text(league.registered and (L('REGISTERED · Rank ')..tostring(league.rank or '--')..' / '..league.participants) or 'JOIN THIS THREE-MONTH SEASON · Participation is optional')
     button(league.registered and 'LEAVE THIS SEASON' or 'JOIN THIS THREE-MONTH SEASON',league.registered and 'leaveLeague' or 'joinLeague')
     button('LIGA COINS · ITEM SHOP & BATTLE DROPS','shop')
     button(f.leagueOpen and 'BACK TO CUPS' or 'TROPHY · RANKINGS, CHALLENGES & DAILY EGGS',f.leagueOpen and 'back' or 'rankings')
@@ -313,21 +316,21 @@ function W.draw(self,x,y,w,h)
      text('SEASON RANKINGS · TOP 100',true,P.ink)
      text('Challenge using the cup selected in the Arena. Accepting is optional; Auto-Match finds other online rivals.')
      for _,r in ipairs(league.ranking or {}) do
-      text('#'..r.rank..'  '..r.friend_tag..' · '..r.points..' points · '..r.wins..' wins'..(r.online and ' · ONLINE' or ''),false,r.rank<=3 and P.link or P.detail)
-      if league.registered and r.account_id~=f.account then button('CHALLENGE '..r.nickname,'challenge:'..r.account_id) end
+      text('#'..r.rank..'  '..r.friend_tag..' · '..r.points..L(' points · ')..r.wins..L(' wins')..(r.online and L(' · ONLINE') or ''),false,r.rank<=3 and P.link or P.detail)
+      if league.registered and r.account_id~=f.account then button(L('CHALLENGE ')..r.nickname,'challenge:'..r.account_id) end
      end
      if #(league.ranking or {})==0 then text('Be the first player to join this season.') end
      text('DAILY PODIUM · 3 / 2 / 1 EGGS',true,P.link)
      text('At each UTC day close: 75% shiny chance per egg · All 1,025 species, including legends. Eggs stay in the Bank until a compatible edition supports them. Generation 1 cannot receive eggs.')
      text(league.reward_notice)
      for _,r in ipairs(league.rewards or {}) do
-      text(r.day..' · Rank '..r.rank..' · '..r.eggs..' eggs')
+      text(r.day..L(' · Rank ')..r.rank..' · '..r.eggs..L(' eggs'))
       button(r.claimed and 'RESTORE THE SAME EGGS' or 'CLAIM DAILY EGGS','claimEggs:'..r.id)
      end
      if #(league.rewards or {})==0 then text('Your earned daily eggs will appear here after the UTC day closes.') end
      text('VOLUNTARY CHALLENGES',true,P.ink)
      for _,c in ipairs(league.challenges or {}) do
-      text((c.sender==f.account and 'SENT TO #'..c.recipient or 'FROM #'..c.sender)..' · '..c.format:upper()..' · '..c.state:upper())
+      text((c.sender==f.account and L('SENT TO #')..c.recipient or L('FROM #')..c.sender)..' · '..c.format:upper()..' · '..c.state:upper())
       if c.state=='accepted' and c.tournament_id then button('OPEN CHALLENGE','open:'..c.tournament_id)
       elseif c.recipient==f.account and c.state=='pending' then button('ACCEPT · USE A SHARED IMPORTED EDITION','acceptChallenge:'..c.id);button('DECLINE · NO POINT PENALTY','declineChallenge:'..c.id) end
      end
@@ -337,18 +340,18 @@ function W.draw(self,x,y,w,h)
    local q=arena.queue
    if q then
     text(q.tournament_id and 'RIVAL ASSIGNED · YOUR MATCH IS READY' or 'FINDING YOUR NEXT RIVAL',true,P.link)
-    text(q.edition:upper()..' · '..q.format:upper()..' · Online accounts only · One queue across all your devices')
+    text(q.edition:upper()..' · '..q.format:upper()..L(' · Online accounts only · One queue across all your devices'))
     if q.tournament_id then button('OPEN ASSIGNED PAIRING','open:'..q.tournament_id) else button('LEAVE MATCHMAKING','leaveQueue') end
    end
    local edition=f.queueEdition or 'crystal';local generation=Versions.generation(edition)
-   text('CHOOSE YOUR GAME · GEN '..generation..' / '..edition:upper(),true,P.ink)
+   text(L('CHOOSE YOUR GAME · GEN ')..generation..' / '..edition:upper(),true,P.ink)
    local gw=(w-16*s)/5
    for gen=1,5 do button((gen==generation and '*' or '')..(w<520*s and 'G' or 'GEN ')..gen,'arenaGeneration:'..gen,gw,x+(gen-1)*(gw+4*s),y) end;y=y+46*s
    local choices={};for _,v in ipairs(editions) do if Versions.generation(v)==generation then choices[#choices+1]=v end end
    local ew=(w-4*s*(#choices-1))/#choices
    local short={sapphire='SAPPH.',emerald='EMER.',firered='F.RED',leafgreen='L.GREEN',platinum='PLAT.',heartgold='H.GOLD',soulsilver='S.SILV'}
    for i,v in ipairs(choices) do button((v==edition and '*' or '')..(ew<100*s and short[v] or v:upper()),'arenaEdition:'..v,ew,x+(i-1)*(ew+4*s),y) end;y=y+52*s
-   text('CUPS FOR '..edition:upper(),true,P.ink)
+   text(L('CUPS FOR ')..edition:upper(),true,P.ink)
    local available={};local hasRegional=false
    for _,c in ipairs(arena.formats or {}) do if c.generation==generation then hasRegional=true end end
    for _,c in ipairs(arena.formats or {}) do
@@ -365,7 +368,8 @@ function W.draw(self,x,y,w,h)
     f.rects[#f.rects+1]={x=bx,y=by,width=cardWidth,height=170*s,id='format:'..c.id}
    end
    y=y+math.ceil(#available/cols)*184*s
-   button((arena.league and 'AUTO-MATCH · ' or 'FIND AN ONLINE RIVAL · ')..(f.selected or 'rookie'):upper(),'findRival')
+   local selectedTitle='';for _,cup in ipairs(available)do if cup.id==f.selected then selectedTitle=L(cup.title);break end end
+   button(L(arena.league and 'AUTO-MATCH · ' or 'FIND AN ONLINE RIVAL · ')..selectedTitle,'findRival')
    text('Auto-Match uses shared editions imported on this device. Both players enter a temporary native link battle from the pairing. Completed matching reports award +50 for a win and -25 for a loss.')
    if not arena.league and arena.points_notice then text(arena.points_notice) end
   end
@@ -374,10 +378,10 @@ function W.draw(self,x,y,w,h)
   text(f.notice)
   if f.index then
    for _,award in ipairs(f.index.awards or {}) do
-    text('★ CHAMPION · '..award.title,true,P.link)
+    text(L('★ CHAMPION · ')..award.title,true,P.link)
     if award.gift_code then
-     text('YOUR PRIVATE GIFT CODE · '..award.gift_code,true,P.link)
-     text('For '..award.edition:upper()..'. Only your account can claim this prize.')
+     text(L('YOUR PRIVATE GIFT CODE · ')..award.gift_code,true,P.link)
+     text(L('For ')..award.edition:upper()..L('. Only your account can claim this prize.'))
      button('COPY PRIZE CODE','copyPrize:'..award.gift_id)
      button('REDEEM MY PRIZE','redeemPrize:'..award.gift_id)
     end

@@ -88,7 +88,9 @@ function W.begin(game, loaded, runtime, clone)
 		end
 		stack._modalTracker, stack._sceneStack = nil, nil
     if runtime.battle then
-      stack.states[#stack.states+1]=require("src.core.CheckpointBattle").apply(game,runtime.battle,clone)
+      local battle=require("src.core.CheckpointBattle").apply(game,runtime.battle,clone)
+      stack.states[#stack.states+1]=battle
+      battle:resumeCheckpoint()
     end
 	end)
 	if not ok then

@@ -40,3 +40,6 @@ mods/UNI_LANGUAGE_NATIVE/** -text -whitespace
 # Offline translation deltas and retained upstream notices are exact bytes.
 assets/language-patches/**/*.bps -text
 assets/language-patches/pt-BR/notices/** -text
+
+# Unified patch context lines intentionally contain a single space.
+tools/patches/*.patch whitespace=-blank-at-eol

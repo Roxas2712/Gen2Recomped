@@ -4,18 +4,26 @@ local V, F, H =
   require("src.core.GameVersion"), require("src.link.Fingerprint"), require("src.link.Handshake")
 local Copy = require("src.mods.Merge").deepCopy
 local data, before = T.fixtures.fresh(), V.get()
--- Legacy hash retained; native hash independently audits revision 19 -> 20 only.
+-- Independent Python integer FNV audits revision 27 while preserving
+-- edition-specific secondary commands and the separate NDS surfaces.
 local LEGACY = "e33d251961f2a41d"
-local NATIVE = "43fe7ea27b438e0e"
-for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "firered", "black" }) do
+local NATIVE = "78dbbb41ed15c325"
+local EMERALD_NATIVE = "fb32852c3ce04be0"
+local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
+for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgreen", "emerald", "platinum", "diamond", "firered", "black", "gold" }) do
   V.set(version)
   local gba = V.isGen3()
+  local generation = V.generation()
+  local nds = generation == 4 or generation == 5
+  local native = gba or nds
+  local expectedNative = version == "emerald" and EMERALD_NATIVE or NATIVE
   T.eq(
     F.compute(data, {}),
-    gba and NATIVE or LEGACY,
+    gba and expectedNative or nds and NDS[generation] or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 20 or nil, "only GBA advertises the new command revision")
+  T.eq(F.nativeBattleRevision(), gba and 27 or nds and ("nds-" .. generation .. "-1") or nil,
+    "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")
   local legacy = Copy(current)
@@ -23,23 +31,42 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
   T.eq(H.checkCompat(current, Copy(current)), "full", "identical native rules admit lockstep")
   T.eq(
     H.checkCompat(current, legacy),
-    gba and "subset" or "full",
-    "old wire digest cannot admit changed GBA battles"
+    native and "subset" or "full",
+    "old wire digest cannot admit changed native battles"
   )
-  T.eq(H.checkCompat(legacy, current), gba and "subset" or "full", "the wire mismatch is symmetric")
+  T.eq(H.checkCompat(legacy, current), native and "subset" or "full", "the wire mismatch is symmetric")
   T.eq(
     H.checkCompat(current, {}),
-    gba and "refused" or "vanilla_peer",
+    native and "refused" or "vanilla_peer",
     "legacy unversioned peers remain safe"
   )
+  if nds then
+    T.eq(current.nativePartyRevision, "nds-" .. generation .. "-1",
+      "native DS party codec revision is part of admission")
+    local previous = Copy(current)
+    previous.nativeBattleRevision = "nds-" .. generation .. "-0"
+    T.eq(H.checkCompat(current, previous), "subset", "older DS command revision cannot enter lockstep")
+    T.eq(H.checkCompat(previous, current), "subset", "DS command mismatch is symmetric")
+    local other = Copy(current)
+    other.nativePartyRevision = "nds-" .. generation .. "-0"
+    T.eq(H.checkCompat(current, other), "refused", "older DS party codec cannot admit battle or trade")
+  end
   if gba then
     local previous = Copy(current)
-    previous.nativeBattleRevision, previous.fingerprint = 19, "22e453523676534e"
-    T.eq(H.checkCompat(current, previous), "subset", "previous native music rules cannot admit lockstep")
-    T.eq(H.checkCompat(previous, current), "subset", "native command revision mismatch is symmetric")
-    T.eq(current.nativePartyRevision, 1, "music commands retain the native party codec")
+    previous.nativeBattleRevision, previous.fingerprint = 26,
+      version == "emerald" and "524ff88d849b1641" or "ed48736806f1e02c"
+    local older = Copy(current)
+    older.nativeBattleRevision, older.fingerprint = 23,
+      version == "emerald" and "a7ffeef827cf59b4" or "1e7b593d0cbd1d69"
+    local oldest = Copy(current)
+    oldest.nativeBattleRevision, oldest.fingerprint = 22, "0532b5c0de70029c"
+    for _, peer in ipairs({ previous, older, oldest }) do
+      T.eq(H.checkCompat(current, peer), "subset", "previous native rules cannot admit lockstep")
+      T.eq(H.checkCompat(peer, current), "subset", "native rule mismatch is symmetric")
+    end
+    T.eq(current.nativePartyRevision, 1, "round initialization retains the native party codec")
     for _, host in ipairs({ false, true }) do
-      for _, peer in ipairs({ legacy, previous }) do
+      for _, peer in ipairs({ legacy, previous, older, oldest }) do
         local state = setmetatable(
           { game = game, myHello = current, peerHello = peer },
           { __index = require("src.link.LinkState") }
@@ -61,7 +88,7 @@ for _, version in ipairs({ "red", "firered", "gold", "emerald", "diamond", "fire
     }) do
       local changed = Copy(data)
       changed.moves.FIX_TACKLE[field] = value
-      T.neq(F.compute(changed, {}), NATIVE, "native " .. field .. " changes the full link surface")
+      T.neq(F.compute(changed, {}), expectedNative, "native " .. field .. " changes the full link surface")
       T.neq(
         F.records(changed, "moves").FIX_TACKLE,
         F.records(data, "moves").FIX_TACKLE,
