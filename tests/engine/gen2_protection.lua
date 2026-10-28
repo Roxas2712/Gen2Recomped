@@ -62,20 +62,20 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
  b:resolveTurn(selected)
  local first,second=b.queue[1],b.queue[2]
  T.check(first and second and first.fn and second.fn,'real native actions are queued')
- b:runQueueAction(first)
+ b.nextInsert=0;first.fn()
  T.eq(b.enemy.enduring,true,'the faster opponent executes actual Endure first')
  local afterFirst=draws
- b:runQueueAction(second)
+ b.nextInsert=0;second.fn()
  T.eq(b.player.protecting,nil,'second actor cannot Protect after opponent')
  T.eq(b.player.protectRun,0,'second actor resets source-readable counter')
  T.eq(draws,afterFirst,'opponent-first failure consumes no protection RNG')
  T.eq(selected.pp,19,'failed protection still spends the actual move PP')
  -- A new round retires the previous first actor. Called effects remain in
  -- the same round and cannot change its first side.
- b:beginTurn();b:executeAction(b.player,b.enemy,{special='recharge'})
+ b.queue={};b:resolveTurn(b.player.curMoves[1]);b:executeAction(b.player,b.enemy,{special='recharge'})
  T.eq(b._gen2ProtectionFirst,'player','next round records its actual first side')
  -- First-side identity must survive replacement of that side's wrapper.
- b:beginTurn()
+ b.queue={};b:resolveTurn(b.player.curMoves[1])
  local withdrawn=b.player
  b:executeAction(withdrawn,b.enemy,{special='playerSwitch',mon=b.game.save.party[2]})
  T.check(b.player~=withdrawn,'real native switch replaces the first wrapper')
