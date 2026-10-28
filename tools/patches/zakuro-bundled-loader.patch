@@ -1,0 +1,39 @@
+diff --git a/crates/zakuro-gpu/src/portability.rs b/crates/zakuro-gpu/src/portability.rs
+--- a/crates/zakuro-gpu/src/portability.rs
++++ b/crates/zakuro-gpu/src/portability.rs
+@@ -26,3 +26,11 @@
+         }
+     }
+ }
++
++// An application bundle selects its own reviewed loader without DYLD setup.
++pub(crate) fn entry() -> Result<ash::Entry, ash::LoadingError> {
++    match std::env::var_os("RETRO_3DS_VULKAN_LIBRARY") {
++        Some(path) => unsafe { ash::Entry::load_from(path) },
++        None => unsafe { ash::Entry::load() },
++    }
++}
+diff --git a/crates/zakuro-gpu/src/raster/hardware.rs b/crates/zakuro-gpu/src/raster/hardware.rs
+--- a/crates/zakuro-gpu/src/raster/hardware.rs
++++ b/crates/zakuro-gpu/src/raster/hardware.rs
+@@ -5651,7 +5651,7 @@
+ pub(crate) fn own_device() -> Result<SharedDevice, String> {
+     // SAFETY: loads the system's Vulkan library, which has no other
+     // requirements
+-    let entry = unsafe { ash::Entry::load() }.map_err(|e| format!("no Vulkan loader, {e}"))?;
++    let entry = crate::portability::entry().map_err(|e| format!("no Vulkan loader, {e}"))?;
+     let app = vk::ApplicationInfo::default().application_name(c"zakuro").api_version(vk::API_VERSION_1_3);
+     let mut extensions = Vec::new();
+     let portability = crate::portability::instance(&entry, &mut extensions);
+diff --git a/crates/zakuro-gpu/src/backend/vulkan.rs b/crates/zakuro-gpu/src/backend/vulkan.rs
+--- a/crates/zakuro-gpu/src/backend/vulkan.rs
++++ b/crates/zakuro-gpu/src/backend/vulkan.rs
+@@ -136,7 +136,7 @@
+     ) -> Result<VulkanPresenter, PresentError> {
+         // SAFETY: the loader reads the system's Vulkan library, which is the
+         // documented way to start.
+-        let entry = unsafe { ash::Entry::load() }
++        let entry = crate::portability::entry()
+             .map_err(|e| fail(format!("no Vulkan loader: {e}")))?;
+ 
+         let display = window

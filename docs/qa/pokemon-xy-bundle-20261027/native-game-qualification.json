@@ -1,0 +1,118 @@
+{
+  "date": "2026-10-27",
+  "host": {
+    "cpu": "Apple M2",
+    "os": "macOS 15.8.1",
+    "memory_gib": 16
+  },
+  "runtime_id": "c38311ec99f012a71208eab874665a84742dde34fd1e571a452af3cd82fdf7ea",
+  "compilation_id": "8b3efa0aa303b2024813170bc891ef19d41230894ac30bbf85ae172457819339",
+  "tests": {
+    "python": 46,
+    "compiler_with_bundled_zig": 56,
+    "import": 25,
+    "presentation": 9,
+    "launcher_sequence": 65,
+    "external_animation": 4,
+    "language": 10,
+    "controller_layout": 13,
+    "real_bundled_compiler_cache_cycles": 2
+  },
+  "genuine_preflight": {
+    "x": true,
+    "y": true
+  },
+  "native_y_initial": {
+    "native_game_played": true,
+    "seconds": 300.0011728333333,
+    "frames": 17028,
+    "resolution": 3,
+    "hardware": true,
+    "recompiled_instructions": 25061363975,
+    "interpreted_instructions": 124091894,
+    "scope": "First-run language selection, intro, and German Professor Platan dialogue. Private CLI cold build was followed by GUI cached import, device qualification and native play in an instrumented app copy; production native modules unchanged."
+  },
+  "native_y_final": {
+    "native_game_played": true,
+    "import_worker_completed": true,
+    "played_seconds": 120.00031187499998,
+    "scope": "Two-minute visible native test using final bundled runtime and a separately compiled genuine ROM; German selection and intro; concurrent X compilation; isolated QA save profile.",
+    "edition": "y",
+    "frame": 6691,
+    "stats": {
+      "recompiled": 17956508141,
+      "readback_ms": 0.098041,
+      "emulation_cpu_ms": 20.67133300000569,
+      "sample_frame": 6626,
+      "resolution": 1,
+      "top_blank": false,
+      "frames": 6626,
+      "interpreted": 103522827,
+      "hardware": true,
+      "emulation_ms": 52.941416
+    },
+    "library_sha256": "5035562c7160afc70b8ad8a8c3613f2671db02cd24546450b9a19a82af27c9e7"
+  },
+  "remaining_scope": [
+    "No full-game walkthrough or in-battle acceptance test",
+    "No 3DS cloud/device-transfer, network-battle or other-platform acceptance claimed"
+  ],
+  "roms_or_game_derived_bytes_committed": false,
+  "native_x_final": {
+    "played_seconds": 180.00009970833338,
+    "scope": "Three-minute visible native test in an instrumented bundled app copy after separate genuine-ROM CLI compilation: German language selection, intro and title screen. Production native modules unchanged.",
+    "frame": 10572,
+    "stats": {
+      "hardware": true,
+      "frames": 10560,
+      "emulation_cpu_ms": 2.82870900000853,
+      "sample_frame": 10560,
+      "readback_ms": 0.0006670000000000001,
+      "emulation_ms": 2.879334,
+      "recompiled": 33589412695,
+      "interpreted": 189146128,
+      "resolution": 3
+    },
+    "import_worker_completed": true,
+    "native_game_played": true,
+    "edition": "x",
+    "library_sha256": "24bfa46043a656d4392692168cc3fdf849ad854586e208ec08ebe729a52036dc"
+  },
+  "native_x_build": {
+    "returncode": 0,
+    "terminal_result": 0,
+    "seconds": 940.2858914999524,
+    "native_game_played": false,
+    "runtime_id": "c38311ec99f012a71208eab874665a84742dde34fd1e571a452af3cd82fdf7ea",
+    "build_jobs": 8,
+    "cache_retirement": {
+      "repair": "Preserved stale Zig manifests outside active lookup path"
+    }
+  },
+  "compiler_cache_after_both_builds_mib": 47.1,
+  "local_demo_imports_ready": {
+    "x": true,
+    "y": true
+  },
+  "tested_implementation_commit": "804992db776b4c33a667fde972d2f008d236c1e8",
+  "native_x_prologue": {
+    "frame": 8298,
+    "stats": {
+      "frames": 8220,
+      "emulation_ms": 3.592959,
+      "readback_ms": 0.462125,
+      "hardware": true,
+      "sample_frame": 8220,
+      "emulation_cpu_ms": 3.538958000001003,
+      "recompiled": 12097664333,
+      "resolution": 3,
+      "interpreted": 57407498
+    },
+    "native_game_played": true,
+    "import_worker_completed": true,
+    "played_seconds": 140.00020154166666,
+    "scope": "Supplementary native X run to German Professor Platan dialogue. Unfused L\u00d6VE 12 host, instrumented copy of the final app payload, explicit same bundled native sidecar and existing isolated QA player data; not another packaged-app cold import.",
+    "edition": "x",
+    "normal_duration_start_key_tested": true
+  }
+}

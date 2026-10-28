@@ -11,13 +11,15 @@ local smokeStep, bootCount = 0, 0
 local mode = os.getenv('LIBRARY_PREVIEW_MODE') or 'library'
 local version = os.getenv('LIBRARY_PREVIEW_VERSION') or 'crystal'
 local previewBooted = false
+local xyImportStarted = false
+local xyFile = os.getenv('LIBRARY_PREVIEW_XY_FILE')
 
 function love.load()
   if love.setDeprecationOutput then love.setDeprecationOutput(false) end
   local root = assert(os.getenv('LIBRARY_PREVIEW_ROOT'), 'Use run.py to open the preview')
   package.path = root .. '/?.lua;' .. package.path
   require('src.core.SaveData').otherLocations = function() return {} end
-  if not require('src.core.GameVersion').VERSIONS[version] then version='crystal' end
+  if not require('src.core.GameVersion').VERSIONS[version] and not require('src.import.LauncherPokemonXY').info(version) then version='crystal' end
   local RI = require('src.import.RomImporter')
   ui = RI.new(function(v) bootCount=bootCount+1;previewBooted=true;print('PLAY ' .. tostring(v)) end, {launcher = true})
   ui._launcherSequence = nil
@@ -85,14 +87,20 @@ function love.load()
         if rows[1] then ui:_findShowDetails(rows[1]);ui._findDetails.previewExpanded=true end
       end
     end
+  elseif mode == '3ds' then
+    ui._setupPending=nil;ui._setupOverlay=nil
+    ui:_sbOpenGame(version=='y' and 'y' or 'x')
   elseif mode == 'game' then ui:_sbOpenGame(version)
   elseif mode == 'news' then ui:_sbGo('news') end
 end
 
 function love.update(dt)
   frames = frames + 1
-  if not output and not frameFolder and not smoke then ui:update(dt)
+  if mode=='3ds' or not output and not frameFolder and not smoke then ui:update(dt)
   else ui.pulse = (ui.pulse or 0) + dt end
+  if mode=='3ds' and xyFile and not xyImportStarted and not ui._xyJob then
+    xyImportStarted=true;ui:_xyImport(xyFile)
+  end
   if previewBooted and not smoke then
     previewBooted=false
     ui._handedOff=false -- A preview returns to the library so Play can be tried again.
@@ -117,7 +125,13 @@ function love.draw()
       if frameIndex > frameCount then love.event.quit(0) end
     end)
   end
-  if frames > 3 and output and not captured then
+  if frames > 3 and output and not captured and not (mode=='3ds' and ui._xyJob) then
+    if mode=='3ds' and xyFile then
+      local row=ui._xyData and ui._xyData[ui._xyEdition]
+      assert(xyImportStarted and row and row.imported and not row.ready,'Real worker must import the fixture without false native readiness: '..tostring(ui._xyNotice))
+      if os.getenv('LIBRARY_PREVIEW_XY_EXPECT_FAILURE')=='1' then assert(ui._xyNoticeIsError,'The native worker must explicitly report a failed compile')end
+      print('3DS_WORKER_IMPORT_PASS')
+    end
     captured = true
     love.graphics.captureScreenshot(function(data)
       local file = assert(io.open(output, 'wb'))

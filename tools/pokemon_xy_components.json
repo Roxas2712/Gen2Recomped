@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "components": {
+    "zig": {
+      "url": "https://ziglang.org/download/0.15.2/zig-aarch64-macos-0.15.2.tar.xz",
+      "sha256": "3cc2bab367e185cdfb27501c4b30b1b0653c28d9f73df8dc91488e66ece5fa6b",
+      "version": "0.15.2"
+    },
+    "python": {
+      "url": "https://github.com/astral-sh/python-build-standalone/releases/download/20261021/cpython-3.12.15%2B20261021-aarch64-apple-darwin-install_only_stripped.tar.gz",
+      "sha256": "7b8d00b751db21cea87dc551a8f8165147c5fbc5251d5537d7e5497dde00a219",
+      "version": "3.12.15+20261021"
+    },
+    "molten-vk": {
+      "url": "https://ghcr.io/v2/homebrew/core/molten-vk/blobs/sha256:fb4d355feaf8f36631695721b1ea2ac2e63cfdced0f3044c85ed8e6305a9acbc",
+      "sha256": "fb4d355feaf8f36631695721b1ea2ac2e63cfdced0f3044c85ed8e6305a9acbc",
+      "version": "1.4.2",
+      "source_url": "https://github.com/KhronosGroup/MoltenVK/archive/refs/tags/v1.4.2.tar.gz"
+    },
+    "vulkan-loader": {
+      "url": "https://ghcr.io/v2/homebrew/core/vulkan-loader/blobs/sha256:4b99cecb4fe7115a6faf770cfa9e8f14426c24baa6e4566e2473fe5beedad5af",
+      "sha256": "4b99cecb4fe7115a6faf770cfa9e8f14426c24baa6e4566e2473fe5beedad5af",
+      "version": "1.4.363.0",
+      "source_url": "https://github.com/KhronosGroup/Vulkan-Loader/archive/refs/tags/vulkan-sdk-1.4.363.0.tar.gz"
+    }
+  }
+}
