@@ -29,6 +29,8 @@ local function private(path)
     or path:match('^modstorage[/]') or path=='modstorage'
     or path:match('^mod_storage[/]') or path=='mod_storage'
     or path:match('^exports[/]') or path=='exports'
+    or path:match('^pokewalker%.lua') or path:match('^pokewalker_backups[/]') or path=='pokewalker_backups'
+    or path:match('^walker[/]') or path=='walker'
 end
 function F.wrap(base,id)
   if base._profileBase then return base end
