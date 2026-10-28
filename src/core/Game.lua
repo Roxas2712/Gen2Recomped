@@ -428,6 +428,20 @@ end
 -- Options row takes effect immediately; speedOverride is the --speed /
 -- POKEPORT_SPEED run argument, which wins over the saved option so a bot
 -- or screenshot run does not depend on whatever the player last chose.
+function Game:speedLocked()
+  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
+    return true, 'link'
+  end
+  local states = self.stack and self.stack.states or {}
+  for i = #states, 1, -1 do
+    local state = states[i]
+    if state and (state.isFixedSpeed or state.isMinigame) then
+      return true, 'minigame'
+    end
+  end
+  return false
+end
+
 function Game:logicSpeed()
   local GameSpeed = require("src.core.GameSpeed")
   -- Link play is always 1X on both machines, and this wins over every other
@@ -436,7 +450,7 @@ function Game:logicSpeed()
   -- than the opponent it is racing, and drove its own animation/message
   -- queue at a different rate than the peer it is locked to.  Nothing about
   -- a match should depend on what either player set this to.
-  if self.linkSession or (self.linkNet and not self.linkNet.closed) then
+  if self:speedLocked() then
     return 1
   end
   if self.speedOverride then return GameSpeed.clamp(self.speedOverride) end
