@@ -149,6 +149,35 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','replacement'})
  if mode~='replacement'then T.eq(b.species,target.mon.species,mode..' commits resolved native visual identity')end
  T.eq(b.mon.species,species,mode..' retains saved species')
 end
+for _,disabled in ipairs({false,true})do
+ local s,b,target,row=make('crystal','player','transform')
+ local initial=s:picImage(b.sprite)
+ Effects.TRANSFORM_EFFECT(s,b,target)
+ local middle=b.sprite
+ local second={anim='PIC_TEST',attackerIsPlayer=true,animDelayed=true}
+ if not disabled then s.queue[2]=second;s.moveAnimRow=second end
+ target.species='FIXMON_B'
+ Effects.TRANSFORM_EFFECT(s,b,target)
+ local final=b.sprite
+ T.eq(s:battlerPic(b),initial,'two resolved transforms still show the original queued picture')
+ if disabled then
+  s.game.save.options.animations=false
+  s:updateQueue()
+ else
+  s:updateQueue();local r=s.anim;local n=0
+  while r.picOverride.player~='transform'and n<120 do s:updateQueue();n=n+1 end
+  T.check(n<120,'first native transform opcode completes')
+  T.eq(s:battlerPic(b),s:picImage(middle),'first command reveals only its own queued identity')
+  endAnim(s)
+  s:updateQueue();r=s.anim;n=0
+  while r.picOverride.player~='transform'and n<120 do s:updateQueue();n=n+1 end
+  T.check(n<120,'second native transform opcode completes')
+ end
+ T.eq(b.species,'FIXMON_B','native admission commits transforms in original queue order')
+ T.eq(s:battlerPic(b),s:picImage(final),'last resolved visual remains after repeated transforms')
+ T.eq(#s._gen2PictureChanges,0,'repeated transform pins retire completely')
+ T.eq(b.mon.species,'FIXMON_A','repeated transforms cannot change the saved species')
+end
 for _,edition in ipairs({'red','emerald','firered'})do
  Version.set(edition)
  local s,b=make('crystal','player','dropsub');Version.set(edition)
