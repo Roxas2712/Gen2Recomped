@@ -92,7 +92,7 @@ function Gen3HallOfFame.new(game, onDone)
 end
 
 function Gen3HallOfFame:enter()
-  pcall(Music.play, self.game.data, "Music_HallOfFame")
+  pcall(Music.play, self.game.data, Music.special(self.game.data, "hallOfFame"))
 end
 
 function Gen3HallOfFame:background()

@@ -80,8 +80,8 @@ end
 function Gen3Credits:enter()
   -- the credits have their own music where the dataset names one; the
   -- Hall of Fame's is what plays if it does not
-  local ok = pcall(Music.play, self.game.data, "Music_Credits")
-  if not ok then pcall(Music.play, self.game.data, "Music_HallOfFame") end
+  local ok = pcall(Music.play, self.game.data, Music.special(self.game.data, "credits"))
+  if not ok then pcall(Music.play, self.game.data, Music.special(self.game.data, "hallOfFame")) end
 end
 
 function Gen3Credits:finish()

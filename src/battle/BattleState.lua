@@ -1738,15 +1738,17 @@ local function buildTrainerParty(game, oppClass, partyIndex, partyDef)
       goto continue
     end
     do
-    local mon = Pokemon.new(game.data, slot.species, slot.level, nil, slot.form)
+    local dvs = slot.dvs or trainerDvs
+    local gen2 = require('src.core.GameVersion').generation()==2
+    local mon = Pokemon.new(game.data, slot.species, slot.level, nil, slot.form,
+      gen2 and {dvs=dvs} or nil)
     -- fixed trainer DVs, recomputed stats.  A party slot that carries its OWN
     -- DVs and stat exp is a stored mon rather than a generated one -- the
     -- Battle Tower's opponents come out of BattleTowerMons with both -- so its
     -- numbers win, and Stats.calc reproduces the cartridge's own stat block
     -- from them.  No ordinary TrainerGroups slot has either field, so every
     -- other trainer in the game is unchanged.
-    local dvs = slot.dvs or trainerDvs
-    mon.dvs = dvs
+    if gen2 then dvs=mon.dvs else mon.dvs=dvs end
     if slot.statExp then mon.statExp = slot.statExp end
     if slot.happiness then mon.happiness = slot.happiness end
     if slot.stats then

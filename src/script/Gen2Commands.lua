@@ -2522,21 +2522,18 @@ function Commands.g2_give_odd_egg(ctx)
   end
   local row = eggs[pick] or eggs[1]
   local Pokemon = require("src.pokemon.Pokemon")
-  local mon = Pokemon.new(data, row.species, row.level or 5)
+  local eggDvs
   if type(row.dvs) == "table" and row.dvs[1] and row.dvs[2] then
     local one, two = row.dvs[1], row.dvs[2]
     local atk, dfn = math.floor(one / 16) % 16, one % 16
     local spd, spc = math.floor(two / 16) % 16, two % 16
-    mon.dvs = {
+    eggDvs = {
       attack = atk, defense = dfn, speed = spd, special = spc,
       hp = (atk % 2) * 8 + (dfn % 2) * 4 + (spd % 2) * 2 + (spc % 2),
     }
-    pcall(function()
-      mon.stats = require("src.pokemon.Stats")
-        .calc(data.pokemon[row.species], mon.level, mon.dvs, mon.statExp)
-      mon.hp = mon.stats.hp
-    end)
   end
+  local mon = Pokemon.new(data, row.species, row.level or 5, nil, nil,
+    eggDvs and {dvs=eggDvs} or nil)
   if row.moves then
     mon.moves = {}
     for _, id in ipairs(row.moves) do
@@ -3757,10 +3754,7 @@ function Commands.g2_trade(ctx, index)
   -- recalculates its stats from those DVs at that level).
   local Pokemon = require("src.pokemon.Pokemon")
   local sent = party[slot]
-  local newMon = Pokemon.new(data, trade.get, sent.level)
-  if trade.nickname and trade.nickname ~= "" then
-    newMon.nickname = trade.nickname
-  end
+  local tradeDvs
   -- The table's two DV bytes are the usual packed nibble pairs -- attack and
   -- defense in the first, speed and special in the second -- and the HP DV is
   -- the four low bits, exactly as Stats.randomDVs derives it.
@@ -3768,17 +3762,15 @@ function Commands.g2_trade(ctx, index)
     local one, two = trade.dvs[1], trade.dvs[2]
     local atk, dfn = math.floor(one / 16) % 16, one % 16
     local spd, spc = math.floor(two / 16) % 16, two % 16
-    local dvs = {
+    tradeDvs = {
       attack = atk, defense = dfn, speed = spd, special = spc,
       hp = (atk % 2) * 8 + (dfn % 2) * 4 + (spd % 2) * 2 + (spc % 2),
     }
-    newMon.dvs = dvs
-    pcall(function()
-      local speciesDef = data.pokemon[trade.get]
-      newMon.stats = require("src.pokemon.Stats")
-        .calc(speciesDef, newMon.level, dvs, newMon.statExp)
-      newMon.hp = newMon.stats.hp
-    end)
+  end
+  local newMon = Pokemon.new(data, trade.get, sent.level, nil, nil,
+    tradeDvs and {dvs=tradeDvs} or nil)
+  if trade.nickname and trade.nickname ~= "" then
+    newMon.nickname = trade.nickname
   end
   newMon.traded = true      -- boosted exp, and the Name Rater refuses it
   newMon.ot = (trade.ot ~= "" and trade.ot) or "TRAINER"

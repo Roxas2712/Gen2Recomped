@@ -58331,7 +58331,7 @@ RomExtractorGen3.HOF = {
     { key = "dexNo",    exact = "No. " },
     { key = "level",    exact = "Lv. " },
     { key = "idNo",     needs = { "IDNo." } },
-    { key = "name",     exact = "NAME" },
+    { key = "name",     exact = "NAME", rsExact = "NAME /" },
   },
 }
 
@@ -58420,9 +58420,11 @@ function RomExtractorGen3:hallOfFameText(anchor)
   end
   local out, missing = {}, {}
   for _, want in ipairs(H.WANT) do
+    local exact=want.rsExact and (self.version=='ruby' or self.version=='sapphire')
+      and want.rsExact or want.exact
     for _, text in ipairs(found) do
-      if want.exact then
-        if text == want.exact then out[want.key] = text break end
+      if exact then
+        if text == exact then out[want.key] = text break end
       else
         local all = true
         for _, needle in ipairs(want.needs) do
@@ -58674,7 +58676,12 @@ function RomExtractorGen3:creditsPages()
       end
     end
     if real < C.MIN_ENTRIES then return false end
-    return titles * 100 >= real * C.MIN_TITLES
+    -- RS CreditsEntry has one byte followed by padding and the text pointer;
+    -- it has no Emerald isTitle byte. Its original centred roll therefore
+    -- cannot meet an Emerald heading-count threshold. Keep the name density
+    -- and the closed, five-record page-table checks for both editions.
+    local rs=self.version=='ruby' or self.version=='sapphire'
+    return (rs or titles * 100 >= real * C.MIN_TITLES)
        and spaced * 100 >= real * C.MIN_SPACED
   end
 
