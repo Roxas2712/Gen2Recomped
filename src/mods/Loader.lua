@@ -1654,6 +1654,7 @@ function Loader:load(data)
   ModSeams.unwindAll()
   retireCompatibilityMaps()
   self.baseData = data
+  require('src.mods.LegacyShaderCompat').install(self)
   require("src.core.Gen2SpeciesNames").publish(data)
   require("src.pokemon.Gen2Mail").load(data)
   require("src.compat.gen2.Decorations").useRegistry(data)
@@ -2057,6 +2058,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require('src.mods.LegacyShaderCompat').reset()
   local paletteContext=package.loaded["src.render.PaletteFX"]
   if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]
