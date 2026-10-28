@@ -47,7 +47,6 @@ def main():
  supported={x['identifier'] for x in runtime.get('supportedDeviceTypes',[])}
  device=next(x['identifier'] for x in reversed(types) if 'iPhone' in x['name'] and (not supported or x['identifier'] in supported))
  token=uuid.uuid4().hex
- udid=sim('create','create','Gen2-Lua-QA-'+token,device,runtime['identifier'])
  results={};arch='arm64' if platform.machine()=='arm64' else 'x86_64';lua_arch='arm64' if arch=='arm64' else 'x64'
  source=out/'host';shutil.copytree(love,source,symlinks=True,ignore=shutil.ignore_patterns('.git'))
  framework=source/'platform/xcode/ios/libraries/Lua.xcframework'
@@ -55,9 +54,10 @@ def main():
          'thread.lua':ROOT/'tools/runtime-upvalue-check/love-thread.lua','check.lua':ROOT/'tools/runtime-upvalue-check/check.lua','src/link/Json.lua':engine/'src/link/Json.lua'}
  probe_hashes={name:sha(path) for name,path in probes.items()}
  native_probe=ROOT/'tools/mobile-runtime-check/host-c-api.cpp'
- wrapper=source/'src/modules/love/wrap_love.cpp'
+ wrapper=source/'src/love.cpp'
  wrapper.write_bytes(wrapper.read_bytes()+b'\n'+native_probe.read_bytes())
  probe_hashes['native-c-api.cpp']=sha(native_probe)
+ udid=sim('create','create','Gen2-Lua-QA-'+token,device,runtime['identifier'])
  try:
   sim('boot','boot',udid);sim('booted','bootstatus',udid,'-b',timeout=360)
   for variant,capacity in [('stock',60),('extended',120)]:
@@ -85,6 +85,7 @@ def main():
    sim(variant+'-install','install',udid,app)
    container=Path(sim(variant+'-container','get_app_container',udid,package,'data'))
    report_path=container/'Documents/runtime-capacity-result.json'
+   report_path.parent.mkdir(parents=True,exist_ok=True)
    console=(out/(variant+'-console.log')).open('w')
    launcher=popen(['xcrun','simctl','launch','--console',udid,package],
      env={**os.environ,'SIMCTL_CHILD_ROXAS_RUNTIME_REPORT':str(report_path)},stdout=console,stderr=subprocess.STDOUT)
