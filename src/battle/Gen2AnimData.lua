@@ -3,17 +3,21 @@
 -- plus Additional Terms; see compat/gen1-gsc/. No ROM program is invented.
 local Ids=require('src.battle.Gen2AnimObjectIds')
 local M={}
-M.CACHE_REVISION=2
+M.CACHE_REVISION=3
+function M.isNative(anims)
+  return anims and anims.generation==2 and anims.format=='gsc-native-v1'
+end
 local function order(constants,key)
   return constants and constants[key] or Ids[key]
 end
-function M.tables(anims,constants)
+function M.tables(anims,constants,version)
   anims=anims or {}
   local c={}
   for _,key in ipairs({'battleAnimFramesetOrder','battleAnimObjectOrder',
       'battleAnimFuncOrder','battleAnimGfxOrder','battleAnimObPaletteOrder'})do c[key]=order(constants,key)end
   c.battleBgEffectOrder=constants and constants.battleBgEffectOrder
-    or require('src.battle.Gen2BgEffectIds').forVersion()
+    or require('src.battle.Gen2BgEffectIds').forVersion(version or anims.gameVersion)
+  if M.isNative(anims)then return anims,c end
   local data={objects={},framesets={},oamsets={},gfx={},palettes=anims.palettes,
     pictureArt=anims.pictureArt}
   for id,row in pairs(anims.objects or {})do
@@ -50,6 +54,21 @@ end
 
 local ops={delay='wait',ifvarequal='if_var_equal',
   ifparamequal='if_param_equal',ifparamand='if_param_and'}
+function M.row(inst,target)
+  local op=ops[inst.op]or inst.op
+  local row={op}
+  for _,value in ipairs(inst.args or {})do row[#row+1]=type(value)=='number'and value%256 or value end
+  if op=='wait'then row[2]=inst.frames or 0
+  elseif op=='gfx'then
+    row={tostring(#(inst.ids or {}))..'gfx'}
+    for _,id in ipairs(inst.ids or {})do row[#row+1]=id end
+  elseif op=='jump'or op=='call'or op=='jumpuntil'or op=='ifpmode'then
+    row={op,target}
+  elseif op=='loop'or op=='if_var_equal'or op=='if_param_equal'or op=='if_param_and'then
+    row={op,row[2],target}
+  end
+  return row
+end
 -- Native scripts already contain all reached subroutines in one flat ROM
 -- walk. A target remains that walk's instruction index; suffix lists let the
 -- GSC interpreter fetch it without synthesizing addresses or instructions.
@@ -61,16 +80,7 @@ function M.program(tables,script)
   local rows,targets={},{}
   targets[script.entry or 1]=true
   for i,inst in ipairs(script.code or {})do
-    local op=ops[inst.op]or inst.op
-    local row={op}
-    for _,value in ipairs(inst.args or {})do row[#row+1]=type(value)=='number'and value%256 or value end
-    if op=='wait'then row[2]=inst.frames or 0
-    elseif op=='gfx'then
-      row={tostring(#(inst.ids or {}))..'gfx'}
-      for _,id in ipairs(inst.ids or {})do row[#row+1]=id end
-    elseif op=='jump'or op=='call'or op=='jumpuntil'then row[2]=inst.to
-    elseif op=='loop'or op=='if_var_equal'or op=='if_param_equal'
-        or op=='if_param_and'then row[3]=inst.to end
+    local row=M.row(inst,inst.to)
     if inst.to then targets[inst.to]=true end
     rows[i]=row
   end

@@ -56,6 +56,16 @@ local GEN1_BALL_ANIMS = {
 -- Resolve a move id (or one of the misc animation names) to a script.
 function Gen2AnimPlayer:scriptFor(moveId)
   local anims = self.anims
+  if Data.isNative(anims)then
+    local key=anims.moves and anims.moves[moveId]or anims.ids and anims.ids[moveId]
+    if not key then
+      local alias=GEN1_BALL_ANIMS[moveId]
+      if alias==false then return nil end
+      key=anims.misc and anims.misc[alias or moveId]
+    end
+    if not key and type(moveId)=='number'then key=anims.indices and anims.indices[moveId]end
+    return key and anims.scripts and anims.scripts[key]and key or nil
+  end
   local id = anims.moveAnims and anims.moveAnims[moveId]
     or anims.ids and anims.ids[moveId]
   if not id then
@@ -122,7 +132,9 @@ function Gen2AnimPlayer:start(moveId,attackerIsPlayer,opts)
   if alias=='throwPokeBall'then param=ballParam(self,self.opts)
   elseif moveId=='SHINY_ANIM'then param=1 end
   local tables,constants=Data.tables(self.anims,self.data and self.data.constants)
-  local program,entry=Data.program(tables,self.script)
+  local program,entry
+  if Data.isNative(self.anims)then program,entry=tables,self.script
+  else program,entry=Data.program(tables,self.script)end
   local data,events,options=self.data,self.effects,self.opts
   local wobbles=0
   local runner=Runtime.new({data=program,constants=constants,
