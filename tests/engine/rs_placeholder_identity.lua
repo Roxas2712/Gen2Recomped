@@ -10,6 +10,7 @@ local loader=require('compat.gen1-rs.Loader').new('ruby')
 local native=loader('src.import.gba.text_placeholders_extract')
 local roles={'EVIL_TEAM','GOOD_TEAM','EVIL_LEADER','GOOD_LEADER','EVIL_LEGENDARY','GOOD_LEGENDARY'}
 local translated=require('src.translation.rompack.gba_text')
+local Content=require('src.mods.TextContent')
 for _,edition in ipairs{'ruby','sapphire'}do
   V.set(edition)
   local symbols=native.rsSymbols(edition)
@@ -43,6 +44,8 @@ for _,edition in ipairs{'ruby','sapphire'}do
   T.eq(decoded,table.concat(tokens),'actual host decoder preserves six role identities')
   local nodes={};for code=8,13 do nodes[#nodes+1]={t='ph',code=code}end
   T.eq(translated.plain(nodes,edition),decoded,'translated IR preserves the same role identities')
+  T.eq(Content.source(decoded,3,edition,true),decoded,'native mod reader retains the RS role dialect')
+  T.eq(Content.write(decoded,3,edition),decoded,'authored RS mod text retains native roles')
   local values={};for _,key in ipairs(roles)do values[#values+1]=spec.values[key]end
   T.eq(Box.substitute(game,decoded),table.concat(values),'actual TextBox expands native role words')
   T.eq(Box.substitute(game,'{VERSION}'),expected.VERSION,'dialogue version comes from own cartridge')
@@ -58,6 +61,13 @@ for _,edition in ipairs{'ruby','sapphire'}do
 end
 for _,edition in ipairs{'emerald','firered','leafgreen','red','gold'}do
   for code=8,13 do T.eq(M.token(code,edition),nil,'other edition keeps its existing placeholder dialect')end
+  if edition=='emerald'or edition=='firered'or edition=='leafgreen'then
+    for _,role in ipairs(roles)do
+      local token='{'..role..'}'
+      T.eq(pcall(Content.source,token,3,edition,true),false,'non-RS native reader rejects RS role: '..edition..'/'..role)
+      T.eq(pcall(Content.write,token,3,edition),false,'non-RS authored text rejects RS role: '..edition..'/'..role)
+    end
+  end
 end
 Fs.read,Fs.write,love.filesystem.load=read,write,oldLoad;V.set(old)
 T.finish('RS native team, leader, legendary, version and gendered dialogue identities')
