@@ -12,6 +12,7 @@ end
 
 function Model.bind(model, screen)
   screens[model] = screen
+  rawset(model, '_nativeRandom', function(n) return owner(model).rng(n) - 1 end)
   -- Source GSC's LOVE-style view uses the current native function even if
   -- link setup or a scoped native owner replaces it after this bind.
   rawset(model, '_nativeLoveRng', function(lo, hi)
@@ -29,7 +30,8 @@ function Model:roller()
   if not roller then
     -- Zero-based BattleRandom over the same existing stream. Keep the cache
     -- on the transient model; a global value closure could root a weak key.
-    roller = function(n) return owner(self).rng(n) - 1 end
+    local random = rawget(self, '_nativeRandom')
+    roller = function(n) return random(n) end
     rawset(self, '_nativeRoller', roller)
   end
   return roller
