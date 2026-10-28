@@ -18,6 +18,7 @@ for _,level in ipairs{'off','light','normal','strong'}do
 end
 love.system=love.system or {}
 local oldOS,oldVibrate=love.system.getOS,love.system.vibrate
+love.system.getOS=oldOS or function() return 'Linux' end
 local pulses={}
 love.system.vibrate=function(seconds)pulses[#pulses+1]=seconds end
 T.eq(Touch.buzz('off'),false,'OFF never pulses')
