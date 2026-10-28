@@ -95,6 +95,18 @@ T.check(Input:isDown('x') and Input:isDown('y'),'both DS buttons reach actual na
 Touch:touchreleased('ds-buttons',cx,cy)
 T.check(not Input:isDown('x') and not Input:isDown('y'),'DS bind release reaches native owner')
 Touch:setPreview(true)
+-- The studio's mock device occupies a rectangle inside the editor window.
+-- Its Test input must use that same rectangle, not the full window surface.
+Studio.setBindSpec('a');Studio.testing=true;Touch:setPreview(false)
+Studio.lastCanvas={x=60,y=70,w=180,h=300}
+local r=Studio.lastCanvas
+cx,cy=Skin.controlGeometry(Studio.page(),Studio.selectedControl(),r.w,r.h,r.x,r.y)
+Studio.mousepressed(cx,cy,1)
+T.check(Input:isDown('a'),'Test input uses actual mock-device coordinates')
+T.eq(Skin.surfaceRect,nil,'Test input restores outer skin surface')
+Studio.mousereleased(cx,cy,1)
+T.check(not Input:isDown('a'),'mock-device release clears native button')
+Studio.testing=false;Touch:setPreview(true)
 local calls=0
 local mouse=Studio.mousepressed
 Studio.mousepressed=function(...)calls=calls+1;return mouse(...)end
