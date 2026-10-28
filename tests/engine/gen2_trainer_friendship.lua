@@ -93,7 +93,8 @@ for _,edition in ipairs{'gold','silver','crystal'}do
    T.eq(#probe.events,leaders[class]and 2 or 0,'one event per standing non-egg, including byte saturation')
    for n,ev in ipairs(probe.events)do
     T.eq(ev.mon,party[n],'API2 event retains actual native mon')
-    T.eq(ev.event,4,'cartridge GYMBATTLE event id')
+    T.eq(ev.event,'GYMBATTLE','source constructor event name')
+    T.eq(ev.eventId,4,'native cartridge event index remains available')
     T.eq(ev.reason,'event','source reason')
     T.eq(ev.from,h,'event before value')
     T.eq(ev.to,expected,'event after value')
