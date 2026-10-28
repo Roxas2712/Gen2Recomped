@@ -31,3 +31,21 @@ preempt already-suspended arbitrary Lua statements, provide a complete native
 HP/RNG continuation, install a resolver or enable Action Card. Native default
 combat, Gen2 and native-owner ABI qualification are separate explicit checks.
 Player saves and private mod files are not changed by QA.
+
+Native production `4c7b4c0a`, merged with main `ea1b3a83` as `4ddf42e1`,
+frozen `e8d798a271`, passes148 groups. The same frozen source additionally
+passes native GSC vanish/checkpoint and trainer-phazing groups (1490/108/355
+checks), making151 selected groups in total. Focused qualification passes216
+context checks, including actual Loader-installed source/native pass-throughs
+with identical complete native HP/PP/every-RNG/frame traces in all five GBA
+editions, plus1816 existing unified callback checks. The older135-check negative
+`cb0980b06f` reproduces63 failures, including17 stale native HP lost and RNG
+consumption after parent return. The final expanded fixture is qualified
+separately; the initial negative is not an identical216-check comparison.
+
+Unchanged OASC109 `bddb5181`, Ruby `3c7d87b493`, completes native new-game,
+GRUNT_003 trainer entry, paper/native/terrarium/native/paper views, native move
+swap/cancel, actual RAGE (PP20 to19, enemy HP66 to58), dex/list retirement and
+clean source teardown with no loader errors. Owned prepared fresh profile;
+continuous story, visible desktop, stable FPS and complete Action Card remain
+unqualified. The Mac was locked. No private mod or player profile was changed.
