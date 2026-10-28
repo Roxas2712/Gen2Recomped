@@ -31,9 +31,16 @@ Validation:
   description after detecting wrong geometry; its receipt is retained.
 - Older-public composition `4402bdd757`: 74 groups pass, including all 460
   projection assertions, with its existing native controllers retained.
-- Real unchanged-consumer image qualification is recorded after its managed
-  run finishes. All views/portraits, capture image acceptance and stable frame
-  rates remain separate.
+- Real Metal Ruby `3fec7460ac`, unchanged consumer `bddb5181`, imported TIANA
+  portrait 2: all 189 observed opening-particle draws have the current fitted
+  ball centre (maximum framebuffer error `0.00000763` pixels). The frame at
+  opponent presentation tick 62 now shows the ring at the actual ball rather
+  than outside the scene. Both native send-outs, 11 captured throw images,
+  the command menu and cleanup pass without loader errors. The 553 pre-player-
+  throw observations and 82 ball-hidden observations retain zero visibility
+  violations. There are zero duplicate cells in 378 opening passes.
+  All views/portraits, capture image acceptance and stable frame rates remain
+  separate. Hosted CI is separate too.
 
 Owned QA profiles/copies only, with a 20 GiB free floor. Private sources,
 original ROMs and player saves/profiles are unchanged.
