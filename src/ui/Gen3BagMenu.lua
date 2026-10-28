@@ -297,6 +297,7 @@ function Gen3BagMenu.new(game, opts)
   self.rsTutorial = opts.rsTutorial and true or false
   self.rs = not self.pcList and (not self.scriptRows or opts.rsTutorial)
     and require('src.ui.Gen3RsBagView').available(game)
+  require('src.ui.Gen3BagPocketMemory').restore(self)
   self:rebuild()
   return self
 end
@@ -435,6 +436,7 @@ function Gen3BagMenu:movePocket(delta)
   self.pocket = (self.pocket - 1 + delta) % #self.pockets + 1
   self.index, self.top = 1, 1
   self:rebuild()
+  require('src.ui.Gen3BagPocketMemory').remember(self)
 end
 
 function Gen3BagMenu:moveCursor(delta)
