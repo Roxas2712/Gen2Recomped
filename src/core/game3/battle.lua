@@ -133,6 +133,7 @@ function M._nativeUpdate(screen,dt,body)
 end
 function M._nativeDraw(screen,body)
   local c=runtime:bind(screen);if not c then return body(screen)end
+  if screen.introBalls and screen.introBallsFrom==nil then screen.introBallsFrom=screen.frame or 0 end
   if Boundary.active('battle.draw')then return Boundary.invoke('battle.draw')end
   local capture=captures[screen];local frame=serial()
   if capture and sameTarget(capture.target,target())and(capture.serial~=nil and capture.serial==frame or capture.serial==nil)then
