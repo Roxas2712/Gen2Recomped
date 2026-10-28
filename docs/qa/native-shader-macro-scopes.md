@@ -34,3 +34,6 @@ licences and rights remain in effect.
 
 Depends on the offered native compiler/depth stack (#337, #388). Current
 upstream-main composition and complete release qualification remain open.
+
+The actual offered source fcaecd13 also passes all 101 native Metal checks
+(receipt 7f7a699ac9); this is separate from the fork run d01eccac34.
