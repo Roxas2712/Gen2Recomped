@@ -136,12 +136,17 @@ function View.install(Screen, images)
     local b = battler(self, side)
     if not b then return nil end
     local pf = self.picFx and self.picFx[b]
+    local bg=self.anim and self.anim.bg
     return {
       hidden = (side == "enemy" and (self.enemyHidden or self.enemySendingOut))
         or (side == "player" and self.sendingOut) or self:fxHidden(b)
-        or (b.fainted and not self:fxFaintActive(b)) or (pf and pf.hidden) or false,
+        or (b.fainted and not self:fxFaintActive(b)) or (pf and pf.hidden)
+        or (bg and bg.hidden[side]) or false,
       pic = b.substituteHP and "substitute" or nil,
-      slide = pf and pf.ox or 0,
+      slide = (bg and bg.slide[side] or 0)+(pf and pf.ox or 0),
+      size = bg and bg.picSize[side],
+      shade = bg and bg.monShade[side],
+      lifted = bg and bg.liftedRows[side],
     }
   end
 

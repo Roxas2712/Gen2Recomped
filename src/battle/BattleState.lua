@@ -13782,6 +13782,7 @@ Gen2BattleView.install(BattleState, {
   path = imagePathOf,
   trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
 })
+require('src.battle.Gen2BgPictures').install(BattleState)
 Gen2Queue.install(BattleState)
 Gen2Faint.install(BattleState)
 

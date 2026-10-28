@@ -36,7 +36,6 @@
 --   xOffset' = -xOffset
 
 local BgEffects = require('src.battle.gen2.BgEffects')
-local BgIds = require('src.battle.Gen2BgEffectIds')
 
 local Gen2AnimPlayer = {}
 Gen2AnimPlayer.__index = Gen2AnimPlayer
@@ -330,68 +329,9 @@ function Gen2AnimPlayer:isDone()
   return self.done and self.tail <= 0
 end
 
--- `anim_bgeffect` queues one of BattleBGEffects' asm routines
--- (BATTLE_BG_EFFECT_*, constants/battle_anim_constants.asm).  Those are the
--- screen shakes, palette flashes and mon-pic moves -- everything an
--- animation does outside its own objects -- so without them a Gen 2 battle
--- showed the sprites and none of the impact.  BattleState already implements
--- Gen 1's SE_* vocabulary for exactly these effects, so each id routes onto
--- its closest counterpart rather than a second fx layer.
---
--- The side each one acts on is NOT baked into the id: every routine resolves
--- it through BGEffect_CheckBattleTurn, which is `hBattleTurn XOR
--- BG_EFFECT_STRUCT_BATTLE_TURN` -- the third `anim_bgeffect` argument, 1 for
--- the user and 0 for the target.  So the names below are all the unflipped
--- SE_* row and `side` on the queued event picks the battler.
-local BG_EFFECTS = {
-  [0x01] = "SE_DARK_SCREEN_FLASH",   -- FLASH_INVERTED
-  [0x02] = "SE_DARK_SCREEN_FLASH",   -- FLASH_WHITE
-  [0x03] = "SE_LIGHT_SCREEN_PALETTE",-- WHITE_HUES
-  [0x04] = "SE_DARK_SCREEN_PALETTE", -- BLACK_HUES
-  [0x05] = "SE_FLASH_SCREEN_LONG",   -- ALTERNATE_HUES
-  [0x08] = "SE_FLASH_SCREEN_LONG",   -- CYCLE_BGPALS_INVERTED
-  [0x09] = "SE_HIDE_MON_PIC",        -- HIDE_MON
-  [0x0A] = "SE_SHOW_MON_PIC",        -- SHOW_MON
-  [0x0B] = "SE_SHOW_MON_PIC",        -- ENTER_MON
-  [0x0C] = "SE_HIDE_MON_PIC",        -- RETURN_MON
-  [0x0F] = "SE_SLIDE_MON_UP",        -- TELEPORT
-  [0x13] = "SE_BLINK_MON",           -- DOUBLE_TEAM
-  [0x14] = "SE_HIDE_MON_PIC",        -- ACID_ARMOR
-  [0x15] = "SE_FLASH_SCREEN_LONG",   -- RAPID_FLASH
-  [0x16] = "SE_LIGHT_SCREEN_PALETTE",-- FADE_MON_TO_LIGHT
-  [0x17] = "SE_DARKEN_MON_PALETTE",  -- FADE_MON_TO_BLACK
-  [0x18] = "SE_LIGHT_SCREEN_PALETTE",-- FADE_MON_TO_LIGHT_REPEATING
-  [0x19] = "SE_DARKEN_MON_PALETTE",  -- FADE_MON_TO_BLACK_REPEATING
-  [0x1A] = "SE_FLASH_SCREEN_LONG",   -- CYCLE_MON_LIGHT_DARK_REPEATING
-  [0x1B] = "SE_BLINK_MON",           -- FLASH_MON_REPEATING
-  [0x1C] = "SE_DARKEN_MON_PALETTE",  -- FADE_MONS_TO_BLACK_REPEATING
-  [0x1D] = "SE_LIGHT_SCREEN_PALETTE",-- FADE_MON_TO_WHITE_WAIT_FADE_BACK
-  [0x1E] = "SE_RESET_SCREEN_PALETTE",-- FADE_MON_FROM_WHITE
-  [0x1F] = "SE_SHAKE_SCREEN",        -- SHAKE_SCREEN_X
-  [0x20] = "SE_ROCK_SLIDE_SHAKE",    -- SHAKE_SCREEN_Y
-  [0x21] = "SE_SQUISH_MON_PIC",      -- WITHDRAW
-  [0x22] = "SE_BOUNCE_UP_AND_DOWN",  -- BOUNCE_DOWN
-  [0x23] = "SE_SLIDE_MON_DOWN_AND_HIDE", -- DIG
-  [0x24] = "SE_MOVE_MON_HORIZONTALLY",   -- TACKLE
-  [0x25] = "SE_SHAKE_BACK_AND_FORTH",-- WOBBLE_MON
-  [0x26] = "SE_HIDE_MON_PIC",        -- REMOVE_MON
-  [0x27] = "SE_WAVY_SCREEN",         -- WAVE_DEFORM_MON
-  [0x28] = "SE_WAVY_SCREEN",         -- PSYCHIC
-  [0x2B] = "SE_SHAKE_BACK_AND_FORTH",-- FLAIL
-  [0x2D] = "SE_SHAKE_SCREEN",        -- ROLLOUT
-  [0x2E] = "SE_SHAKE_SCREEN",        -- VITAL_THROW
-  [0x32] = "SE_SHAKE_BACK_AND_FORTH",-- VIBRATE_MON
-  [0x33] = "SE_SHAKE_BACK_AND_FORTH",-- WOBBLE_PLAYER
-  [0x34] = "SE_WAVY_SCREEN",         -- WOBBLE_SCREEN
-}
-
--- `anim_incbgeffect id` bumps that effect's BG_EFFECT_STRUCT_JT_INDEX, and
--- for every routine a script ends this way the state it lands on is the one
--- that puts back what the effect changed and calls EndBattleBGEffect:
--- BGEffect_RapidCyclePals' .two_dmg reloads rBGP with $e4, the deformations'
--- last state is BattleAnim_ResetLCDStatCustom.  The port ran none of it, so
--- Growl's FADE_MON_TO_BLACK_REPEATING left its darkened palette up for the
--- rest of the battle and Tail Whip's WOBBLE_MON never put the mon back.
+-- The historical SE-reset lookup remains available to existing consumers.
+-- The native VM no longer emits these substitutes: Gen2BgView and native
+-- picture drawing consume the genuine BG owner directly.
 local BG_EFFECTS_END = {
   [0x03] = "SE_RESET_SCREEN_PALETTE", -- WHITE_HUES
   [0x04] = "SE_RESET_SCREEN_PALETTE", -- BLACK_HUES
@@ -418,44 +358,10 @@ local BG_EFFECTS_END = {
 }
 Gen2AnimPlayer.BG_EFFECTS_END = BG_EFFECTS_END
 
--- The legacy visual adapter is keyed by the Gold/Silver table. Cartridge
--- commands must resolve by NAME first: Crystal inserts BODY_SLAM at $25.
--- Keep this adapter until the native register/scanline draw owner is wired;
--- the actual pool below is authoritative for public BG state.
-local legacyBgIds = {}
-for index,name in ipairs(BgIds.forVersion('gold')) do legacyBgIds[name]=index-1 end
-local function legacyBgId(self,id)
-  local name=type(id)=='number'and self.bg.order[id+1]or id
-  if name=='BATTLE_BG_EFFECT_BODY_SLAM'then return 0x24 end
-  return legacyBgIds[name]
-end
-
--- BGEffect_CheckBattleTurn: BG_EFFECT_STRUCT_BATTLE_TURN is 1 for the move's
--- user and 0 for its target.  Anything else (the flash routines reuse the
--- field as a repeat count) only ever drives screen-wide effects, which
--- ignore the side.
-local function bgSide(turn)
-  return turn == 1 and "user" or "target"
-end
-
--- The effects that are deliberately dropped rather than unhandled, so the
--- coverage test can tell the two apart.
-Gen2AnimPlayer.BG_EFFECTS_DROPPED = {
-  -- object palette cycling; the port draws each object with its own
-  -- BattleObjectPals entry and has no OBP timer to cycle
-  [0x06] = true, [0x07] = true,
-  -- per-scanline BG raster (Surf/Whirlpool/the water backdrop)
-  [0x0D] = true, [0x0E] = true, [0x2F] = true, [0x30] = true, [0x31] = true,
-  -- BG tilemap dissolve
-  [0x10] = true,
-  -- BATTLEROBJ_1ROW/2ROW copy rows of the battler's own picture into the
-  -- object tiles.  With no VRAM to copy into, the objects that depend on it
-  -- would draw the raw PLAYERHEAD/ENEMYFEET sheets instead -- the stray foot
-  -- that turned up in half the physical moves -- so spawn drops them.
-  [0x11] = true, [0x12] = true,
-  -- unused beta routines
-  [0x29] = true, [0x2A] = true, [0x2C] = true,
-}
+-- BG commands now execute their genuine register/picture state machines.
+-- Battler-picture requests are drawn by the native lifted-row pass, while
+-- the remaining approximate object runtime is replaced independently.
+Gen2AnimPlayer.BG_EFFECTS_DROPPED = {}
 
 -- BATTLE_ANIM_GFX_PLAYERHEAD / _ENEMYFEET: these two sheets are placeholders
 -- that BATTLE_BG_EFFECT_BATTLEROBJ_*ROW overwrites with a slice of the
@@ -718,24 +624,9 @@ function Gen2AnimPlayer:step(inst)
     end
   elseif op == "bgeffect" then
     local id = inst.args[1]
-    local side = bgSide(inst.args[3])
-    -- anim_incbgeffect addresses a running effect by id alone, so keep the
-    -- side the queue entry was made with
-    self.bgSides = self.bgSides or {}
-    self.bgSides[id] = side
     self.bg:queue(id, inst.args[2], inst.args[3], inst.args[4])
-    local se = BG_EFFECTS[legacyBgId(self,id)]
-    if se then
-      self.effects[#self.effects + 1] = { effect = se, side = side, gen2 = true }
-    end
   elseif op == "incbgeffect" then
-    local id = inst.args[1]
-    self.bg:incEffect(id)
-    local se = BG_EFFECTS_END[legacyBgId(self,id)]
-    if se then
-      local side = self.bgSides and self.bgSides[id] or "target"
-      self.effects[#self.effects + 1] = { effect = se, side = side, gen2 = true }
-    end
+    self.bg:incEffect(inst.args[1])
   elseif op == 'bgp' or op == 'obp0' or op == 'obp1' then
     self.bg[op] = (inst.args[1] or 0) % 256
   elseif op == 'resetobp0' then

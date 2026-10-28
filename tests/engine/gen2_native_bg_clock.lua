@@ -51,9 +51,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   local entry=p.bg.effects[1]
   T.eq(entry.func,edition=='crystal'and'BATTLE_BG_EFFECT_BODY_SLAM'or'BATTLE_BG_EFFECT_WOBBLE_MON',
     'raw command resolves through the actual cartridge table')
-  local effect=p:pollEffects()[1]
-  T.eq(effect and effect.effect,edition=='crystal'and'SE_MOVE_MON_HORIZONTALLY'or'SE_SHAKE_BACK_AND_FORTH',
-    'existing visual adapter also resolves Crystal insertion by effect name')
+  T.eq(#p:pollEffects(),0,'actual BG owner does not duplicate its motion through legacy SE effects')
   p:update();p:update()
   if edition=='crystal'then T.eq(p.bg.lyBackup[0x30],0xfe,'real VM drives the signed BODY_SLAM LCD trace')end
   p:release()

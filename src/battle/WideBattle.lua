@@ -83,9 +83,10 @@ local function inRegion(x, y, w, h, dx, dy, fn)
   g.setScissor(x, y, w, h)
   g.push()
   g.translate(dx, dy)
-  fn()
+  local ok,why=pcall(fn)
   g.pop()
   restoreScissor(saved)
+  if not ok then error(why,0)end
 end
 
 local function levelAt(battle, battler, x, y)
@@ -467,6 +468,21 @@ local function drawAnimationLayer(battle)
 end
 
 -- The whole 304x144 composition for one frame.
+-- Native picture regions are shared by the BG and lifted-OBJ passes.
+function WideBattle.drawPicRegions(battle,slide,sx,sy)
+  sx,sy=sx or 0,sy or 0
+  local previous=battle.wideRegion
+  battle.wideRegion = true
+  local ok,why=pcall(function()
+  inRegion(sx, 32 + sy, 160, WideBattle.FIELD_BOTTOM - 32, 20 + sx, 8 + sy,
+    function() battle:drawPicsLayer(slide, 0, 0, "player", true) end)
+  inRegion(160 + sx, sy, 144, WideBattle.FIELD_BOTTOM, 136 + sx, sy,
+    function() battle:drawPicsLayer(slide, 0, 0, "enemy", true) end)
+  end)
+  battle.wideRegion = previous
+  if not ok then error(why,0)end
+end
+
 local function drawPanel(battle,withObjects)
   local g = love.graphics
   -- The field is the display mode's paper.  Under a forced-mono mode the
@@ -479,7 +495,9 @@ local function drawPanel(battle,withObjects)
   else
     g.setColor(PaletteFX.paperShade(battle.data))
   end
-  g.rectangle("fill", 0, 0, WideBattle.WIDTH, WideBattle.HEIGHT)
+  if not battle:worldBackdrop()then
+    g.rectangle("fill",0,0,WideBattle.WIDTH,WideBattle.HEIGHT)
+  end
   -- AskName clears the field the same way the classic layout does
   if battle.blankForAskName then return end
 
@@ -500,12 +518,7 @@ local function drawPanel(battle,withObjects)
   -- each region's clip with its contents, so a pic pushed toward a region
   -- edge is not sheared off it (a vertical shake used to clip the player's
   -- feet at FIELD_BOTTOM).
-  battle.wideRegion = true
-  inRegion(sx, 32 + sy, 160, WideBattle.FIELD_BOTTOM - 32, 20 + sx, 8 + sy,
-    function() battle:drawPicsLayer(slide, 0, 0, "player", true) end)
-  inRegion(160 + sx, sy, 144, WideBattle.FIELD_BOTTOM, 136 + sx, sy,
-    function() battle:drawPicsLayer(slide, 0, 0, "enemy", true) end)
-  battle.wideRegion = nil
+  WideBattle.drawPicRegions(battle,slide,sx,sy)
 
   -- A battle sets rWY to 0 (engine/battle/core.asm), so the window the
   -- shakes move IS the whole screen: PredefShakeScreenHorizontally,

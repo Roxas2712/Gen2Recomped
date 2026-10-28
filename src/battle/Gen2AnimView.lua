@@ -27,6 +27,7 @@ function View:release()
     if image and image.release then image:release() end
   end
   self.images, self.quads = {}, {}
+  self:releaseBg()
 end
 function View:objPalette(name, battle)
   local index = slots[name] or tonumber(name)
@@ -119,4 +120,6 @@ function View.runner(player)
     __newindex=function() error('native Gen2 animation observation is read-only',2) end,
   })
 end
+-- BG methods use the same concrete view object as native OAM drawing.
+for name,method in pairs(require('src.battle.Gen2BgView'))do View[name]=method end
 return View
