@@ -113,6 +113,7 @@ mobile/ios/bundle_id.local
 
 /tests/*
 !/tests/pokemon_x_preflight_test.py
+!/tests/skin_fs_fixture.lua
 !/tests/test_fetch_love_runtime.py
 !/tests/native_suspend/
 !/tests/native_arena/

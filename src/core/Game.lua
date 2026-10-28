@@ -115,6 +115,9 @@ function Game:load()
 
   self.touchControls = TouchControls
   TouchControls:init()
+  TouchControls:setHotkeyHandler(function(action, pressed)
+    self:touchSkinHotkey(action, pressed)
+  end)
 
   self.renderer = Renderer
   Renderer:init()
@@ -392,6 +395,36 @@ function Game:returnToTitle()
   -- froze the resumed challenge's first fade that way.
   if self.overworld then self.overworld.fadeOverlay = nil end
   self.stack:push(self:makeTitleState())
+end
+
+-- Skin actions use the same native speed/title/options owners as keyboard input.
+Game.SKIN_FAST_FORWARD = 4
+function Game:touchSkinHotkey(action, pressed)
+  if action == "fast_forward_hold" then
+    if pressed then
+      self.skinSpeedSaved = self.speedOverride
+      self.speedOverride = Game.SKIN_FAST_FORWARD
+    else
+      self.speedOverride = self.skinSpeedSaved
+      self.skinSpeedSaved = nil
+    end
+  elseif action == "fast_forward_toggle" and pressed then
+    if self:speedLocked() or not (self.save and self.save.options) then return end
+    local Speed = require("src.core.GameSpeed")
+    self.save.options.speed = Speed.cycle(self.save.options.speed, 1)
+    self.speedOverride = nil
+    self:writeOptions()
+  elseif action == "soft_reset" and pressed then
+    Input:reset()
+    TouchControls:reset()
+    self:returnToTitle()
+  elseif action == "menu" and pressed then
+    local top = self.stack and self.stack:top()
+    if top and not top.isTouchSkinMenu then
+      local state = require("src.ui.Screens").build(self, "OptionsMenu")
+      if state then state.isTouchSkinMenu = true; self.stack:push(state) end
+    end
+  end
 end
 
 function Game:step(dt)
@@ -2082,8 +2115,8 @@ function Game:touchpressed(id, x, y, dx, dy, pressure)
   -- one opens a different screen before the finger is lifted.
   if not self.secondScreenInjecting and TouchControls.visible and TouchControls:visible()
      and TouchControls:hitTest(x,y) then
-    TouchControls:touchpressed(id,x,y)
-    return
+    if TouchControls:touchpressed(id,x,y)
+       or (TouchControls.touches and TouchControls.touches[id]) then return end
   end
   if modPointer(self, "pressed", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchpressed", id, x, y) then return end
