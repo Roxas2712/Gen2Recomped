@@ -1,0 +1,34 @@
+name: Native coroutine phase ownership
+on:
+  pull_request:
+    paths:
+      - 'src/compat/gen1/CoroutineScopes.lua'
+      - 'src/compat/gen1/ScriptBoundary.lua'
+      - 'src/core/Game3.lua'
+      - 'tests/engine/native_coroutine_phase_scopes.lua'
+      - 'tests/engine/native_game_coroutine_scopes.lua'
+      - '.github/workflows/native-phase-scopes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Borrowing, suspension, retirement and callback attribution
+        run: |
+          luajit tests/engine/native_coroutine_phase_scopes.lua
+          luajit tests/engine/native_game_coroutine_scopes.lua
+          luajit tests/engine/native_session_callbacks.lua
+          luajit tests/engine/native_script_space.lua
+          luajit tests/engine/native_follower_callback_owner.lua
+          luajit tests/engine/unified_mod_callbacks.lua
+      - name: Existing native owners and Gen2 lifecycle
+        run: |
+          luajit tests/engine/native_effect_context.lua
+          luajit tests/engine/native_battle_menu_continuity.lua
+          luajit tests/engine/native_fly_arrival.lua
+          luajit tests/engine/gen2_lifecycle_callbacks.lua
