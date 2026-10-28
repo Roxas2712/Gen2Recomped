@@ -27,7 +27,8 @@ FILES = ['src/import/BankPages.lua', 'src/import/BankWorkspace.lua',
          'src/import/LauncherLibrary.lua', 'src/import/LauncherCommunity.lua']
 LOOKUP_ONLY = ['src/import/RomImporter.lua', 'src/import/LauncherSidebar.lua',
                'src/import/LauncherStorage.lua', 'src/import/LauncherModProfiles.lua',
-               'src/pinball/Friends.lua', 'src/pinball/Player.lua', 'src/ui/WalkerOnlinePage.lua']
+               'src/pinball/Friends.lua', 'src/pinball/Player.lua', 'src/ui/WalkerOnlinePage.lua',
+               'src/pokewalker/minigames/Enrollment.lua']
 FILES += LOOKUP_ONLY
 # Helpers have different signatures. Never mistake paths, code or action IDs
 # for visible copy just because their surrounding function is named button.
@@ -72,7 +73,7 @@ def collect(root=ROOT):
                 previous = token
         for i, (token, _) in enumerate(tokens[:-2]):
             if filename in LOOKUP_ONLY:
-                if token in {'Strings','launcherLookup','launcherFormat'} and tokens[i+1][0]=='(':record(i+2)
+                if token in {'Strings','T','launcherLookup','launcherFormat'} and tokens[i+1][0]=='(':record(i+2)
                 continue
             if token in {'text', 'paragraph', 'para', 'line', 'button', 'row', 'field', 'check', 'L', 'F', 'Strings', 'launcherLookup', 'launcherFormat', 'action', '_chipButton'} and tokens[i+1][0] == '(':
                 if token=='action' and not filename.endswith('LauncherGameMods.lua'):continue

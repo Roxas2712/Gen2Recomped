@@ -28,8 +28,10 @@ P.attachTask(task);account='17'
 local ok,allowed,opts=coroutine.resume(task)
 check(ok and not allowed and S.decode(opts).musicVol==6,'a pending task stays pinned to its original profile and refuses account-changing operations')
 check(P.check() and Saves.peekSlot('red',slot).player.name=='Alice' and Saves.loadOptions().musicVol==2,'switching back restores the original save registry, data and options')
+Saves.persistenceFs().write('minigames/enrollment.lua','A acceptance')
 local ui={_bankOverlay={accountId='17',right={dirty=true}},ready={}}
 account='29';P.profileChanged(ui)
+check(not Saves.persistenceFs().read('minigames/enrollment.lua'),'minigame acknowledgement is private to the active account')
 check(not ui._bankOverlay and ui._profileBankDrafts['17'].right.dirty,'account switching retains another profile’s staged Bank draft without displaying it')
 local binding=files[P.FILE];files[P.FILE]='damaged legacy binding'
 check(P.check() and Saves.peekSlot('red',slotB).player.name=='Bob','a damaged legacy binding does not block an independently linked named profile')

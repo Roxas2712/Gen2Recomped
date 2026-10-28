@@ -1,6 +1,18 @@
 -- Shared launcher-language copy for walker records and online/account access.
 -- Contributions by Roxas2712. See LICENSE-ROXAS2712.md.
 return {de={
+ ["MINIGAMES · CONTENT NOTICES"]="MINISPIELE · INHALTSHINWEISE",
+ ["Minigames may use additional graphics, sounds and other content. Third-party content and trademarks remain with their respective rights holders. This project claims no ownership of them."]="Minispiele können zusätzliche Grafiken, Klänge und andere Inhalte verwenden. Fremde Inhalte und Marken verbleiben bei ihren jeweiligen Rechteinhabern. Dieses Projekt beansprucht daran keine Rechte.",
+ ["Use additional files only when you are permitted to use them for the intended purpose. A local import, a free download or this confirmation does not grant a licence."]="Nutze zusätzliche Dateien nur, wenn du zur vorgesehenen Verwendung berechtigt bist. Ein lokaler Import, ein kostenloser Download oder diese Bestätigung erteilt keine Lizenz.",
+ ["Read and accept these notices before opening the minigames. You can withdraw acceptance in Friends & cloud. This notice does not replace the separate selection and review of optional asset packs."]="Lies diese Hinweise und nimm sie an, bevor du die Minispiele öffnest. Unter Freunde & Cloud kannst du die Annahme widerrufen. Dieser Hinweis ersetzt nicht die gesonderte Auswahl und Prüfung optionaler Inhaltspakete.",
+ ["I have read the notices. I confirm that I am permitted to use any additional files I provide for the intended purpose."]="Ich habe die Hinweise gelesen. Für von mir bereitgestellte Zusatzdateien bestätige ich, dass ich zur vorgesehenen Nutzung berechtigt bin.",
+ ["ACCEPT & CONTINUE"]="ANNEHMEN & WEITER",
+ ["BACK WITHOUT ACCEPTING"]="OHNE ANNAHME ZURÜCK",
+ ["Read the notices and tick the confirmation first."]="Lies zuerst die Hinweise und setze das Bestätigungshäkchen.",
+ ["The profile or notices changed. Read them again before accepting."]="Das Profil oder die Hinweise wurden geändert. Lies sie vor der Annahme erneut.",
+ ["The confirmation could not be saved. Minigames remain locked."]="Die Bestätigung konnte nicht gespeichert werden. Die Minispiele bleiben gesperrt.",
+ ["WITHDRAW MINIGAME ACCEPTANCE"]="MINISPIEL-ANNAHME WIDERRUFEN",
+ ["Acceptance withdrawn. Minigames require confirmation again."]="Annahme widerrufen. Die Minispiele erfordern erneut deine Bestätigung.",
  ["Resume"]="Fortsetzen",
  ["End run"]="Runde beenden",
  ["Play again"]="Noch einmal",

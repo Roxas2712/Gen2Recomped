@@ -34,6 +34,7 @@ local Context = require("src.pokewalker.minigames.Context")
 local Base = require("src.pokewalker.minigames.Base")
 local Gfx = require("src.pokewalker.minigames.Gfx")
 local T=require("src.pokewalker.minigames.Locale")
+local Enrollment=require('src.pokewalker.minigames.Enrollment')
 
 local H = {}
 H.__index = H
@@ -58,11 +59,14 @@ end
 function H.new(screen, st, opts)
   local self = setmetatable({ screen = screen, st = st, opts = opts or {}, t = 0, view = "list",
                               sel = 1, scoresOf = nil, earned = 0, runs = 0, stickDir = {} }, H)
-  Rewards.state(st)
+  if Enrollment.accepted(H.GAME_MODULES)then self:_initialize()else Enrollment.open(self)end
+  return self
+end
+function H:_initialize()
+  Rewards.state(self.st)
   local A=Gfx.art()
   if A and A.forget then A.forget() end -- imports may have changed since last entry
   pcall(self.context,self)
-  return self
 end
 
 -- ------------------------------------------------------------ the games
@@ -102,6 +106,7 @@ function H:cycleSource()
 end
 
 function H:play(i, skipIntro)
+  if not Enrollment.accepted(H.GAME_MODULES)then Enrollment.open(self);return end
   if not require('src.pokewalker.Walker').check(self.st)then return end
   local mod = H.games()[i]
   if not mod then return end
@@ -129,6 +134,7 @@ function H:update(dt)
   if require('src.pokewalker.Walker').syncing then return end
   if not require('src.pokewalker.Walker').check(self.st)then self:close(true);return end
   self.t = self.t + math.min(dt or 0, 0.1)
+  if self.enrolling then return end
   if self.session then self.session:update(dt) end
 end
 
@@ -142,6 +148,7 @@ end
 
 function H:action(a)
   if require('src.pokewalker.Walker').syncing then return true end
+  if self.enrolling then return Enrollment.action(self,a)end
   if self.view == "game" and self.session then return self.session:action(a) end
   local n = #H.games()
   if self.view == "scores" then
@@ -228,6 +235,7 @@ end
 local function dateOf(t) return t and os.date("%b %d", t) or "" end
 
 function H:draw(x, y, w, h)
+  if self.enrolling then return Enrollment.draw(self,x,y,w,h)end
   local g = love.graphics
   Gfx.tick(self.t)
   Gfx.version=self.artVersion
