@@ -525,6 +525,13 @@ local function buildRows(game)
   do
     local osName = love.system and love.system.getOS and love.system.getOS()
     if osName == 'Android' or osName == 'iOS' or os.getenv('POKEPORT_TOUCH') == '1' then
+      rows[#rows + 1] = { id = 'hotbar', label = Strings('TOUCH HOTBAR'),
+        value = function(g) return g.save.options.hotbar ~= false and Strings('ON') or Strings('OFF') end,
+        step = function(g)
+          g.save.options.hotbar = g.save.options.hotbar == false
+          require('src.core.TouchControls'):applyOptions(g.save.options)
+          return true
+        end }
       rows[#rows + 1] = { id = 'haptics', label = Strings('HAPTICS'),
         value = function(g) return require('src.core.TouchControls').hapticLabel(g.save.options.haptics) end,
         step = function(g, dir)

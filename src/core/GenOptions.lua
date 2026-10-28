@@ -52,6 +52,7 @@ GenOptions.SHARED_ONLY = {
   saveSlots = true,
   touchControls = true,
   haptics = true,
+  hotbar = true,
   tutorials = true,
   perGeneration = true,
   dataDir = true,
