@@ -11510,6 +11510,8 @@ function BattleState:gen3SendOut(battler)
     sendOut = (battler == self.player) and "player" or "opponent",
     battler = battler,
     to = { x = cx, y = cy },
+    from = self.pokedudeDemo and battler == self.player
+      and timing.sendOut.fromPokedude or nil,
     -- ...AND IF IT SPARKLES, IT SPARKLES HERE.  TryShinyAnimation is called
     -- out of the send-out, once the mon is out of the ball, which is exactly
     -- what this animation owns -- so the shiny beat rides it rather than
