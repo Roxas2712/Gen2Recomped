@@ -10,6 +10,7 @@
 local Fingerprint = require("src.link.Fingerprint")
 local Schemas = require("src.mods.Schemas")
 local Version = require("src.core.Version")
+local Strings = require("src.core.Strings")
 
 local Handshake = {}
 
