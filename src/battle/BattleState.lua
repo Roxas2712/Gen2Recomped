@@ -3154,7 +3154,7 @@ function BattleState:advanceQueue()
     end
     if GameVersion.isGen2() then
       require('src.battle.Gen2PicturePresentation').admitted(self,item,
-        self.animPlaying and self.anim or nil)
+        self.animPlaying and self.animPlayer.runtime or nil)
     end
     self.current = nil
     return true
