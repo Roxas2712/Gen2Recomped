@@ -402,7 +402,7 @@ Game.SKIN_FAST_FORWARD = 4
 function Game:_cycleSpeed(dir)
   if not (self.save and self.save.options) or self:speedLocked() then return false end
   local ow = self.overworld
-  local top = self.stack and self.stack:top()
+  local top = activeTop(self.stack)
   if ow and (ow.transitioning or (top == ow and (
       (ow.runner and ow.runner.isRunning and ow.runner:isRunning())
       or (ow.scriptMoves and #ow.scriptMoves > 0) or ow.engaging or ow.emote))) then
