@@ -31,7 +31,9 @@ function C.new(game,opts)
     self.cry=Sound.playCry(game.data,id)
     return self.cry
   end
-  function audio.isCryFinished()return not(self.cry and self.cry:isPlaying())end
+  -- Completion belongs to the shared native audio clock. A device can keep
+  -- reporting a queued source as playing after the recording has completed.
+  function audio.isCryFinished()return Sound.isCryFinished()end
   audio.fadeOutBgm=Music.fadeOutM4a
   local profile={id=version,family='rs',ui={}}
   profile.ui.frames={nativeLayout='rs',manifest='data/generated/gba/chrome/rs_frames.lua',userCount=20,
