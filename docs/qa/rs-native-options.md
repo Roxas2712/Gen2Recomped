@@ -45,6 +45,13 @@ captures and checks eight cases:
 - Reopening uses the saved frame and UP wraps to CANCEL.
 - Actual main-menu OPTION/B return restores the original menu.
 
+Integration `1f00e0eed5c4dd625d8c8795e5bdc7c2c3501053` preserves public main
+`a8833b354413996e07ff2cdff73b94c656df54bc`, including its newer ball/sendout
+presentation. Both editions pass fresh full imports and the same complete
+twelve-capture option fixture on that integrated source. Five focused
+integrated suites pass 613 assertions, including native ending save, Hall of
+Fame and credits contracts. The subsequent head changes documentation only.
+
 Draw-time save bytes and gameplay RNG remain unchanged. The initial native
 run exposed an update continuing after its owner was popped during fade-out;
 the final runtime stops that update safely. The final head adds documentation
