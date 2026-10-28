@@ -1106,7 +1106,7 @@ R.font = {
   semantics = "record", target = "font",
   value = f.union{
     f.rec{ image = f.path, base = f.int(0), glyphsPerRow = f.opt(f.int(1)),
-           advance = f.opt(f.int(1)),
+           advance = f.opt(f.int(1)), inactive = f.opt(f.bool),
            charmap = f.opt(f.list(f.rec{ code = f.int(0), seq = f.str })) },
     f.rec{ seq = f.str, code = f.int(0) },
     fontTtf,
