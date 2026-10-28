@@ -3051,6 +3051,9 @@ function BattleState:advanceQueue()
             ok, started = pcall(self.animForMove, self, item.anim,
               item.attackerIsPlayer and 'player' or 'enemy',
               item.animParam, item.effectiveness, item.afterAnim)
+          elseif gen2Misc and not opts then
+            ok,started=pcall(self.animForId,self,item.anim,
+              item.attackerIsPlayer and 'player' or 'enemy',item.animParam)
           else
             ok, started = pcall(require('src.battle.Gen2MovePresentation').start,
               self, item.anim, item.attackerIsPlayer, opts)

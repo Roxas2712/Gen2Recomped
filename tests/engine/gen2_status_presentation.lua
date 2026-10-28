@@ -67,7 +67,13 @@ for _,edition in ipairs{'gold','silver','crystal'}do
    T.check(text and text:find(language=='de'and(kind=='sleep'and'schlaeft'or'verwirrt')
      or(kind=='sleep'and'fast asleep'or'is confused'),1,true),'actual translated caption is retained')
    s.game.save.options.animations=false
-   local starts=0;local start=s.animPlayer.start
+   local starts,admissions=0,0;local start=s.animPlayer.start
+   local admit=s.animForId
+   s.animForId=function(self,id,which,param)
+    admissions=admissions+1;T.eq(id,expected,'native row uses the real public misc entry point')
+    T.eq(which,side,'native misc entry point keeps the actual side')
+    return admit(self,id,which,param)
+   end
    s.animPlayer.start=function(self,id,...)
     starts=starts+1;T.eq(id,expected,'scene-off still admits the actual misc-status program')
     return start(self,id,...)
@@ -80,6 +86,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
    T.eq(runner.animId,expected,'real interpreter exposes the actual status ID')
    finish(s)
    T.eq(starts,1,'status row starts exactly one interpreter')
+   T.eq(admissions,1,'native row is admitted through its public owner exactly once')
    T.eq(runner.frames,kind=='sleep'and 4 or 5,'real native wait/ret owns duration')
    T.eq(b.mon.hp,hp,'status presentation does not change HP')
    T.eq(b.curMoves[1].pp,pp,'status presentation cannot spend PP')
@@ -172,6 +179,15 @@ for _,edition in ipairs{'red','firered','emerald'}do
     or(side=='player'and'CONF_PLAYER_ANIM'or'CONF_ANIM')
   for _,row in ipairs(s.queue)do if row.anim then T.eq(row.anim,expected,'non-GSC status identity unchanged')end end
  end end
+end
+for _,edition in ipairs{'firered','emerald'}do
+ local s=make(edition,'flat','de');local b=s.player
+ s.data.moves.SNORE={id='SNORE',index=173,name='SNORE',type='NORMAL',power=40,pp=15}
+ local move={id='SNORE',pp=10};b.mon.status='SLP';b.sleepTurns=3
+ T.eq(s:statusInterrupt(b,s.enemy,move),false,'GBA Snore still bypasses its native sleep cancellation')
+ T.eq(s.queue[1].anim,'SLP_PLAYER_ANIM','allowed GBA Snore retains its original sleep presentation')
+ T.check(s.queue[2].text:find('schlaeft',1,true)~=nil,'allowed GBA Snore retains actual translated caption')
+ T.eq(move.pp,10,'GBA precheck presentation spends no PP')
 end
 Strings.load({});V.set(old)
 T.finish('native GSC status identity, translated captions, structured causes and real queue/VM')
