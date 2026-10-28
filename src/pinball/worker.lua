@@ -1,14 +1,16 @@
 -- One worker owns both guest contexts and all native calls.
-require('love.thread');require('love.timer');require('love.image');require('love.sound')
+require('love.thread');require('love.timer');require('love.image');require('love.sound');require('love.audio')
 local Json=require('src.link.Json');local job=Json.decode(...)
 local ABI=require('src.pinball.ABI');local ffi=ABI.ffi
+local Clock=require('src.pinball.Clock')
 local channels={}
-for _,k in ipairs{'commands','frames','audio','events'}do channels[k]=love.thread.getChannel(job.channel..'.'..k)end
+for _,k in ipairs{'commands','frames','events'}do channels[k]=love.thread.getChannel(job.channel..'.'..k)end
 local function emit(event)channels.events:push(Json.encode(event))end
-local lib,handles
+local lib,handles,output
 local function failure()return ffi.string(lib.ascendant_pinball_error())end
 local function release(message)if message then for _,data in ipairs(message.images)do data:release()end end end
 local function close()
+ if output then output:close();output=nil end
  if handles then
   for _,m in ipairs(handles)do if lib.ascendant_pinball_close(m)==0 then emit{event='notice',message=failure()}end end
   handles=nil
@@ -16,8 +18,11 @@ local function close()
 end
 local ok,why=pcall(function()
  lib=ABI.load(job.session.bridge);handles={}
+ output=require('src.pinball.Audio').new(job.session.volume,job.diagnostics)
  local hasPriority,workerPriority=pcall(function()return lib.ascendant_pinball_priority end)
  local foreground=job.foreground~=false
+ local visible=job.visible~=false;local nextHiddenPicture=0
+ local hasPresent,stepPresent=pcall(function()return lib.ascendant_pinball_step_present end)
  local defaultPriority=os.getenv('ASCENDANT_PINBALL_DEFAULT_QOS')=='1'
  local initialPriority=hasPriority and workerPriority(-1)or 0
  local priority=initialPriority
@@ -37,9 +42,12 @@ local ok,why=pcall(function()
  emit{event='ready'}
  local input={0,0};local paused=false;local phase=job.duel and 'preparing' or 'playing'
  local prepared,elapsed,done,best={},{},{},{}
+ local audioMuted=false
+ local function audioActive()output:setActive(not audioMuted and not paused and phase~='waiting'and phase~='finished')end
  local nextPreview=0
  local previews=love.thread.getChannel(job.channel..'.previewSource')
  local nextFrame=love.timer.getTime();local n=0
+ local audioProduced,audioDropped,audioSeconds,scheduleLost,maxStep=0,0,0,0,0
  local width,height,count,rate=ffi.new('uint32_t[1]'),ffi.new('uint32_t[1]'),ffi.new('size_t[1]'),ffi.new('uint32_t[1]')
  local hasTableStats,tableStats=pcall(function()return lib.ascendant_pinball_table_stats end)
  local hasTiming,nativeTiming=pcall(function()return lib.ascendant_pinball_diagnostics end)
@@ -66,9 +74,12 @@ local ok,why=pcall(function()
     close();emit{event='closed'};return
    end
    if msg.action=='input' then input=msg.buttons end
-   if msg.action=='start' and phase=='waiting'then phase='playing';nextFrame=love.timer.getTime();schedule(not paused)end
-   if msg.action=='pause' then paused=msg.value;input={0,0};nextFrame=love.timer.getTime();schedule(not paused and phase~='waiting'and phase~='finished')end
+   if msg.action=='start' and phase=='waiting'then phase='playing';nextFrame=love.timer.getTime();schedule(not paused);audioActive()end
+   if msg.action=='pause' then paused=msg.value;input={0,0};nextFrame=love.timer.getTime();schedule(not paused and phase~='waiting'and phase~='finished');audioActive()end
+   if msg.action=='mute'then audioMuted=msg.value==true;audioActive()end
+   if msg.action=='volume'then output:setVolume(msg.value)end
    if msg.action=='foreground'then foreground=msg.value;schedule(not paused and phase~='waiting'and phase~='finished')end
+   if msg.action=='visible'then visible=msg.value==true end
    if msg.action=='view'then
     for _,m in ipairs(handles)do assert(lib.ascendant_pinball_view(m,msg.full_table and 1 or 0)~=0,failure())end
    end
@@ -81,6 +92,7 @@ local ok,why=pcall(function()
       if f then f:close()else path=job.session.player..'/quick.state'end
      end
      local success=lib.ascendant_pinball_state(handles[1],path,msg.load and 1 or 0)
+     if msg.load and success~=0 then output:setActive(false);audioActive()end
      emit{event='notice',message=success~=0 and (msg.load and 'Schnellstand geladen.' or 'Schnellstand gespeichert.')or failure()}
     end
    end
@@ -92,6 +104,8 @@ local ok,why=pcall(function()
   else
    local begin=love.timer.getTime();n=n+1
    local message={images={},stats={},frame=n}
+   local drawFrame=visible or now>=nextHiddenPicture
+   if drawFrame and not visible then nextHiddenPicture=now+1/6 end
    local diagnostics=job.diagnostics and {step=0,simulation=0,composition=0,thread_cpu=0,interpreted=0,image=0,stats=0,audio=0,late=math.max(0,begin-nextFrame),reused_rows=0,rendered_rows=0,priority_before=initialPriority,priority=priority}
    for i,m in ipairs(handles)do
     local function read(address,bytes)return tonumber(lib.ascendant_pinball_read(m,address,bytes or 1))end
@@ -116,8 +130,11 @@ local ok,why=pcall(function()
      end
     end
     local stamp=diagnostics and love.timer.getTime()
+    local advanced=false
     if not prepared[i] or phase=='playing' and not done[i]then
-     assert(lib.ascendant_pinball_step(m,buttons)~=0,failure())
+     local success=hasPresent and stepPresent(m,buttons,drawFrame and 1 or 0)or lib.ascendant_pinball_step(m,buttons)
+     assert(success~=0,failure())
+     advanced=true
      if diagnostics and hasTiming then
       nativeTiming(m,timings)
       diagnostics.simulation=diagnostics.simulation+tonumber(timings[0]);diagnostics.composition=diagnostics.composition+tonumber(timings[1])
@@ -127,10 +144,14 @@ local ok,why=pcall(function()
     end
     if diagnostics then local t=love.timer.getTime();diagnostics.step=diagnostics.step+t-stamp;stamp=t end
     if diagnostics and hasTableStats then tableStats(m,reused,rendered);diagnostics.reused_rows=diagnostics.reused_rows+tonumber(reused[0]);diagnostics.rendered_rows=diagnostics.rendered_rows+tonumber(rendered[0])end
-    local ptr=lib.ascendant_pinball_picture(m,width,height)
-    local data=love.image.newImageData(tonumber(width[0]),tonumber(height[0]),'rgba8')
-    ffi.copy(data:getFFIPointer(),ptr,tonumber(width[0])*tonumber(height[0])*4);message.images[i]=data
-    if job.broadcastView and i==1 and phase=='playing'and now>=nextPreview then
+    local data
+    if drawFrame then
+     local ptr=lib.ascendant_pinball_picture(m,width,height)
+     assert(ptr~=nil,failure())
+     data=love.image.newImageData(tonumber(width[0]),tonumber(height[0]),'rgba8')
+     ffi.copy(data:getFFIPointer(),ptr,tonumber(width[0])*tonumber(height[0])*4);message.images[i]=data
+    end
+    if data and job.broadcastView and i==1 and phase=='playing'and now>=nextPreview then
      nextPreview=now+1/6
      previews:performAtomic(function(channel)
       local old=channel:pop();while old do old.image:release();old=channel:pop()end
@@ -154,11 +175,13 @@ local ok,why=pcall(function()
      stats.done=done[i]or false
     end
     if diagnostics then local t=love.timer.getTime();diagnostics.stats=diagnostics.stats+t-stamp;stamp=t end
-    if i==(job.audioSeat or 1) and channels.audio:getCount()<6 then
+    if advanced and i==(job.audioSeat or 1) then
      local samples=lib.ascendant_pinball_audio(m,count,rate);local length=tonumber(count[0])
+     if job.diagnostics then audioProduced=audioProduced+1;audioSeconds=audioSeconds+length/tonumber(rate[0])end
      if length>0 then
       local sound=love.sound.newSoundData(length,tonumber(rate[0]),16,1)
-      ffi.copy(sound:getFFIPointer(),samples,length*2);channels.audio:push(sound);sound:release()
+      ffi.copy(sound:getFFIPointer(),samples,length*2)
+      output:push(sound,{frame=n,phase=phase,main=stats.main,sub=stats.sub,producer=diagnostics})
      end
     end
     if diagnostics then diagnostics.audio=diagnostics.audio+love.timer.getTime()-stamp end
@@ -166,15 +189,21 @@ local ok,why=pcall(function()
    if phase=='preparing'then
     local all=true;for i=1,#handles do if not prepared[i]then all=false end end
     if all then
-     phase='waiting';schedule(false);local checkpoints={}
+     phase='waiting';schedule(false);audioActive();local checkpoints={}
      for i,m in ipairs(handles)do checkpoints[i]=ffi.string(lib.ascendant_pinball_checkpoint(m))end
      emit{event='prepared',checkpoints=checkpoints}
     end
    elseif job.duel and phase=='playing'then
     local all=true;for i=1,#handles do if not done[i]then all=false end end
-    if all then phase='finished';schedule(false)end
+    if all then phase='finished';schedule(false);audioActive()end
    end
+   message.audio={restarts=output.restarts,history=output.history,rate=output.rate,dropped=output.dropped}
    message.phase=phase;message.seconds=love.timer.getTime()-begin;message.diagnostics=diagnostics
+   if diagnostics then
+    maxStep=math.max(maxStep,message.seconds)
+    diagnostics.audioProduced=audioProduced;diagnostics.audioDropped=output.dropped;diagnostics.audioSeconds=audioSeconds
+    diagnostics.scheduleLost=scheduleLost;diagnostics.maxStep=maxStep
+   end
    -- A small completed-frame FIFO absorbs variable native execution time.
    -- Clearing the mailbox before step() lost visible frames; publishing only
    -- the newest frame still magnified start/completion jitter. Bound latency
@@ -186,8 +215,11 @@ local ok,why=pcall(function()
    -- Channel Variants retain their own objects. Release the producer proxies
    -- now; waiting for worker GC can retain many full native image buffers.
    release(message)
-   -- Never skip guest frames or accelerate physics to hide a slow machine.
-   nextFrame=math.max(nextFrame+280896/16777216,love.timer.getTime()-.05)
+   -- Keep every guest frame. Recover short scheduler spikes against the original
+   -- deadline; discarding debt after only 50 ms slowly emptied the audio reserve.
+   -- Bound recovery to 250 ms so a long OS suspension cannot cause an unbounded burst.
+   local lost;nextFrame,lost=Clock.advance(nextFrame,love.timer.getTime())
+   if job.diagnostics then scheduleLost=scheduleLost+lost end
   end
  end
 end)

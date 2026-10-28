@@ -19,7 +19,7 @@ function Duel.new(net,host,rules,options)
  local copy={};for _,k in ipairs{'rom','backend','content','field','frames','seed'}do copy[k]=rules[k] end
  return setmetatable({net=net,host=host==true,rules=copy,state='connecting',localFrame=0,remoteFrame=0,
   localScore=0,remoteScore=0,localDone=false,remoteDone=false,sequence=0,remoteSequence=0,
-  viewRequested=options and options.view==true,localPictureFrame=0,remotePictureFrame=0},Duel)
+  viewRequested=options and options.view==true,peerViewRequested=options and options.peerView==true,localPictureFrame=0,remotePictureFrame=0},Duel)
 end
 function Duel:picture(packet)
  if not self.viewEnabled or self.state~='playing'or self.localDone then return false end
@@ -60,12 +60,13 @@ function Duel:update(dt)
  if self.state=='cancelled' or self.state=='finished' then return end
  self.net:update()
  if self.net.error then self:fail(self.net.error);return end
- if self.net.paired and not self.helloSent then self.helloSent=true;self:send('hello',{rules=self.rules,host=self.host,view=self.viewRequested and 2 or nil})end
+ if self.net.paired and not self.helloSent then self.helloSent=true;self:send('hello',{rules=self.rules,host=self.host,view=self.viewRequested and 2 or nil,peerView=self.peerViewRequested or nil})end
  for _,msg in ipairs(self.net:poll())do
   if type(msg)~='table' or msg.type~='pinball_duel' or msg.protocol~=1 then self:fail('Incompatible duel protocol.');return end
   if msg.kind=='hello' and not self.helloReceived then
    if type(msg.host)~='boolean' or msg.host==self.host or not equal(self.rules,msg.rules) then self:fail('Different ROM, build, content or duel rules.');return end
    self.viewEnabled=self.viewRequested and msg.view==2
+   self.peerViewEnabled=self.viewEnabled and self.peerViewRequested and msg.peerView==true
    self.helloReceived=true;self.state='lobby'
   elseif msg.kind=='ready' and self.helloReceived and self.state=='lobby' then
    if type(msg.checkpoint)~='string' or #msg.checkpoint~=40 or not msg.checkpoint:match('^%x+$')then self:fail('Invalid starting checkpoint.');return end

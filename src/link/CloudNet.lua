@@ -44,6 +44,8 @@ function N:exchange()
   end
   local doc=response.first
   if doc.battle~=self.battle or type(doc.sent)~='number' or doc.sent<self.accepted or doc.sent>self.sequence then return self:fail('Invalid Arena message acknowledgement.') end
+  if doc.peer_sent~=nil and (type(doc.peer_sent)~='number'or doc.peer_sent%1~=0 or doc.peer_sent<self.received or doc.peer_sent>2147483647)then return self:fail('Invalid peer message watermark.')end
+  self.peerSent=doc.peer_sent
   if self.hasPeer and doc.peer_online==false and not doc.peer_closed then return self:fail('Your rival disconnected from the Arena.') end
   self.accepted=doc.sent;self.lastSuccess=now();self.peerClosed=doc.peer_closed
   while self.outbox[1] and self.outbox[1].sequence<=doc.sent do table.remove(self.outbox,1) end
@@ -57,9 +59,10 @@ function N:exchange()
   end
   -- A full page can still have a tail. Keep fetching until a short page
   -- proves that the closed peer stream is drained; then flush our final ACK.
-  if self.peerClosed and #messages<BATCH_SIZE then self:close() end
+  local peerDrained=not self.peerSent or self.received>=self.peerSent
+  if self.peerClosed and #messages<BATCH_SIZE and peerDrained then self:close() end
   if self.sentClose and #self.outbox==0 and (not self.drainPeer or
-   self.peerClosed and #messages<BATCH_SIZE and self.closeAfter==self.received)then
+   self.peerClosed and peerDrained and #messages<BATCH_SIZE and self.closeAfter==self.received)then
    self.finished=true;return
   end
  end

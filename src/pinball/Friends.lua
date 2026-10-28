@@ -121,6 +121,7 @@ function M:tick(available)
      self.net=self.Net.new(invite.id,invite.id,invite.id,'',function(payload)
       return self.Play.request('POST','invites/'..invite.id..'/wire',payload)
      end,{drainPeer=true})
+     self.net.peerTicket=function()return self.Play.request('POST','invites/'..invite.id..'/transport',{})end
      self.state='playing'
      local ok,why=self.options.start(self.net,tostring(invite.host)==identity,invite.rules,invite.nickname)
      if not ok then self.notice=tostring(why or 'Pinball konnte nicht gestartet werden.');self:finished()end

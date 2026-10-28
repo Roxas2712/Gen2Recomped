@@ -18,7 +18,7 @@ its game modes with launcher approximations or bundle the decompilation's assets
 | Original button configurations | All ten GBA inputs are exposed on keyboard and controller. Shoulders are convenient flippers; triggers provide L/R, left-stick click provides Select, Back opens the host menu. |
 | Original SRAM and exact quick state | SRAM is preserved and reopened; exact quick-state image/RAM replay and legacy states are tested separately. No original-save schema is replaced. |
 | Host view, image filters, integer scale, fullscreen | Existing Pinball player controls remain available. Full-table rendering is still beta and covers standard tables. |
-| Friend point duels | Existing friendships and authenticated device invitations, optional import preparation, native joint start and consistent results passed with two actual clients over a local HTTPS server. Public deployment and physical-device networking remain unqualified. |
+| Friend point duels | Existing friendships and authenticated device invitations, optional import preparation, native joint start and consistent results passed with two actual clients over local and public HTTPS, including public WebRTC/WSS opponent pictures. Physical-device networking remains unqualified. |
 | Physical e-Reader cards, Game Boy Player rumble, original Pokédex cable exchange | Not qualified by these tests. No card data, hardware accessory or functioning cable session is invented. |
 
 The HALT and OBJ-layer fixes are in `tools/pinball-rs-native/runtime-fixes.patch`. The private
@@ -71,10 +71,11 @@ board side by side. A separate bounded image worker handles previews; the
 client executes one native game. A macOS activity lease protects active audio
 and video from App Nap, allows idle system sleep, and ends on solo pause,
 completion or close. Native preparation/waiting is deliberately silent.
-The consumer prebuffers six native audio frames (about 100 ms) to cover short
+The native worker owns the queueable audio Source and prebuffers six native audio frames (about 100 ms) to cover short
 interpreter/scheduler spikes. A paused host menu discards current duel audio
 instead of replaying an old backlog when it closes. Guest timing and sample
 duration remain unchanged.
-Picture updates use the authenticated HTTPS fallback, not a qualified public
-P2P video channel. See `PINBALL-MODCOMPASS.md` for the wire limits and the
+Picture updates prefer the separately authorized WebRTC channel, then WSS
+relay and authenticated HTTPS fallback. The public same-Mac two-client run
+qualified direct/relay failover; cross-NAT physical devices remain pending. See `PINBALL-MODCOMPASS.md` for the wire limits and the
 distinction between synthetic tests, local native HTTPS duels and deployment.

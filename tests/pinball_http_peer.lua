@@ -3,7 +3,7 @@
 local Json=require('src.link.Json')
 local fixturePath=assert(os.getenv('PINBALL_HTTP_CONFIG'))
 local f=assert(io.open(fixturePath,'rb'));local config=Json.decode(f:read('*a'));f:close()
-assert(config.url:match('^https://localhost:%d+/api/cloud/v1/play/$'),'local HTTPS qualification only')
+assert(config.url:match('^https://localhost:%d+/api/cloud/v1/play/$')or config.publicQualification==true and config.url=='https://pokexpert.de/api/cloud/v1/play/','explicit isolated HTTPS qualification only')
 local started=love.timer.getTime();local doc,job,nextPresence,player,friends,net= nil,nil,0
 local preparedFromMissing=false;local invited=false;local pendingAccept;local result,finishedAt,completionWait,captured,minimized,reported
 local updateGaps={};local priorUpdate;local activityStatus;local steadyRestarts;local steadyStart;local capturedAt;local minimizedAt
@@ -28,7 +28,7 @@ local function client(session)
   end,
   start=function(transport,host,rules)
    assert(not player,'only one native start per client');net=transport
-   player=require('src.pinball.Player').new(config.session,{net=transport,host=host,duel=true,field=rules.field,diagnostics=true,opponent='HTTPS QA FRIEND'})
+   player=require('src.pinball.Player').new(config.session,{net=transport,host=host,duel=true,field=rules.field,diagnostics=true,forceRelay=config.peer_mode=='relay',opponent='HTTPS QA FRIEND'})
    player.sound:setVolume(0)
    activityStatus={active=player.activity.active,error=player.activity.error,priorityBefore=player.activity.priorityBefore}
    player.input.buttons=function()
@@ -42,7 +42,7 @@ end
 friends=client(config.seat==1 and config.session or nil)
 local function report(ok,why)
  reported=true
- local value={passed=ok,error=why,seat=config.seat,transport='actual local HTTPS',native=player~=nil,
+ local value={passed=ok,error=why,seat=config.seat,transport=config.publicQualification and 'actual public HTTPS' or 'actual local HTTPS',native=player~=nil,
   prepared_from_missing=preparedFromMissing,result=result,seconds=love.timer.getTime()-started,
   checkpoint=player and player.checkpoint,stats=player and player.stats[1],duel=player and player.duel and {
    state=player.duel.state,localScore=player.duel.localScore,remoteScore=player.duel.remoteScore,
@@ -50,7 +50,8 @@ local function report(ok,why)
   activity=activityStatus,update_gaps=updateGaps,
   steady_audio_restarts=steadyRestarts and ((player.audioRestarts or 0)-steadyRestarts),steady_seconds=steadyStart and (love.timer.getTime()-steadyStart),
   capture_at=capturedAt,minimize_at=minimizedAt,audio_history=player and player.audioRestartHistory,
-  audio_restarts=player and player.audioRestarts or 0,wire_error=net and net.error,
+  peer_view=player and player.peerView and {path=player.peerView.path,sent=player.peerView.sent,received=player.peerView.received,directFrames=player.peerView.directFrames,relayFrames=player.peerView.relayFrames,error=player.peerView.error,forcedFallback=player.forcedFallback},
+  producer=player and player.diagnostics,audio_restarts=player and player.audioRestarts or 0,wire_error=net and net.error,
   opponent_view=player and player.liveView and {frame=player.liveView.frame,received=player.liveView.received,error=player.viewFailed}}
  local file=assert(io.open(config.output,'wb'));file:write(Json.encode(value));file:close()
 end
@@ -88,6 +89,9 @@ love.update=function(dt)
   if player then
    if not finishedAt then
     player:update(dt)
+    if config.peer_mode=='switch'and not player.forcedFallback and now-started>70 and player.peerView and player.peerView.net.direct then
+     player.forcedFallback=true;player.peerView.net.options.forceRelay=true;player.peerView.net.native:drop()
+    end
     if now-started>60 and not steadyStart then steadyStart=now;steadyRestarts=player.audioRestarts or 0 end
     assert(not player.error,tostring(player.error))
     assert(player.duel.state~='cancelled',tostring(player.duel.error))

@@ -12,16 +12,24 @@ def port():
     with socket.socket()as sock:sock.bind(('127.0.0.1',0));return sock.getsockname()[1]
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--server',type=Path,required=True);p.add_argument('--php',type=Path,required=True);p.add_argument('--love',type=Path,required=True);p.add_argument('--label',default='native-friends')
+    p.add_argument('--peer-mode',choices=['off','direct','relay','switch'],default='off');p.add_argument('--peer-library',type=Path);p.add_argument('--peer-ca',type=Path);p.add_argument('--peer-key-file',type=Path);p.add_argument('--peer-relay',default='wss://retrorecomped-peer-relay.ascendant-content.workers.dev')
     a=p.parse_args();assert a.label.replace('-','').isalnum()
     import qa_storage as qa
     qa._storage=qa.Storage(ROOT);atexit.register(qa._storage.close,collect=False)
     server=a.server.resolve();php=a.php.resolve();love=a.love.resolve();work=ROOT/'.local/pinball-rs'
     for source in(ROOT,server,php,love,work,Path(sys.executable)):qa.qa_source(source)
+    if a.peer_mode!='off':
+        assert a.peer_library and a.peer_ca and a.peer_key_file,'Peer qualification needs its private native library, CA and signing key file'
+        for source in(a.peer_library,a.peer_ca,a.peer_key_file):qa.qa_source(source.resolve())
     out=ROOT/'.local/qa'/('pinball-http-'+a.label);qa.qa_cache(out);out.mkdir(parents=True,exist_ok=True)
     assert not(out/'test.sqlite').exists(),'Use a fresh label to preserve prior evidence'
     database=out/'test.sqlite';database.touch();os.chmod(out,0o700)
     for part in('framework/cache/data','framework/sessions','framework/views','logs'):(out/'storage'/part).mkdir(parents=True,exist_ok=True)
     env=os.environ|{'APP_ENV':'testing','APP_DEBUG':'false','APP_KEY':'base64:'+base64.b64encode(os.urandom(32)).decode(),'DB_CONNECTION':'sqlite','DB_DATABASE':str(database),'DB_URL':'','CACHE_STORE':'file','SESSION_DRIVER':'array','MAIL_MAILER':'array','QUEUE_CONNECTION':'sync','BCRYPT_ROUNDS':'4','RETRO_CLOUD_ENABLED':'true','LARAVEL_STORAGE_PATH':str(out/'storage'),'APP_CONFIG_CACHE':str(out/'config.php'),'APP_ROUTES_CACHE':str(out/'routes.php'),'LOG_CHANNEL':'stderr','PINBALL_HTTP_FIXTURE':str(out/'accounts.json')}
+    if a.peer_mode!='off':
+        secret=a.peer_key_file.read_text().strip();secret=secret.split('=',1)[1]if secret.startswith('PEER_SIGNING_KEY=')else secret
+        env.update(RETRO_PEER_ENABLED='true',RETRO_PEER_RELAY_URL=a.peer_relay,RETRO_PEER_SIGNING_KEY=secret,POKEPORT_PEER_LIBRARY=str(a.peer_library.resolve()),POKEPORT_PEER_CA=str(a.peer_ca.resolve()))
+    traffic={'wire_bytes':0,'picture_messages':0,'requests':0};traffic_lock=threading.Lock()
     with(out/'bootstrap.log').open('w')as log:
         qa.qa_run([str(php),'artisan','migrate','--force','--no-interaction'],cwd=server,env=env,stdout=log,stderr=log,check=True)
         qa.qa_run([str(php),'tests/Fixtures/pinball_http.php'],cwd=server,env=env,stdout=log,stderr=log,check=True)
@@ -31,6 +39,11 @@ def main():
     class Gateway(http.server.BaseHTTPRequestHandler):
         def do_POST(self):
             body=self.rfile.read(int(self.headers.get('Content-Length','0')))
+            with traffic_lock:
+                traffic['requests']+=1
+                if self.path.endswith('/wire'):
+                    traffic['wire_bytes']+=len(body)
+                    traffic['picture_messages']+=sum(json.loads(row['body']).get('kind')=='picture'for row in json.loads(body).get('messages',[]))
             request=urllib.request.Request('http://127.0.0.1:'+str(hp)+self.path,data=body,method='POST',headers={k:v for k,v in self.headers.items()if k.lower()not in('host','connection','content-length')})
             try:response=urllib.request.urlopen(request,timeout=30)
             except urllib.error.HTTPError as error:response=error
@@ -63,7 +76,7 @@ def main():
             (host/'main.lua').write_bytes((ROOT/'tests/pinball_http_peer.lua').read_bytes())
             (host/'conf.lua').write_text('function love.conf(t) t.identity="'+identity+'";t.version="12.0";t.window.width=1000;t.window.height=720;t.window.vsync=0;t.console=true end')
             private=dict(session,player=str(out/('player-'+str(index))));Path(private['player']).mkdir(exist_ok=True)
-            config=out/('client-'+str(index)+'.json');config.write_text(json.dumps(account|{'seat':index,'session':private,'field':0,'url':'https://localhost:'+str(tp)+'/api/cloud/v1/play/','output':str(out/('result-'+str(index)+'.json'))}));os.chmod(config,0o600)
+            config=out/('client-'+str(index)+'.json');config.write_text(json.dumps(account|{'seat':index,'peer_mode':a.peer_mode,'session':private,'field':0,'url':'https://localhost:'+str(tp)+'/api/cloud/v1/play/','output':str(out/('result-'+str(index)+'.json'))}));os.chmod(config,0o600)
             stream=(out/('peer-'+str(index)+'.log')).open('w');streams.append(stream)
             executable=love
             if sys.platform=='darwin':
@@ -89,8 +102,14 @@ def main():
         with sqlite3.connect('file:'+str(database)+'?mode=ro',uri=True)as db:
             assert db.execute("select count(*) from retro_play_invites where mode='pinball' and state='finished'").fetchone()[0]==1
             assert db.execute("select count(*) from retro_play_messages where body is not null").fetchone()[0]==0,'Unacknowledged final messages remain'
+        if a.peer_mode!='off':
+            assert all(r.get('peer_view')and not r['peer_view'].get('error')and r['peer_view']['received']>10 for r in results),results
+            if a.peer_mode in('direct','switch'):assert all(r['peer_view']['directFrames']>10 for r in results),results
+            if a.peer_mode in('relay','switch'):assert all(r['peer_view']['relayFrames']>10 for r in results),results
+            if a.peer_mode=='switch':assert any(r['peer_view'].get('forcedFallback')for r in results),results
+            assert traffic['picture_messages']<30,'Pictures still consume the SQL-backed wire after peer setup'
         audio_ok=all(result.get('steady_audio_restarts')==0 and result.get('steady_seconds',0)>60 for result in results)
-        report={'passed':audio_ok,'gameplay_qualified':True,'server_final_tail_drained':True,'kind':'two actual native clients over local HTTPS','production_qualified':False,'steady_audio_qualified':audio_ok,'results':results};(out/'report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
+        report={'passed':audio_ok,'gameplay_qualified':True,'peer_mode':a.peer_mode,'http_traffic':traffic,'server_final_tail_drained':True,'kind':'two actual native clients over local HTTPS','production_qualified':False,'steady_audio_qualified':audio_ok,'results':results};(out/'report.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
         assert audio_ok,'Native gameplay passed, but the zero-starvation audio target failed; see report.json'
     finally:
         if gateway:gateway.shutdown();gateway.server_close()

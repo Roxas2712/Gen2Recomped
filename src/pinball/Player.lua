@@ -2,9 +2,6 @@
 local M={};local live=setmetatable({},{__mode='k'});local serial=0
 local Json=require('src.link.Json')
 local FrameCap=require('src.core.FrameCap')
--- Six completed guest frames cover short interpreter/scheduler spikes without
--- changing the cartridge clock or stretching samples (about 100 ms at 60 Hz).
-local AUDIO_BUFFERS,AUDIO_PREROLL=16,6
 local FILTERS={'pixels','smooth','lcd','scanlines'}
 local DISPLAY_SHADER=[[
 extern vec2 sourceSize;
@@ -29,18 +26,18 @@ function M.new(session,options)
  if saved then local ok,v=pcall(Json.decode,saved);if ok and type(v)=='table'then for _,k in ipairs{'filter','integer','audioSeat','full_table','opponentView'}do if v[k]~=nil then self.settings[k]=v[k]end end end end
  self.input=require('src.pinball.Input').new(self.seats,love.joystick.getJoysticks())
  self.channel='ascendant.pinball.'..serial..'.'..love.timer.getTime()
- for _,k in ipairs{'commands','frames','audio','events'}do self[k]=love.thread.getChannel(self.channel..'.'..k);self[k]:clear()end
- self.audioRate=32768;self.sound=love.audio.newQueueableSource(self.audioRate,16,1,AUDIO_BUFFERS);self.sound:setVolume(session.volume or .6)
+ for _,k in ipairs{'commands','frames','events'}do self[k]=love.thread.getChannel(self.channel..'.'..k);self[k]:clear()end
+ self.sound={setVolume=function(_,value)self:command{action='volume',value=value}end}
  local ok,shader=pcall(love.graphics.newShader,DISPLAY_SHADER);if ok then self.shader=shader end
  self.thread=love.thread.newThread('src/pinball/worker.lua')
  if options.net then
   self.duel=require('src.pinball.Duel').new(options.net,options.host,{rom=session.rom_sha1,backend=session.backend,
-   content=session.content,field=options.field or 0,frames=18000,seed=0},{view=true})
+   content=session.content,field=options.field or 0,frames=18000,seed=0},{view=true,peerView=require('src.pinball.PeerView').available(options.net)})
  end
  self.thread:start(Json.encode{session=session,channel=self.channel,seats=self.seats,duel=options.duel,
-  field=options.field or 0,frameLimit=18000,broadcastView=options.net~=nil,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus()})
+  field=options.field or 0,frameLimit=18000,broadcastView=options.net~=nil,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus(),visible=not love.window.isVisible or love.window.isVisible()})
  function self:command(msg)if self.thread:isRunning()then self.commands:push(Json.encode(msg))end end
- function self:stop()if self.closing then return end;self.closing=true;FrameCap.setRealtime(self,false);if self.activity then self.activity:release()end;if self.liveView then self.liveView:stop()end;if self.duel then self.duel:close()end;self:command{action='quit'};self.sound:stop()end
+ function self:stop()if self.closing then return end;self.closing=true;FrameCap.setRealtime(self,false);if self.activity then self.activity:release()end;if self.peerView then self.peerView:stop()end;if self.liveView then self.liveView:stop()end;if self.duel then self.duel:close()end;self:command{action='quit'}end
  function self:dispose()
   if self.disposed then return end;self.disposed=true
   FrameCap.setRealtime(self,false);live[self]=nil
@@ -50,12 +47,13 @@ function M.new(session,options)
   local preview=previews:pop();while preview do free(preview.image);preview=previews:pop()end
   for _,image in pairs(self.images)do free(image)end
   local msg=self.frames:pop();while msg do for _,data in ipairs(msg.images)do free(data)end;msg=self.frames:pop()end
-  local sound=self.audio:pop();while sound do free(sound);sound=self.audio:pop()end
-  free(self.sound);free(self.font);free(self.small);free(self.shader)
+  free(self.font);free(self.small);free(self.shader)
  end
  function self:update(dt)
   local focused=love.window.hasFocus()
   if self.lastForeground~=focused then self.lastForeground=focused;self:command{action='foreground',value=focused}end
+  local visible=not love.window.isVisible or love.window.isVisible()
+  if self.lastVisible~=visible then self.lastVisible=visible;self:command{action='visible',value=visible}end
   local event=self.events:pop()
   while event do
    local msg=Json.decode(event)
@@ -80,12 +78,7 @@ function M.new(session,options)
     image:setFilter(self.settings.filter=='smooth' and 'linear'or 'nearest');data:release()
    end
    self.stats=msg.stats;self.frame=msg.frame;self.frameMs=msg.seconds*1000;self.phase=msg.phase;self.diagnostics=msg.diagnostics
-   if self.phase~=self.audioPhase then
-    self.audioPhase=self.phase
-    if self.phase=='waiting'or self.phase=='finished'then
-     self.sound:stop();self.audio:clear();self.audioStarted=false
-    end
-   end
+   if msg.audio then self.audioRestarts=msg.audio.restarts;self.audioRestartHistory=msg.audio.history;self.audioRate=msg.audio.rate;self.audioDropped=msg.audio.dropped end
    if self.seats==2 and self.phase=='finished'then
     self.result=self.stats[1].score==self.stats[2].score and 'Unentschieden' or self.stats[1].score>self.stats[2].score and 'Spieler 1 gewinnt' or 'Spieler 2 gewinnt'
    end
@@ -93,10 +86,21 @@ function M.new(session,options)
   if self.duel then
    self.duel:update(dt)
    if self.duel.viewEnabled and not self.liveView then self.liveView=require('src.pinball.LiveView').new(self.channel)end
+   if self.duel.peerViewEnabled and not self.peerViewAttempted then
+    self.peerViewAttempted=true;self.peerView=require('src.pinball.PeerView').new(options.net,{forceRelay=options.forceRelay})
+   end
    if self.liveView then
-    local picture=self.duel:pollPicture();if picture and self.settings.opponentView then self.liveView:receive(picture)end
+    local picture=self.duel:pollPicture()
+    if self.peerView then
+     local direct=self.peerView:update()
+     if direct and (not picture or direct.frame>picture.frame)then picture=direct end
+    end
+    if picture and picture.frame>(self.latestRemoteFrame or 0)then
+     self.latestRemoteFrame=picture.frame
+     if self.settings.opponentView then self.liveView:receive(picture)end
+    end
     local data,packet=self.liveView:update()
-    if packet then self.duel:picture(packet)end
+    if packet and (not self.peerView or not self.peerView:send(packet))then self.duel:picture(packet)end
     if data then
      local image=self.images[2]
      if image and image:getWidth()==data:getWidth()and image:getHeight()==data:getHeight()then image:replacePixels(data)
@@ -114,6 +118,7 @@ function M.new(session,options)
     self.duel:progress(st.elapsed,string.format('%.0f',st.score),st.done);self.reported=st.elapsed
    end
    if self.duel.state=='cancelled' and not self.duelCancelled then
+    if self.peerView then self.peerView:stop()end
     self.duelCancelled=true;self:command{action='pause',value=true};self.notice=self.duel.error
    elseif self.duel.state=='finished'then
     self.result=({win='Du gewinnst',loss='Dein Gegner gewinnt',draw='Unentschieden'})[self.duel.result]
@@ -132,27 +137,6 @@ function M.new(session,options)
    if not self.lastInput or input[1]~=self.lastInput[1]or input[2]~=self.lastInput[2]then
     self.lastInput=input;self:command{action='input',buttons=input}
    end
-  end
-  if self.paused then self.audio:clear()end
-  while not self.paused and self.sound:getFreeBufferCount()>0 do
-   local data=self.audio:pop();if not data then break end
-   if data:getSampleRate()~=self.audioRate then
-    self.audioRate=data:getSampleRate()
-    self.sound:stop();free(self.sound);self.sound=love.audio.newQueueableSource(data:getSampleRate(),16,1,AUDIO_BUFFERS);self.audioStarted=false;self.sound:setVolume(session.volume or .6)
-   end
-   local ok=pcall(self.sound.queue,self.sound,data);data:release()
-   if not ok then break end
-  end
-  if self.ready and self.phase~='waiting'and self.phase~='finished'and not self.paused and not self.closing and not self.sound:isPlaying()
-   and AUDIO_BUFFERS-self.sound:getFreeBufferCount()>=AUDIO_PREROLL then
-   if self.audioStarted then
-    self.audioRestarts=(self.audioRestarts or 0)+1
-    if options.diagnostics then
-     self.audioRestartHistory=self.audioRestartHistory or {}
-     if #self.audioRestartHistory<16 then self.audioRestartHistory[#self.audioRestartHistory+1]={at=love.timer.getTime(),frame=self.frame,phase=self.phase,main=self.stats[1]and self.stats[1].main,sub=self.stats[1]and self.stats[1].sub}end
-    end
-   end
-   self.sound:play();self.audioStarted=true
   end
  end
  function self:draw(w,h,preview)
@@ -179,6 +163,12 @@ function M.new(session,options)
     g.setColor(.44,.83,.89);g.printf(title,x+12,12,slot-24,'left')
     local points=self.duel and i==2 and self.duel.remoteScore or self.stats[i]and self.stats[i].score
     if points then g.setColor(1,1,1);g.printf(string.format('%.0f Punkte',points),x+12,self.duel and 36 or 12,slot-24,'right')end
+    if self.duel and i==2 then
+     local path=self.peerView and not self.peerView.error and self.peerView.path
+     g.setFont(self.small);g.setColor(.63,.71,.76)
+     g.print(path=='p2p'and 'LIVE · DIREKT' or path=='relay'and 'LIVE · RELAY' or 'LIVE · HTTPS',x+12,64)
+     g.setFont(self.font)
+    end
    end
   end
   if not preview then
@@ -191,7 +181,7 @@ function M.new(session,options)
     g.setFont(self.font);g.setColor(.025,.04,.06,.9);g.rectangle('fill',w*.25,h*.43,w*.5,70,12,12)
     g.setColor(1,1,1);g.printf(self.result or tostring(math.ceil(self.countdown)),w*.25,h*.43+25,w*.5,'center')
    end
-   if self.notice~=''then g.setColor(1,.78,.35);g.printf(self.notice,12,self.duel and 64 or 44,w-24,'center')end
+   if self.notice~=''then g.setColor(1,.78,.35);g.printf(self.notice,12,self.duel and 64 or 44,self.duel and w*.5-24 or w-24,'center')end
    if self.paused then
     g.setColor(.02,.03,.05,.94);g.rectangle('fill',w*.15,h*.2,w*.7,h*.6,15,15)
     g.setFont(self.font);g.setColor(.44,.83,.89);g.printf('RECOMPILED ASCENDANT · PINBALL',w*.18,h*.24,w*.64,'center')
@@ -206,7 +196,7 @@ function M.new(session,options)
    if self.paused and self.activity then self.activity:release()
    elseif not self.paused then self.activity=require('src.pinball.Activity').acquire()end
   end
-  if self.paused then self.sound:stop();self.audio:clear();self.audioStarted=false end
+  self:command{action='mute',value=self.paused}
  end
  function self:keypressed(key,_,isrepeat)
   if isrepeat then return end

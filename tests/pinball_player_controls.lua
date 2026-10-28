@@ -12,7 +12,7 @@ local player=require('src.pinball.Player').new({},{});local commands={}
 player.command=function(_,message)commands[#commands+1]=message end
 player:keypressed('escape','escape',false);assert(player.paused)
 for _=1,20 do player:keypressed('escape','escape',true)end
-assert(player.paused and #commands==1,'held Escape must not flash the pause overlay')
+assert(player.paused and #commands==2 and commands[2].action=='mute'and commands[2].value==true,'held Escape must not flash the pause overlay')
 player:keypressed('escape','escape',false);assert(not player.paused)
 player:keypressed('f6','f6',false);assert(player.settings.full_table)
 for _=1,20 do player:keypressed('f6','f6',true)end

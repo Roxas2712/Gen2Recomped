@@ -1,14 +1,9 @@
--- Exercise the real Player consumer against a bounded queue and starvation.
+-- Exercise the worker-owned audio output against queue bounds and starvation.
 package.path='./?.lua;'..package.path
-love=require('tests.love_stub');local noop=function()end
-love.filesystem.read=function()end;love.filesystem.write=function()return true end
-love.keyboard.isDown=function()return false end;love.mouse.isDown=function()return false end
-love.joystick={getJoysticks=function()return{}end};love.window.hasFocus=function()return true end
-local function channel()return{items={},clear=function(self)self.items={}end,pop=function(self)return table.remove(self.items,1)end,push=function(self,v)self.items[#self.items+1]=v end,getCount=function(self)return #self.items end}end
-love.thread={getChannel=channel,newThread=function()return{start=noop,isRunning=function()return false end,getError=noop}end}
-local sources={}
+local noop=function()end;love={timer={getTime=function()return 1 end}};local sources={};local released=0
 love.audio={newQueueableSource=function(_,_,_,capacity)
- local s={capacity=capacity,queued=0,playing=false,starts=0,setVolume=noop,release=noop}
+ local s={capacity=capacity,queued=0,playing=false,starts=0,setVolume=noop,releases=0}
+ function s:release()self.releases=self.releases+1 end
  function s:stop()self.playing=false;self.queued=0 end
  function s:isPlaying()return self.playing end
  function s:getFreeBufferCount()return self.capacity-self.queued end
@@ -16,28 +11,19 @@ love.audio={newQueueableSource=function(_,_,_,capacity)
  function s:play()self.playing=true;self.starts=self.starts+1 end
  sources[#sources+1]=s;return s
 end}
-local cap=require('src.core.FrameCap');local player=require('src.pinball.Player').new({},{});player.ready=true
+local out=require('src.pinball.Audio').new(.6,true)
 local function add(count,rate)
- for _=1,count do player.audio:push({getSampleRate=function()return rate or 32768 end,release=noop})end
- player:update(.016)
+ for _=1,count do out:push({getSampleRate=function()return rate or 32768 end,release=function()released=released+1 end},{frame=1,phase='playing'})end
 end
-add(5);assert(not player.sound.playing,'short startup must prebuffer instead of immediately underrunning')
-add(1);assert(player.sound.playing and player.sound.starts==1)
-player.sound.playing=false;player.sound.queued=0
-add(5);assert(not player.sound.playing,'starved playback must refill before restarting')
-add(1);assert(player.sound.playing and player.audioRestarts==1)
-add(6,65536);assert(player.audioRate==65536 and player.sound.playing and #sources==2,'rate changes must retain a correctly sized new queue')
-assert(cap.realtime());player:togglePause();assert(not cap.realtime() and not player.sound.playing)
-add(6,65536);assert(player.audio:getCount()==0 and player.sound.queued==0,'paused menus must discard live duel audio instead of replaying it late')
-player:togglePause();assert(cap.realtime())
-local function phase(value)
- player.videoStarted=true
- player.frames:push({images={},stats={},seconds=0,phase=value,frame=1})
- player:update(.016)
-end
-phase('waiting');assert(not player.sound.playing and not player.audioStarted,'joint-start waiting ends preparation audio deliberately')
-phase('playing');add(6,65536)
-assert(player.sound.playing and player.audioRestarts==1,'resuming after intentional native waiting is not audio starvation')
-phase('finished');assert(not player.sound.playing,'completed native game must not replay queued sound while awaiting the peer')
-player:dispose();assert(not cap.realtime())
-print('Pinball audio: startup preroll, starvation recovery, sample-rate change, pause and lease cleanup passed')
+add(5);assert(not out.source.playing,'short startup must prebuffer')
+add(1);assert(out.source.playing and out.source.starts==1)
+out.source.playing=false;out.source.queued=0
+add(5);assert(not out.source.playing,'starved playback must refill')
+add(1);assert(out.source.playing and out.restarts==1 and #out.history==1)
+add(6,65536);assert(out.rate==65536 and out.source.playing and #sources==2 and sources[1].releases==1)
+out:setActive(false);add(6,65536);assert(not out.source and not out.started and sources[2].releases==1,'waiting or host pause discards even unplayed PCM buffers')
+out:setActive(true);add(6,65536);assert(out.source.playing and out.restarts==1,'intentional pause is not counted as starvation')
+add(40,65536);assert(out.source.queued==32 and out.dropped==14,'catch-up remains bounded even if hardware cannot accept more')
+out:close();out:close();assert(not out.source and sources[3].releases==1)
+assert(released==70,'every PCM block releases its worker proxy exactly once')
+print('Pinball worker audio: preroll, underrun, rates, pause, bounds and release passed')

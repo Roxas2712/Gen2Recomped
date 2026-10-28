@@ -73,6 +73,7 @@ struct Machine {
  uint32_t sample_rate=32768;
  std::string save;
  uint64_t calls=0,cycles=0,frames=0;
+ uint64_t picture_frame=~uint64_t(0);
  uint64_t interpreted=0;
  gbarecomp::RuntimeArmContext execution;
  gbarecomp::RuntimeTimingContext timing;
@@ -90,12 +91,13 @@ struct Machine {
    fallback.resize(ppu.render_bytes());
    ppu.render(fallback.data(),bus.read16(0x04000000),bus.io().raw(),bus.vram_ptr(),bus.oam_ptr(),bus.pal_ptr());rgb=fallback.data();
   }
-  if(full_table&&table_view.render(bus,ppu,frames,rgba,width,height))return;
+  if(full_table&&table_view.render(bus,ppu,frames,rgba,width,height)){picture_frame=frames;return;}
   width=w;height=h;
   rgba.resize(static_cast<size_t>(w)*h*4);
   for(size_t i=0;i<static_cast<size_t>(w)*h;i++) {
    rgba[i*4]=rgb[i*3];rgba[i*4+1]=rgb[i*3+1];rgba[i*4+2]=rgb[i*3+2];rgba[i*4+3]=255;
   }
+  picture_frame=frames;
  }
  bool flush() {
   if(save.empty()||!bus.save().dirty())return true;
@@ -177,7 +179,7 @@ void* ascendant_pinball_open(const char* rom,const char* bios,const char* save) 
   capture(*m);m->picture();active=m.release();machines.insert(active);error.clear();return active;
  }catch(const std::exception& ex){error=ex.what();active=nullptr;gbarecomp::set_active_bus(nullptr);gbarecomp::set_active_ppu(nullptr);return nullptr;}
 }
-int ascendant_pinball_step(void* handle,uint16_t buttons) {
+int ascendant_pinball_step_present(void* handle,uint16_t buttons,int present) {
  std::lock_guard<std::mutex> lock(ownership);
  Machine* current=nullptr;
  try {
@@ -197,15 +199,20 @@ int ascendant_pinball_step(void* handle,uint16_t buttons) {
   m.interpreted+=gbarecomp::self_heal_interpreted_insns()-interp;
   m.calls+=dispatches;capture(m);
   const auto simulated=m.diagnostics?Clock::now():Clock::time_point{};
-  m.picture();
+  if(present)m.picture();
   m.sample_count=m.bus.audio().drain_sample_block(m.samples.data(),m.samples.size(),m.sample_rate);
   if(m.diagnostics){const auto end=Clock::now();m.timings={std::chrono::duration<double>(simulated-start).count(),std::chrono::duration<double>(end-simulated).count(),thread_seconds()-cpu,double(gbarecomp::self_heal_interpreted_insns()-interp)};}
   return 1;
  }catch(const std::exception& ex){if(current)capture(*current);error=ex.what();return 0;}
 }
+int ascendant_pinball_step(void* handle,uint16_t buttons) {
+ return ascendant_pinball_step_present(handle,buttons,1);
+}
 const uint8_t* ascendant_pinball_picture(void* handle,uint32_t* width,uint32_t* height) {
  std::lock_guard<std::mutex> lock(ownership);
  auto* m=static_cast<Machine*>(handle);if(!machines.count(m)||!width||!height)return nullptr;
+ try {if(m->picture_frame!=m->frames)m->picture();}
+ catch(const std::exception& ex){error=ex.what();return nullptr;}
  *width=m->width;*height=m->height;return m->rgba.data();
 }
 int ascendant_pinball_view(void* handle,int full_table) {
@@ -223,7 +230,7 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
  std::lock_guard<std::mutex> lock(ownership);
  auto* m=static_cast<Machine*>(handle);if(!machines.count(m)||!path)return 0;
  try {
-  bind(*m);auto context=m->snapshot();bool ok=false;
+  bind(*m);if(!load)m->picture();auto context=m->snapshot();bool ok=false;
   if(load) {
    const auto content=bytes(path);
    if(content.size()<64||std::memcmp(content.data(),"APRSTATE",8))throw std::runtime_error("Unsupported Pinball quick state");
