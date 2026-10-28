@@ -8062,7 +8062,7 @@ local WEATHER_BALL_ANIM = {
   SUN = 1, RAIN = 2, SANDSTORM = 3, HAIL = 4,
 }
 
-function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation)
+local function nativePerformMove(self, user, target, moveInst, isCalled, suppressAnimation)
   local move = self:moveDef(moveInst)
   if not move then
     Logger.warn("unknown move instance %s", tostring(moveInst.id))
@@ -8310,6 +8310,14 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
          == "ELECTRIC" then
     user.charged = nil
   end
+end
+
+function BattleState:performMove(user, target, moveInst, isCalled, suppressAnimation, spreadContinuation)
+  local resolver=GameVersion.isGen3()and package.loaded['src.core.game3.battle.engine']
+  if resolver then
+    return resolver._native(self,user,target,moveInst,isCalled,suppressAnimation,spreadContinuation,nativePerformMove)
+  end
+  return nativePerformMove(self,user,target,moveInst,isCalled,suppressAnimation,spreadContinuation)
 end
 
 function BattleState:continueTrapping(user, target)
