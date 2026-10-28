@@ -399,6 +399,21 @@ end
 
 -- Skin actions use the same native speed/title/options owners as keyboard input.
 Game.SKIN_FAST_FORWARD = 4
+function Game:_cycleSpeed(dir)
+  if not (self.save and self.save.options) or self:speedLocked() then return false end
+  local ow = self.overworld
+  local top = self.stack and self.stack:top()
+  if ow and (ow.transitioning or (top == ow and (
+      (ow.runner and ow.runner.isRunning and ow.runner:isRunning())
+      or (ow.scriptMoves and #ow.scriptMoves > 0) or ow.engaging or ow.emote))) then
+    return false
+  end
+  self.save.options.speed = require('src.core.GameSpeed').cycle(self.save.options.speed, dir or 1)
+  self.speedOverride = nil
+  self:writeOptions()
+  return true
+end
+
 function Game:touchSkinHotkey(action, pressed)
   if action == "fast_forward_hold" then
     if pressed then
@@ -409,11 +424,7 @@ function Game:touchSkinHotkey(action, pressed)
       self.skinSpeedSaved = nil
     end
   elseif action == "fast_forward_toggle" and pressed then
-    if self:speedLocked() or not (self.save and self.save.options) then return end
-    local Speed = require("src.core.GameSpeed")
-    self.save.options.speed = Speed.cycle(self.save.options.speed, 1)
-    self.speedOverride = nil
-    self:writeOptions()
+    return self:_cycleSpeed(1)
   elseif action == "soft_reset" and pressed then
     Input:reset()
     TouchControls:reset()
@@ -452,6 +463,7 @@ function Game:_step(dt)
     close()
   end
   if TouchControls.pollTouches then TouchControls:pollTouches() end
+  Game._pollPadPointers(self)
   self.input:step()
   -- A+B+SELECT+START held for 16 steps: SoftReset (home/init.asm) stops the
   -- audio, whites the palettes out and falls through into Init, i.e. the
@@ -1651,6 +1663,9 @@ local function keypressedBody(self, key)
     local loaded, recovered = SaveData.load()
     if loaded then self:continueGame(loaded, recovered) end
     return
+  elseif key == "1" then
+    self:_cycleSpeed(1)
+    return
   elseif key == "-" then
     self:zoomStep(-1)
     return
@@ -1964,12 +1979,14 @@ end
 function Game:focus(f)
   Input:reset()
   TouchControls:reset()
+  self._padPointerIds = nil
   self:audioSession(f, "focus")
 end
 
 function Game:visible(v)
   Input:reset()
   TouchControls:reset()
+  self._padPointerIds = nil
   self:audioSession(v, "visibility")
 end
 
@@ -2110,13 +2127,35 @@ local function modPointer(self, phase, id, x, y, dx, dy, pressure)
   return not nativeOwner and p.claimed == true
 end
 
+-- Options can reset the pad synchronously while a hotbar key is dispatched.
+-- Keep gesture ownership separately until release; a changed screen/mod must
+-- not inherit the remaining movement/release of that virtual-control press.
+function Game:_pollPadPointers()
+  if not self._padPointerIds or not (love.touch and love.touch.getTouches) then return end
+  local ok, ids = pcall(love.touch.getTouches)
+  if not ok or type(ids) ~= 'table' then return end
+  local live = {}
+  for _, id in ipairs(ids) do live[id] = true end
+  for id in pairs(self._padPointerIds) do
+    if id ~= 'mouse' and not live[id] then self._padPointerIds[id] = nil end
+  end
+end
+
 function Game:touchpressed(id, x, y, dx, dy, pressure)
+  if not self.secondScreenInjecting and self._padPointerIds then
+    if self._padPointerIds[id] then TouchControls:touchreleased(id,x,y) end
+    self._padPointerIds[id] = nil
+  end
   -- Visible virtual controls own their complete gesture, even when pressing
   -- one opens a different screen before the finger is lifted.
   if not self.secondScreenInjecting and TouchControls.visible and TouchControls:visible()
      and TouchControls:hitTest(x,y) then
     if TouchControls:touchpressed(id,x,y)
-       or (TouchControls.touches and TouchControls.touches[id]) then return end
+       or (TouchControls.touches and TouchControls.touches[id]) then
+      self._padPointerIds = self._padPointerIds or {}
+      self._padPointerIds[id] = true
+      return
+    end
   end
   if modPointer(self, "pressed", id, x, y, dx, dy, pressure) then return end
   if offerPointer(self, "touchpressed", id, x, y) then return end
@@ -2134,7 +2173,8 @@ function Game:hasPointerScreen()
 end
 
 function Game:touchmoved(id, x, y, dx, dy, pressure)
-  if not self.secondScreenInjecting and TouchControls.touches and TouchControls.touches[id] then
+  if not self.secondScreenInjecting and ((self._padPointerIds and self._padPointerIds[id])
+      or (TouchControls.touches and TouchControls.touches[id])) then
     TouchControls:touchmoved(id,x,y)
     return
   end
@@ -2145,8 +2185,10 @@ function Game:touchmoved(id, x, y, dx, dy, pressure)
 end
 
 function Game:touchreleased(id, x, y, dx, dy, pressure)
-  if not self.secondScreenInjecting and TouchControls.touches and TouchControls.touches[id] then
+  if not self.secondScreenInjecting and ((self._padPointerIds and self._padPointerIds[id])
+      or (TouchControls.touches and TouchControls.touches[id])) then
     TouchControls:touchreleased(id,x,y)
+    if self._padPointerIds then self._padPointerIds[id] = nil end
     return
   end
   if modPointer(self, "released", id, x, y, dx, dy, pressure) then return end

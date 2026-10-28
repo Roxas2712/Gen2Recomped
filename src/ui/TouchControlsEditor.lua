@@ -140,7 +140,7 @@ function Editor.draw()
   -- column between the two shoulders.
   local Lay = TouchControls:layout()
   local side = 0
-  for _, k in ipairs({ "l", "r" }) do
+  for _, k in ipairs({ "l", "r", "hotbar" }) do
     local z = Lay[k]
     if z then
       local reach = (k == "l") and (z.cx + z.w * 0.7 - ox) or (ox + ww - (z.cx - z.w * 0.7))
@@ -150,7 +150,7 @@ function Editor.draw()
   side = math.min(side, ww * 0.3)
   -- ...and where the shoulders end: the cards below them take the full width
   local shoulderBottom = oy
-  for _, k in ipairs({ "l", "r" }) do
+  for _, k in ipairs({ "l", "r", "hotbar" }) do
     local z = Lay[k]
     if z then shoulderBottom = math.max(shoulderBottom, z.cy + z.w * 0.5) end
   end
