@@ -1,9 +1,9 @@
--- Exercise real native VM commands and its actual BG register owner.
--- Official main has no Gen2AnimView observation; no substitute runner is installed.
+-- Exercise real native VM commands and the public animation observation.
 -- Expected picture and LCD traces come from the pinned GSC BG implementation.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local Player=require('src.battle.Gen2AnimPlayer')
+local View=require('src.battle.Gen2AnimView')
 local Version=require('src.core.GameVersion')
 local previous=Version.get()
 local function data(code,constants)
@@ -18,7 +18,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       {op='delay',frames=13},{op='ret'},
     }))
     T.check(p:start('PROBE',playerTurn),'native VM starts the real test program')
-    local r=p
+    local r=View.runner(p);p.presentation=r
     T.eq(r.bg,p.bg,'observation exposes the actual register owner')
     local ticks=0;local playFrame=p.bg.playFrame
     p.bg.playFrame=function(self,...)ticks=ticks+1;return playFrame(self,...)end
@@ -29,6 +29,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
       local expected=stage<3 and((playerTurn and 2 or 5)-stage)or nil
       T.eq(r.bg.picSize[side],expected,'native command/wait path follows four-frame picture stages')
       T.eq(ticks,frame,'one existing VM update executes exactly one BG pass')
+      T.eq(r.frames,frame,'public time is the native VM time')
       for _=1,20 do local bg,frames=r.bg,r.frames end
       T.eq(ticks,frame,'repeated consumer observations never run the effect')
     end
@@ -37,7 +38,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
     T.eq(ticks,14,'legacy object-tail drain cannot keep advancing a stopped BG program')
     local old=r.bg
     p:start('PROBE',not playerTurn)
-    T.eq(old.picSize[side],nil,'previous register block keeps its completed picture trace')
+    T.eq(r.bg,old,'retired consumer retains the previous register block')
     T.check(p.bg~=old,'restart owns a fresh block rather than mutating retired state')
     T.eq(p.bg.env.battleTurn,playerTurn and 1 or 0,'restart binds the current attacker side')
     T.eq(p.bg.picSize.player,nil,'restart clears player picture stages')
@@ -50,9 +51,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   local entry=p.bg.effects[1]
   T.eq(entry.func,edition=='crystal'and'BATTLE_BG_EFFECT_BODY_SLAM'or'BATTLE_BG_EFFECT_WOBBLE_MON',
     'raw command resolves through the actual cartridge table')
-  local effect=p:pollEffects()[1]
-  T.eq(effect and effect.effect,edition=='crystal'and'SE_MOVE_MON_HORIZONTALLY'or'SE_SHAKE_BACK_AND_FORTH',
-    'existing visual adapter also resolves Crystal insertion by effect name')
+  T.eq(#p:pollEffects(),0,'actual BG owner does not duplicate its motion through legacy SE effects')
   p:update();p:update()
   if edition=='crystal'then T.eq(p.bg.lyBackup[0x30],0xfe,'real VM drives the signed BODY_SLAM LCD trace')end
   p:release()

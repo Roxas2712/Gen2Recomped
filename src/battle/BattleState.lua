@@ -13030,5 +13030,6 @@ end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
 require('src.battle.Gen2BattleScene').install(BattleState)
+require('src.battle.Gen2BgPictures').install(BattleState)
 
 return BattleState

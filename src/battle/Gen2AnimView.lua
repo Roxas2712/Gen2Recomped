@@ -27,6 +27,7 @@ function View:release()
     if image and image.release then image:release() end
   end
   self.images, self.quads = {}, {}
+  self:releaseBg()
 end
 function View:objPalette(name, battle)
   local index = slots[name] or tonumber(name)
@@ -97,7 +98,7 @@ function View.runner(player)
   local function state()
     return {animId=player.presentationId or player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
       stopped=player:isDone(),keepSprites=player.keepSprites,
-      objects=objects(), oam=player:oam(selected)}
+      bg=player.bg, objects=objects(), oam=player:oam(selected)}
   end
   local runner = {}
   function runner:oam() return frozen and frozen.oam or player:oam(selected) end
@@ -114,8 +115,11 @@ function View.runner(player)
       if key=='stopped'then return player:isDone()end
       if key=='keepSprites'then return player.keepSprites end
       if key=='objects'then return objects()end
+      if key=='bg'then return player.bg end
     end,
     __newindex=function() error('native Gen2 animation observation is read-only',2) end,
   })
 end
+-- BG methods use the same concrete view object as native OAM drawing.
+for name,method in pairs(require('src.battle.Gen2BgView'))do View[name]=method end
 return View
