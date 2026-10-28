@@ -38,6 +38,7 @@ local WideBattle = require("src.battle.WideBattle")
 local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
 local GameVersion = require("src.core.GameVersion")
+local Gen2Vanish = require('src.battle.Gen2VanishPresentation')
 
 -- FORWARD-DECLARED, because they are defined next to the other doubles
 -- helpers two thousand lines down but read from `stepHPDrain` up here.  A
@@ -2738,7 +2739,10 @@ function BattleState:updateQueue()
   end
   if self.animPlaying then
     self.animPlayer:update()
-    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
+    if GameVersion.isGen2() then
+      require('src.battle.Gen2PicturePresentation').sync(self)
+      Gen2Vanish.sync(self)
+    end
     if self.animPlayer.pollEffects and self.applyAnimEffect then
       for _, ev in ipairs(self.animPlayer:pollEffects()) do
         self:applyAnimEffect(ev)
@@ -2778,7 +2782,10 @@ function BattleState:updateQueue()
     return true
   end
   if not self.current then
-    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
+    if GameVersion.isGen2() then
+      require('src.battle.Gen2PicturePresentation').sync(self)
+      Gen2Vanish.sync(self)
+    end
     local item = table.remove(self.queue, 1)
     if not item then return false end
     if item.fn then
@@ -3025,6 +3032,7 @@ function BattleState:updateQueue()
         end
       end
       if GameVersion.isGen2() then
+        Gen2Vanish.admitted(self,item,self.animPlaying and self.animPlayer.runtime or nil)
         require('src.battle.Gen2PicturePresentation').admitted(self,item,
           self.animPlaying and self.animPlayer.runtime or nil)
       end
@@ -8282,6 +8290,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   -- charge release?
   local releasing = user.charging == moveInst and user.chargeReady
   if releasing then
+    Gen2Vanish.releasing(self,user)
     user.charging, user.chargeReady, user.invulnerable = nil, nil, nil
     user.hiddenAs = nil
   end
@@ -8359,6 +8368,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
                            attackerPosition = user.position,
                            targetPosition = target and target.position,
                            animContext = animContext }
+      if GameVersion.isGen2() and releasing then Gen2Vanish.releaseRow(self,user,self.moveAnimRow) end
       table.insert(self.queue, self.nextInsert, self.moveAnimRow)
     end
   end
@@ -8417,7 +8427,7 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
   -- straight past `charge` while the sun is up and fires on the turn it was
   -- selected.  Every other charge move ignores the weather.
   if record and record.charge and not releasing and not skipCharge then
-    local branchAware = GameVersion.get() == "firered"
+    local branchAware = GameVersion.isGen2() or GameVersion.get() == "firered"
                         and hasMoveTurnVariant(move.anim)
     if not branchAware then self:cancelMoveAnim() end
     user.charging = moveInst
@@ -8433,6 +8443,12 @@ function BattleState:performMove(user, target, moveInst, isCalled, suppressAnima
       -- the other, each for double damage.
       -- (a BW record names its own place: underwater, underground, vanished)
       user.hiddenAs = move.hiddenAs or ((move.id == "DIG") and "underground" or "air")
+    end
+    if GameVersion.isGen2() then
+      -- BattleCommand_Charge runs this move's own param-1 program before
+      -- DisappearUser; Gen1's TELEPORT/SLIDE_DOWN substitutes do not apply.
+      if self.moveAnimRow then self.moveAnimRow.animParam=1 end
+      Gen2Vanish.charge(self,user,self.moveAnimRow)
     end
     if not branchAware then
       local chargeAnim = record.charge.anim
@@ -13087,5 +13103,6 @@ require('src.battle.Gen2BgPictures').install(BattleState)
 require('src.battle.Gen2PicturePresentation').install(BattleState)
 require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf,
   source=function(image)return imageMeta[image]end})
+Gen2Vanish.install(BattleState)
 
 return BattleState
