@@ -28,6 +28,9 @@ local function data(spec)
       {seq='<PK>',code=240},{seq="'d",code=241}}}}
 end
 local BASE=0x400000
+local asset=io.open('assets/fonts/plainpixel/PlainPixel-Regular.ttf','rb')
+T.check(asset~=nil,'default font is included in the engine source/package input')
+if asset then T.eq(asset:read(4),'\0\1\0\0','bundled asset is a TrueType font');asset:close()end
 T.eq(type(Font.ttfActive),'function','Gen1 TTF status API')
 if type(Font.ttfActive)~='function'then T.finish('font TTF contract');return end
 T.check(not Font.ttfActive(),'safe before load')
