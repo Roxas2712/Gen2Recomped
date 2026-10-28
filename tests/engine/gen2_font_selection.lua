@@ -76,7 +76,7 @@ T.check(Schemas.check(Schemas.REGISTRIES.font,'font','battleExtra',
   {image='battle',base=0x60,inactive=true},'register'))
 T.check(not Schemas.check(Schemas.REGISTRIES.font,'font','battleExtra',
   {image='battle',base=0x60,inactive='yes'},'register'))
-local target=T.fixtures.fresh();target.font=data().font
+local target=T.fixtures.fresh();target.font=data().font;target.font.pages=nil
 local json=require('src.link.Json')
 local run=T.sdk.loadMods({'mods/battle_font_probe'},{data=target,fs=T.sdk.memfs({
   ['mods/battle_font_probe/manifest.json']=json.encode({id='battle_font_probe',name='Font sheet fixture',version='1.0.0',api=2,entry='main.lua'}),
