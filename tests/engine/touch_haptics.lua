@@ -16,6 +16,7 @@ T.eq(Touch.cycleHaptics('off',-1),'strong')
 for _,level in ipairs{'off','light','normal','strong'}do
   T.eq(Touch.hapticLabel(level),level:upper(),'native haptic label')
 end
+love.system=love.system or {}
 local oldOS,oldVibrate=love.system.getOS,love.system.vibrate
 local pulses={}
 love.system.vibrate=function(seconds)pulses[#pulses+1]=seconds end
