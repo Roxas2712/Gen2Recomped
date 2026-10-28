@@ -22,9 +22,9 @@ views after reconstruction.
 
 GSC protection-counter retention now follows the actual PROTECT/ENDURE effect,
 including renamed moves. Reassigning an old PROTECT ID to another effect resets
-the counter. This does not yet address all GSC protection mechanics: the shared
-handler's RNG protocol, opponent-first and Substitute restrictions still need
-their own reference comparison and correction.
+the counter. That bridge alone does not change protection odds or restrictions;
+the subsequent [native GSC protection work](native-gen2-protection.md) addresses
+the RNG protocol, opponent-first and Substitute restrictions separately.
 
 Validation uses actual native battle owners and a loaded API2 source consumer:
 423 state/mechanics/ownership/collection checks pass across Gold, Silver,
