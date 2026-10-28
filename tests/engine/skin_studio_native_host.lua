@@ -85,6 +85,7 @@ T.eq(Studio.skin,previousSkin,'pending archive drop retains actual edited skin')
 Studio.confirmNo()
 T.eq(Studio.skin,previousSkin,'cancelling drop retains edits')
 -- The editor must preserve native DS controls, in addition to Gen1's binds.
+local Version=require('src.core.GameVersion');Version.set('platinum')
 Studio.addControl();Studio.setBindSpec('x|y')
 local Input=require('src.core.Input');Input:init()
 local Touch=require('src.core.TouchControls');Touch:setPreview(false)
@@ -95,6 +96,7 @@ T.check(Input:isDown('x') and Input:isDown('y'),'both DS buttons reach actual na
 Touch:touchreleased('ds-buttons',cx,cy)
 T.check(not Input:isDown('x') and not Input:isDown('y'),'DS bind release reaches native owner')
 Touch:setPreview(true)
+Version.set('crystal')
 -- The studio's mock device occupies a rectangle inside the editor window.
 -- Its Test input must use that same rectangle, not the full window surface.
 Studio.setBindSpec('a');Studio.testing=true;Touch:setPreview(false)

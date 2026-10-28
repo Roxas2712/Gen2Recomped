@@ -212,7 +212,10 @@ eq(abxy.buttons[1], "a", "and reaches that GB button")
 eq(ap.controls[16].spec, "start", "abxy_area honours an _up override")
 eq(ap.controls[15].spec, "y|start", "the up-left sector combines both sides")
 check(ap.controls[15].exclusive == nil, "and inherits nothing the desc did not set")
-check(ap.controls[14].decorative, "RetroPad Y has no GB button, so that sector is inert")
+-- The native host also owns DS controls. Unlike the GB-only reference,
+-- importing a RetroPad Y must preserve that native button binding.
+check(not ap.controls[14].decorative, "RetroPad Y remains a native input control")
+eq(ap.controls[14].buttons[1], 'y', "RetroPad Y retains its native DS binding")
 eq(abxy.shape, "radial", "a radial area keeps its ellipse")
 
 eq(ap.controls[18].spec, "right", "analog_left degrades to a directional pad")
