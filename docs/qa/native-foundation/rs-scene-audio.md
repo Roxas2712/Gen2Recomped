@@ -33,3 +33,27 @@ private mod change or save migration is introduced.
 
 Real unchanged-mod flight/profile qualification follows separately. No complete
 RS story, visible desktop, all-map or sixty-FPS acceptance is claimed here.
+
+## Real unchanged-mod follow-up
+
+Frozen source `f2a6e05e84` completes the real Ruby new-game/naming and native flight
+in runs `28e10c6482` and `d1249ddfe5`. Both reach landingSetup ready beneath the
+opaque arrival owner, then Littleroot5,9 with free input,355050 vertices and no
+mod/renderer errors. The machine remains screen-locked; these are fresh owned
+profiles with a prepared visited destination, not visible desktop or story QA.
+
+The CPU sampler is diagnostic and changes tracing. It does not establish FPS
+acceptance. Run `d1249ddfe5` observes a747.9ms draw frame, including739.3ms in a
+pending room-volume job for Brendan's house while the player stands outside.
+The per-frame samples are concentrated in exterior clipping/transformation and
+collection. This identifies a remaining background geometry overrun; arrival
+readiness alone does not solve it. The private mod bytes remain unchanged.
+
+## Silent fallback ownership
+
+A separate native-player defect lets an already stopped earlier source complete
+a later no-pack/render-failure wait immediately. Both failure branches now clear
+the current source while retaining the existing64-frame logical fallback. Old
+voices and isolated playbacks keep their ownership. The dedicated five-edition
+test retains the initial30 failures, then passes165 checks. Full combined
+qualification after this follow-up is recorded separately.

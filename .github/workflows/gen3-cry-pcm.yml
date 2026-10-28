@@ -17,6 +17,7 @@ jobs:
           luajit tests/engine/gen3_cry_pcm.lua
           luajit tests/engine/gen3_audio_modes.lua
           luajit tests/engine/gen3_cry_owner.lua
+          luajit tests/engine/native_cry_fallback_owner.lua
           luajit tests/engine/gen3_audio_prep.lua
       - name: Verify native scene and script completion ownership
         run: |
