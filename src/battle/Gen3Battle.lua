@@ -1564,6 +1564,13 @@ function Gen3Battle.healthboxVisible(battle,id,slide,showStatus)
   return not battle.showEnemyTrainer and not battle.enemySendingOut
     and not battle:growInScale(b) and not battle.introBalls
 end
+function Gen3Battle.drawSafariPanel(battle,x,y)
+  if not battle.gen3Safari then return false end
+  if battle.rsBattlePanel then
+    return require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
+  end
+  return require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)
+end
 local function drawHUDs(battle, slide)
   local showStatus = StatusHUDVisibility.forBattle(battle)
   local record = hudRecord(battle)
@@ -1571,9 +1578,7 @@ local function drawHUDs(battle, slide)
   local double = battle.isDouble and battle:isDouble()
   if showStatus and battle.gen3Safari and slide==0 then
     local x,y=healthboxAt(battle,'singlesPlayer',hudImage(images.safari or images.player),112,64)
-    if battle.rsBattlePanel then
-      require('src.battle.Gen3RsHealthbox').drawSafari(battle,x,y,battle.rsBattlePanel.font)
-    else require('src.battle.Gen3NativeHealthbox').drawSafari(battle,x,y)end
+    Gen3Battle.drawSafariPanel(battle,x,y)
   end
   if not double and Gen3Battle.healthboxVisible(battle,1,slide,not not showStatus) then
     local x, y = healthboxAt(battle, "singlesOpponent",
@@ -2059,12 +2064,10 @@ end
 -- Font.draw expands brace tags for ordinary host text; the cartridge's
 -- compound glyph must keep its original width in the narrow action column.
 function Gen3Battle.drawSafariLabel(label,x,y)
-  if label~='{POKEBLOCK}'then Font.draw(label,x,y);return Font.width(label)end
-  local pen=x
-  for code=0x55,0x59 do
-    Font.drawCode(code,pen,y);pen=pen+Font.advanceOf(code)
-  end
-  return pen-x
+  local pen=require('src.render.Gen3TextPen')
+  local width=pen.drawCompound(label,x,y)
+  if width~=nil then return width end
+  Font.draw(label,x,y);return Font.width(label)
 end
 
 local function drawCommandMenu(battle)

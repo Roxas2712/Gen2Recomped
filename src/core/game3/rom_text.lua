@@ -24,7 +24,18 @@ local function readNative(key)
  value=text[id]
  if row then
   if value~=row.nativePlain then return value,nil,game,value==nil end
+  if key=='gText_SafariZoneMenu'or key=='BattleText_MenuOptionsSafari'then
+   -- The native Safari owner preserves compound glyph tags which older
+   -- generic catalogs flattened into Latin letters. Borrow its actual IR;
+   -- explicit canonical/offset/prose edits have already won above.
+   local plain,nodes=require('src.battle.Gen3SafariText').read(data,Version.get(),'native.safari.menu')
+   if plain then return plain,nodes,game,nil,true end
+  end
   return row.plain,row.ir,game,nil,true
+ end
+ if value==nil and key:sub(1,14)=='native.safari.'then
+  local plain,nodes=require('src.battle.Gen3SafariText').read(data,Version.get(),key)
+  return plain,nodes,game
  end
  return value,nil,game
 end
