@@ -1,6 +1,8 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
+-- The CPU LOVE stub does not load pinned native modules from disk.
+local oldLoad=love.filesystem.load;love.filesystem.load=loadfile
 local Ui=require('src.core.game3.battle.ui')
 local Chrome=require('src.ui.game3.battle_chrome')
 local Frames=require('src.battle.Gen3BattleFrames')
@@ -86,6 +88,18 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.same(trace[1],{1,1,15,20,4});T.same(trace[2],{1,23,15,6,4})
   b.safari=true;trace={};T.eq(panel:draw(b),false)
   T.eq(select(2,Ui.drawMenuFrames('menu')),1);T.eq(#trace,0,'Safari retains its native fallback')
+  -- The current native Safari bridge shares the RS panel and frame lease.
+  -- Keep its labels while the ordinary unsupported Safari fallback stays above.
+  local labels={'BALL','POKéBLOCK','GO NEAR','RUN'}
+  game.data.constants.gen3SafariNative={dialect='rs',labels=labels,
+   textIR={prompt={{t='text',s='Safari prompt'},{t='eos'}}}}
+  b.gen3Safari={edition=edition};b.phase='menu';trace={}
+  local painted={};panel.font.draw=function(value)painted[#painted+1]=value end
+  T.eq(panel:draw(b),true,'native Safari actions remain handled by the RS panel')
+  T.eq(#trace,1,'the selected native action frame is drawn exactly once')
+  T.same(trace[1],{1,18,15,11,4})
+  T.same(painted,{'Safari prompt',unpack(labels)},'native Safari labels survive shared frame drawing')
+  b.gen3Safari=nil
   b.safari=nil;b.rsBattlePanel=nil
  end
  -- The graphics fence restores target and stack even if the native painter fails.
@@ -102,4 +116,5 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
 end
 Font.drawBox,Assets.image,g.draw,Renderer.frameSerial=oldBox,oldImage,oldDraw,oldSerial
 package.loaded['src.core.Game']=oldGame
+love.filesystem.load=oldLoad
 T.finish('native battle frames, packed-panel reuse, RS ownership, targets and retirement')
