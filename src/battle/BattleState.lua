@@ -47,6 +47,7 @@ local Gen3Battle = require("src.battle.Gen3Battle")
 local Gen4Battle = require("src.battle.Gen4Battle")
 local Gen2BattleView = require("src.battle.Gen2BattleView")
 local Gen2Read = require('src.battle.Gen2BattleRead')
+local Battler = require('src.battle.Battler')
 local Gen2Queue = require('src.battle.Gen2EventQueue')
 local Gen2Vanish = require('src.battle.Gen2VanishPresentation')
 local Gen2Faint = require('src.battle.Gen2FaintPresentation')
@@ -1048,76 +1049,29 @@ end
 -- ---------------------------------------------------------------------
 
 local function makeBattler(data, mon, isPlayer, save, battle)
-  local def = require('src.pokemon.Gen4Forms').definition(data,mon)
-  local badgeBoosts = data.constants and data.constants.badgeBoosts
-  local badges = nil
-  if isPlayer and save then
-    -- Gen 1 badge stat boosts (x9/8); the badge set follows the merged
-    -- badgeBoosts rows so a retuned list changes what gets baked in
-    badges = {}
-    for _, row in ipairs(badgeBoosts or Damage.BADGE_BOOSTS) do
-      if save.inventory[row.badge] then badges[row.badge] = true end
-    end
-  end
-  local battler = {
-    mon = mon,
-    def = def,
-    name = mon.nickname or def.name,
-    -- The species this battler is SHOWING, which is not always `mon.species`:
-    -- a Transformed mon wears the copied species' pic and a Tower ghost wears
-    -- none at all.  Both of those move this field where they move `sprite`,
-    -- so anything drawing the battler -- the flat pic here, or a renderer
-    -- standing a model in its place -- reads one answer and agrees with the
-    -- other.  `mon.species` stays the truth about the Pokemon itself; this is
-    -- the truth about the picture.
-    species = mon.species,
-    isPlayer = isPlayer,
-    badges = badges,
-    -- merged registry views consumed by the pure battle modules
-    badgeBoosts = badgeBoosts,
-    statuses = data.statuses,
-    -- ...and the two HoldItems needs: the item table to look `mon.item` up
-    -- in, and the nature table, because whether a FIGY BERRY confuses the
-    -- Pokemon that ate it depends on which stat its nature lowers.  Views,
-    -- not copies, so a berry eaten mid-battle is seen the next time it is
-    -- asked for.
-    items = data.items,
-    natures = data.constants and data.constants.natures,
-    shownHP = mon.hp, -- the HP the bar displays (UpdateHPBar drain)
-    -- HUD status label (DrawHUDsAndHPBars); mon.status can land mid-move
-    -- while the tilemap still shows the prior condition until the next
-    -- post-action HUD refresh (core.asm after Execute*Move)
-    shownStatus = mon.status,
-    toxicCounter = GameVersion.isGen3() and mon.status == "PSN" and mon.toxic == true and 1 or nil,
-    -- a sleep put on outside battle with its own count (the Battle Pike's
-    -- Kirlia: STATUS1_SLEEP, all three bits); spent, it is gone
-    sleepTurns = (mon.status == "SLP" and mon.sleepTurns) or nil,
-    stages = {},
-    -- volatile state; Transform/Conversion/Mimic override the cur* fields
-    curStats = mon.stats,
-    curTypes = def.types,
-    curMoves = mon.moves,
-    sprite = (function()
-      local Sprites = require("src.pokemon.Sprites")
-      local path, tc = Sprites.path(data, mon.species,
-        isPlayer and "back" or "front",
-        { mon = mon, kind = "battle" })
-      return getImage(path, monPalette(data, mon.species,
-        require("src.pokemon.Pokemon").isShiny(mon)), tc)
-    end)(),
-    -- Crystal's front-pic frame animation.  Only the FRONT pic carries
-    -- animation tiles, so the player's back pic has none -- and Gold and
-    -- Silver have none at all, where this stays nil and the pic holds still.
-    -- forMon rather than new: a shiny Gen 3 Pokemon animates from its own
-    -- strip, and only the Pokemon can say whether it is one
-    picAnim = (not isPlayer or (data.pokemon[mon.species] or {}).gen5Animation)
-      and require("src.pokemon.PicAnim").forMon(data, mon,isPlayer and "back" or "front") or nil,
-    -- Emerald's procedural front-pic animation -- the squash/hop/glow the
-    -- sprite itself does when it appears.  Front pic only, same as above.
-    monAnim = (not isPlayer)
-      and require("src.pokemon.MonAnim").new(data, mon.species) or nil,
-  }
-  return Gen2Read.bind(require("src.battle.HeldItemRead").bind(battler, battle), battle)
+  local battler = Battler.new(data, mon, isPlayer, save, battle)
+  -- The regular native screen hydrates the same art as before. Pure model
+  -- construction can use the data factory without allocating GPU resources.
+  battler.sprite = (function()
+    local Sprites = require("src.pokemon.Sprites")
+    local path, tc = Sprites.path(data, mon.species,
+      isPlayer and "back" or "front",
+      { mon = mon, kind = "battle" })
+    return getImage(path, monPalette(data, mon.species,
+      require("src.pokemon.Pokemon").isShiny(mon)), tc)
+  end)()
+  -- Crystal's front-pic frame animation. Only the FRONT pic carries
+  -- animation tiles, so the player's back pic has none -- and Gold and
+  -- Silver have none at all, where this stays nil and the pic holds still.
+  -- forMon rather than new: a shiny Gen 3 Pokemon animates from its own
+  -- strip, and only the Pokemon can say whether it is one.
+  battler.picAnim = (not isPlayer or (data.pokemon[mon.species] or {}).gen5Animation)
+    and require("src.pokemon.PicAnim").forMon(data, mon, isPlayer and "back" or "front") or nil
+  -- Emerald's procedural front-pic animation -- the squash/hop/glow the
+  -- sprite itself does when it appears. Front pic only, same as above.
+  battler.monAnim = (not isPlayer)
+    and require("src.pokemon.MonAnim").new(data, mon.species) or nil
+  return battler
 end
 
 -- LinkBattle builds clamped copies with save=nil (no badge boosts); wild
