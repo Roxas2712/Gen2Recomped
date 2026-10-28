@@ -3,29 +3,36 @@
 local Native=require('src.compat.gen1.NativeSession')
 local Views=require('src.compat.gen1.SessionView')
 local Version=require('src.core.GameVersion')
+local CoroutineScopes=require('src.compat.gen1.CoroutineScopes')
 local G={}
 local entries=setmetatable({},{__mode='k'})
 local owners=setmetatable({},{__mode='k'})
-local scopes={}
+local scopes=CoroutineScopes.new()
+local BODY={}
 local bases={}
 local bootLeases=setmetatable({},{__mode='k'})
 local mouseBodies=setmetatable({},{__mode='k'})
 local callbackOwners={}
 local actorCallbackOwners={}
-local callbackOwner
+local callbackScopes=CoroutineScopes.new()
 local unpack=table.unpack or unpack
 local function pack(...)return {n=select('#',...),...}end
-function G._callbackOwner()return callbackOwner end
+function G._callbackOwner()
+  local frame=callbackScopes:find('owner')
+  return frame and frame.value
+end
 function G._withCallbackOwner(owner,fn,...)
-  local previous=callbackOwner;callbackOwner=owner
+  local frame=callbackScopes:push('owner',owner)
   local result=pack(pcall(fn,...))
   local views=package.loaded['src.compat.gen1.PokemonView']
-  if result[1]and views then
+  if result[1]and not frame.closed and not CoroutineScopes.retired()and views then
     local ok,why=pcall(views.flush)
     if not ok then result={n=2,false,why}end
   end
-  callbackOwner=previous
+  local retired=frame.closed or CoroutineScopes.retired()
+  callbackScopes:close(frame)
   if not result[1]then error(result[2],0)end
+  if retired then error('native callback owner retired while suspended',0)end
   return unpack(result,2,result.n)
 end
 local function methodOwner(name)
@@ -57,7 +64,8 @@ local function session(e)
   return e.session
 end
 local function forward(view,name,...)
-  local e=entry(view);local c=scopes[name]
+  assert(not CoroutineScopes.retired(),'native Game3 coroutine retired')
+  local e=entry(view);local c=scopes:find(name)
   if c and c.view==view then
     if c.called then
       if c.failed then error(c.failure,0)end
@@ -65,8 +73,12 @@ local function forward(view,name,...)
       return
     end
     c.called=true
+    local claim=scopes:push(BODY,nil,c)
     local result=pack(pcall(c.native,e.owner,...))
+    local retired=c.closed or claim.closed
+    scopes:close(claim)
     if not result[1]then c.failed=true;c.failure=result[2];error(result[2],0)end
+    if retired then error('native Game3 phase retired while suspended',0)end
     c.result={n=result.n-1};for i=2,result.n do c.result[i-1]=result[i]end
     return unpack(c.result,1,c.result.n)
   end
@@ -179,18 +191,21 @@ function G.new(owner)
   return G.forNative(owner)
 end
 function G._dispatch(name,owner,native,...)
+  assert(not CoroutineScopes.retired(),'native Game3 coroutine retired')
   local sourceName=name=='_step'and'fixedUpdate'or name
   if mouseBodies[owner]and(name=='touchpressed'or name=='touchmoved'or name=='touchreleased')
       and select(1,...)=='mouse'then return native(owner,...)end
-  if Version.generation()~=3 or G[sourceName]==bases[sourceName]or scopes[name]then return native(owner,...)end
+  if Version.generation()~=3 or G[sourceName]==bases[sourceName]or scopes:find(name)then return native(owner,...)end
   local view=G.forNative(owner);if not view then return native(owner,...)end
-  local previous=scopes[name];local c={view=view,native=native};scopes[name]=c
+  local c=scopes:push(name);c.view,c.native=view,native
   local args=pack(...);local result
   local ok,why=xpcall(function()
-    result=pack(G._withCallbackOwner(methodOwner(sourceName)or callbackOwner,G[sourceName],view,unpack(args,1,args.n)))
+    result=pack(G._withCallbackOwner(methodOwner(sourceName)or G._callbackOwner(),G[sourceName],view,unpack(args,1,args.n)))
   end,debug.traceback)
-  scopes[name]=previous
+  local retired=c.closed
+  scopes:close(c)
   if c.failed then error(c.failure,0)end
+  if retired then error('native Game3 phase retired while suspended',0)end
   if not ok then error(why,0)end
   return unpack(result,1,result.n)
 end
