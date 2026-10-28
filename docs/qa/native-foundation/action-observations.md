@@ -45,3 +45,18 @@ executes the identical owned turn probe against that tree and predecessor
 `ddd4035807` without overlaying either native controller. HP, PP, RNG invocations
 and every frame/phase record match across all five editions. Latest source and
 older-public integration qualification are recorded separately.
+
+Final current-main code `5eca0614` (main `c4bd3b36`), frozen `f11ba60038`,
+passes133 selected CPU groups including782 focused action checks. Exact
+predecessor `f9fc881eb2` retains identical full-turn HP/PP/RNG/frame traces
+across all five GBA editions. Older-public composition `c9eed01598` passes55
+groups, retaining its older native controller bodies. Raw older-public execution
+still requires the declared shared typed-iteration prerequisite; this is not
+standalone upstream CI acceptance. The scoped CI workflow belongs to the complete
+native fork, not the incomplete older-public prerequisite chain.
+
+Unchanged package `bddb5181`, Sapphire run `567f801dd0`, completes native
+new-game/field entry, paper battle, real RAGE selection (PP20 to19), player
+HP63 to46 and enemy HP57 to49, then native/source cleanup without loader errors.
+The after-move capture is upright. This owned prepared fresh-profile functional
+run is not continuous story, visible-desktop or FPS acceptance.
