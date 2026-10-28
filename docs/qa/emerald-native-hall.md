@@ -31,3 +31,11 @@ egg directly rather than relying on that field.
 These are prepared presentation fixtures. Emerald's atomic League save,
 title reset and ordinary full-story coverage remain separate work. The
 shared native RS adapter retains its existing save/title/CONTINUE behavior.
+
+Final runtime `14314e629df77b12a958461d09bc67499c860108` passes the same
+fresh full import and complete fifteen-capture Hall/credits/callback fixture.
+Its one- and three-member fixtures also pass with the male portrait, a real
+egg, half-team coordinates, eight captures, unchanged party values and no
+early story callback. The small fixture only checks the start of credits;
+it does not claim a second full movie. The focused suites pass 178
+assertions (59 Hall readiness, 41 Emerald movie, 78 existing RS Hall).
