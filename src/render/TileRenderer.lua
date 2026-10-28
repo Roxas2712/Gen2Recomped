@@ -1977,10 +1977,18 @@ function TileRenderer:markCellBottomRedraw(cx, cy, camX, camY, colors)
   local ty = cy * 2 + 1
   for i = 0, 1 do
     local tx = cx * 2 + i
-    local quad = self.quads[self.map:tileAt(tx, ty)]
-    if quad then
-      PaletteFX.markSpriteRedraw(self.image, quad, tx * 8 - math.floor(camX),
-                                 ty * 8 - math.floor(camY), 1, colors, true)
+    local tile = self.map:tileAt(tx, ty)
+    local keyed = tile and self.gbcCtx and getKeyedTile(self, tile)
+    if keyed then
+      -- Native GBC tiles already own their per-tile palette and alpha.
+      PaletteFX.markSpriteRedraw(keyed, nil, tx * 8 - math.floor(camX),
+                                 ty * 8 - math.floor(camY))
+    else
+      local quad = self.quads[tile]
+      if quad then
+        PaletteFX.markSpriteRedraw(self.image, quad, tx * 8 - math.floor(camX),
+                                   ty * 8 - math.floor(camY), 1, colors, true)
+      end
     end
   end
 end

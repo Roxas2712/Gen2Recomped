@@ -18847,7 +18847,8 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
                                 self:gen3GrassFrame(e, false)) then
         if field then field.tiles:cell(e.cellX,e.cellY,cam,bgY)
         else self.map.renderer:drawCellBottom(e.cellX, e.cellY, cam.x, bgY)end
-        if grassColors then
+        if PaletteFX.spriteRedraws()[1] then
+          grassColors = grassColors or PaletteFX.pal(Game.data, self:paletteNameFor(self.map))
           self.map.renderer:markCellBottomRedraw(e.cellX, e.cellY,
                                                  cam.x, bgY, grassColors)
         end
@@ -18858,7 +18859,8 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
                                 self:gen3GrassFrame(e, true)) then
         if field then field.tiles:cell(e.targetX,e.targetY,cam,bgY)
         else self.map.renderer:drawCellBottom(e.targetX, e.targetY, cam.x, bgY)end
-        if grassColors then
+        if PaletteFX.spriteRedraws()[1] then
+          grassColors = grassColors or PaletteFX.pal(Game.data, self:paletteNameFor(self.map))
           self.map.renderer:markCellBottomRedraw(e.targetX, e.targetY,
                                                  cam.x, bgY, grassColors)
         end
@@ -19244,12 +19246,8 @@ local function drawWorldBody(self, cadenceConsumed)
     -- the pipeline owns the whole frame; nothing else draws into the world
   elseif not tilt then
     -- === FLAT PATH: everything into the one world canvas, as before =====
-    -- OBP-baked sprites replay after the zone pass in OG RED mode, so their
-    -- grass feet-overdraw must replay over them too, colorized with the
-    -- current map's palette (see PaletteFX.markSpriteRedraw).  SGB no longer
-    -- takes that path -- its characters are colorized by the zone just like
-    -- the ground under them (#301) -- so there the first overdraw is already
-    -- the final one.
+    -- Full-colour and native OBJ sprites can also replay with their alpha.
+    -- Resolve their foreground palette lazily when grass actually needs it.
     local grassColors = PaletteFX.usesSpriteObp()
       and PaletteFX.pal(Game.data, self:paletteNameFor(self.map)) or nil
     -- WHOEVER IS STANDING ON THE GROUND HAS TO LEAN WITH IT.
