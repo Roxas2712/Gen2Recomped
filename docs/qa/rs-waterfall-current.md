@@ -27,5 +27,9 @@ regression failed 15 assertions before the correction.
 then uses directional and A-button input on the imported Ever Grande map.
 It checks the downward push, HM question, Pokémon announcement, ascent,
 full descent, unchanged field PP and final-renderer save/RNG immutability.
-Native acceptance is pending; this fixture is not an ordinary playthrough.
+Native Ruby and Sapphire tests passed on `de124808609e7bf96ea566023aa5cdae24bb6e7e`,
+with six final-renderer captures each. The Sapphire ordinary continuation
+also used its normally taught Kyogre WATERFALL and reached the upper water
+through the A-button question and Pokémon announcement. The prepared fixture
+is not an ordinary playthrough; neither result is a complete game acceptance.
 Cartridges, generated art/audio, captures and saves remain private.
