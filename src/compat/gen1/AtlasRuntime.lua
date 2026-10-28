@@ -95,7 +95,7 @@ function M.new(api)
   end
   function runtime:pending()return jobs end
   local advance
-  function runtime:prefetch(name,priority)
+  function runtime:prefetch(name,priority,required)
     local canonical,pair,key=resolve(name);if not canonical then return false,pair end
     local cached=api._pairs[canonical]
     if cached and cached.image and(not cached._stamp or same(cached._stamp,key))then return false end
@@ -122,7 +122,7 @@ function M.new(api)
     end)
     jobs[canonical]=job
     local nativeCo=job.co
-    job._worker=Build.prepare(pair,layout,function(core)
+    if not required then job._worker=Build.prepare(pair,layout,function(core)
       if jobs[canonical]~=job then return end
       job._worker=nil
       if job._advanced or job.co~=nativeCo then return end
@@ -135,7 +135,7 @@ function M.new(api)
       repeat result=advance(job)until result~=false
     end,function()
       if jobs[canonical]==job then job._worker=nil end
-    end)
+    end)end
     return true
   end
   advance=function(job)
@@ -167,7 +167,7 @@ function M.new(api)
     repeat
       local chosen
       for _,job in pairs(jobs)do
-        if job._worker and Build.expired(job._worker)then Build.cancel(job._worker);job._worker=nil end
+        if job._worker and Build.expired(job._worker,true)then Build.cancel(job._worker);job._worker=nil end
         if not job._worker and (not chosen or job.priority<chosen.priority or(job.priority==chosen.priority and job.order<chosen.order))then chosen=job end
       end
       if not chosen then break end
@@ -218,7 +218,7 @@ function M.new(api)
     local canonical,pair,key=resolve(name);if not canonical then return nil,pair end
     cached=api._pairs[canonical]
     if cached and cached.image and same(cached._stamp,key)then touch(canonical);return self:sync(cached)end
-    self:prefetch(canonical,0)
+    self:prefetch(canonical,0,true)
     local job=jobs[canonical];if not job then return nil,'native atlas build unavailable'end
     -- A required atlas retains immediate synchronous admission. The central
     -- poll owns callbacks; a pending job gets a zero-wait timeout here.

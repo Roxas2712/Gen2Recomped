@@ -137,6 +137,9 @@ f=fresh();before=nextId
 setmetatable(f.game.data.map_tilesets.P.palettes[1],{__index=function()error('unused getter')end})
 Native.prefetch(f.pair);T.eq(nextId,before,'custom source accessors retain main-thread ownership')
 T.check(Native.get(f.pair).image~=nil,'custom palettes still build natively')
+f=fresh();before=nextId
+T.check(Native.get(f.pair).image~=nil,'immediately required atlas remains synchronously available')
+T.eq(nextId,before,'immediately required get never serializes and submits a job it must cancel')
 f=fresh();before=nextId;P.buildWorkers=false
 Native.prefetch(f.pair);T.eq(nextId,before,'global worker OFF preserves coroutine admission')
 T.check(Native.get(f.pair).image~=nil,'worker OFF atlas remains usable')

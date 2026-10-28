@@ -51,8 +51,11 @@ function M.cancel(job)
   if Pool.cancel(job.id)then totals.cancelled=totals.cancelled+1 end
   pending[job]=nil
 end
-function M.expired(job)
-  return clock()-job.started>=5 or not current(job)
+-- A waiting reply cannot publish. Check its deadline/admission each frame;
+-- validate every captured source value once when the reply can actually commit.
+function M.expired(job,waiting)
+  if clock()-job.started>=5 or not M.available()then return true end
+  return not(waiting==true or current(job))
 end
 function M.prepare(pair,layout,done,failed)
   if not M.available()then return nil end
