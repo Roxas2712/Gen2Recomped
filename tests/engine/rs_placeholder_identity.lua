@@ -21,7 +21,8 @@ for _,edition in ipairs{'ruby','sapphire'}do
   local n=0
   for key,symbol in pairs(symbols)do
     if not bySymbol[symbol]then
-      n=n+1;local text='ROM'..tostring(n);bySymbol[symbol]=text;local off=assert(S.off(symbol))
+      n=n+1;local off=assert(S.off(symbol));local text=assert(S.size(symbol))<=1 and''or string.char(65+n)
+      bySymbol[symbol]=text
       for i=1,#text do local b=text:byte(i);memory[off+i-1]=b>=65 and b-65+0xbb or b-48+0xa1 end
       memory[off+#text]=255
     end
