@@ -7,8 +7,19 @@ on:
       - 'mobile/android/**'
       - '.github/workflows/android-love-runtime.yml'
   workflow_dispatch:
+    inputs:
+      abi:
+        type: choice
+        options: [all, arm64-v8a, armeabi-v7a, x86_64]
+        default: all
+        description: Target ABI coverage
+      reuse_run:
+        type: string
+        default: ''
+        description: Optional prior run whose unchanged native QA APKs should receive current probes
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: android-love-runtime-${{ github.ref }}
   cancel-in-progress: true
@@ -19,7 +30,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        abi: [arm64-v8a, armeabi-v7a, x86_64]
+        abi: ${{ fromJSON(inputs.abi == 'x86_64' && '["x86_64"]' || inputs.abi == 'arm64-v8a' && '["arm64-v8a"]' || inputs.abi == 'armeabi-v7a' && '["armeabi-v7a"]' || '["arm64-v8a","armeabi-v7a","x86_64"]') }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
@@ -34,18 +45,35 @@ jobs:
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install
           'platforms;android-34' 'build-tools;34.0.0' 'ndk;25.2.9519653'
       - name: Install host multilib
+        if: inputs.reuse_run == ''
         run: sudo apt-get update && sudo apt-get install -y gcc-multilib
       - name: Build matching VM candidates
+        if: inputs.reuse_run == ''
         run: >-
           python3 tools/mobile-runtime-check/build_android.py
           --ndk "$ANDROID_HOME/ndk/25.2.9519653" --abi '${{ matrix.abi }}'
           --output '${{ runner.temp }}/android-vm/candidate'
       - name: Build actual LÖVE apps in an owned source copy
+        if: inputs.reuse_run == ''
         run: >-
           python3 tools/mobile-runtime-check/qualify_android_love.py build
           --abi '${{ matrix.abi }}'
           --build '${{ runner.temp }}/android-vm/candidate'
           --output '${{ runner.temp }}/android-love/candidate'
+      - uses: actions/download-artifact@v4
+        if: inputs.reuse_run != ''
+        with:
+          name: android-love-runtime-host-${{ matrix.abi }}
+          run-id: ${{ inputs.reuse_run }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/reused
+      - name: Refresh public probes while preserving native binary bytes
+        if: inputs.reuse_run != ''
+        run: |
+          cp -R "$RUNNER_TEMP/reused/android-vm" "$RUNNER_TEMP/android-vm"
+          python3 tools/mobile-runtime-check/refresh_android_probes.py \
+            --build "$RUNNER_TEMP/reused/android-love/candidate" \
+            --output "$RUNNER_TEMP/android-love/candidate"
       - name: Enable the owned emulator's KVM access
         run: sudo chmod a+rw /dev/kvm
       - name: Execute the actual JNI, LÖVE, thread and FFI host
