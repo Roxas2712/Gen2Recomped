@@ -10,6 +10,8 @@ return function(game)
     'touchmoved','mousepressed','mousereleased'} do love[event]=function()end end
   game.input:reset();U.freshSave(game)
   game.save.party={require('src.pokemon.Pokemon').new(game.data,'SCEPTILE',48)}
+  require('src.core.SaveData').validate(game.save,game.data)
+  require('src.battle.BattleState').stampOT(game.save,game.save.party[1])
   U.teleport(game,'MAP_G15_N00',8,20,'up');U.wait(90)
   local C=require('src.script.Gen3Commands');local S=require('src.core.SaveSerializer')
   local firstBarrier=game.overworld.map:blockAt(8,15)
