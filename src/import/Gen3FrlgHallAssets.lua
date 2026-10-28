@@ -2,7 +2,7 @@
 -- Own-cartridge resources for the exact shared FR/LG Hall controller.
 local M={ROOT='data/generated/gba/'}
 M.LABELS={'gText_Number','gText_Level','gText_IDNumber','gText_Name','gText_MainMenuTime',
-  'gText_WelcomeToHOF','gText_SavingDontTurnOffThePower2','gText_EggNickname','gText_LeagueChamp'}
+  'gText_WelcomeToHOF','gText_SavingDontTurnOffThePower2','gText_EggNickname','gText_LeagueChamp','gText_SaveFailed'}
 function M.resources()
   local paths={}
   for _,name in ipairs{'manifest.lua','bands.rgba','stripes.rgba','confetti.rgba','egg.rgba'}do paths[#paths+1]=M.ROOT..'hall_of_fame/'..name end
