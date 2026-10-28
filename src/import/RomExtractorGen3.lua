@@ -413,32 +413,67 @@ end
 -- the two together: "PROTEIN1,000".  A caller that is reading a menu row
 -- passes { [0x13] = "  " } and gets the gap back; everything else is
 -- unaffected, because an unlisted command is dropped exactly as before.
-function RomExtractorGen3:readText(off, maxBytes, spacers, opts)
+-- `structured` additionally retains layout commands and raw placeholder ids
+-- for verified named-text consumers; ordinary scan probes keep their arity,
+-- allocation policy and strict field-placeholder rejection.
+function RomExtractorGen3:readText(off, maxBytes, spacers, structured, opts)
+  -- Existing RS imports pass dialect options in the fourth slot. That path
+  -- stays unstructured; IR callers can additionally supply fifth-slot options.
+  if type(structured) == 'table' then opts, structured = structured, false end
   local map = self:charmap()
   local out = {}
+  local ir, pending, flush, node
+  if structured then
+    ir, pending = {}, {}
+    flush = function()
+      if #pending > 0 then
+        ir[#ir + 1] = { t = 'text', s = table.concat(pending) }
+        pending = {}
+      end
+    end
+    node = function(value) flush(); ir[#ir + 1] = value end
+  end
   local i = 0
   local limit = maxBytes or 1024
   while i < limit do
     local ok, b = pcall(self.rom.u8, self.rom, off + i)
     if not ok then return nil end
     if b == EOS then
+      if ir then
+        flush(); ir[#ir + 1] = { t = 'eos' }
+        return table.concat(out), i + 1, ir
+      end
       return table.concat(out), i + 1
     elseif b == NEWLINE then
+      if ir then node({t='nl'}) end
       out[#out + 1] = "\n"; i = i + 1
     elseif b == TEXT_SCROLL then
+      if ir then node({t='scroll'}) end
       out[#out + 1] = "\v"; i = i + 1
     elseif b == TEXT_PAGE then
+      if ir then node({t='para'}) end
       out[#out + 1] = "\f"; i = i + 1
+    elseif ir and (b == 0xF8 or b == 0xF9) then
+      if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
+      local id = self.rom:u8(off + i + 1)
+      local tag, glyph = require('src.import.Gen3TextGlyphs').read(b, id)
+      if not tag then return nil end
+      node({t='tag',tag=tag,control=b,code=id})
+      out[#out+1]=glyph; i=i+2
     elseif b == TEXT_PLACEHOLDER then
       -- Only $00-$0D are placeholders.  Spelling an unknown id as
       -- "{PLACEHOLDER:BF}" and carrying on made the SCAN believe graphics data
       -- was dialogue -- the token's own letters satisfied the letter gate.
+      if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local id = self.rom:u8(off + i + 1)
       local name = PLACEHOLDERS[id]
-      if not name then return nil end
+      if not name and not ir then return nil end
+      if ir then node({t='ph',code=id}) end
+      name = name or ('{PH:%02X}'):format(id)
       out[#out + 1] = name
       i = i + 2
     elseif b == TEXT_EXTENDED then
+      if i + 2 > limit or self.rom.size and off + i + 2 > self.rom.size then return nil end
       local cmd = self.rom:u8(off + i + 1)
       local operands = EXTENDED_OPERANDS[cmd]
       -- RS NAME_END separates a town/city stem from its visible suffix.
@@ -446,18 +481,28 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, opts)
       -- Keep unknown commands rejected in other dialects and scan probes.
       if cmd == 0 and opts and opts.rsNameEnd
         and (self.version == 'ruby' or self.version == 'sapphire') then operands = 0 end
-      if not operands then return nil end     -- an unknown command means this
-      if cmd == 0x0C then                     -- was never a string
+      if not operands then return nil end -- unknown commands reject a text probe
+      if i + 2 + operands > limit or self.rom.size and off + i + 2 + operands > self.rom.size then return nil end
+      if ir then
+        local args = {}
+        for n=1,operands do args[n]=self.rom:u8(off+i+1+n) end
+        node({t='ext',cmd=cmd,args=args,literal=cmd==12 and
+          (map[args[1]]or require('src.import.Gen3TextGlyphs').literal(args[1]))or nil})
+      end
+      if cmd == 0x0C then
         -- ESCAPE: the operand is a literal byte, control code or not
-        out[#out + 1] = map[self.rom:u8(off + i + 2)] or ""
+        local escaped=self.rom:u8(off+i+2)
+        out[#out + 1] = map[escaped]or ir and require('src.import.Gen3TextGlyphs').literal(escaped)or ""
       elseif spacers and spacers[cmd] then
         out[#out + 1] = spacers[cmd]
       end
       i = i + 2 + operands
     else
       local glyph = map[b]
+      if glyph==nil and ir then glyph=require('src.import.Gen3TextGlyphs').literal(b)end
       if glyph == nil then return nil end
       out[#out + 1] = glyph
+      if ir then pending[#pending + 1] = glyph end
       i = i + 1
     end
   end
@@ -12767,7 +12812,10 @@ function RomExtractorGen3:extractText()
   self:write("text", out)
   -- text_pointers is the module Data.lua requires; until the script engine can
   -- say which line belongs to which map, it carries the offset index alone
-  self:write("text_pointers", { source = "ROM:scan", byOffset = true })
+  local named, namedCount = require('src.import.Gen3TextCatalog').extract(self, out)
+  self._textPointers = { source = "ROM:scan", byOffset = true, namedIR = named }
+  self:write("text_pointers", self._textPointers)
+  if not named then Logger.warn('gen3 named text: %s', tostring(namedCount)) end
   Logger.info("Gen3 text: %d strings recovered by scan", count)
 end
 
@@ -31593,6 +31641,20 @@ function RomExtractorGen3:extractBattleMenu()
                      or ""),
   }
   self._constants = constants
+  -- These two semantic labels are also known structurally on every edition;
+  -- retain the actual offsets instead of inferring them from provenance prose.
+  if self._textPointers and self._textPointers.namedIR then
+    local labels={gText_BattleMenu=menu.at,gText_WhatWillPkmnDo=promptAt}
+    local extra=require('src.import.Gen3TextCatalog').bind(self,self._text or {},labels)
+    local catalog=self._textPointers.namedIR
+    for key,id in pairs(extra.named)do
+      if not catalog.named[key] then
+        catalog.named[key]=id
+        catalog.records[id]=catalog.records[id]or extra.records[id]
+      end
+    end
+    self:write('text_pointers',self._textPointers)
+  end
   self:itemMenuActions(constants)
   self:trainerCardBadges(constants)
   self:trainerCardArt(constants)
@@ -59420,6 +59482,15 @@ function RomExtractorGen3:run()
   require('src.import.Gen3EmeraldPresentation').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
+  -- Script and late UI stages can add prose after the initial scan. Snapshot
+  -- that final native pool so readers retain its layout IR until an actual
+  -- registry edit or removal, including strings the scan initially rejected.
+  if self._textPointers and self._textPointers.namedIR then
+    for id, row in pairs(self._textPointers.namedIR.records) do
+      row.nativePlain = self._text and self._text[id]
+    end
+    self:write('text_pointers', self._textPointers)
+  end
   if self.progress then
     self.progress(STAGE_COUNT, STAGE_COUNT, "Ready", 1, 1)
   end
