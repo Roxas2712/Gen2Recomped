@@ -43,6 +43,15 @@ local function live(lease)
   'native move resolution PP owner retired')
  return lease
 end
+-- Read the same ownership decision used by the native summary, from a
+-- resident of this exact admitted battle. Queries never flush staged PP.
+function M.isTradedMon(state,mon)
+ local screen=Battle._screen(state)
+ if not screen then return nil,'native battle admission required'end
+ local raw,known,game,owner=require('src.compat.gen1.BattleView').nativeMon(mon,true)
+ if not(known and raw and game==screen.game and owner==screen)then return nil,'foreign native Pokemon record'end
+ return not require('src.pokemon.Gen3Ownership').owns(raw,(game.save or{}).player)
+end
 function M.resolveMove(user,target,move,slot,adapter,state,out,...)
  local frame=scopes:find('move');local lease=frame and live(frame.value)
  if not lease then return nil,'move resolution belongs to its native invocation'end
