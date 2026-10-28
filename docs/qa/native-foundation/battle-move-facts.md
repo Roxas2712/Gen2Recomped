@@ -29,3 +29,11 @@ After qualification, only the helper's authorship/provenance comment changed.
 
 Native/player save profiles and private mod bytes are untouched. QA uses fresh
 owned profiles and the20GiB free-space floor, preserving the requested8GiB.
+
+Unchanged OASC109 `bddb5181`, Ruby `8714d38018`, frozen `a6c22718d3`:
+native new-game/GRUNT_003 trainer entry, paper/native/terrarium/native/paper,
+move swap/cancel, actual RAGE PP20 to19 / enemy HP66 to58 / player HP63,
+dex retirement and clean source teardown pass without loader errors. Terrarium
+and after-move captures were inspected upright. Owned fresh profile; this is
+not full story, contact timing, all-terrain, visible-desktop or stable-FPS
+acceptance. All own GPU children and managed copies are cleaned up;30GiB free.
