@@ -1323,6 +1323,10 @@ local function markerFor(version)
   if version == "red" or version == "blue" or version == "yellow" then
     revision = "gen1-trade-art-v1:"
   end
+  -- Reimport generated animation commands; keep saves and unrelated caches.
+  if GameVersion.generation(version)==2 then
+    revision=revision..'gen2-anim-object-v'..require('src.battle.Gen2AnimData').CACHE_REVISION..':'
+  end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end
 

@@ -17,7 +17,7 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   local B={{245,239,227},{31,97,193},{167,59,131},{7,13,19}}
   local C={{221,231,241},{71,81,91},{101,111,121},{11,21,31}}
   local data={battle_anims={gen2=true,moveAnims={PROBE=1},
-    scripts={[1]={entry=1,code={{op='obp0',args={0x1b}},
+    scripts={[1]={entry=1,code={{op='gfx',ids={1}},{op='obp0',args={0x1b}},
       {op='obj',args={0,64,48,0}},{op='obj',args={1,72,48,0}},
       {op='obj',args={2,80,48,0}},{op='delay',frames=2},{op='ret'}}}},
     objects={},functions={[0]='Null'},framesets={[0]={frames={{oam=0,duration=8}},loop='hold'}},
