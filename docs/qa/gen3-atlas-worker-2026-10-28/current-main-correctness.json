@@ -1,0 +1,85 @@
+{
+  "runtime_source": "69a7a230ec1060ab6765f7263bfe0a779d0d7ebe",
+  "focus_passed": true,
+  "source_unchanged": true,
+  "inputs_unchanged": true,
+  "groups": [
+    {
+      "name": "atlas_worker",
+      "exit": 0,
+      "summary": [
+        "851/851 checks passed  (Gen3 atlas core bytes, live animations and worker ownership)"
+      ],
+      "log_sha256": "a0ce63083d8cb38bfb58605c968442384bad5b91111b381a851527ad449fab7f"
+    },
+    {
+      "name": "native_atlas_pixels",
+      "exit": 0,
+      "summary": [
+        "1748/1748 checks passed  (native atlas pixel projection)"
+      ],
+      "log_sha256": "06416508d91d35c20de16fb03b00dd18713a636346f79b8733b3cc4163749ae2"
+    },
+    {
+      "name": "native_atlas_resources",
+      "exit": 0,
+      "summary": [
+        "526/526 checks passed  (native atlas resource lifecycle)"
+      ],
+      "log_sha256": "25dd0f9f411752cc4d23a9144e18ba51a55cebb559b8e717b8c21a6fb2e89042"
+    },
+    {
+      "name": "native_atlas_palettes",
+      "exit": 0,
+      "summary": [
+        "602/602 checks passed  (native source palette word projection)"
+      ],
+      "log_sha256": "9acf4f747066b19d05e08f85a9004d66219ada67c11676a9e1679a2fcc4d60ab"
+    },
+    {
+      "name": "shader_branches",
+      "exit": 0,
+      "summary": [
+        "55/55 checks passed  (shader branch planning, unchanged arithmetic and conservative source guards)"
+      ],
+      "log_sha256": "a0bbb27ff8c4e3458f7abf32520c16da919e047c9088bb62277d642f52ceeaf9"
+    },
+    {
+      "name": "alpha_depth_compat",
+      "exit": 0,
+      "summary": [
+        "69/69 checks passed  (Metal alpha-cutout late depth, exact native shader/target/lifetime contracts)"
+      ],
+      "log_sha256": "f0e824065e457e2f791c615d7438ce6b76f0dbd300e567d5bfd60ca226918f0a"
+    },
+    {
+      "name": "frlg_credits_readiness",
+      "exit": 0,
+      "summary": [
+        "76/76 checks passed  (original FRLG credits script, map pans, sprites, Pokemon windows and edition readiness)"
+      ],
+      "log_sha256": "cfe0e63f13a75581d779d2290ddc6e49d5d91fd4673814b56fd3fd6144856565"
+    },
+    {
+      "name": "walker_transfer",
+      "exit": 0,
+      "summary": [
+        "667/667 checks passed  (Pok\u00e9walker native transfers recover every write boundary without loss, duplication or stale/account writes)"
+      ],
+      "log_sha256": "75877b6c51a6f9d8c3028458f43090c842929289313b3188610e31e50fcc935e"
+    }
+  ],
+  "actual_love_11_5_threads": {
+    "passed": true,
+    "actualThreads": true,
+    "channelRestarts": 4,
+    "checks": 1913,
+    "lowWorkers": 1,
+    "atlasBytesEqual": true,
+    "atlasRgbaBytes": 327680,
+    "graphicsFree": true,
+    "byteDataRoundTrip": true
+  },
+  "actual_thread_log_sha256": "01e581cfa23d6c4eb66ce7b2c6a0021344d08f1ef1f0c167decbc5b3415b2d0e",
+  "scope": "Correctness only. Does not satisfy the required performance gate."
+}

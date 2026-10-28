@@ -77,3 +77,9 @@ focused checks (849 assertions and five integration stages, all passing). The ti
 
 [Raw qualification and measurements](qa/gen3-atlas-worker-2026-10-27/qualification.json)
 are retained alongside `coroutine-ownership.json`, `seam-off.json` and `seam-on.json`.
+
+## Erneute Prüfung am 28. Oktober
+
+Die Korrekturen, erneute aktuelle-main-Qualifikation und weiterhin nicht
+erfüllte Performance-Bedingung sind in der [Folgeprüfung](qa/gen3-atlas-worker-review-2026-10-28.md)
+getrennt dokumentiert. Der Entwurfsstatus und die Integrationssperre bleiben erhalten.
