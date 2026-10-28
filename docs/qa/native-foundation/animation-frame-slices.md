@@ -44,3 +44,28 @@ intro boot frames. It calls the native new-game lifecycle directly into its
 owned field fixture; no existing player save is loaded or copied. Managed
 cleanup finishes after the native child exits, preserving logs and receipts.
 The configured 20-GiB free reserve remains active.
+
+## Immutable upload rows
+
+`AtlasUpload.patch` now reads each complete RGBA8 tile directly from the
+caller's immutable string. The sixteen row copies retain their original
+placement and stride, without manufacturing sixteen substring values.
+Portable/non-RGBA/null-pointer resources keep the ImageData fallback. A short
+or non-string payload cannot enter the raw pointer path.
+
+Source fe8510f2 includes newer public main 39113358. Syntax and 67,243 checks
+across 20 groups pass (6b089b583e), including 202 independent full-buffer/guard
+and fallback checks plus the newer evolution contracts. An isolated actual
+old/new OFF/ON/ON/OFF comparison over 30,000 patches takes
+3.763 / 1.636 / 1.587 / 3.748 ms, with identical complete output buffers
+(dc52ca0e48): 2.33x throughput for that operation. This does not measure FPS.
+
+The current composition passes a further real Metal run with four captures /
+three exact comparisons in the direct Cerulean rain fixture (ecf6a2abdb).
+Both public atlas optimizations are enabled throughout. Only a separate,
+normally inactive private texture-binding candidate is toggled; its exact
+reuse count changes from zero to 777 in the image rows. Its ABBA timing is
+43.424 / 40.658 / 56.051 / 87.459 ms per frame, with named background load
+57.73% mean / 193.3% maximum. Those timings are unqualified diagnostics and
+do not establish a native speedup from either atlas change. No shader
+compilation occurs inside the timed legs. The source hashes remain unchanged.
