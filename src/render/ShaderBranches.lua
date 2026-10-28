@@ -19,7 +19,6 @@ local function uncomment(source)
  end
  return table.concat(pieces)
 end
-local function pattern(name)return'%f[%w_]'..name..'%f[^%w_]'end
 local function withoutDirectives(clean)
  local continued=false;local out={}
  for line in(clean..'\n'):gmatch('(.-)\n')do
@@ -74,23 +73,25 @@ function B.plan(source)
  for _,r in ipairs(conditions)do
   for name in clean:sub(r[1],r[2]):gmatch('%f[%w_][%w_]+%f[^%w_]')do used[name]=true end
  end
- local order={}
- for name in pairs(names)do
-  local use=pattern(name)
-  local shadow,macro=false,false;local pos=1
-  while true do
-   local a,b=outside:find(use,pos);if not a then break end
+ local rejected={};local pos=1
+ while true do
+  local a,b=outside:find('%f[%w_][%w_]+%f[^%w_]',pos);if not a then break end
+  local name=outside:sub(a,b)
+  if names[name]and not rejected[name]then
    -- Inspect the predecessor of this actual token. Searching an unanchored
    -- word+whitespace pattern rescans every suffix of long GLSL identifiers
    -- for every candidate, even when the candidate is absent there.
    local before=a-1
    while before>0 and outside:sub(before,before):match('%s')do before=before-1 end
    local predecessor=outside:sub(before,before)
-   if predecessor:match('[,%.]')or before<a-1 and predecessor:match('[%w_]')then shadow=true;break end
-   if code:sub(a,b)~=clean:sub(a,b)then macro=true;break end
-   pos=b+1
+   if predecessor:match('[,%.]')or before<a-1 and predecessor:match('[%w_]')
+    or code:sub(a,b)~=clean:sub(a,b)then rejected[name]=true end
   end
-  if shadow or macro then names[name]=nil
+  pos=b+1
+ end
+ local order={}
+ for name in pairs(names)do
+  if rejected[name]then names[name]=nil
   else
    if used[name]then order[#order+1]=name else names[name]=nil end
   end
