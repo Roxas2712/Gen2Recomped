@@ -33,6 +33,17 @@ Validation on implementation commit `8025abc7`:
 - Existing model calculation/completion, RNG link/checkpoint, party scope,
   held-item and round-clock suites: 252, 210, 57, 540, 8982 and 400 checks
   respectively, all passing.
+- An independent comparison runs the same driver against the original
+  native constructor (`646c1af8`) and its extracted implementation
+  (`8025abc7`). All 270 cases have identical combat-data/reference-identity
+  descriptions and actual sprite/animation-selector call traces: 18
+  editions, five status/form/badge variants and three battler roles. This
+  uses the LÖVE test stub and does not prove GPU artwork.
+
+The older offered upstream host independently passes 577 plain-Lua and
+810 actual native constructor/switch checks over its 15 advertised editions.
+Its adaptation retains its existing calculation binding and poison defaults;
+it does not import the fork-only held-item reader. See upstream PR396.
 
 This is a prerequisite for a standalone native model constructor, not an
 implementation of Gen1's complete `Battle.new`/turn-execution contract.

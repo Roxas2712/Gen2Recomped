@@ -15,11 +15,13 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `43abf33ddbe5e04b2043d21a2816c32eb5a6b4c9`,
-including native RNG PR336. That merge has 88 successful/skipped exact-head
-checks and an independently qualified identical tree: 934/934 engine suites,
-4/4 SDK suites and all available official ROM-free tiers. It is integrated
-into the current native battler development branch.
+The fetched fork main is `39113358ebcaa8e8f018fab3a7bbff18bb00fb31`,
+including GBA evolution PR344 and the earlier native RNG PR336. The preceding
+RNG merge `43abf33d` has 88 successful/skipped exact-head checks and an
+independently qualified identical tree: 934/934 engine suites, 4/4 SDK suites
+and all available official ROM-free tiers. Current main is integrated into
+the native battler development branch; the earlier receipt does not qualify
+the subsequently changed combined tree.
 
 The newest release by publication time observed through GitHub's release
 API is `desktop-test-20261028.3`, RetroRecomped 0.8.57, published
@@ -28,13 +30,19 @@ API is `desktop-test-20261028.3`, RetroRecomped 0.8.57, published
 is qualified here as containing all subsequent main/development changes.
 No release assets were updated during this checkpoint.
 
-Friendship PR341 and round-clock PR346 remain development work pending
-their complete current-tree merge gates. The public live round clock has
+Friendship source `26037683` passes a fresh complete independent run:
+936/936 engine suites, 4/4 SDK suites and every available official ROM-free
+tier. Its merge gate stopped when main advanced through PR344 during that
+run. The updated combination requires fresh qualification. PR349 now
+composes the friendship and round-clock implementations from PR341/346
+with the battler extraction on current main; the earlier PRs stay draft
+until the complete batch is qualified and merged. The public live clock has
 400 focused checks, actual native link observations have 210 and semantic
 checkpoint observations have 57. The
 [battler data/presentation extraction](native-battler-construction.md),
-PR349, has 691 plain-Lua checks without LÖVE and 972 checks through actual
-wild constructors and switches across the 18 registered editions.
+has 691 plain-Lua checks without LÖVE, 972 checks through actual wild
+constructors/switches across 18 editions, and 270 independently matched
+original-versus-extracted native data/art-selector cases.
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.
 
