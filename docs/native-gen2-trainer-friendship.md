@@ -33,6 +33,21 @@ their separate meaning. Other editions and Gen2 hacks keep their existing
 friendship rules. No mod, Gen1 installation, player profile, save or ROM is
 modified by this change.
 
+## Older-host party prerequisite
+
+This offered host did not have the fork's battle-local party selection or
+`playerPartyView()`. Supply the original native selection integration here:
+validate and retain ordered original mon references in the trainer constructor,
+then use the same roster for the lead, doubles, native party menus, benches,
+party-wide effects, EXP/EXP.ALL and defeat decisions. Never replace or reorder
+`save.party`. Invalid selections fall back to the complete original party.
+
+The standalone `native_trainer_party_scope` regression drives actual older-host
+constructors, generation-appropriate menus, AI, Heal Bell/Beat Up, EXP and defeat
+across its supported editions. This prerequisite is tested on this offered host;
+the corresponding fork result is not inherited. Execution status is recorded
+in the draft PR before qualification.
+
 ## Validation
 
 The committed ROM-free regressions exercise real `BattleState.newTrainer`,
