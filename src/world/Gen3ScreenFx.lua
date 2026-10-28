@@ -69,9 +69,11 @@ M.ORB = {
   [2] = { blue = false, x = 120 },
 }
 
-function M.orb(ow, result)
+function M.orb(ow, result, profile)
   local row = M.ORB[tonumber(result) or 3] or { blue = true, x = 120 }
-  ow.g3Orb = { blue = row.blue, cx = row.x, cy = 80, radius = 1, phase = 0,
+  -- RS uses (104,80) for both uncentred colours; Emerald moves blue to 136.
+  local cx=profile=='rs'and tonumber(result)==1 and 104 or row.x
+  ow.g3Orb = { blue = row.blue, cx = cx, cy = 80, radius = 1, phase = 0,
                state = "grow", eva = 12, evb = 7, dir = 0, delay = 0, pan = 0 }
 end
 
