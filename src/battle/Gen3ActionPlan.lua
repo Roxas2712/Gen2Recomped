@@ -2,7 +2,14 @@
 -- Observations of the native turn order and its actual queue rows. This
 -- ledger never starts, removes, schedules or reorders an action on its own.
 local Version=require('src.core.GameVersion')
+local Iteration=require('src.compat.gen1.TableIteration')
 local M={}
+local actionKeys={'kind','meta','move','user','target','userId','targetId','order'}
+local function actionPairs(_,source)
+  local out={}
+  for _,key in ipairs(actionKeys)do out[key]=source[key]end
+  return out
+end
 local ABSENT={}
 local function loader(game)
   local value=game and game.mods
@@ -95,6 +102,9 @@ local function actionView(b,p,admission,index)
     __newindex=function()error('native action observation is read-only',2)end,
     __metatable='native action observation',
   })
+  -- Use the shared LuaJIT pairs/next authority. The reader has no closure
+  -- over this view, its native battle or its source admission.
+  Iteration.register(view,actionPairs)
   views[index]=view
   return view
 end

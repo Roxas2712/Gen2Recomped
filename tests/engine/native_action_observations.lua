@@ -29,6 +29,11 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(first.user,native.order[1][1]==b.player and'player'or'enemy')
  T.eq(first.target,native.order[1][2]==b.player and'player'or'enemy')
  T.eq(first.order,1);T.eq(B._actionI,1,'cursor identifies the real first queue row')
+ local facts={};for key,value in pairs(first)do facts[key]=value end
+ T.same(facts,{kind='move',meta=false,move='MOVE_033',user=first.user,target=first.target,
+   userId=native.order[1][1].position,targetId=native.order[1][2].position,order=1},
+   'shared typed iteration exposes genuine action facts, including false values')
+ T.eq(next(first)~=nil,true,'shared typed next sees action records')
  T.eq(native.rows[1],b.queue[1],'observation records reference the actual queued native fn')
  T.eq(B._phase,b.phase,'observations do not advertise an unimplemented action phase')
  local save=Json.encode(f.game.save);local frame,rollCount,queue=b.frame,#rolls,{}
@@ -63,6 +68,7 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  b.queue=queue;T.eq(first.kind,nil,'restoring a queue cannot revive its retired observation')
  close(f)
  T.eq(first.kind,nil,'an exited native battle cannot retain action access')
+ T.same(require('src.compat.gen1.TableIteration').snapshot(first),{},'retired action iteration retains no native facts')
 end
 
 -- Compare complete native turns with and without observer registration.
