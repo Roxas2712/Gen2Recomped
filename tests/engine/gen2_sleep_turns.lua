@@ -79,7 +79,7 @@ for _,edition in ipairs{'gold','silver','crystal'}do
    -- The move's own awake guard still runs after a waking status check.
    s,b,t=fixture(edition,id,side);asleep(b,1)
    hp,pp=t.mon.hp,b.curMoves[1].pp;s:executeAction(b,t,b.curMoves[1])
-   T.eq(b.mon.status,nil);T.eq(b.curMoves[1].pp,pp-1)
+   T.eq(b.mon.status,nil);T.eq(b.curMoves[1].pp,pp-ppCost)
    T.eq(t.mon.hp,hp,'wake permits the selected move, whose awake-only failure remains native')
    T.check(texts(s):find('failed!',1,true)~=nil)
   end
