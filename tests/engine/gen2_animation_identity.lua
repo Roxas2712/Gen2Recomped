@@ -27,15 +27,17 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   end
   T.eq(r.frames,p.frames,'repeated scalar reads observe native time')
   T.eq(projections,0,'scalar queries never project OAM')
-  T.eq(#r.objects.structs,0,'object inspection remains separate from OAM projection')
+  T.eq(#r.objects.structs,10,'real object pool retains all ten hardware slots')
+  T.eq(r.objects:activeCount(),0,'idle hardware slots are empty')
+  T.eq(r,p.runtime,'public runner is the actual native interpreter')
   T.eq(projections,0,'object metadata queries never project OAM')
-  r:oam();T.eq(projections,1,'explicit sprite drawing projects actual OAM once')
+  r:oam();T.eq(projections,0,'real OAM is already emitted by the VM, with no draw-time projection')
   local before=p.frames;p:update();T.eq(r.frames,p.frames,'live frame observation advances with VM')
   T.eq(p.frames,before+1,'observation does not advance the clock')
   p:start('FIX_MOVE',false)
   T.eq(r.animId,expected,'retired observation preserves original resolved program')
-  T.eq(projections,2,'retiring captures OAM only once')
-  r.retire();T.eq(projections,2,'repeated retirement does not rebuild sprites')
+  T.eq(projections,0,'old runner keeps its own OAM without retirement projection')
+  r.retire();T.eq(projections,0,'repeated retirement does not rebuild sprites')
  end
  local p=Player.new(data)
  data.battle_anims.moveAnims.TOSS_ANIM=1

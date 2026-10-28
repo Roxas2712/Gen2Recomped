@@ -49,7 +49,7 @@ function View:quad(gfx, tile, image)
   local bySheet = self.quads[gfx] or {}; self.quads[gfx] = bySheet
   if not bySheet[tile] then
     local w,h = image:getDimensions()
-    local cols = sheet.cols or 16
+    local cols = sheet.cols or sheet.wide or 16
     bySheet[tile] = love.graphics.newQuad((tile%cols)*8, math.floor(tile/cols)*8, 8,8,w,h)
   end
   return bySheet[tile]
@@ -62,9 +62,17 @@ function View:drawObjects(runner, battle)
     g.setColor(1,1,1,1)
     local active,activeByte
     for _, obj in ipairs(runner:oam()) do
-      local sheet = self.data.gfx and self.data.gfx[obj.gfx]
-      local image = sheet and self:image(sheet.image)
-      local quad = image and self:quad(obj.gfx, obj.tile, image)
+      local entry,index
+      for i=#runner.loaded,1,-1 do
+        local loaded=runner.loaded[i]
+        if obj.tile>=loaded.tile and obj.tile<loaded.tile+math.max(loaded.tiles,1)then
+          entry,index=loaded,obj.tile-loaded.tile
+          break
+        end
+      end
+      local sheet=entry and not entry.battler and self.data.gfx and self.data.gfx[entry.gfx]
+      local image=sheet and self:image(sheet.image)
+      local quad=image and self:quad(entry.gfx,index,image)
       if quad then
         local colors = self:objPalette(obj.palette, battle)
         local slot=slots[obj.palette]or tonumber(obj.palette)
@@ -84,46 +92,9 @@ function View:drawObjects(runner, battle)
   if not ok then error(err,0) end
 end
 
--- Stable per-animation observations of the native VM, including its real
--- object state machine and frame clock. Filtered OAM proxies still delegate
--- to this same draw owner. Restarting the VM retires the old observation.
-function View.runner(player)
-  local selected, frozen
-  local function objects()
-    local structs = {}
-    for _, obj in ipairs(selected or player.objects) do
-      local fn = obj.fn and ('BATTLE_ANIM_FUNC_'..obj.fn:gsub('(%l)(%u)','%1_%2'):upper())
-      if obj.fn == 'PokeBall' then fn = 'BATTLE_ANIM_FUNC_POKEBALL' end
-      if obj.fn == 'PokeBallBlocked' then fn = 'BATTLE_ANIM_FUNC_POKEBALL_BLOCKED' end
-      structs[#structs+1] = {index=obj.index,func=fn,jt=obj.state}
-    end
-    return {structs=structs}
-  end
-  local function state()
-    return {animId=player.presentationId or player.moveId,frames=player.frames or 0,var=player.vars and player.vars.var or 0,
-      stopped=player:isDone(),keepSprites=player.keepSprites,
-      bg=player.bg, objects=objects(), oam=player:oam(selected)}
-  end
-  local runner = {}
-  function runner:oam() return frozen and frozen.oam or player:oam(selected) end
-  function runner.selectObjects(objects) selected=objects end
-  function runner.retire() if not frozen then frozen=state(); player=nil end end
-  return setmetatable(runner, {
-    -- Scalar observations are hot in render/camera callbacks. Do not project
-    -- OAM and allocate all object records just to read a name or frame count.
-    __index=function(_,key)
-      if frozen then return frozen[key] end
-      if key=='animId'then return player.presentationId or player.moveId end
-      if key=='frames'then return player.frames or 0 end
-      if key=='var'then return player.vars and player.vars.var or 0 end
-      if key=='stopped'then return player:isDone()end
-      if key=='keepSprites'then return player.keepSprites end
-      if key=='objects'then return objects()end
-      if key=='bg'then return player.bg end
-    end,
-    __newindex=function() error('native Gen2 animation observation is read-only',2) end,
-  })
-end
+-- The public runner is now the actual command/object/BG owner. A restart
+-- creates a fresh runner, so retained consumers never rebind to another move.
+function View.runner(player)return player.runtime end
 -- BG methods use the same concrete view object as native OAM drawing.
 for name,method in pairs(require('src.battle.Gen2BgView'))do View[name]=method end
 return View
