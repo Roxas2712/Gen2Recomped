@@ -7,7 +7,9 @@ local Probe=dofile('tests/native_action_plan/turn.lua')
 local Json=require('src.link.Json')
 local base=Seq.begin
 local function run(b)
- local row=table.remove(b.queue,1);b:runQueueAction(row)
+ local row=table.remove(b.queue,1)
+ if b.runQueueAction then return b:runQueueAction(row)end
+ table.insert(b.queue,1,row);return b:updateQueue()
 end
 local function prepared(edition)
  local f,b=Probe.open(edition);b:resolveTurn(b.player.mon.moves[1]);return f,b
