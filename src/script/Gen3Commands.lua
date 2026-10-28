@@ -12740,7 +12740,8 @@ Gen3Commands.SPECIALS[275] = function(ctx)
   local ribboned = 0
   if okContest then
     for _, mon in ipairs(save.party or {}) do
-      local ribbons = Contest.ribbons(mon)
+      -- RS/E GameClear and FR/LG EnterHallOfFame exclude eggs from awards.
+      local ribbons = type(mon)=='table'and not(mon.isEgg or mon.egg)and Contest.ribbons(mon)
       if ribbons and not ribbons.champion then
         ribbons.champion = true
         ribboned = ribboned + 1
@@ -12785,7 +12786,7 @@ Gen3Commands.SPECIALS[275] = function(ctx)
   -- dataset with no SS Tidal table falls straight through it.
   local ceremony = okHof and game and game.stack
                    and Gen3HallOfFame.new(game, function(ending)
-                         if ending and ending.nativeRsSaved then
+                         if ending and(ending.nativeRsSaved or ending.nativeEmeraldSaved)then
                            -- The original RS ending resets after THE END.
                            -- Retire this exact suspended script rather than
                            -- running the old home/gift callback behind title.
