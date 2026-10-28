@@ -3,6 +3,27 @@
 -- an alias to the screen and does not construct or advance a second battle.
 local Runtime = require('src.mods.Runtime')
 local Model = {}
+-- IsGymLeader's cartridge list includes the Elite Four, Champion and Red,
+-- then falls through into the eight Kanto leaders. Keep this public source
+-- predicate distinct from the native badge/Pikachu companion marker.
+Model.KANTO_GYM_LEADER_CLASSES = {
+  BROCK=true, MISTY=true, LT_SURGE=true, ERIKA=true,
+  JANINE=true, SABRINA=true, BLAINE=true, BLUE=true,
+}
+Model.GYM_LEADER_CLASSES = {
+  FALKNER=true, WHITNEY=true, BUGSY=true, MORTY=true,
+  PRYCE=true, JASMINE=true, CHUCK=true, CLAIR=true,
+  WILL=true, BRUNO=true, KAREN=true, KOGA=true, CHAMPION=true, RED=true,
+}
+for class in pairs(Model.KANTO_GYM_LEADER_CLASSES) do
+  Model.GYM_LEADER_CLASSES[class] = true
+end
+function Model.isGymLeader(class)
+  return class ~= nil and Model.GYM_LEADER_CLASSES[class] == true
+end
+function Model.isKantoGymLeader(class)
+  return class ~= nil and Model.KANTO_GYM_LEADER_CLASSES[class] == true
+end
 local screens = setmetatable({}, { __mode = 'kv' })
 local ended = setmetatable({}, { __mode = 'k' })
 

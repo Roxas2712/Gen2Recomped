@@ -1788,6 +1788,15 @@ function BattleState.newTrainer(game, oppClass, partyIndex)
     self.trainerLabel = shownName
   end
   self.introText = Strings("%s wants\nto fight!", shownName)
+  -- InitEnemyTrainer awards GSC friendship before the first turn, including
+  -- Elite Four/Champion/Red. Resolve the public source predicate so API2
+  -- decorators affect this actual native owner. The party view contains the
+  -- original selected mons; excluded save-party members receive no award.
+  if require("src.pokemon.Gen2Friendship").isVanilla()
+     and require("src.battle.gen2.Battle").isGymLeader(
+       require("src.battle.Gen2TrainerClass").fromIndex(self.trainer.index)) then
+    require("src.pokemon.Gen2Friendship").gymBattle({party=self:playerPartyView()})
+  end
   return self
 end
 
@@ -3644,7 +3653,6 @@ function BattleState:enter()
   if self.isGymLeader then
     require("src.world.PikachuFollower")
       .modifyHappiness(self.game.save, "GYMLEADER")
-    require("src.pokemon.Gen2Friendship").gymBattle(self.game.save)
   end
   -- normally already playing: the transition wipe starts the theme
   -- (audio/play_battle_music.asm runs before the transition, and
