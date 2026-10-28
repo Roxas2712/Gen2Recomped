@@ -8,6 +8,20 @@ local V = require('src.render.GameViewport')
 local Runtime = require('src.mods.Runtime')
 local Save = require('src.core.SaveData')
 local Game = require('src.core.Game')
+local sdk=T.sdk.loadMods({'mods/skin_consumer'},{data=T.fixtures.fresh(),fs=T.sdk.memfs({
+  ['mods/skin_consumer/manifest.json']=require('src.link.Json').encode({
+    id='skin_consumer',name='Unmodified skin API consumer fixture',version='1.0.0',api=2,entry='main.lua'}),
+  ['mods/skin_consumer/main.lua']=[[
+    local mod=...
+    local S=require('src.core.TouchSkin')
+    mod.exports.hasGeometry=type(S.page)=='function' and type(S.controlGeometry)=='function'
+    mod.exports.hasLibrary=type(S.installArchive)=='function' and type(S.exportDelta)=='function'
+  ]],
+})})
+T.eq(#sdk.errors,0,'actual mod loader resolves native skin API')
+T.eq(sdk.loader.apis.skin_consumer.exports.hasGeometry,true,'optional mod geometry consumer receives real API')
+T.eq(sdk.loader.apis.skin_consumer.exports.hasLibrary,true,'optional mod library consumer receives real API')
+sdk.release()
 local W, H = 640, 480
 love.graphics.getDimensions = function() return W, H end
 love.graphics.getPixelDimensions = function() return W * 2, H * 2 end
@@ -140,7 +154,9 @@ T.eq(Skin.active,nil,'missing skin cannot leave stale art selected')
 T.check(Touch.skinError ~= nil,'missing skin reports its load error')
 
 -- Skin cutouts share the actual viewport owner; mod hooks keep final say.
-Runtime.hooks,Runtime.events={},{}
+local Hooks=require('src.mods.Hooks')
+local hooks=Hooks.new()
+Runtime.install(require('src.mods.Events').new(),hooks,{})
 Touch:applyOptions({touchControls={skin='native_owned'}})
 local x,y,w,h=Skin.viewport(W,H)
 local r=V.begin(2)
@@ -153,6 +169,15 @@ T.eq(lx,10,'pointer maps into real cutout x')
 T.eq(ly,20,'pointer maps into real cutout y')
 T.check(inside,'pointer inside cutout is accepted')
 V.finish({}); V.reset()
+local undo=hooks:wrap('render.viewport',function(next,ctx)
+  local base=next(ctx)
+  T.eq(base.width,math.floor(w),'mod receives selected skin as default viewport')
+  return {x=20,y=30,width=100,height=90}
+end,0,'owned-fixture')
+r=V.begin(2)
+T.eq(r.x,20,'layout mod can override selected skin viewport')
+T.eq(r.width,100,'layout mod retains final cutout authority')
+V.finish({}); V.reset(); undo()
 V.begin(4,false)
 T.eq(V.active(),false,'existing native dual-screen layout keeps its owner')
 V.finish({}); V.reset()
