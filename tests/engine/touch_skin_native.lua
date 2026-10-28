@@ -67,6 +67,32 @@ T.check(files[ra]:find('overlay0_desc0',1,true) ~= nil, 'RetroArch export contai
 local delta = assert(Skin.exportDelta(restored, {system='gbc'}))
 T.check(files[delta]:find('info.json',1,true) ~= nil, 'Delta export contains metadata')
 
+-- The actual option row accepts normal input and retains other layout options.
+local Version=require('src.core.GameVersion')
+Version.set('crystal')
+local Menu=require('src.ui.OptionsMenu')
+local Stack=require('src.core.StateStack')
+local g={data=T.fixtures.fresh(),save=Save.newGame(),writes=0,input={pressed={}}}
+g.stack=setmetatable({},{__index=Stack});g.stack:init()
+g.input.wasPressed=function(self,key) return self.pressed[key]==true end
+g.writeOptions=function(self) self.writes=self.writes+1;self.persisted=Save.encode(self.save) end
+g.save.options.touchControls={layouts={portrait={scale=1.2}}}
+local menu=Menu.new(g);g.stack:push(menu)
+local page=menu:focusRow('touchSkin')
+T.check(page ~= nil,'installed skin exposes a native Options row')
+if page then
+  g.input.pressed={right=true};page:update(1/60);g.input.pressed={}
+  T.eq(g.save.options.touchControls.skin,'native_owned','normal RIGHT selects installed skin')
+  T.eq(Skin.active and Skin.active.id,'native_owned','normal Options input applies real skin')
+  T.eq(g.writes,1,'normal Options input writes through native owner')
+  local roundTrip=assert(Save.decode(g.persisted))
+  T.eq(roundTrip.options.touchControls.skin,'native_owned','save codec round-trips selected skin')
+  T.eq(roundTrip.options.touchControls.layouts.portrait.scale,1.2,'skin choice retains layout preferences')
+  g.input.pressed={right=true};page:update(1/60);g.input.pressed={}
+  T.eq(g.save.options.touchControls.skin,nil,'normal RIGHT wraps to default pad')
+  T.eq(Skin.active,nil,'default choice releases custom viewport')
+end
+
 Touch:init(); Input:init()
 Touch.active = true
 Touch:applyOptions({touchControls={skin='native_owned'}})
