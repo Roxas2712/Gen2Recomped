@@ -284,6 +284,9 @@ function Status.beforeMove(battler, rng, battle, move)
     local statusId=mon.status
     local canMove, statusMsgs, selfHit, reason, kind = handler(battler, rng, battle, move)
     for _, m in ipairs(statusMsgs or {}) do msgs[#msgs + 1] = m end
+    -- Gen1-style registered records already return the explicit kind in
+    -- slot four. Retain that value as the native reason as well.
+    if kind==nil and (reason=='sleep' or reason=='confused')then kind=reason end
     if reason=='gen3_sleep' and not canMove then kind='sleep' end
     if statusMsgs and #statusMsgs>0 and (kind=='sleep' or kind=='confused')then describe(kind,#msgs)end
     if not canMove then describe(nil,nil,record.id or statusId)end

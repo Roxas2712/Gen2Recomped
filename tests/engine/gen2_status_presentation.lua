@@ -130,8 +130,38 @@ for _,mode in ipairs{'wake','snap','flinch','skip','missing'}do
  s:statusInterrupt(b,s.enemy,b.curMoves[1])
  local count=0;for _,row in ipairs(s.queue)do if row.anim then count=count+1 end end
  T.eq(count,mode=='missing'and 1 or 0,mode..' has no false status program')
- finish(s);T.eq(s.animPlaying,false,mode..' releases its native queue')
+ finish(s);T.check(not s.animPlaying,mode..' releases its native queue')
  s.animPlayer:release()
+end
+do
+ local s=make('crystal','native','de');local b=s.player
+ b.confusedTurns=3;b.mon.status='PAR';b.charging={};b.bideTurns=2
+ local calls=0;s.rng=function()calls=calls+1;return 0 end
+ local hp,pp=b.mon.hp,b.curMoves[1].pp
+ T.eq(s:statusInterrupt(b,s.enemy,b.curMoves[1]),true,'actual confusion self-hit blocks action')
+ T.eq(calls,1,'self-hit never makes a later paralysis roll')
+ T.check(b.mon.hp<hp,'actual native confusion damage resolves')
+ T.eq(b.charging,nil,'actual self-hit clears native charge')
+ T.eq(b.bideTurns,nil,'actual self-hit clears native Bide')
+ T.eq(b.curMoves[1].pp,pp,'actual self-hit spends no move PP')
+ local animations=0
+ for _,row in ipairs(s.queue)do if row.anim=='ANIM_CONFUSED'then animations=animations+1 end end
+ T.eq(animations,1,'actual self-hit retains its own confusion presentation once')
+ finish(s);s.animPlayer:release()
+end
+do
+ local s=make('crystal','native','de');local b=s.player
+ s.data.statuses={SHAM={beforeMovePriority=40,beforeMove=function()
+  return false,{'Eigene Schlafmeldung'},false,'sleep'
+ end}};b.mon.status='SHAM'
+ local _,_,_,reason,p=Status.beforeMove(b,s.rng,s)
+ T.eq(reason,'sleep','explicit source record kind keeps its native return value')
+ T.eq(p and p.kind,'sleep','explicit Gen1-style record metadata reaches the native owner')
+ T.eq(p and p.blockedStatus,'SHAM','missing record id falls back to the real registered status key')
+ s:statusInterrupt(b,s.enemy,b.curMoves[1])
+ T.eq(s.queue[1].anim,'ANIM_SLP','explicit registered status uses actual GSC program')
+ T.eq(s.queue[2].text,'Eigene Schlafmeldung','explicit registered caption is never regenerated')
+ finish(s);s.animPlayer:release()
 end
 -- Gen1/GBA callers retain their original animation names and native side rules.
 for _,edition in ipairs{'red','firered','emerald'}do
