@@ -1289,7 +1289,7 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
   if GameVersion.isFRLG(version) then revision = version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version == "polishedcrystal" then revision = "polished-stored-unown-forms-v7:" end
   if version == "prism" then revision = "prism-events-art-v2:" end

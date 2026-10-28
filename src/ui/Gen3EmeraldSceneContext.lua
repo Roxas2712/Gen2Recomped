@@ -39,7 +39,8 @@ function M.new(game,opts)
     ['src.import.CacheBlob']={readFs=fs.readActive,decode=function(_,bytes)return bytes end},
     ['src.import.gba.versions']={BUILD='emerald',active=function()return'emerald'end},
     ['src.core.game3.profile']=profiles,['src.core.game3.audio']=audio,
-    ['src.core.game3.song_ids']=songs,['src.core.game3.se_ids']={resolve=function(id)return tonumber(id)or songs[id]end},
+    ['src.core.game3.song_ids']=songs,['src.core.game3.se_ids']=setmetatable({
+      resolve=function(id)return tonumber(id)or songs[id]end},{__index=songs}),
     ['src.ui.game3.stack']={push=function()end,pop=function()end},
     ['src.core.game3.display']={W=240,H=160,TILE=8,COLS=30,ROWS=20},
   }

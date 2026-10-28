@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-198 files. Four further byte-exact files supply the native RS credits
+199 files. Four further byte-exact files supply the native RS credits
 controller, scenery selection and exact-edition credits extractor. Four more
 supply Hall of Fame presentation, art decoding and the RS text policy. One more
 supplies the original RS options controller and rendering over host-owned settings. The existing GBA
@@ -17,6 +17,13 @@ M4A synthesizer and preserves native warm attract restart, interruption and
 host menu callbacks. No generated assets or cartridge bytes are vendored.
 Native movie/title acceptance does not imply native parity for the remaining
 Emerald menus, professor sequence or complete story.
+
+The original Emerald common main menu now reuses host callback ownership,
+the read-only shared Hoenn save summary and Emerald's own constants. Its
+sixteen labels, normal font, title palette and twenty frames come from the
+selected ROM. Original panels and dimming display the active save directly;
+CONTINUE has no additional host preview confirmation. Mod-owned custom rows
+keep their existing host menu. Mystery Gift/Events gameplay remains separate.
 
 Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC
 (https://github.com/bryanthaboi/gen1recomp).
