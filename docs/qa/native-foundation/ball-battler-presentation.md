@@ -25,9 +25,17 @@ Validation so far:
   visibility correction: 197 CPU groups pass, including all 23,160 assertions
   above and the new main's font, alpha-depth, effects, checkpoint and waterfall
   regressions. Native Gen2 regressions remain included.
-- Real unchanged-consumer image qualification is recorded below once its
-  managed run finishes. This is separate from complete gameplay, all
-  portraits/views and stable frame-rate acceptance.
+- Real Metal Ruby `611cb4757b`, unchanged consumer `bddb5181`, imported TIANA
+  portrait 2: 595 battler observations, including 553 before the accepted
+  player send-out with zero premature visible player rows. All 82 observed
+  ball-hidden rows hide their actual actor. Both native send-outs are admitted;
+  108 native clock samples, 76 visible fitted ball rows and 11 captured throw
+  images are retained. The command menu and cleanup complete without loader
+  errors; 378 opening-effect passes contain zero duplicate native ball cells.
+  Images at enemy frames 32/62 and player frames 0/20 confirm empty slots
+  before release and actual opening emergence. Opening particles still need
+  fitting to the source scene; this is not complete scene, all-portrait/view
+  or stable frame-rate acceptance. Hosted CI remains separate.
 
 QA uses owned profiles and preserved disposable copies with a 20 GiB free
 floor. Private consumer sources, ROM originals and player saves are unchanged.
