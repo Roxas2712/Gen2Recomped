@@ -9,6 +9,9 @@ listed in [GBA integration and verification](docs/gba-authentic-integration.md).
 These editions remain **Alpha**: complete story and postgame acceptance is
 still outstanding.
 
+GSC background-effect source provenance and its retained licence are recorded in
+[compat/gen1-gsc/provenance.json](compat/gen1-gsc/provenance.json).
+
 Based on the Pokemon Gen 1 Recompilation Project by BOIS CLUB GAMES, LLC
 (https://github.com/bryanthaboi/gen1recomp). The pinned presentation sources
 retain their [original licence and provenance](compat/gen1-rs/README.md).
