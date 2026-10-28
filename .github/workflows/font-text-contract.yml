@@ -14,3 +14,4 @@ jobs:
       - run: |
           luajit tests/engine/font_text_contract.lua
           luajit tests/engine/font_text_macros.lua
+          luajit tests/engine/font_ttf_contract.lua
