@@ -52,7 +52,7 @@ def main():
     here = Path(__file__).resolve().parent
     root = here.parent.parent
     qa_source(root)
-    for key in ('LIBRARY_PREVIEW_CATALOGUE', 'LIBRARY_PREVIEW_THUMBNAILS'):
+    for key in ('LIBRARY_PREVIEW_CATALOGUE', 'LIBRARY_PREVIEW_THUMBNAILS', 'LIBRARY_PREVIEW_XY_FILE'):
         if os.getenv(key):
             qa_source(Path(os.environ[key]))
     executable = shutil.which(args.love)
