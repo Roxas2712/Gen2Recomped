@@ -133,7 +133,10 @@ Status.RECORDS = {
     id = "SLP", label = "SLP", hudLabel = "SLP",
     catchBonus = 25, shakeBonus = 10,
     beforeMovePriority = 40,
-    beforeMove = function(battler)
+    beforeMove = function(battler,rng,battle,move)
+      if require('src.core.GameVersion').isGen2()then
+        return require('src.battle.Gen2Sleep').beforeMove(battler,rng,battle,move)
+      end
       local gba = require("src.core.GameVersion").isGen3()
       local step = gba and require("src.battle.Abilities").sleepStep(battler) or 1
       battler.sleepTurns = (battler.sleepTurns or 1) - step
@@ -147,7 +150,9 @@ Status.RECORDS = {
     onInflict = function(battle, target, opts, display)
       local low, high = rule(battle, "sleepTurnsMin"), rule(battle, "sleepTurnsMax")
       local gba = require("src.core.GameVersion").isGen3()
-      if gba and low == 2 and high == 5 then target.sleepTurns = battle.rng(0, 3) + 2
+      if require('src.core.GameVersion').isGen2()then
+        require('src.battle.Gen2Sleep').inflict(battle,target,low,high)
+      elseif gba and low == 2 and high == 5 then target.sleepTurns = battle.rng(0, 3) + 2
       else target.sleepTurns = battle.rng(low, high) end
       if gba then target.mon.sleepTurns = target.sleepTurns end
       return { Strings("%s\nfell asleep!", display) }
@@ -265,7 +270,8 @@ function Status.beforeMove(battler, rng, battle, move)
     return false, {}
   end
   local gba = require("src.core.GameVersion").isGen3()
-  if battler.flinched and not gba then
+  local gsc = require('src.core.GameVersion').isGen2()
+  if battler.flinched and not gba and not gsc then
     battler.flinched = false
     return false, { Strings("%s\nflinched!", name(battler)) }
   end
@@ -297,10 +303,11 @@ function Status.beforeMove(battler, rng, battle, move)
     if not canMove or selfHit then return canMove, msgs, selfHit, reason, presentation end
     handler = nil
   end
-  if gba and battler.flinched then
+  if (gba or gsc) and battler.flinched then
     battler.flinched = false
     msgs[#msgs + 1] = Strings("%s\nflinched!", name(battler))
-    return false, msgs, false, "gen3_flinch", presentation
+    if gsc then require('src.battle.Gen2Sleep').cancel(battler,move)end
+    return false, msgs, false, gba and "gen3_flinch"or nil, presentation
   end
   if battler.boundTurns and battler.boundTurns > 0 then
     battler.boundTurns = battler.boundTurns - 1
