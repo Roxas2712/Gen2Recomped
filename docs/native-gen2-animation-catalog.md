@@ -21,6 +21,8 @@ pretending to have cartridge addresses.
 Native `Gen2AnimPlayer` and its actual runtime/view use that complete imported
 table directly. Changing moves changes the entry point and VM state, not the
 data owner. Standalone source calls and source edits observe the same pool.
+The original source-native `generation=2` schema is accepted directly,
+without requiring the fork's private format or legacy index flags.
 The previous flat input remains accepted for existing program registrations;
 there is still one real interpreter, object pool and battle clock.
 

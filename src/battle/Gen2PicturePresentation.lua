@@ -1,6 +1,7 @@
 -- Picture identity follows the existing GSC animation VM, not the earlier
 -- native damage/effect calculation. No combat value or saved mon is delayed.
 local Version=require('src.core.GameVersion')
+local Data=require('src.battle.Gen2AnimData')
 local M={}
 
 local function side(b) return b.isPlayer and 'player' or 'enemy' end
@@ -25,7 +26,7 @@ end
 local function mark(screen,b,kind)
   local row=screen.moveAnimRow
   local player=screen.animPlayer
-  if not (Version.isGen2() and row and screen:animationsOn() and player and player.anims.gen2
+  if not (Version.isGen2() and row and screen:animationsOn() and player and Data.isGen2(player.anims)
       and player:scriptFor(row.anim))then return end
   local queued=false
   for _,item in ipairs(screen.queue or {})do if item==row then queued=true;break end end

@@ -1254,7 +1254,7 @@ local function newBattle(game)
   -- rather than Gen 1's subanimation/frame-block tables), so they get
   -- their own player.
   if game.data.battle_anims then
-    if game.data.battle_anims.gen2 then
+    if require('src.battle.Gen2AnimData').isGen2(game.data.battle_anims) then
       local ok, Gen2AnimPlayer = pcall(require, "src.battle.Gen2AnimPlayer")
       if ok then
         self.animPlayer = Gen2AnimPlayer.new(game.data)
@@ -2342,7 +2342,7 @@ end
 -- `isPlayer` follows the poof's convention (Gen2AnimPlayer flips it): false
 -- for the player's own mon, true for the foe's.
 function BattleState:shinyAnim(battler, isPlayer)
-  if not (self.data and self.data.battle_anims and self.data.battle_anims.gen2) then
+  if not (self.data and require('src.battle.Gen2AnimData').isGen2(self.data.battle_anims)) then
     return false
   end
   local mon = battler and battler.mon
@@ -2355,7 +2355,7 @@ end
 -- before the queue starts running, where animNext's insert point does not
 -- apply.
 function BattleState:shinyAnimAppend(battler, isPlayer)
-  if not (self.data and self.data.battle_anims and self.data.battle_anims.gen2) then
+  if not (self.data and require('src.battle.Gen2AnimData').isGen2(self.data.battle_anims)) then
     return false
   end
   local mon = battler and battler.mon
@@ -10388,7 +10388,7 @@ end
 function BattleState:gen3ShinyBurst(battler)
   if not battler then return false end
   if not self:gen3ThrowsSendOut() then return false end
-  if self.data and self.data.battle_anims and self.data.battle_anims.gen2 then
+  if self.data and require('src.battle.Gen2AnimData').isGen2(self.data.battle_anims) then
     return false -- Johto has its own SHINY_ANIM; this is the Gen 3 dataset
   end
   local mon = battler.mon
@@ -10532,7 +10532,7 @@ function BattleState:ballChain(tossAnim, caught, shakes, ball)
   -- (anim_checkpokeball -> GetPokeBallWobble) and finally the click or the
   -- break-out, all from one script.  Replaying Gen 1's POOF/HIDEPIC/SHAKE
   -- rows on top of it would only double up pieces of what it just did.
-  if self.data and self.data.battle_anims and self.data.battle_anims.gen2 then
+  if self.data and require('src.battle.Gen2AnimData').isGen2(self.data.battle_anims) then
     self:animNext(tossAnim, true, shakes, ball, caught)
     if caught then
       self:actNext(function()

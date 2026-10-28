@@ -5,7 +5,11 @@ local Ids=require('src.battle.Gen2AnimObjectIds')
 local M={}
 M.CACHE_REVISION=3
 function M.isNative(anims)
-  return anims and anims.generation==2 and anims.format=='gsc-native-v1'
+  return anims and anims.generation==2 and type(anims.scripts)=='table'
+    and type(anims.moves)=='table'and type(anims.oamsets)=='table'
+end
+function M.isGen2(anims)
+  return anims and (anims.gen2==true or M.isNative(anims))
 end
 local function order(constants,key)
   return constants and constants[key] or Ids[key]

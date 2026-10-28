@@ -89,6 +89,7 @@ function M.run()
       data.battle_anims.oam[id]={tile=0,sprites=sprites}
     end
     local catalog=require('src.battle.Gen2AnimCatalog').compile(data.battle_anims,data.constants,edition)
+    catalog.gen2,catalog.format,catalog.moveAnims,catalog.indices,catalog.misc=nil,nil,nil,nil,nil
     data.battle_anims=assert(loadstring(require('src.import.LuaWriter').encodeSplit(catalog)))()
     require('src.render.Font').load(data)
     local save=require('src.core.SaveData').newGame()
