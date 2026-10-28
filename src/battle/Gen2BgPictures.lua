@@ -3,7 +3,7 @@
 -- The existing native screen still owns images, battlers and all clocks.
 local Version=require('src.core.GameVersion')
 local Palette=require('src.render.Gen2PaletteDraw')
-local Chrome=require('src.ui.Gen2Chrome')
+local Chrome=require('src.battle.Gen2BgPaint')
 local M={}
 local SIZES={[0]=6,[1]=4,[2]=2,[3]=7,[4]=5,[5]=3}
 
@@ -29,6 +29,17 @@ local function withPalette(screen,side,body)
   if not ok then error(why,0)end
 end
 function M.install(Screen)
+  -- Older native screens need the same live observation; this reads their
+  -- actual battler and BG owners rather than constructing another model.
+  if not Screen.animPicState then
+    function Screen:animPicState(side)
+      local bg=self.anim and self.anim.bg
+      if not bg then return nil end
+      return {hidden=bg.hidden[side],size=bg.picSize[side],
+        shade=bg.monShade[side],slide=bg.slide[side]or 0,
+        lifted=bg.liftedRows[side]}
+    end
+  end
   local draw=Screen.drawBattlerPic
   function Screen:drawBattlerPic(b,x,y,scale)
     if not Version.isGen2() or not(self.anim and self.anim.bg) then
@@ -72,6 +83,7 @@ function M.install(Screen)
     end
   end
   local drawPic=Screen.drawPic
+  if drawPic then
   function Screen:drawPic(mon,back)
     if not Version.isGen2() or not(self.anim and self.anim.bg)then
       return drawPic(self,mon,back)
@@ -80,6 +92,7 @@ function M.install(Screen)
       or self.enemy and self.enemy.mon==mon and 'enemy'
       or (back and 'player'or'enemy')
     return withPalette(self,side,function()drawPic(self,mon,back)end)
+  end
   end
   function Screen:drawLiftedRows(width)
     local bg=self.anim and self.anim.bg

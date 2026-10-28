@@ -3,7 +3,7 @@
 -- Native integration retains the real BG scanline pipeline and uses this
 -- engine's palette and pixel-canvas owners. OAM is composited afterwards.
 local PixelCanvas=require('src.render.PixelCanvas')
-local Chrome=require('src.ui.Gen2Chrome')
+local Chrome=require('src.battle.Gen2BgPaint')
 local GbcPalette=require('src.render.Gen2PaletteDraw')
 local BgView={}
 local SCREEN_W,SCREEN_H=160,144
