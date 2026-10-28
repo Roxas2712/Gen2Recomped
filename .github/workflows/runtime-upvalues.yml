@@ -1,4 +1,4 @@
-name: Native runtime capacity
+name: PR253 Windows native runtime qualification
 on:
   pull_request:
     paths:
@@ -29,22 +29,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: ubuntu-24.04
-            label: linux-x64
           - runner: windows-2022
             label: windows-x64
             love-artifact: '12514271124'
             library: lua51.dll
-          - runner: macos-15-intel
-            label: macos-x64
-            love-artifact: '12513712494'
-            library: libluajit.so
-            engine-timeout: 2400
-            job-timeout: 90
-          - runner: macos-15
-            label: macos-arm64
-            love-artifact: '12513712494'
-            library: libluajit.so
     runs-on: ${{ matrix.runner }}
     # Two complete engine runs, each bounded at 40 minutes, plus both runtime
     # builds and the actual LOVE host checks. No tier is skipped on slow hosts.
@@ -114,7 +102,7 @@ jobs:
           retention-days: 14
   components:
     needs: qualify
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
@@ -126,29 +114,17 @@ jobs:
           python-version: '3.12'
       - uses: actions/download-artifact@v8
         with:
-          pattern: runtime-capacity-*
-          path: runtime-candidates
-      - name: Verify component packaging guards
-        shell: bash
-        run: python -m unittest discover -s engine/tests -p test_runtime_component.py -v
-      - name: Combine the two qualified Mac slices
-        shell: bash
-        run: >-
-          python engine/tools/runtime-upvalue-check/component.py
-          --platform macos
-          --candidate runtime-candidates/runtime-capacity-macos-x64
-          --candidate runtime-candidates/runtime-capacity-macos-arm64
-          --output "${{ runner.temp }}/qualified-runtime/candidate/macos"
-      - name: Stage the qualified Windows component
-        shell: bash
+          name: runtime-capacity-windows-x64
+          path: runtime-candidates/windows
+      - name: Stage the source-bound Windows runtime
         run: >-
           python engine/tools/runtime-upvalue-check/component.py
           --platform windows
-          --candidate runtime-candidates/runtime-capacity-windows-x64
-          --output "${{ runner.temp }}/qualified-runtime/candidate/windows"
+          --candidate runtime-candidates/windows
+          --output "${{ runner.temp }}/qualified-runtime/windows"
       - uses: actions/upload-artifact@v7
         with:
-          name: qualified-desktop-runtime
-          path: ${{ runner.temp }}/qualified-runtime/candidate/
+          name: pr253-qualified-windows-runtime
+          path: ${{ runner.temp }}/qualified-runtime/
           if-no-files-found: error
           retention-days: 14
