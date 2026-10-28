@@ -1288,6 +1288,7 @@ local function newBattle(game, opts)
       if ok then
         self.animPlayer = Gen2AnimPlayer.new(game.data)
         self.animPlayer.battle = self.battle
+        self.animPlayer.screen = self
         self.animView = self.animPlayer.view
         self.anims = self.animPlayer.anims
       end
@@ -4451,6 +4452,10 @@ end
 -- changes -- see drawBattlerPic and the enemy branch of drawPics.
 function BattleState:pictureSprite(battler)
   return battler.sprite
+end
+
+function BattleState:pictureScalePath(battler, path)
+  return path
 end
 
 function BattleState:pictureStill(battler)
@@ -12551,7 +12556,8 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
     end
   end
   local img = self:battlerPic(battler)
-  if self:substituteVisible(battler) and not self:fxFaintActive(battler)
+  local replacement=GameVersion.isGen2() and require('src.battle.Gen2PictureArt').replacement(self,battler)~=nil
+  if not replacement and self:substituteVisible(battler) and not self:fxFaintActive(battler)
      and not battler.fainted then
     self:drawSubstituteDoll(battler)
     return
@@ -12604,7 +12610,7 @@ function BattleState:drawBattlerPicAt(battler, x, y, scale)
       end
       return
     end
-    if not battler.gen3Transformed
+    if not replacement and not battler.gen3Transformed
        and self:drawStadiumBattlerPic(battler, img, x, y, scale) then return end
     local tr, tg, tb, tc = self:gen3AnimTint(battler)
     if tc then
@@ -13053,6 +13059,10 @@ end
 -- top-left x, y and the scale (slide/shake offsets are added by the
 -- caller).  Feet stay at 96 for every scale: y + (h - pad) * scale == 96.
 function BattleState.backPlacement(w, h, pad, padL, scale)
+  if GameVersion.isGen2() then
+    return 16 + math.max(0, math.floor((48-w)/2)) + math.floor(w*(1-scale)/2),
+      96-h + math.floor(h*(1-scale)), scale
+  end
   return 8 - padL * scale, 96 - (h - pad) * scale, scale
 end
 
@@ -13167,7 +13177,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
     love.graphics.setColor(1, 1, 1, 1)
     local ex, ey = enemyPicXY(img, slide, sx, sy)
     local s = BattleState.resolveBattleScale(self.data, "front",
-      imagePathOf(img), self.enemy.mon and self.enemy.mon.species)
+      self:pictureScalePath(self.enemy,imagePathOf(img)), self.enemy.mon and self.enemy.mon.species)
     -- EMERALD PLACES ITS POKEMON ON A PLATFORM, and the 7x7 tile slot above
     -- is the Game Boy's rule for a 160x144 letterbox that has none.  On the
     -- Gen 3 field it left the foe up in the corner well clear of the ground
@@ -13297,7 +13307,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
     local pad = imagePadBottom[handle] or 0
     local padL = imagePadLeft[handle] or 0
     local s = BattleState.resolveBattleScale(self.data, "back",
-      imagePathOf(handle),
+      self:pictureScalePath(self.player,imagePathOf(handle)),
       self.player.mon and self.player.mon.species)
     local gs = self:growInScale(self.player)
     local ballOut = self:gen3BallFor(self.player)
@@ -13308,9 +13318,14 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       -- pinned, mod scale composed with the grow stage
       local eff = s * gs
       if eff > 0 then
-        love.graphics.draw(img,
-          8 - padL * s + img:getWidth() * s * (1 - gs) / 2 + sx,
-          96 - (img:getHeight() - pad) * eff + sy, 0, eff, eff)
+        if GameVersion.isGen2() then
+          local dx,dy=BattleState.backPlacement(img:getWidth(),img:getHeight(),pad,padL,eff)
+          love.graphics.draw(img,dx+sx,dy+sy,0,eff,eff)
+        else
+          love.graphics.draw(img,
+            8 - padL * s + img:getWidth() * s * (1 - gs) / 2 + sx,
+            96 - (img:getHeight() - pad) * eff + sy, 0, eff, eff)
+        end
       end
     elseif ballOut then
       -- COMING OUT OF THE BALL, which is the absorb run backwards: the pic
@@ -13966,5 +13981,7 @@ end
 -- Compose after native/source view installers, retaining their real draw owners.
 require('src.battle.Gen2BgPictures').install(BattleState)
 require('src.battle.Gen2PicturePresentation').install(BattleState)
+require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf,
+  source=function(image)return imageMeta[image]end})
 
 return BattleState

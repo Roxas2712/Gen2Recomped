@@ -5,6 +5,7 @@
 -- compat/gen1-gsc/LICENSE.MD; inherited object-drawing rights remain intact.
 local Palette = require('src.render.Gen2PaletteDraw')
 local PaletteFX = require('src.render.PaletteFX')
+local BattlerRows = require('src.battle.Gen2BattlerRows')
 local View = {}
 View.__index = View
 local slots = {
@@ -13,7 +14,14 @@ local slots = {
   PAL_BATTLE_OB_BLUE=6, PAL_BATTLE_OB_BROWN=7,
 }
 function View.new(anims, data)
-  return setmetatable({data=anims or {}, gameData=data or {}, images={}, quads={}}, View)
+  return setmetatable({data=anims or {}, gameData=data or {}, images={}, quads={},
+    battlerRows=setmetatable({},{__mode='k'})}, View)
+end
+function View:loadBattlerRows(screen,...)
+  if not(screen and screen.gen2ObjectPictureSource)then return end
+  for _,entry in ipairs({...})do
+    self.battlerRows[entry]=BattlerRows.snapshot(screen:gen2ObjectPictureSource(entry.battler),entry)
+  end
 end
 function View:image(path)
   if not path then return nil end
@@ -29,6 +37,10 @@ function View:release()
     if image and image.release then image:release() end
   end
   self.images, self.quads = {}, {}
+  for _,snapshot in pairs(self.battlerRows)do
+    if snapshot.image.release then snapshot.image:release()end
+  end
+  self.battlerRows=setmetatable({},{__mode='k'})
   self:releaseBg()
 end
 function View:objPalette(name, battle)
@@ -58,9 +70,9 @@ function View:drawObjects(runner, battle)
   local g = love and love.graphics
   if not g then return end
   g.push('all')
-  local ok, err = pcall(function()
+  local ok, err = pcall(Palette.preserving,function()
     g.setColor(1,1,1,1)
-    local active,activeByte
+    local active,activeByte,activeRaw
     for _, obj in ipairs(runner:oam()) do
       local entry,index
       for i=#runner.loaded,1,-1 do
@@ -71,15 +83,17 @@ function View:drawObjects(runner, battle)
         end
       end
       local sheet=entry and not entry.battler and self.data.gfx and self.data.gfx[entry.gfx]
-      local image=sheet and self:image(sheet.image)
-      local quad=image and self:quad(entry.gfx,index,image)
+      local snapshot=entry and self.battlerRows[entry]
+      local image=snapshot and snapshot.image or sheet and self:image(sheet.image)
+      local quad=snapshot and BattlerRows.quad(snapshot,index)or image and self:quad(entry.gfx,index,image)
       if quad then
         local colors = self:objPalette(obj.palette, battle)
         local slot=slots[obj.palette]or tonumber(obj.palette)
         local byte=(slot==2 or slot==3)and runner.bg and runner.bg.obp0 or nil
-        if colors~=active or byte~=activeByte then
-          if not Palette.useRaw(Palette.remap(Palette.resolve(colors),byte))then g.setShader()end
-          active,activeByte=colors,byte
+        local raw=snapshot and snapshot.trueColor or false
+        if colors~=active or byte~=activeByte or raw~=activeRaw then
+          if raw or not Palette.useRaw(Palette.remap(Palette.resolve(colors),byte))then g.setShader()end
+          active,activeByte,activeRaw=colors,byte,raw
         end
         local attr = obj.attr or 0
         local sx = math.floor(attr/32)%2 == 1 and -1 or 1

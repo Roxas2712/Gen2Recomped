@@ -19,6 +19,9 @@ jobs:
         run: |
           luajit tests/engine/gen2_picture_presentation.lua
           luajit tests/engine/gen2_picture_pixels.lua
+          luajit tests/engine/gen2_picture_art_import.lua
+          luajit tests/engine/gen2_picture_art_draw.lua
+          luajit tests/engine/gen2_battler_rows.lua
       - name: Existing command, object and background owners
         run: |
           luajit tests/engine/gen2_object_runtime.lua

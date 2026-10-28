@@ -15509,6 +15509,7 @@ function RomExtractorGen2:gen2BattleAnims()
   return {
     gen2 = true,
     commandFormat = "gsc-macro-v1",
+    pictureArt = require('src.import.Gen2BattlePictureArt').extract(self),
     scripts = scripts,
     moveAnims = moveAnims,
     objects = self:gen2AnimObjects(),
