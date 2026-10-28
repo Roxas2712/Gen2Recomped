@@ -25,19 +25,31 @@ for _,edition in ipairs{'firered','leafgreen','emerald'}do
  local blobs={[spec.TILES]=tiles,[spec.TILEMAP]=map,[spec.PALETTE]=pal,[spec.MENU_PALETTE]=menu}
  X.lz77ok=function(_,at)return true,blobs[at]end
  Image.blank=function()error('synthetic reader does not bake GPU artwork')end
- local writes=0
- local x=setmetatable({rom={pointer=function()return nil end},_constants={retained=true},beginStage=function()end,
+ local writes,ppReads=0,0
+ local rom={size=spec.PP_TEXT_PALETTE+32,pointer=function()return nil end,
+  u16=function(_,at)ppReads=ppReads+1;return 1024+(at-spec.PP_TEXT_PALETTE)/2 end}
+ local x=setmetatable({rom=rom,version=edition,symbols={},_constants={retained=true},beginStage=function()end,
   write=function(_,name,value)T.eq(name,'constants');T.eq(value.retained,true);writes=writes+1 end},X)
  x:extractBattleTextbox();T.eq(writes,1)
  local result=x._constants.gen3BattleTextbox.palette;T.eq(#result,16)
  for i=1,16 do T.eq(result[i],pal[i*2-1]+pal[i*2]*256)end
+ local imported=x._constants.gen3BattleTextbox
+ T.eq(#imported.windowPalette,16)
+ for i=1,16 do T.eq(imported.windowPalette[i],menu[i*2-1]+menu[i*2]*256)end
+ if edition=='emerald'then
+  T.eq(ppReads,16);T.eq(#imported.ppPalette,16);T.eq(imported.ppSource,'ROM:gPPTextPalette 0D85620')
+  for i=1,16 do T.eq(imported.ppPalette[i],1023+i)end
+  x.rom.size=spec.PP_TEXT_PALETTE+31;x:extractBattleTextbox()
+  T.eq(x._constants.gen3BattleTextbox.ppPalette,nil,'bounded raw PP table read')
+  T.eq(ppReads,16,'out-of-bounds table reads no bytes')
+ else T.eq(ppReads,0);T.eq(imported.ppPalette,nil,'no Emerald raw addresses in another edition')end
  local first=result[1];pal[1]=0;T.eq(result[1],first,'raw bytes are detached from the serialized palette')
  pal[#pal]=nil;x._constants={};writes=0;x:extractBattleTextbox()
  T.eq(writes,0,'truncated palette cannot publish indexed metadata');T.eq(x._constants.gen3BattleTextbox,nil)
- T.check(cacheMarker(edition):find('gba-textbox-palette-v1:',1,true)~=nil)
+ T.check(cacheMarker(edition):find('gba-textbox-palette-v2:',1,true)~=nil)
 end
 for _,edition in ipairs{'red','crystal','ruby','sapphire','platinum','black'}do
- T.eq(cacheMarker(edition):find('gba-textbox-palette-v1:',1,true),nil,'unaffected edition cache marker')
+ T.eq(cacheMarker(edition):find('gba-textbox-palette-v2:',1,true),nil,'unaffected edition cache marker')
 end
 X.lz77ok,Image.blank=lz,blank
 T.finish('validated native textbox extraction retains the full raw palette and narrows cache revision')

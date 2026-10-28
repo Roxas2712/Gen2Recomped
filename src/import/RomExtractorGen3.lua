@@ -54856,6 +54856,9 @@ RomExtractorGen3.BATTLE_TEXTBOX = {
   -- gBattleWindowTextPalette, which is BG palette 5 and is where the menu's
   -- own text colours live
   MENU_PALETTE = 0xD85600, MENU_PALETTE_BYTES = 0x20,
+  -- Emerald battle_interface.c: the four PP ink/shadow pairs are in a
+  -- separate raw sixteen-colour table, not in the compressed window palette.
+  PP_TEXT_PALETTE = 0xD85620,
   COLS = 32, ROWS = 64, WIDTH = 30,
   -- the three panels, by their first map row
   PANELS = { { key = "message", row = 14 }, { key = "action", row = 34 },
@@ -55094,10 +55097,26 @@ function RomExtractorGen3:extractBattleTextbox()
   local constants = self._constants or {}
   -- Preserve the cartridge's first bank for indexed presentation text.
   -- RGB role triples alone cannot answer arbitrary foreground/shadow pairs.
-  local textboxPalette = {}
-  for i = 0, 15 do textboxPalette[i + 1] = palRaw[i * 2 + 1] + palRaw[i * 2 + 2] * 256 end
+  local textboxPalette, windowPalette = {}, {}
+  for i = 0, 15 do
+    textboxPalette[i + 1] = palRaw[i * 2 + 1] + palRaw[i * 2 + 2] * 256
+    windowPalette[i + 1] = menuRaw[i * 2 + 1] + menuRaw[i * 2 + 2] * 256
+  end
+  local ppPalette, ppSource
+  local edition = type(self.version) == 'table' and self.version.id or self.version
+  if edition == 'emerald' then
+    local at = self:symbol('gPPTextPalette') or T.PP_TEXT_PALETTE
+    if type(at) == 'number' and at % 1 == 0 and at >= 0 and at + 32 <= rom.size then
+      local values = {}
+      for i = 0, 15 do values[i + 1] = rom:u16(at + i * 2) end
+      ppPalette, ppSource = values, ('ROM:gPPTextPalette %07X'):format(at)
+    end
+  end
   constants.gen3BattleTextbox = {
     palette = textboxPalette,
+    windowPalette = windowPalette,
+    ppPalette = ppPalette,
+    ppSource = ppSource,
     images = images,
     frameImages = frameImages,
     y = T.SCREEN_Y,
