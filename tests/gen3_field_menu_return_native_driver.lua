@@ -37,7 +37,14 @@ return function(game)
   assert(target)
   for _=1,math.abs(target-menu.index)do press(target>menu.index and'down'or'up')end
   press('a',30);assert(getmetatable(game.stack:top())==Party)
-  press('a');press('a',30)
+  press('a')
+  local party=game.stack:top();local flash
+  for i,row in ipairs(party.submenu or{})do
+    if row.action=='field'and row.move=='FLASH'then flash=i end
+  end
+  assert(flash,'Native party submenu does not offer FLASH')
+  for _=1,math.abs(flash-party.subIndex)do press(flash>party.subIndex and'down'or'up')end
+  press('a',30)
   for _,state in ipairs(game.stack.states)do assert(getmetatable(state)~=Start,'Field action recreated START')end
   shot('native-party-flash-presentation')
   for _=1,2000 do
