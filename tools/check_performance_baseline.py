@@ -43,11 +43,14 @@ def main():
     parser.add_argument("--hidden", action="store_true", help="Use an invisible native window for matched unfocused measurements")
     parser.add_argument("--stable-focus", action="store_true", help="Reject measurements whose actual native focus changes")
     parser.add_argument("--unfocused-sdl3", type=Path, help="SDL3 library for a real non-focusable show/hide transition; requires --hidden --stable-focus")
+    parser.add_argument("--compact-host", action="store_true", help="Omit unused platform distributions, mods and documentation from the source-only atlas host")
     parser.add_argument("--perf", help="Native POKEPORT_PERF overrides, e.g. atlasWorker=0")
     parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
+    if args.compact_host and not args.atlas_bridge:
+        parser.error("--compact-host requires --atlas-bridge")
     if args.unfocused_sdl3 and not (args.measure and args.hidden and args.stable_focus):
         parser.error("--unfocused-sdl3 requires --measure --hidden --stable-focus")
     if args.unfocused_sdl3:
@@ -122,13 +125,35 @@ def main():
                       text=True, check=True).stdout.strip(), "Commit the candidate first"
     git_dir = Path(qa_run(["git", "rev-parse", "--absolute-git-dir"], cwd=ROOT,
                           capture_output=True, text=True, check=True).stdout.strip())
-    qa_extract_archive(git_dir, head, source)
+    export_tree = head
+    export_omitted = []
+    if args.compact_host:
+        # Reuse the exact source subtrees; only the private host's root tree
+        # omits inputs that this no-mod atlas scene never uses. No staging
+        # archive, mutable checkout or alternate runtime is introduced.
+        omitted = {"mobile", "ports", "docs", "mods", "Gen2Recomped.exe", ".github"}
+        rows = qa_run(["git", "-c", "gc.auto=0", "ls-tree", "-z", head], cwd=ROOT,
+                      capture_output=True, check=True).stdout.split(b"\0")
+        kept = []
+        for row in rows:
+            if not row:
+                continue
+            name = row.split(b"\t", 1)[1].decode()
+            if name in omitted:
+                export_omitted.append(name)
+            else:
+                kept.append(row + b"\0")
+        export_tree = qa_run(["git", "-c", "gc.auto=0", "mktree", "-z"], cwd=ROOT,
+                             input=b"".join(kept), capture_output=True, check=True).stdout.decode().strip()
+    qa_extract_archive(git_dir, export_tree, source)
     if args.hidden:
         conf = source / 'conf.lua'
         conf.write_text(conf.read_text() + '\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.window.visible=false end\n')
     engine = source / "main.lua"
     engine_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
     adaptations = []
+    if export_omitted:
+        adaptations.append("Omit unused private-host root entries: " + ", ".join(export_omitted))
     if args.measure:
         code = engine.read_text()
         pacing = '  if os.getenv("POKEPORT_DRIVER") then return false end'
@@ -141,8 +166,8 @@ def main():
         assert block.count(update) == 1
         code = code[:begin] + block.replace(update, '      PlatformHooks.update(Game, dt)') + code[end:]
         engine.write_text(code)
-        adaptations = ["Enable existing native pacing in the owned driver host",
-                       "Use the interactive PlatformHooks.update and real dt after each driver observation"]
+        adaptations += ["Enable existing native pacing in the owned driver host",
+                        "Use the interactive PlatformHooks.update and real dt after each driver observation"]
     patched_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
     instrumented = {}
     if args.measure:
@@ -298,6 +323,7 @@ end
               "originalEntrypointSha256": engine_hash, "hostEntrypointSha256": patched_hash,
               "testAdaptations": adaptations, "separateCaseProfiles": args.measure,
               "instrumentedFiles": instrumented,
+              "exportTree": export_tree, "exportOmitted": export_omitted,
               "hostSyntaxChecked": lua is not None,
               "hardware": hardware,
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
