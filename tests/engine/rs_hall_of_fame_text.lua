@@ -62,4 +62,17 @@ for _,edition in ipairs{'ruby','sapphire'} do
   T.eq(creditsFixture(edition,false):creditsPages(),nil,'a record run without a closed page table is rejected')
 end
 T.eq(creditsFixture('emerald',true):creditsPages(),nil,'Emerald still requires its original heading records')
+local Music=require('src.core.Music');local play=Music.play
+local selected;Music.play=function(_,song)selected=song end
+local data={audio={special={hallOfFame='OWNED_HOF_SONG',credits='OWNED_CREDITS_SONG'}}}
+require('src.ui.Gen3HallOfFame').enter({game={data=data}})
+T.eq(selected,'OWNED_HOF_SONG','ceremony requests the imported edition role')
+require('src.ui.Gen3Credits').enter({game={data=data}})
+T.eq(selected,'OWNED_CREDITS_SONG','roll requests the imported edition role')
+data.audio.special={}
+require('src.ui.Gen3HallOfFame').enter({game={data=data}})
+T.eq(selected,'Music_HallOfFame','legacy datasets retain their role fallback')
+require('src.ui.Gen3Credits').enter({game={data=data}})
+T.eq(selected,'Music_Credits','legacy credit role fallback is retained')
+Music.play=play
 T.finish('RS Hall of Fame label and original credits records, closed page tables and Emerald isolation')

@@ -10,7 +10,8 @@ The Hall of Fame matcher now admits the edition's exact original label. RS
 credits retain the existing readable-name density, record extent and closed
 five-row page-table checks without requiring Emerald's additional title byte.
 Emerald and FRLG retain their existing admission rules. Existing renderer,
-ceremony and credits callbacks are reused.
+ceremony and credits callbacks are reused. Those screens now resolve their
+music roles through `audio.special`, including the edition's native song IDs.
 
 Primary RS references, pinned to
 `5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f`:
@@ -24,7 +25,8 @@ Primary RS references, pinned to
 actual text decoder and pointer-table parser. It checks exact edition labels,
 missing and unrelated text, record runs without page tables, repeated page
 pointers, and Emerald isolation. The pre-fix Hall of Fame cases failed six
-assertions; the combined corrected contracts pass 33 assertions.
+assertions; the combined corrected contracts pass 37 assertions, including
+native song-role selection and legacy fallback labels.
 
 `tests/rs_ending_native_driver.lua` is a prepared imported-ROM fixture using
 the actual GameClear special, two Pokémon, original player label, welcome,
