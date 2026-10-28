@@ -97,7 +97,7 @@ function M.cover(self,entry,x,y,w,h,opacity)
     if w>180*self._s then
       g.setFont(self.hintFont);g.setColor(c[1],c[2],c[3],opacity)
       g.print('RETRO / COMMUNITY',x+14*self._s,y+14*self._s)
-      g.setFont(self.stateFont);g.printf(s.label,x+14*self._s,y+h-self.stateFont:getHeight()-16*self._s,w*.58,'left')
+      g.setFont(self.stateFont);g.printf(L(s.label),x+14*self._s,y+h-self.stateFont:getHeight()-16*self._s,w*.58,'left')
     end
   end
   g.pop()
