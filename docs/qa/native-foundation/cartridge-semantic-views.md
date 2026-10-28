@@ -30,7 +30,7 @@ Fork source `cb02fe24a7` on main `4e481a9c` passes 79 CPU groups, including
 196 Safari text/profile/HUD checks, 807 existing collision semantics checks,
 639 native text IR checks and the current native Safari rules/runtime suites.
 Exact older-public composition `30716ff9f5` passes 44 groups: 807 collision,
-576 IR checks and 8 unavailable-owner/retirement-boundary checks. It retains
+576 IR checks and 8 import/unsupported-owner/generation boundary checks. It retains
 its older native bodies and does not contain the later native Safari owner;
 positive Safari controller/HUD qualification is not claimed for that baseline.
 The narrow callback and shared helper remain dormant without that native owner.
@@ -44,8 +44,10 @@ battle window/scene behavior.
 Unchanged-mod FireRed Safari `549ab98f50` completes its native constructor,
 paper view and idle cleanup. Its image exposed the ordinary player HP panel
 where Safari balls should appear; that failure is retained as evidence and led
-to the shared native-counter delegation. The corrected five-view visual run
-is in progress. Full Safari throw/reaction/capture parity, all-edition/all-map
+to the shared native-counter delegation. Corrected source `cb02fe24a7` run `69041aad74-firered` exits0 after all five
+paper/native/terrarium/native/paper views and idle cleanup. Its inspected paper
+frame shows the native Safari counter with30 balls instead of player HP.
+An actual Ruby Safari recheck is in progress. Full Safari throw/reaction/capture parity, all-edition/all-map
 visual acceptance and sustained60FPS are not inferred.
 
 QA uses owned profiles, preserves player saves and enforces20GiB free, above
