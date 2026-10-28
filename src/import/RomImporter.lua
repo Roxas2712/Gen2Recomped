@@ -1352,6 +1352,9 @@ local function markerFor(version)
   if GameVersion.generation(version)==3 then revision=revision..'gba-field-move-art-v1:'end
   if GameVersion.generation(version)==2 then
     revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
+    -- The genuine animation VM consumes battler-row commands that older
+    -- handler-name imports reversed. Rebuild generated data, retain saves.
+    revision=revision..'gen2-anim-object-v'..require('src.battle.Gen2AnimData').CACHE_REVISION..':'
   end
   return CACHE_FORMAT .. revision .. GameVersion.info(version).sha1
 end

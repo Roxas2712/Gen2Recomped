@@ -3,6 +3,7 @@
 -- plus Additional Terms; see compat/gen1-gsc/. No ROM program is invented.
 local Ids=require('src.battle.Gen2AnimObjectIds')
 local M={}
+M.CACHE_REVISION=1
 local function order(constants,key)
   return constants and constants[key] or Ids[key]
 end
