@@ -7,6 +7,8 @@ local data, before = T.fixtures.fresh(), V.get()
 -- Independent Python integer FNV audits revision 27 while preserving
 -- edition-specific secondary commands and the separate NDS surfaces.
 local LEGACY = "e33d251961f2a41d"
+-- Independently audited integer FNV: legacy surface + GSC command domain.
+local GSC = "40df18dc503213c8"
 local NATIVE = "78dbbb41ed15c325"
 local EMERALD_NATIVE = "fb32852c3ce04be0"
 local NDS = { [4] = "d37127fdeb67b571", [5] = "5959e75709cb1fcb" }
@@ -15,14 +17,15 @@ for _, version in ipairs({ "red", "ruby", "gold", "sapphire", "firered", "leafgr
   local gba = V.isGen3()
   local generation = V.generation()
   local nds = generation == 4 or generation == 5
-  local native = gba or nds
+  local gsc = V.isGen2()
+  local native = gba or nds or gsc
   local expectedNative = version == "emerald" and EMERALD_NATIVE or NATIVE
   T.eq(
     F.compute(data, {}),
-    gba and expectedNative or nds and NDS[generation] or LEGACY,
+    gba and expectedNative or nds and NDS[generation] or gsc and GSC or LEGACY,
     "runtime command revision participates in cached fingerprints"
   )
-  T.eq(F.nativeBattleRevision(), gba and 27 or nds and ("nds-" .. generation .. "-1") or nil,
+  T.eq(F.nativeBattleRevision(), gba and 27 or nds and ("nds-" .. generation .. "-1") or gsc and "gsc-1" or nil,
     "each edition advertises its native command revision")
   local game = { data = data, save = { player = { name = "RULES" } } }
   local current = H.hello(game, "battle")

@@ -1,11 +1,44 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Observe the native Petalburg slide and paint its actual resident metatiles.
--- General cartridge door sheets and mod-started door tasks are separate APIs.
+-- Cartridge metadata is read-only; mod-started door tasks are separate APIs.
 local Native=require('src.compat.gen1.NativeSession')
 local Identity=require('src.compat.gen1.MapIdentity')
 local Version=require('src.core.GameVersion')
 local Scope=require('src.render.GraphicsScope')
 local M={}
+local function copy(value)
+ if type(value)~='table'then return value end
+ local out={};for k,v in pairs(value)do out[k]=copy(v)end;return out
+end
+local cohort=setmetatable({},{__mode='v'})
+local doorCollision
+local function manifest(game)
+ local data=game and game.data;local constants=data and data.constants
+ local facts=constants and constants.gen3DoorMetadata
+ local edition=Version.get()
+ if not(type(facts)=='table'and facts.schema==1 and facts.edition==edition and Version.acceptsSha1(edition,facts.romSha1)
+  and type(facts.by_mid)=='table'and type(facts.doors)=='table')then
+  M._manifest=nil;cohort=setmetatable({},{__mode='v'});return
+ end
+ if not M._manifest or cohort[1]~=game or cohort[2]~=data or cohort[3]~=facts or cohort[4]~=game.save or cohort[5]~=game.mods then
+  M._manifest=copy(facts);cohort=setmetatable({game,data,facts,game.save,game.mods},{__mode='v'})
+ end
+ return facts
+end
+function M.getDoorEntryAt(mapId,x,y)
+ local game=Native.resolve();local facts=manifest(game);if not facts then return nil,'native door metadata unavailable'end
+ if type(x)~='number'or type(y)~='number'or x~=x or y~=y or x%1~=0 or y%1~=0 then return nil end
+ local maps=require('src.core.game3.map')._context(game);if not maps then return nil end
+ local def=maps:definition(mapId);if not def then return nil end
+ local layout=maps:layout(def.id,def)
+ if not layout or x<0 or y<0 or x>=def.width or y>=def.height then return nil end
+ doorCollision=doorCollision or require('src.compat.gen1.CollisionRuntime').new()
+ local behavior=doorCollision:behaviorMid(def,layout:midAt(x,y),game)
+ local MB=require('src.compat.gen1.MetatileBehavior')
+ if behavior~=MB.require('WARP_DOOR')and not(facts.family=='rse'and behavior==MB.require('PETALBURG_GYM_DOOR'))then return nil end
+ local row=facts.by_mid[layout:midAt(x,y)]
+ if row then return copy(row),copy(facts.doors[row.tile])end
+end
 local function current(mapId,x,y)
  local game,world=Native.resolve()
  local slide=world and world.gymDoorSlide

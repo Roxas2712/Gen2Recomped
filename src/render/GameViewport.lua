@@ -23,6 +23,7 @@ function V.reset()
     return
   end
   release()
+  V.skinFill = false
   V.rect = nil
   V.full = nil
   V.generation = nil
@@ -67,11 +68,20 @@ function V.begin(generation, allowed)
   ph = finite(ph) and math.max(1, ph) or h
   local context =
     { width = w, height = h, pixelWidth = pw, pixelHeight = ph, dpiX = pw / w, dpiY = ph / h, generation = generation }
-  local requested
+  local requested, skinFill
+  if allowed ~= false then
+    local Skin = require("src.core.TouchSkin")
+    local ok, x, y, sw, sh, fill = pcall(Skin.viewport, w, h)
+    if ok and finite(x) and finite(y) and finite(sw) and finite(sh) and sw > 0 and sh > 0 then
+      requested = { x = x, y = y, width = sw, height = sh }
+      skinFill = fill == true
+    end
+  end
+  local skinRequest = requested
   if allowed ~= false and Runtime.wantsHook("render.viewport") then
     local ok, value = Scope.call(function()
       return Runtime.call("render.viewport", function()
-        return { x = 0, y = 0, width = w, height = h }
+        return skinRequest or { x = 0, y = 0, width = w, height = h }
       end, context)
     end)
     if ok then
@@ -86,6 +96,7 @@ function V.begin(generation, allowed)
   local r, capture = rect(requested, w, h)
   local active = capture or r.x ~= 0 or r.y ~= 0 or r.width ~= w or r.height ~= h
   V.rect, V.generation, V.frameActive = r, generation, active
+  V.skinFill = skinFill == true and requested == skinRequest
   if active then
     local key = table.concat({ r.width, r.height, pw / w, ph / h }, ":")
     if V.failedSize ~= key then
@@ -118,6 +129,7 @@ function V.begin(generation, allowed)
   end
   if not active then
     V.frameActive = false
+    V.skinFill = false
     V.rect = { x = 0, y = 0, width = w, height = h }
   end
   V.inFrame = true

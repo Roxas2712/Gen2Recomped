@@ -31,6 +31,7 @@
 -- A frame's dt is clamped, so a phone waking up does not teleport a runner.
 
 local Rewards = require("src.pokewalker.minigames.Rewards")
+local T=require('src.pokewalker.minigames.Locale')
 
 local B = {}
 B.__index = B
@@ -81,13 +82,13 @@ end
 function B:menu()
   if self.phase == "pause" then
     return {
-      { "Resume", function() self:resume() end, "accent" },
-      { "End run", function() self:finish() end, "danger" },
+      { T("Resume"), function() self:resume() end, "accent" },
+      { T("End run"), function() self:finish() end, "danger" },
     }
   elseif self.phase == "results" then
     return {
-      { "Play again", function() if self.opts.onAgain then self.opts.onAgain(self) end end, "accent" },
-      { "Back to games", function() if self.opts.onExit then self.opts.onExit(self) end end },
+      { T("Play again"), function() if self.opts.onAgain then self.opts.onAgain(self) end end, "accent" },
+      { T("Back to games"), function() if self.opts.onExit then self.opts.onExit(self) end end },
     }
   end
   return nil
@@ -187,11 +188,11 @@ function B:draw(x, y, w, h)
   g.pop()
   Gfx.setc(Gfx.BG, 0.94)
   g.rectangle("fill", x, y, w, hh)
-  local bw = math.max(hh, f.body:getWidth("Pause") + 30 * s)
+  local bw = math.max(hh, f.body:getWidth(T("Pause")) + 30 * s)
   if self.phase == "play" then
-    Gfx.button(self.hits, x + 8, y + 6, bw, hh - 12, "Pause", function() self:pause() end, nil, f.body)
+    Gfx.button(self.hits, x + 8, y + 6, bw, hh - 12, T("Pause"), function() self:pause() end, nil, f.body)
   elseif self.phase == "intro" then
-    Gfx.button(self.hits, x + 8, y + 6, bw, hh - 12, "Back", function()
+    Gfx.button(self.hits, x + 8, y + 6, bw, hh - 12, T("Back"), function()
       if self.opts.onExit then self.opts.onExit(self) end
     end, nil, f.body)
   end
@@ -203,31 +204,31 @@ function B:draw(x, y, w, h)
   g.setFont(f.head)
   for i = #items, 1, -1 do
     local it = items[i]
-    local vw = math.max(f.head:getWidth(it[2]), f.small:getWidth(it[1])) + 16 * s
+    local vw = math.max(f.head:getWidth(it[2]), f.small:getWidth(T(it[1]))) + 16 * s
     if rx - vw < minX + 60 * s then break end
     rx = rx - vw
     Gfx.setc(Gfx.DIM); g.setFont(f.small)
-    g.printf(it[1], rx, y + 4, vw, "center")
+    g.printf(T(it[1]), rx, y + 4, vw, "center")
     Gfx.setc(i == 1 and Gfx.GOLD or Gfx.INK); g.setFont(f.head)
     g.printf(it[2], rx, y + 4 + f.small:getHeight(), vw, "center")
   end
   if rx - minX > 80 * s then
     Gfx.setc(Gfx.INK)
-    Gfx.fit(self.module.title, minX, y + (hh - f.head:getHeight()) / 2, rx - minX - 10, f.head, "left")
+    Gfx.fit(T(self.module.title), minX, y + (hh - f.head:getHeight()) / 2, rx - minX - 10, f.head, "left")
   end
 
   if self.phase == "intro" then self:drawIntro(x, gy, w, y + h - gy, Gfx, f, s)
-  elseif self.phase == "pause" then self:drawPanel(x, gy, w, y + h - gy, Gfx, f, s, "Paused", {})
+  elseif self.phase == "pause" then self:drawPanel(x, gy, w, y + h - gy, Gfx, f, s, T("Paused"), {})
   elseif self.phase == "results" then self:drawResults(x, gy, w, y + h - gy, Gfx, f, s) end
 end
 
 function B:drawIntro(x, y, w, h, Gfx, f, s)
   local lines = {}
-  for _, l in ipairs(self.module.howTo or {}) do lines[#lines + 1] = l end
-  if self.ctx.standIn then lines[#lines + 1] = "(Nobody is out walking, so Pikachu stands in. Send a Pokemon on a walk to play with it.)" end
+  for _, l in ipairs(self.module.howTo or {}) do lines[#lines + 1] = T(l) end
+  if self.ctx.standIn then lines[#lines+1]=T('(Nobody is out walking, so %s stands in. Send a Pokemon on a walk to play with it.)',self.ctx.walker.name)end
   local left = Rewards.left(self.st)
-  lines[#lines + 1] = ("Today's rewards left: %d W, %d items, %d Pokemon."):format(left.watts, left.items, left.pokemon)
-  self:drawPanel(x, y, w, h, Gfx, f, s, self.module.title, lines, { { "Start", function() self:start() end, "accent" } })
+  lines[#lines + 1] = T("Today's rewards left: %d W, %d items, %d Pokemon.",left.watts, left.items, left.pokemon)
+  self:drawPanel(x, y, w, h, Gfx, f, s, T(self.module.title), lines, { { T("Start"), function() self:start() end, "accent" } })
 end
 
 -- a centred card with a title, lines and buttons (the shell's menus)
@@ -279,23 +280,24 @@ end
 function B:drawResults(x, y, w, h, Gfx, f, s)
   local r = self.result or {}
   local lines = {}
+  if r.error then lines[#lines+1]=require('src.core.Strings')(r.error)end
   local why = self.game.overText
   if why then lines[#lines + 1] = why end
-  lines[#lines + 1] = ("Score %d%s%s"):format(r.score or 0, r.newBest and "  -- new best!" or "",
+  lines[#lines + 1] = T("Score %d%s%s",r.score or 0, r.newBest and T("  -- new best!") or "",
     (r.placed and r.rank) and ("   (#%d)"):format(r.rank) or "")
   for _, l in ipairs(self.game.summary and self.game:summary() or {}) do lines[#lines + 1] = l end
   local paid = ("+%d W"):format(r.watts or 0)
-  if r.wattsCapped then paid = paid .. "  (today's watt budget is spent)" end
+  if r.wattsCapped then paid = paid .. T("  (today's watt budget is spent)") end
   lines[#lines + 1] = paid
-  for _, it in ipairs(r.items or {}) do lines[#lines + 1] = "Got " .. it .. "!" end
-  for _, m in ipairs(r.pokemon or {}) do lines[#lines + 1] = ("Caught %s (Lv%d)!"):format(m.name or "?", m.level or 5) end
+  for _, it in ipairs(r.items or {}) do lines[#lines + 1] = T("Got %s!",it) end
+  for _, m in ipairs(r.pokemon or {}) do lines[#lines + 1] = T("Caught %s (Lv%d)!",m.name or "?", m.level or 5) end
   if (r.lost and (r.lost.items + r.lost.pokemon) or 0) > 0 then
-    lines[#lines + 1] = "The bag was full -- send presents home to make room."
+    lines[#lines + 1] = T("The bag was full -- send presents home to make room.")
   end
   if (r.friendship or 0) > 0 then
-    lines[#lines + 1] = ("%s enjoyed that! (+%d friendship)"):format(self.ctx.walker.name or "Your Pokemon", r.friendship)
+    lines[#lines + 1] = T("%s enjoyed that! (+%d friendship)",self.ctx.walker.name or T("Your Pokemon"), r.friendship)
   end
-  self:drawPanel(x, y, w, h, Gfx, f, s, "Results", lines)
+  self:drawPanel(x, y, w, h, Gfx, f, s, T("Results"), lines)
 end
 
 return B
