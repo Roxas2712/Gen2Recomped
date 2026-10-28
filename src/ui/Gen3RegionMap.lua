@@ -297,6 +297,29 @@ function Gen3RegionMap:current()
   return self:sectionAt(self.cx, self.cy)
 end
 
+-- Detached logical atlas metadata from this controller's actual cell lookup.
+-- Metadata-only context: no screen construction, image load or cursor state.
+function Gen3RegionMap.manifest(game)
+  local c=constants(game)
+  local layout=c.gen3RegionMapLayout
+  local grid=layout or c.gen3RegionMapGrid or{width=28,height=15}
+  local width,height=grid.width,grid.height
+  for _,n in ipairs{width,height}do
+    assert(type(n)=='number'and n%1==0 and n>0 and n<=256,'invalid native region atlas dimensions')
+  end
+  assert(width and height,'missing native region atlas dimensions')
+  local context={game=game,places=places(game)}
+  local out={game=require('src.core.GameVersion').get(),nativePicker=true,layout={}}
+  for y=0,height-1 do
+    local row={};out.layout[y+1]=row
+    for x=0,width-1 do
+      local place=Gen3RegionMap.sectionAt(context,x,y)
+      row[x+1]=place and place.section or(layout and layout.none)or false
+    end
+  end
+  return out
+end
+
 function Gen3RegionMap:close()
   if self.game.stack then self.game.stack:pop() end
   if self.onCancel then self.onCancel() end

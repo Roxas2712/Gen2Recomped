@@ -100,6 +100,19 @@ function M.kind(view,sec)
  -- Do not guess route/city/landmark identities for other atlas sections.
  return destination(c,sec)and 2 or 0
 end
+function M.manifest()
+ local game=Native.resolve()
+ assert(game and not Version.isFRLG(),'native Hoenn atlas requires an admitted field')
+ local s=screen()
+ if s and s.rsNative then return require('src.mods.Merge').deepCopy(s.rsNative.kit:manifest())end
+ local spec=game.data.constants and game.data.constants.gen3RsMap
+ if spec then
+  local ok,kit=pcall(require,'src.ui.Gen3RsMapKit')
+  assert(ok and kit.available(game),'native RS atlas owner unavailable')
+  return require('src.mods.Merge').deepCopy(kit.new(game):manifest())
+ end
+ return require('src.ui.Gen3RegionMap').manifest(game)
+end
 M._service={release=release,poll=function()if current and not valid(current)then release()end end,
  releaseOwner=function(_,who)
   if current and current.users[who]then current.users[who]=nil;if not next(current.users)then release()end end
