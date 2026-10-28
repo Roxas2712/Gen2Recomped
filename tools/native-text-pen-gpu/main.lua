@@ -14,10 +14,11 @@ function love.draw()
  local Assets=require('src.render.Assets');local V=require('src.core.GameVersion')
  local old=Assets.image;local art={}
  for _,height in ipairs{8,13}do
-  local pixels=love.image.newImageData(128,8*height)
-  for y=0,8*height-1 do for x=0,127 do
+  local pixels=love.image.newImageData(128,16*height)
+  for y=0,16*height-1 do for x=0,127 do
    local xx,yy=x%8,y%height
-   local c=(xx<2 or yy==1 or xx==yy%7)and 0 or 1
+   local tile=math.floor(x/8)+16*math.floor(y/height)
+   local c=((xx+tile)%8<2 or yy==1+tile%3 or xx==yy%7)and 0 or 1
    pixels:setPixel(x,y,c,c,c,1)
   end end
   art[height]=g.newImage(pixels);art[height]:setFilter('nearest','nearest');pixels:release()
@@ -33,8 +34,8 @@ function love.draw()
  local function read(canvas)g.setCanvas();local d=g.readbackTexture(canvas);local s=d:getString();d:release();return s end
  for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   V.set(edition)
-  Font.load({font={pages={main={image=8,base=128,glyphWidth=8,glyphHeight=8,advance=4,preTinted=true}},
-   faces={small={image=13,base=128,glyphWidth=8,glyphHeight=13,advance=3,preTinted=true}},
+  Font.load({font={pages={main={image=8,base=0,glyphWidth=8,glyphHeight=8,advance=4,preTinted=true}},
+   faces={small={image=13,base=0,glyphWidth=8,glyphHeight=13,advance=3,preTinted=true}},
    charmap={{seq='A',code=128},{seq='é',code=129},{seq='<PK>',code=130}}}})
   for _,dpi in ipairs{1,2}do for _,scale in ipairs{1,2}do
    local actual=g.newCanvas(64*scale,48*scale,{dpiscale=dpi,format='rgba8'})
@@ -48,6 +49,12 @@ function love.draw()
     setup(expected,scale)
     for i,glyph in ipairs{'A','é','<PK>'}do F.draw(glyph,7+(i-1)*6,7,opts)end
     check(read(actual)==read(expected),'positioned Unicode/ligature pixels '..edition);frames=frames+1
+    setup(actual,scale)
+    local total=0;for code=0x55,0x59 do total=total+F.advance(code,opts)end
+    check(F.draw('{POKEBLOCK}',5,7,opts)==total,'compound uses selected native face metrics')
+    setup(expected,scale);local pen=5
+    for code=0x55,0x59 do F.drawGlyph(code,pen,7,opts);pen=pen+F.advance(code,opts)end
+    check(read(actual)==read(expected),'native compound glyph identities/order/positions '..edition);frames=frames+1
     setup(actual,scale);local ok=pcall(F.draw,'A'..string.char(0xfc,0x11),5,7,opts)
     check(not ok,'truncated raw control refused')
     setup(expected,scale);check(read(actual)==read(expected),'error paints no partial label');frames=frames+1

@@ -423,6 +423,7 @@ function RomExtractorGen3:readText(off, maxBytes, spacers, structured, opts)
     opts = structured
     structured = opts.structured == true
   end
+
   local map = self:charmap()
   local out = {}
   local ir, pending, flush, node

@@ -1,6 +1,6 @@
 package.path = './?.lua;./?/init.lua;' .. package.path
 local T = require('tests.modkit')
-local MB = require('src.compat.gen1.MetatileBehavior')
+local MB = require('src.core.game3.mb')
 local Class = require('src.compat.gen1.CollisionClass')
 local fr, em = Class.impl('frlg'), Class.impl('rse')
 T.eq(MB.fromRaw('firered', 17), 17, 'Kanto raw byte retains meaning')
