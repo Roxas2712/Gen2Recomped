@@ -2293,8 +2293,9 @@ local function commandOutput(command)
   releasePointerGrab()
   local pipe = HostShell.popen(command)
   if not pipe then return nil end
-  local result = pipe:read("*a")
-  pipe:close()
+  local ok, result = pcall(pipe.read, pipe, "*a")
+  pcall(pipe.close, pipe)
+  if not ok or type(result) ~= "string" then return nil end
   result = trim(result)
   return result ~= "" and result or nil
 end
@@ -2867,73 +2868,14 @@ end
 -- The extension list comes from the manifest rather than being fixed, because
 -- what a mod needs is its own business: STADIUM2_IMPORTER wants a Nintendo 64
 -- cartridge in any of its three byte orders (.z64/.n64/.v64).
-local function chooseFileByExt(exts, promptName)
-  if type(exts) ~= "table" or #exts == 0 then return nil end
-  local prompt = Strings("Choose your %s", promptName or "file")
-  local platform = love.system.getOS()
-  local quoted, globs, semis = {}, {}, {}
-  for index, ext in ipairs(exts) do
-    quoted[index] = '"' .. ext .. '"'
-    globs[index] = "*." .. ext
-    semis[index] = "*." .. ext
+local function chooseFileByExt(exts, promptName, opts)
+  opts = opts or {}
+  local prompt = opts.title or Strings("Choose your %s", promptName or "file")
+  local commands = require('src.core.FilePicker').commands(prompt, {label=opts.label or 'Base file',exts=exts})
+  for _,command in ipairs(commands or {}) do
+    -- One selected backend: cancelling its dialog must not open another one.
+    return commandOutput(command)
   end
-  if platform == "OS X" then
-    return commandOutput(
-      ([[osascript -e 'POSIX path of (choose file with prompt "%s" of type {%s})' 2>/dev/null]])
-        :format(prompt, table.concat(quoted, ", ")))
-  elseif platform == "Windows" then
-    local script = table.concat({
-      "Add-Type -AssemblyName System.Windows.Forms;",
-      "$d=New-Object System.Windows.Forms.OpenFileDialog;",
-      "$d.Title='" .. prompt .. "';",
-      "$d.Filter='Base file (" .. table.concat(semis, ";") .. ")|"
-        .. table.concat(semis, ";") .. "|All files (*.*)|*.*';",
-      -- THE TEMP COPY IS THE FALLBACK NOW, NOT THE DEFAULT.
-      --
-      -- io.open on Windows needs ANSI bytes, so a path with characters outside
-      -- them cannot be opened at all (#325) and the pick has to be copied to
-      -- an ASCII temp name first.  That was done for EVERY pick, on the
-      -- reasoning that "a cartridge is tens of megabytes, so this copy is the
-      -- one slow step" -- which stopped being true the moment a mod could
-      -- declare a GameCube disc.  A 1.4 GB pick was copied into %TEMP% on the
-      -- system drive before anything looked at it: minutes of apparent freeze,
-      -- 1.4 GB of C: needed to import a file already sitting on G:, and -- the
-      -- reported failure -- Copy-Item leaves $ErrorActionPreference at
-      -- Continue, so a copy that ran out of space still fell through to
-      -- writing the temp path, and the launcher opened a file that was never
-      -- created.  "that file could not be opened", for a file that was right
-      -- there.
-      --
-      -- So: an ASCII path is handed back AS IS, which is every ordinary path
-      -- and costs nothing.  Only a path io.open genuinely cannot take is
-      -- copied, and that copy now has to prove it landed before its
-      -- destination is reported -- otherwise nothing is written and the
-      -- caller falls through to the "copy it into imports/" instructions,
-      -- which at least tell the player what to do next.
-      "if($d.ShowDialog() -eq 'OK'){",
-      "$p=$d.FileName;",
-      "$ascii=$true;",
-      "foreach($c in $p.ToCharArray()){",
-      "if([int]$c -lt 32 -or [int]$c -gt 126){$ascii=$false}};",
-      "[Console]::OutputEncoding=[Text.Encoding]::UTF8;",
-      "if($ascii){[Console]::Write($p)}else{",
-      "$t=Join-Path $env:TEMP 'pokeport_base_pick.bin';",
-      "Copy-Item -LiteralPath $p -Destination $t -Force "
-        .. "-ErrorAction SilentlyContinue;",
-      "if(Test-Path -LiteralPath $t){[Console]::Write($t)}}}",
-    })
-    return commandOutput(
-      'powershell -NoProfile -STA -Command "' .. script .. '"')
-  elseif platform == "Linux" then
-    local path = commandOutput(
-      ([[zenity --file-selection --title="%s" --file-filter="Base file | %s" 2>/dev/null]])
-        :format(prompt, table.concat(globs, " ")))
-    if path then return path end
-    return commandOutput(
-      ([[kdialog --getopenfilename "$HOME" "%s|Base file" 2>/dev/null]])
-        :format(table.concat(globs, " ")))
-  end
-  return nil
 end
 
 -- PUBLISHED, because the map editor needs a picker too.

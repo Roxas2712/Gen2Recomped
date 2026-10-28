@@ -5,7 +5,7 @@ local Native=require('src.compat.gen1.NativeSession')
 local Version=require('src.core.GameVersion')
 local Copy=require('src.mods.Merge').deepCopy
 local M={}
-local function read(key)
+local function readNative(key)
  local game=Native.game();local data=game and game.data
  if not data or type(key)~='string'then return nil end
  local catalog=data.text_pointers and data.text_pointers.namedIR
@@ -24,9 +24,56 @@ local function read(key)
  value=text[id]
  if row then
   if value~=row.nativePlain then return value,nil,game,value==nil end
-  return row.plain,row.ir,game
+  if key=='gText_SafariZoneMenu'or key=='BattleText_MenuOptionsSafari'then
+   -- The native Safari owner preserves compound glyph tags which older
+   -- generic catalogs flattened into Latin letters. Borrow its actual IR;
+   -- explicit canonical/offset/prose edits have already won above.
+   local plain,nodes=require('src.battle.Gen3SafariText').read(data,Version.get(),'native.safari.menu')
+   if plain then return plain,nodes,game,nil,true end
+  end
+  return row.plain,row.ir,game,nil,true
+ end
+ if value==nil and key:sub(1,14)=='native.safari.'then
+  local plain,nodes=require('src.battle.Gen3SafariText').read(data,Version.get(),key)
+  return plain,nodes,game
  end
  return value,nil,game
+end
+-- Semantic RS names refer to the cartridge's own records. PP and TYPE share
+-- a record but are separate labels to callers; keep leading IR controls on
+-- both lines. The ordinary command uses the active-mon prompt, whereas the
+-- separate Safari prompt really names the player. Never rewrite placeholder
+-- bytes globally to compensate for selecting the wrong record.
+local rsLabels={gText_MoveInterfacePP={'BattleText_PP',1},gText_MoveInterfaceType={'BattleText_PP',2},
+ gText_BattleSwitchWhich={'BattleText_SwitchWhich'},gText_WhatWillPkmnDo={'BattleText_OtherMenu'},
+ gText_WhatWillWallyDo={'BattleText_WallyMenu'},gText_SafariZoneMenu={'BattleText_MenuOptionsSafari'},
+ gText_SafariBalls={'BattleText_SafariBalls'}}
+local function line(value,nodes,wanted)
+ if type(value)~='string'then return value,nodes end
+ local at=1
+ for _=2,wanted do local p=value:find('\n',at,true);if not p then return end;at=p+1 end
+ local p=value:find('\n',at,true);value=value:sub(at,p and p-1 or #value)
+ if not nodes then return value end
+ local out,header,row,leading={},{},1,true
+ for _,node in ipairs(nodes)do
+  if leading and node.t=='ext'then header[#header+1]=node else leading=false end
+  if node.t=='nl'then
+   row=row+1
+   if row==wanted then for _,control in ipairs(header)do out[#out+1]=control end end
+  elseif row==wanted and node.t~='eos'then out[#out+1]=node end
+ end
+ out[#out+1]={t='eos'};return value,out
+end
+local function read(key)
+ local value,nodes,game,removed,nativeRecord=readNative(key)
+ local edition=Version.get()
+ local alias=rsLabels[key]
+ if not removed and (value==nil or nativeRecord)and (edition=='ruby'or edition=='sapphire')and alias then
+  local v,ir,owner,gone=readNative(alias[1])
+  if alias[2]then v,ir=line(v,ir,alias[2])end
+  return v,ir,owner,gone
+ end
+ return value,nodes,game,removed
 end
 local function translated(value,game)
  if type(value)~='string'then return nil end
