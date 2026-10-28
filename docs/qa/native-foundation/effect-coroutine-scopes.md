@@ -24,3 +24,13 @@ The direct coroutine fixture first admits native slot placement through
 failures came from the fixture skipping that native placement; no production
 placement or assertions were weakened to fix the probe. Initial retained global
 stack negatives and final predecessor/qualification receipts are separate.
+
+Final native code `2dbf986c`, frozen `8725dc7d7d`, passes136 selected CPU
+groups:133 coroutine-context checks,345 existing native effect checks, action
+presentation/observations and existing Gen2/default combat regressions. Exact
+older-public helper adaptation `e4d1ca0c`, composition `212a06fcb0`, passes57
+groups. The final identical133-check fixture against the original global helper
+from `cbb574a4` fails89 checks (`4eac33b683`); only that owned observation helper
+is selected, with no native controller overlay. Earlier intermediate negative
+receipts are retained separately. No new GPU, unchanged-mod contact, performance
+or release acceptance is claimed. Native effect execution bodies are unchanged.
