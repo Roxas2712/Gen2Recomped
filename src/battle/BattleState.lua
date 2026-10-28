@@ -13287,7 +13287,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
     local pad = imagePadBottom[handle] or 0
     local padL = imagePadLeft[handle] or 0
     local s = BattleState.resolveBattleScale(self.data, "back",
-      imagePathOf(self.player.sprite),
+      imagePathOf(handle),
       self.player.mon and self.player.mon.species)
     local gs = self:growInScale(self.player)
     local ballOut = self:gen3BallFor(self.player)
@@ -13310,7 +13310,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       local dx, dy
       if self:gen3Layout() then
         dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                         imagePathOf(self.player.sprite), s)
+                                         imagePathOf(handle), s)
       else
         dx, dy = BattleState.backPlacement(img:getWidth(), img:getHeight(),
                                            pad, padL, s)
@@ -13330,7 +13330,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       love.graphics.setColor(1, 1, 1, 1)
     elseif self:gen3Layout() then
       local dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                             imagePathOf(self.player.sprite), s)
+                                             imagePathOf(handle), s)
       self:drawBattlerPic(self.player, dx + sx, dy + sy, s)
     else
       local dx, dy = BattleState.backPlacement(img:getWidth(),

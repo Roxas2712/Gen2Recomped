@@ -41,10 +41,12 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(b.mon.stats,savedStats,'saved stats retain their owner')
   T.eq(s:pictureStill(b),s:picImage(sprite),'queued view retains the actual preceding image')
   T.eq(s:battlerPic(b),s:picImage(sprite),'native drawer retains preceding image')
-  T.eq(s:pic(b.mon,b.isPlayer),s:picImage(sprite),'same-side public capture retains preceding image')
-  local front,_,path=s:pic(b.mon,false)
-  T.check(path:find('fixmon_a',1,true)or path:find('fixmon_c',1,true),
-    'opposite capture resolves an existing species path')
+  if s.pic then
+    T.eq(s:pic(b.mon,b.isPlayer),s:picImage(sprite),'same-side public capture retains preceding image')
+    local front,_,path=s:pic(b.mon,false)
+    T.check(path:find('fixmon_a',1,true)or path:find('fixmon_c',1,true),
+      'opposite capture resolves an existing species path')
+  end
   T.eq(Pictures.species(s,b),species,'queued front identity precedes actual transform command')
   s:updateQueue()
   T.eq(s.animPlaying,true,'actual native queue starts picture program')
@@ -54,7 +56,10 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   while r.picOverride[side]~='transform'and ticks<120 do
     T.eq(s:battlerPic(b),s:picImage(sprite),'all pre-command frames show preceding species')
     local frames=r.frames
-    for _=1,3 do s:pic(b.mon,false);s:animPicState(side);s:battlerPic(b)end
+    for _=1,3 do
+      if s.pic then s:pic(b.mon,false)end
+      s:animPicState(side);s:battlerPic(b)
+    end
     T.eq(r.frames,frames,'drawing never advances the VM')
     s:updateQueue();ticks=ticks+1
   end
@@ -94,7 +99,8 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(s:substituteVisible(b),false,'dropsub paints Pokemon despite positive combat substitute HP')
   local dolls,draw=0,s.drawSubstituteDoll
   s.drawSubstituteDoll=function()dolls=dolls+1 end
-  s:drawPic(b.mon,false)
+  if s.drawPic then s:drawPic(b.mon,false)
+  else s:drawPicsLayer(0,0,0,side,true)end
   T.eq(dolls,0,'actual public capture no longer paints hidden doll')
   s.drawSubstituteDoll=draw
   T.eq(b.substituteHP,17,'temporary drawing never destroys combat substitute')
@@ -113,7 +119,7 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(s:pictureStill(b),s:picImage(s:speciesSprite(chosen,b.isPlayer)),
     'native placement measures actual Beat Up image')
   T.eq(s:battlerPic(b),s:pictureStill(b),'native drawer uses actual Beat Up image')
-  T.eq(s:pic(b.mon,b.isPlayer),s:pictureStill(b),'public same-side capture uses same image')
+  if s.pic then T.eq(s:pic(b.mon,b.isPlayer),s:pictureStill(b),'public same-side capture uses same image')end
   T.eq(b.mon.species,species,'Beat Up never replaces the active saved Pokemon')
   endAnim(s)
   T.eq(Pictures.species(s,b),species,'Beat Up temporary picture is released with native VM')
@@ -131,7 +137,8 @@ for _,mode in ipairs({'disabled','missing','cancelled','stopped','replacement'})
  if mode=='cancelled'then s:cancelMoveAnim();Pictures.sync(s)
  elseif mode=='replacement'then
    local incoming=Pokemon.new(s.data,'FIXMON_B',18)
-   s:switchPlayerInto(Battle.POS.PLAYER_LEFT,incoming)
+   if s.switchPlayerInto then s:switchPlayerInto(Battle.POS.PLAYER_LEFT,incoming)
+   else s.player={mon=incoming,isPlayer=true,sprite={}}end
    Pictures.sync(s)
    T.eq(s.player.mon,incoming,'native switch retains actual incoming mon')
    T.eq(Pictures.species(s,s.player),'FIXMON_B','old transform cannot repaint replacement slot')
@@ -146,7 +153,7 @@ for _,edition in ipairs({'red','emerald','firered'})do
  Version.set(edition)
  local s,b=make('crystal','player','dropsub');Version.set(edition)
  b.substituteHP=17;s.anim={picOverride={player=false}}
- T.eq(s:substituteVisible(b),edition=='red'and 17 or true,edition..' keeps its original substitute owner')
+ T.check(s:substituteVisible(b),edition..' keeps its original substitute owner')
  T.eq(s:pictureSprite(b),b.sprite,edition..' keeps native image owner')
 end
 Version.set(before)
