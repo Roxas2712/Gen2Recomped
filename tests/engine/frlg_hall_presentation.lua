@@ -2,6 +2,7 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit');local V=require('src.core.GameVersion')
 local H=require('src.ui.Gen3HallOfFameFRLG');local Music=require('src.core.Music')
+local Credits=require('src.ui.Gen3CreditsFRLG')
 local Assets=require('src.render.Assets');local Font=require('src.render.Font')
 local Sprites=require('src.pokemon.Sprites');local Save=require('src.core.SaveSerializer')
 local oldVersion,play,img,path=V.get(),Music.play,Assets.image,Sprites.path
@@ -16,12 +17,17 @@ Music.play=function(data,song)played[#played+1]=song end
 for _,version in ipairs{'firered','leafgreen'}do
  V.set(version)
  local mon={species='OWNED',level=42,personality=0,nickname='CUSTOM%NAME',otId=123}
- local game={data={audio={special={hallOfFame='OWNED_HALL_CUE'}},field={playerForms={girl={card='girl.png'}}},
+ local game={data={audio={special={hallOfFame='OWNED_HALL_CUE',credits='OWNED_CREDITS_CUE'}},field={playerForms={girl={card='girl.png'}}},
   constants={},pokemon={OWNED={name='OWNED',dex=1,spriteFront='owned.png',genderRatio=254}}},
   save={version=version,player={name='LEAF',gender='girl'},party={mon},playTime={hours=123,minutes=45,seconds=6}}}
  local before=Save.encode(game.save);local h=H.new(game,{text={}},function()end)
  T.eq(kind,'hof','species sprite hook receives its documented ceremony context')
  h:enter();T.eq(played[#played],'OWNED_HALL_CUE','Hall uses the selected cartridge/conversion role')
+ Credits.enter({game=game});T.eq(played[#played],'OWNED_CREDITS_CUE','credits use their own cartridge role')
+ local spy=Music.play
+ Music.play=function(data,song)if song=='OWNED_CREDITS_CUE'then error('owned source failure')end;return spy(data,song)end
+ Credits.enter({game=game});T.eq(played[#played],'OWNED_HALL_CUE','raised credits errors use the correct Hall role')
+ Music.play=spy
  h.phase='champion';drawn={};h:draw()
  T.check(table.concat(drawn,'|'):find('123:45',1,true)~=nil,'table clock is displayed without rewriting save')
  T.eq(Save.encode(game.save),before,'ceremony construction and draw preserve all saved fields')

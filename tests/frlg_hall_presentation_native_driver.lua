@@ -65,9 +65,11 @@ return function(game)
   assert(Music.current()==cue,'Hall music stopped before the player panel')
   game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a');U.wait(90)
   local credits=game.stack:top();assert(credits~=h and credits~=backdrop and callback==0,'Credits handoff fired completion too early')
+  local creditsCue=assert(Music.special(game.data,'credits'))
+  assert(creditsCue:match('^SONG_%x+$')and Music.current()==creditsCue,'Credits retained the Hall song instead of their own cartridge cue')
   shot('native-'..gender..'-hall-credits-handoff',credits)
   while game.stack:top()~=backdrop do game.stack:pop()end
-  report.cases[gender]={party=count,nativeHallMusic=cue,actualCreditsHandoff=true,clock='123:45',derivedFemaleGlyph=true}
+  report.cases[gender]={party=count,nativeHallMusic=cue,nativeCreditsMusic=creditsCue,actualCreditsHandoff=true,clock='123:45',derivedFemaleGlyph=true}
  end
  Sound.play=play;assert(applause==2,'Each actual ceremony must play its applause once')
  report.applauseSources=applause;report.drawSaveRngPreserved=true;report.status='pass';persist()
