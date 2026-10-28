@@ -19,23 +19,31 @@ return function(game, target)
     return y == 0 and Map.defPassable(dest, ts, x-conn.offset*cells, dest.height*cells-1, false)
   end
   local p = ow.player
-  local start = id(p.cellX, p.cellY)
-  local queue, head, prev, how = {start}, 1, {[start] = -1}, {}
-  local found
-  local dirs = {{0,-1,"up"},{-1,0,"left"},{1,0,"right"},{0,1,"down"}}
-  while head <= #queue do
-    local cur = queue[head]; head = head+1
-    local x, y = cur%w, math.floor(cur/w)
-    if goal(x, y) then found = cur; break end
-    for _, d in ipairs(dirs) do
-      local nx, ny = x+d[1], y+d[2]
-      local key = id(nx, ny)
-      local mover = {cellX=x,cellY=y,elevation=ow.map:cellElevation(x,y)}
-      if nx>=0 and ny>=0 and nx<w and ny<h and prev[key]==nil
-        and Collision.canMove(ow.map,ow.entities,mover,d[3]) then
-        prev[key],how[key]=cur,d[3];queue[#queue+1]=key
+  local start,queue,head,prev,how,found
+  local waitFrames=0
+  -- Moving native NPCs can temporarily occupy a one-cell corridor. Wait for
+  -- their real update before replanning; never remove them from collision.
+  for attempt=1,17 do
+    p=ow.player;start=id(p.cellX,p.cellY)
+    queue,head,prev,how,found={start},1,{[start]=-1},{},nil
+    local dirs = {{0,-1,"up"},{-1,0,"left"},{1,0,"right"},{0,1,"down"}}
+    while head <= #queue do
+      local cur = queue[head]; head = head+1
+      local x, y = cur%w, math.floor(cur/w)
+      if goal(x, y) then found = cur; break end
+      for _, d in ipairs(dirs) do
+        local nx, ny = x+d[1], y+d[2]
+        local key = id(nx, ny)
+        local mover = {cellX=x,cellY=y,elevation=ow.map:cellElevation(x,y)}
+        if nx>=0 and ny>=0 and nx<w and ny<h and prev[key]==nil
+          and Collision.canMove(ow.map,ow.entities,mover,d[3]) then
+          prev[key],how[key]=cur,d[3];queue[#queue+1]=key
+        end
       end
     end
+    if found then break end
+    assert(game.stack:active()==ow and not ow.runner:isRunning(),"native scene interrupted route preflight")
+    if attempt<17 then U.wait(15);waitFrames=waitFrames+15 end
   end
   if not found then
     local goals,edge={},{};local minY=h
@@ -55,7 +63,7 @@ return function(game, target)
     table.insert(path,1,{x=cur%w,y=math.floor(cur/w),dir=how[cur]})
     cur=prev[cur]
   end
-  local report = {source=source,target=target,steps=0,pathCells=#path,crossed=false}
+  local report = {source=source,target=target,steps=0,pathCells=#path,crossed=false,preflightWaitFrames=waitFrames}
   for _, step in ipairs(path) do
     assert(game.stack:active()==ow and not ow.runner:isRunning(), "native scene interrupted the planned walk")
     local reached,initiated=false,false
