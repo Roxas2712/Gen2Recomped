@@ -146,7 +146,18 @@ end
 
 function HostShell.toLauncher()
   if launcherHook then return launcherHook() end
-  return HostShell.restart()
+  function HostShell.hasCommand(name)
+  if not HostShell.canSpawnProcess() or type(name)~='string' or #name>80
+      or not name:match('^[%w][%w_.+-]*$') then return false end
+  local windows=love.system.getOS()=='Windows'
+  local pipe=HostShell.popen(windows and('where '..name..' 2>NUL')or("command -v '"..name.."' 2>/dev/null"))
+  if not pipe then return false end
+  local ok,value=pcall(pipe.read,pipe,'*a')
+  pcall(pipe.close,pipe)
+  return ok and type(value)=='string'and value:find('%S')~=nil
+end
+
+return HostShell.restart()
 end
 
 function HostShell.restart()

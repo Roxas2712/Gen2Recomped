@@ -22,3 +22,10 @@ same Gen1Recomp source under the same preserved GPL/Section7 grant.
 
 The identified hotbar geometry/drawing and adapted hotbar reference test also
 originate in that source, under the same preserved GPL/Section7 terms.
+
+SkinStudio, PadCursor, identified cursor sections in TouchControlsEditor,
+widget toolkit (except native vector Icons) and adapted studio tests originate
+in the same Gen1Recomp revision under preserved GPLv3/Section7 terms. Native
+host integration, FilePicker/command provider and all62 vector icons are
+contributions by Roxas2712, subject to LICENSE-ROXAS2712.md and prior grants.
+Excluded Gen1 launcher files and artwork are not copied.
