@@ -180,6 +180,16 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
  alias:release();reference:release();target:release()
  local alpha=package.loaded['src.render.AlphaDepthCompat']
  if alpha and alpha.fragmentDepthTarget and alpha.compileNative then
+  -- Keep an earlier admitted program alive when the first cutout lazily
+  -- adds the native depth method owner to this shared Shader class.
+  local carryText=[[
+uniform float gate;uniform vec4 tint;
+vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){if(gate>.5)return tint;return vec4(1.)-tint;}
+]]
+  local carried=g.newShader(carryText..string.rep(' \n',32768))
+  local carryReference=g.newShader(carryText)
+  carried:send('gate',1);carried:send('tint',{.1,.2,.3,1})
+  target=g.newCanvas(8,8,{dpiscale=1});g.setCanvas(target);g.setShader(carried);g.rectangle('fill',0,0,8,8);g.setCanvas();g.setShader()
   local vertex=[[
 uniform mat4 sceneMatrix;
 #ifdef VERTEX
@@ -204,7 +214,6 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){
   -- Independent explicit-depth oracle, without the adapter's source helper.
   local depthReference=g.newShader(vertex..fragment:gsub('DEPTH_WRITE','gl_FragDepth=gl_FragCoord.z;'))
   candidate=g.newShader(plain..string.rep(' \n',32768))
-  target=g.newCanvas(8,8,{dpiscale=1})
   local depth=g.newCanvas(8,8,{format='depth24stencil8',readable=true,dpiscale=1})
   local pixels=love.image.newImageData(2,1);pixels:setPixel(0,0,0,1,0,0);pixels:setPixel(1,0,0,1,0,1)
   local cutout=g.newImage(pixels);pixels:release();cutout:setFilter('nearest','nearest')
@@ -218,7 +227,7 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(1.,0.,0.,1.);}
 ]])
   behind:send('sceneMatrix','row',matrix)
   local beforeCompiled=S.status().compiled;local beforeCompanions=alpha.status().compiled
-  check(S.status().sources==1,'the native cutout source is actually admitted')
+  check(S.status().sources==2,'the native cutout and preceding program remain admitted')
   local function render(withDepth)
    g.setCanvas(withDepth and{target,depthstencil=depth}or target);g.origin()
    g.setBlendMode('replace','premultiplied');g.setColor(1,1,1,1);g.clear(0,0,0,0,0,1)
@@ -249,7 +258,14 @@ vec4 effect(vec4 c,Image t,vec2 uv,vec2 p){return vec4(1.,0.,0.,1.);}
   check(S.status().compiled==beforeCompiled+2,'one colour and one depth variant are reused across target changes')
   check(S.status().depthUses>0,'the native depth variant is actually drawn')
   check(alpha.status().compiled==beforeCompanions,'variants do not manufacture duplicate depth companions')
-  candidate:release();reference:release();depthReference:release();behind:release();cutout:release();target:release();depth:release();g.present()
+  local cutoutReference=reference;reference=carryReference
+  carryReference:send('gate',1);carryReference:send('tint',{.4,.2,.8,1});carried:send('tint',{.4,.2,.8,1})
+  check(compare(carried),'an earlier live program retains exact mutable uniforms across the owned hook interposition')
+  carried:send('tint',{1,0,0,1});check(not compare(carried),'earlier-program pixel comparison detects a wrong-value control')
+  carried:send('tint',{.4,.2,.8,1});check(compare(carried),'earlier native variant remains reusable after the owned interposition')
+  check(S.status().unsupported==0,'the known native depth owner does not retire earlier programs')
+  reference=cutoutReference
+  candidate:release();reference:release();depthReference:release();behind:release();cutout:release();carried:release();carryReference:release();target:release();depth:release();g.present()
   check(S.status().sources==0,'depth variants retire at the actual native empty-stack boundary')
  end
  -- Mutable native Data is a supported source API, but is intentionally not a
