@@ -50,7 +50,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   b:runQueueAction(b.queue[1]);b:runQueueAction(b.queue[2])
   T.eq(b.player.mon.moves[1].pp,pp-1,'actual native move spends PP once')
   T.eq(probe.read(model),round,'both actual moves share one round')
-  b:endTurn()
+  b:endOfTurn()
   T.eq(probe.read(model),round,'residual processing does not create a new round')
  end
  local starts,moves,ends=0,0,0
