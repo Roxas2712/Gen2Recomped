@@ -15,9 +15,13 @@ the existing coroutine path. Public pending jobs remain typed coroutine jobs;
 no pending placeholder enters the resident atlas table. LOW admits two atlas
 jobs to the pool's one worker. A five-second timeout bounds lost replies.
 
-IdleStream's central poll publishes through the existing native atlas owner
-on the main thread. A required `get` uses a zero-wait timeout: it cancels
-pending CPU work and runs the existing constructor, preserving immediate
+IdleStream's central poll accepts completed CPU data without allocating graphics
+resources. The existing stream owner then uploads at most one texture per step,
+and publishes only after both textures are complete and the captured source
+values are still current. Source edits, replaced public coroutines or disabled
+workers retire unpublished resources and retain the native coroutine fallback.
+A required `get` uses a zero-wait timeout: it cancels pending CPU work and uses
+already accepted current pixels or the existing constructor, preserving immediate
 admission without running unrelated callbacks or adding a 50-ms frame stall.
 Textures and resource leases retain their normal publication and retirement.
 
@@ -83,3 +87,7 @@ are retained alongside `coroutine-ownership.json`, `seam-off.json` and `seam-on.
 Die Korrekturen, erneute aktuelle-main-Qualifikation und weiterhin nicht
 erfüllte Performance-Bedingung sind in der [Folgeprüfung](qa/gen3-atlas-worker-review-2026-10-28.md)
 getrennt dokumentiert. Der Entwurfsstatus und die Integrationssperre bleiben erhalten.
+
+Die [Folgeprüfung vom29.Oktober](qa/gen3-atlas-worker-review-2026-10-29.md)
+dokumentiert die budgetierten Uploads, echten Textur-Readbacks und den weiterhin
+offenen Vergleich. Die historischen Messungen oben qualifizieren diese Änderung nicht.

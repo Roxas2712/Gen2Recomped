@@ -49,8 +49,8 @@ def main():
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
-    if args.compact_host and not args.atlas_bridge:
-        parser.error("--compact-host requires --atlas-bridge")
+    if args.compact_host and (not args.atlas_bridge or any(SCENES[name].get("voxel") for name in args.scene)):
+        parser.error("--compact-host requires a source-only --atlas-bridge scene without voxel mods")
     if args.unfocused_sdl3 and not (args.measure and args.hidden and args.stable_focus):
         parser.error("--unfocused-sdl3 requires --measure --hidden --stable-focus")
     if args.unfocused_sdl3:
