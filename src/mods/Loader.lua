@@ -780,8 +780,13 @@ end
 -- deprecated name warns once per mod on first use
 function Loader:_contentApi(mod, registry, deprecation)
   local loader = self
+  local Names = require('src.mods.Gen2ContentNames')
   local modId = mod.manifest.id
   local apiLevel = mod.manifest.api or 1
+  if apiLevel>=3 or mod.manifest.content_format=='unified' then
+    Names={id=function(_,_,id)return id end,write=function(_,_,value)return value end,
+      read=function(_,_,value)return value end}
+  end
   local warned = false
   local function note()
     if deprecation and not warned then
@@ -798,34 +803,45 @@ function Loader:_contentApi(mod, registry, deprecation)
   local api = {
     register = function(_, id, value)
       note()
+      id=Names.id(loader,registry.name,id)
+      value=Names.write(loader,registry.name,value,registry:get(id))
       validate("register", id, value)
       loader:_journal(registry.name)
       return registry:register(id, value, modId)
     end,
     override = function(_, id, value)
       note()
+      id=Names.id(loader,registry.name,id)
+      value=Names.write(loader,registry.name,value,registry:get(id))
       validate("override", id, value)
       loader:_journal(registry.name)
       return registry:override(id, value, modId)
     end,
     patch = function(_, id, partial)
       note()
+      id=Names.id(loader,registry.name,id)
+      partial=Names.write(loader,registry.name,partial,registry:get(id))
       validate("patch", id, partial)
       loader:_journal(registry.name)
       return registry:patch(id, partial, modId)
     end,
     remove = function(_, id)
       note()
+      id=Names.id(loader,registry.name,id)
       loader:_journal(registry.name)
       return registry:remove(id, modId)
     end,
     get = function(_, id)
       note()
-      return registry:get(id)
+      return Names.read(loader,registry.name,registry:get(Names.id(loader,registry.name,id)))
     end,
     each = function()
       note()
-      return registry:each()
+      local iterator=registry:each()
+      return function()
+        local id,value=iterator()
+        return id,Names.read(loader,registry.name,value)
+      end
     end,
   }
   if registry.name == "rom_text" then
@@ -922,6 +938,12 @@ end
 function Loader:_api(mod)
   local loader = self
   local modId = mod.manifest.id
+  local function eventCallback(callback)
+    if (mod.manifest.api or 1)>=3 or mod.manifest.content_format=='unified' then return callback end
+    return function(...)
+      return require('src.core.Gen2EncounterViews').withLegacyWrites(loader.baseData,callback,...)
+    end
+  end
   -- WHICH GAME THE MOD IS RUNNING IN, read once, here.
   --
   -- From a log where every line is the same gap wearing a different coat, on
@@ -1016,10 +1038,10 @@ function Loader:_api(mod)
     DELETE = Registry.DELETE,
     events = {
       on = function(_, name, callback, priority)
-        return loader.events:on(name, callback, priority, modId)
+        return loader.events:on(name, eventCallback(callback), priority, modId)
       end,
       once = function(_, name, callback, priority)
-        return loader.events:once(name, callback, priority, modId)
+        return loader.events:once(name, eventCallback(callback), priority, modId)
       end,
       -- mods broadcast under their own prefix only, so no mod can forge an
       -- engine event; exports stay the call-style channel
@@ -1632,9 +1654,12 @@ function Loader:load(data)
   ModSeams.unwindAll()
   retireCompatibilityMaps()
   self.baseData = data
+  require('src.mods.LegacyShaderCompat').install(self)
   require("src.core.Gen2SpeciesNames").publish(data)
   require("src.pokemon.Gen2Mail").load(data)
   require("src.compat.gen2.Decorations").useRegistry(data)
+  require("src.compat.gen2.Phone").useRegistry(data)
+  require("src.compat.gen2.Evolution").useRegistry(data)
   require("src.mods.TextContent").prepare(self, data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
@@ -2033,11 +2058,14 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require('src.mods.LegacyShaderCompat').reset()
   local paletteContext=package.loaded["src.render.PaletteFX"]
   if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]
   if clock then clock.resetObservations() end
   require("src.compat.gen2.Decorations").useRegistry(nil)
+  require("src.compat.gen2.Phone").useRegistry(nil)
+  require("src.compat.gen2.Evolution").useRegistry(nil)
   require('src.mods.Steps').unloadAll()
   Net.unloadAll()
   Job.unloadAll()

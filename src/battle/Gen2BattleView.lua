@@ -29,6 +29,7 @@ function View.bind(screen)
     enemyParty = function() return screen.enemyParty end,
     save = function() return screen.game.save end,
     data = function() return screen.data end,
+    stages = function() return screen.battle:stageTables() end,
     wild = function() return screen.kind == "wild" end,
     playerIndex = function() return indexOf(partyOf(screen), screen.player and screen.player.mon) end,
     enemyIndex = function() return indexOf(screen.enemyParty, screen.enemy and screen.enemy.mon) end,
