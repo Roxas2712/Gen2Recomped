@@ -43,6 +43,7 @@ local Logger = require("src.core.Logger")
 local ModCompat = {}
 
 ModCompat.ALIASES = {
+  ["src.core.BattleCheckpoint"] = "src.compat.gen1.BattleCheckpoint",
   -- the overworld: the player class the voxel renderers pose every frame,
   -- the state that owns the map, and the tile/collision tables
   ["src.world.gen2.Player"] = "src.world.Player",
