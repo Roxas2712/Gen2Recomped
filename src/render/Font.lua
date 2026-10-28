@@ -16,6 +16,7 @@ local FALLBACK = { enabled = false, font = nil }
 
 local state
 local loadedFrom
+local resetTextCache
 
 -- the two vanilla pages as the legacy def spells them, so a cache that
 -- predates the pages table still loads and a mod that registers only one
@@ -37,6 +38,7 @@ local function pagesOf(def)
 end
 
 function Font.load(data)
+  if resetTextCache then resetTextCache() end
   loadedFrom = data
   -- A CACHE MAY CARRY NO FONT AT ALL, and that has to degrade rather than
   -- stop the boot: `data.font` is nil for any dataset whose extractor does
@@ -342,7 +344,7 @@ end
 -- Convert a text string into a list of glyph codes.  Unknown characters
 -- render as space (and are reported once).
 local reported = {}
-function Font.encode(text)
+local function encodeUncached(text)
   if FALLBACK.enabled then
     local codes = {}
     local i, n = 1, #text
@@ -380,6 +382,48 @@ function Font.encode(text)
     codes[#codes + 1] = code
   end
   return codes
+end
+
+-- Match Gen1's public text contract without sharing mutable typewriter
+-- arrays. Only glyph selection is cached: advances still use the current
+-- native face/widths, styles and translation font on every measurement.
+local CACHE_MAX = 4096
+local encodeCache, encodeCount = {}, 0
+local stockSplit = Font.split
+local unicodePath
+Font.revision = 0
+resetTextCache = function()
+  encodeCache, encodeCount = {}, 0
+  Font.revision = Font.revision + 1
+end
+local function cachedCodes(text)
+  -- UnicodeFont can change without Font.load (translation activation or
+  -- removal); previously unmapped glyphs must not retain their old codes.
+  local unicode = package.loaded['src.translation.UnicodeFont']
+  local path = unicode and unicode.path
+  if path ~= unicodePath then
+    unicodePath = path
+    resetTextCache()
+  end
+  -- A mod replacing the splitter owns selection, including its side effects.
+  if Font.split ~= stockSplit then return encodeUncached(text) end
+  local codes = encodeCache[text]
+  if codes then return codes end
+  codes = encodeUncached(text)
+  if encodeCount >= CACHE_MAX then encodeCache, encodeCount = {}, 0 end
+  encodeCache[text], encodeCount = codes, encodeCount + 1
+  return codes
+end
+
+function Font.encode(text)
+  local source, copy = cachedCodes(text), {}
+  for i = 1, #source do copy[i] = source[i] end
+  return copy
+end
+local stockEncode = Font.encode
+
+function Font.glyphCount(text)
+  return #cachedCodes(text)
 end
 
 -- The glyph atlas is black pixels on a transparent field, so setColor can
@@ -734,7 +778,8 @@ Font.localize = localize
 function Font.width(text)
   text = localize(text)
   local w = 0
-  for _, code in ipairs(Font.encode(text)) do
+  local codes = Font.encode == stockEncode and cachedCodes(text) or Font.encode(text)
+  for _, code in ipairs(codes) do
     w = w + Font.advanceOf(code)
   end
   return w
@@ -766,9 +811,9 @@ function Font.draw(text, x, y)
   if FALLBACK.enabled and not require("src.translation.UnicodeFont").active() then
     love.graphics.setFont(FALLBACK.font)
     love.graphics.print(text, x, y)
-    return #text * GLYPH
+    return #cachedCodes(text) * GLYPH
   end
-  local codes = Font.encode(text)
+  local codes = Font.encode == stockEncode and cachedCodes(text) or Font.encode(text)
   local pen = x
   for _, code in ipairs(codes) do
     Font.drawCode(code, pen, y)
