@@ -1,5 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
--- Borrow the native ball painter/timeline; source artwork has its own shader.
+-- Borrow native opening effects; source renderers paint their own ball cell.
+-- A base call inside the native whole-layer boundary still borrows that layer.
 local Battle=require('src.core.game3.battle')
 local Coords=require('src.core.game3.battle.anim_coords')
 local Boundary=require('src.compat.gen1.ScriptBoundary')
@@ -65,7 +66,36 @@ end
 local function draw()
  if Boundary.active('battle.ball.draw')then return Boundary.invoke('battle.ball.draw')end
  local screen=Battle._screen();if not screen then return false,'no admitted native battle'end
- return require('src.battle.Gen3Battle').drawBall(screen)
+ local native=require('src.battle.Gen3Battle')
+ local anim=screen.gen3Ball
+ local api=require('src.core.game3.battle.ui').presentation
+ -- A send-out's fitted cell and its opening ring have the same coordinate
+ -- owner. Capture providers already transform their entire opening pass;
+ -- leave that existing protocol and the native whole-layer boundary alone.
+ if not(anim and anim.sendOut and api and type(api.ballPosition)=='function')then
+  return native.drawBallEffects(screen)
+ end
+ local stage=require('src.core.game3.battle.anim').stage()
+ local ball=stage and stage.ball
+ if not ball then return false,'native opening ball retired'end
+ local stack,top,view=screen.game.stack,screen.game.stack:top(),Battle.getState()
+ local result=pack(Scope.call(function()
+  local x,y,scale=Call.call(api,'ballPosition',ball)
+  if Battle._screen()~=screen or Battle.getState()~=view or screen.gen3Ball~=anim
+   or screen.game.stack~=stack or stack:top()~=top then
+   return false,'native opening presentation admission changed'
+  end
+  if x~=nil then
+   scale=scale or 1
+   assert(finite(x)and finite(y)and finite(scale)and scale>=0,'invalid opening projection')
+   if scale==0 then return true end
+   local g=love.graphics
+   g.translate(x,y);g.scale(scale,scale);g.translate(-anim.x,-anim.y)
+  end
+  return native.drawBallEffects(screen)
+ end))
+ if not result[1]then error(result[2],0)end
+ return unpack(result,2,result.n)
 end
 M.draw=draw
 function M._nativeDraw(screen,body)
