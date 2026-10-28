@@ -4,6 +4,10 @@ on:
     paths:
       - 'src/compat/gen1/NativeRegionMap.lua'
       - 'src/world/Gen3FlyTargets.lua'
+      - 'src/world/Gen3FlyArrival.lua'
+      - 'src/core/game3/field_effects.lua'
+      - 'src/render/Transition.lua'
+      - 'tests/engine/native_fly_arrival.lua'
       - 'src/ui/Gen3RegionMap.lua'
       - 'src/ui/Gen3RsRegionMap.lua'
       - 'src/ui/game3/region_map.lua'
@@ -30,6 +34,9 @@ jobs:
         run: |
           luajit tests/engine/native_region_map_observations.lua
           luajit tests/engine/native_fly_boundary.lua
+          luajit tests/engine/native_fly_arrival.lua
+          luajit tests/engine/native_warp_source.lua
+          luajit tests/engine/native_fade_source.lua
           luajit tests/engine/native_field_observations.lua
       - name: Existing native admission and other generations
         run: |

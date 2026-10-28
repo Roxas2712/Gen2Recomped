@@ -70,6 +70,9 @@ F._service=service
 setmetatable(F,{__index=function(_,k)
  if k=='locked'then return F._locked()end
  if k=='_game'then local c=context();return c and require('src.core.Game3').forNative(c.game)end
+ if k=='_flyLanding'then
+  local arrival=package.loaded['src.world.Gen3FlyArrival'];return arrival and arrival.landing()or false
+ end
  end,
  __newindex=function(t,key,value)
   if key=='locked'then
