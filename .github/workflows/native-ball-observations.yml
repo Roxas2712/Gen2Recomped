@@ -14,6 +14,7 @@ on:
       - 'tests/engine/native_sendout_tween.lua'
       - 'tests/engine/native_sendout_tween_admission.lua'
       - 'tests/engine/native_ball_battler_presentation.lua'
+      - 'tests/engine/native_ball_opening_projection.lua'
       - 'tests/engine/native_ball_intro_phase.lua'
       - 'tests/engine/native_ball_effect_layer.lua'
       - 'src/import/Gen3BallSendOutProfile.lua'
@@ -36,6 +37,7 @@ jobs:
       - name: Actual native clocks, stage and capture identity
         run: |
           luajit tests/engine/native_ball_battler_presentation.lua
+          luajit tests/engine/native_ball_opening_projection.lua
           luajit tests/engine/native_sendout_tween_admission.lua
           luajit tests/engine/native_sendout_tween.lua
           luajit tests/engine/native_ball_intro_phase.lua
