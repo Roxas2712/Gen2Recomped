@@ -29,16 +29,18 @@ local function withPalette(screen,side,body)
   if not ok then error(why,0)end
 end
 function M.install(Screen)
-  -- Older native screens need the same live observation; this reads their
-  -- actual battler and BG owners rather than constructing another model.
-  if not Screen.animPicState then
-    function Screen:animPicState(side)
-      local bg=self.anim and self.anim.bg
-      if not bg then return nil end
-      return {hidden=bg.hidden[side],size=bg.picSize[side],
-        shade=bg.monShade[side],slide=bg.slide[side]or 0,
-        lifted=bg.liftedRows[side]}
-    end
+  -- Compose the native picture observation with the real BG owner. A later
+  -- public method override remains visible to the actual picture drawer.
+  local read=Screen.animPicState
+  function Screen:animPicState(side)
+    local state=read and read(self,side)
+    local bg=self.anim and self.anim.bg
+    if not bg then return state end
+    state=state or {}
+    state.hidden=state.hidden or bg.hidden[side]
+    state.size,state.shade=bg.picSize[side],bg.monShade[side]
+    state.slide,state.lifted=bg.slide[side]or 0,bg.liftedRows[side]
+    return state
   end
   local draw=Screen.drawBattlerPic
   function Screen:drawBattlerPic(b,x,y,scale)
@@ -49,7 +51,7 @@ function M.install(Screen)
     local state=self:animPicState(side)
     if state and state.hidden then return end
     if self.liftedPass and not(state and state.lifted)then return end
-    if not self.liftedPass then x=x+(self.anim.bg.slide[side] or 0)end
+    if not self.liftedPass then x=x+(state and state.slide or 0)end
     local size=state and SIZES[state.size]
     if size then
       local image=self:battlerPic(b)

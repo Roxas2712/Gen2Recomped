@@ -143,7 +143,7 @@ function View.install(Screen, images)
         or (b.fainted and not self:fxFaintActive(b)) or (pf and pf.hidden)
         or (bg and bg.hidden[side]) or false,
       pic = b.substituteHP and "substitute" or nil,
-      slide = (bg and bg.slide[side] or 0)+(pf and pf.ox or 0),
+      slide = bg and bg.slide[side] or 0,
       size = bg and bg.picSize[side],
       shade = bg and bg.monShade[side],
       lifted = bg and bg.liftedRows[side],
