@@ -111,8 +111,12 @@ function M.install(Screen)
     local g=love.graphics
     g.push('all')
     local ok,why=pcall(function()
-      if panelFn then panelFn()else self:drawPanel()end
+      local panel=panelFn or function()self:drawPanel()end
+      if self.anim and self.anim.bg and self.animView then
+        self.animView:present(self.anim,panel,self,width or 160)
+      else panel()end
       if self.blankForAskName then return end
+      self:drawLiftedRows(width)
       if objectsFn then objectsFn()else self:drawAnimLayer(self:colorMode())end
       local fx=self.fx
       if fx and fx.flash and fx.flash>0 and self.frame%4<2 then
