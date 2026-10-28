@@ -82,6 +82,13 @@ for _,edition in ipairs({'gold','silver','crystal'})do
   pixels(tiles.anims[1].textures[1],wanted,0,false,edition..' actual animated tile '..name)
   pixels(sprite:resolveImage(),wanted,0,true,edition..' retained native sprite '..name)
   pixels(battle:picImage(originalPic),wanted,0,false,edition..' retained native battle picture '..name)
+  G.setBgp(0x1b)
+  pixels(battle:picImage(originalPic),{wanted[4],wanted[3],wanted[2],wanted[1]},0,false,
+    edition..' actual transient BG register reaches baked battle pixels '..name)
+  battle.fx={bgp={[0]=3,2,1,0}}
+  pixels(battle:picImage(originalPic),wanted,0,false,
+    edition..' actual BG register composes after legacy picture fade '..name)
+  battle.fx=nil;G.setBgp(nil)
   battle.fx={bgp={[0]=3,2,1,0}}
   pixels(battle:picImage(originalPic),{wanted[4],wanted[3],wanted[2],wanted[1]},0,false,edition..' battle fade after display '..name)
   battle.fx=nil;battle.blackedOut=true

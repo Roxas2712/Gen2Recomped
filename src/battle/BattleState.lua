@@ -47,6 +47,7 @@ local Gen4Battle = require("src.battle.Gen4Battle")
 local Gen2BattleView = require("src.battle.Gen2BattleView")
 local Gen2Read = require('src.battle.Gen2BattleRead')
 local Gen2Queue = require('src.battle.Gen2EventQueue')
+local Gen2Faint = require('src.battle.Gen2FaintPresentation')
 local GameVersion = require("src.core.GameVersion")
 local BattleCommands = require("src.battle.BattleCommands")
 local EnemyMoveChoice = require("src.battle.EnemyMoveChoice")
@@ -890,6 +891,10 @@ local function imagePathOf(img)
 end
 
 -- the image a battler pic actually draws with this frame
+-- The native image cache keeps static display bakes separate from transient
+-- hardware BGP. Resolve that byte at the actual battle picture draw boundary.
+-- At most 256 immutable index maps; no per-picture register-map allocation.
+local gen2PicRegisterMaps={}
 function BattleState:picImage(img)
   local PaletteFX = require("src.render.PaletteFX")
   if GameVersion.isGen2() then
@@ -928,7 +933,20 @@ function BattleState:picImage(img)
   if self.blackedOut or (self.introSlide or 0) > 0 then
     return blackImage(self.data, img)
   end
-  return fadeImage(img, self:activeBgp())
+  img=fadeImage(img,self:activeBgp())
+  if GameVersion.isGen2()then
+    local byte=PaletteFX.bgp()
+    if byte then
+      local map=gen2PicRegisterMaps[byte]
+      if not map then
+        local shades=PaletteFX.bgpShades(byte)
+        map={[0]=shades[1],shades[2],shades[3],shades[4]}
+        gen2PicRegisterMaps[byte]=map
+      end
+      img=fadeImage(img,map)
+    end
+  end
+  return img
 end
 
 -- Gen 1 trainer Pokémon have fixed DVs (engine/battle/core.asm);
@@ -2771,6 +2789,7 @@ end
 -- Display-only waits and bar completion. Returning idle grants no command;
 -- only updateQueue may consume a battle row after this gate.
 function BattleState:updateQueuePresentation(textOnly)
+  if GameVersion.isGen2() and self.faintSlide then return true end
   if textOnly then return self:stepPresentationWait() end
   if self._levelUpStreaks and require('src.battle.Gen3LevelUpStreaks').update(self)then return true end
   if self._gbaSubstituteTransition
@@ -2851,6 +2870,7 @@ end
 -- typing, HP, animation and sound have released it; it is not another update
 -- clock. Decorating this method observes the row that is about to run.
 function BattleState:advanceQueue()
+  if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
   local item = table.remove(self.queue, 1)
   while item and (item.gbaSubstituteSpecial or item.gbaNativeEffect or item.gbaLevelUpStreaks) do
     local controller = item.gbaLevelUpStreaks and "Gen3LevelUpStreaks"
@@ -3132,6 +3152,10 @@ function BattleState:advanceQueue()
         self:applyHitFx(item.hit)
       end
     end
+    if GameVersion.isGen2() then
+      require('src.battle.Gen2PicturePresentation').admitted(self,item,
+        self.animPlaying and self.animPlayer.runtime or nil)
+    end
     self.current = nil
     return true
   end
@@ -3160,6 +3184,7 @@ function BattleState:updateQueue()
   if GameVersion.isGen3() and require('src.battle.Gen3VoiceoverPresentation').gate(self) then return true end
   if self.animPlaying and not typing then
     self.animPlayer:update()
+    if GameVersion.isGen2() then require('src.battle.Gen2PicturePresentation').sync(self) end
     if self.animPlayer.pollEffects and self.applyAnimEffect then
       for _, ev in ipairs(self.animPlayer:pollEffects()) do
         self:applyAnimEffect(ev)
@@ -3814,6 +3839,7 @@ end
 function BattleState:activeBattlers() return activeBattlers(self) end
 
 function BattleState:syncSides()
+  if GameVersion.isGen2() then Gen2Faint.reconcile(self) end
   if GameVersion.isGen3() then
     local lock = require("src.battle.Gen3LockOn")
     lock.replacing(self, 0, self.sides[1].battlers[1], self.player)
@@ -4421,6 +4447,14 @@ end
 -- frame if one is up, otherwise the still.  Placement is always measured off
 -- the still (same dimensions, same ground padding), so only the texture
 -- changes -- see drawBattlerPic and the enemy branch of drawPics.
+function BattleState:pictureSprite(battler)
+  return battler.sprite
+end
+
+function BattleState:pictureStill(battler)
+  return self:picImage(self:pictureSprite(battler))
+end
+
 function BattleState:battlerPic(battler)
   local still = self:picImage(battler.sprite)
   local anim = battler and battler.picAnim
@@ -7962,6 +7996,7 @@ function BattleState:updateGen4Ball()
 end
 
 function BattleState:updateFx()
+  if GameVersion.isGen2() then Gen2Faint.step(self) end
   self:updateGen4Ball()
   local fi = self.frlgIntro
   if fi then
@@ -9266,30 +9301,36 @@ function BattleState:onFaint(battler, fieldTerminal)
   -- the faint slide + cry ride the queue (after the move animation and
   -- the HP-bar drain, pokered's order); the slide finishes before the
   -- faint text via a queued hold
-  self:actNext(function()
-    battler.fainted = true
-    local Sound = require("src.core.Sound")
-    Sound.playCry(self.data, battler.mon.species)
-    Sound.play(self.data, "Faint_Fall")
-    self.fx = self.fx or {}
-    -- SlideDownFaintedMonPic: PIC_HEIGHT (7) slide steps, each closing with
-    -- DelayFrames 2 (core.asm:1186-1222).  The port held this one twice as
-    -- long as hardware.
-    self.fx.faint = { battler = battler, frames = Timing.FAINT_SLIDE }
-  end)
-  self.nextInsert = (self.nextInsert or 0) + 1
-  table.insert(self.queue, self.nextInsert, { wait = Timing.FAINT_SLIDE })
-  if not fieldTerminal and not battler.isPlayer and self.kind == "wild" then
-    -- FaintEnemyPokemon .wild_win (core.asm:792-795): beating a wild
-    -- mon calls EndLowHealthAlarm and starts MUSIC_DEFEATED_WILD_MON
-    -- as the slide lands, BEFORE EnemyMonFaintedText and the exp text;
-    -- trainer battles keep the battle theme until TrainerBattleVictory.
-    -- (Starting it even when the player mon dropped too matches the
-    -- acknowledged core.asm:797-798 bug.)
-    self:actNext(function() self:playVictoryMusic() end)
+  if GameVersion.isGen2() then
+    Gen2Queue.afterCurrent(self,{kind='faint',side=battler.isPlayer and 'player' or 'enemy',
+      mon=battler.mon,fieldTerminal=fieldTerminal or nil,
+      text=Strings("%s\nfainted!",displayName(battler))})
+  else
+    self:actNext(function()
+      battler.fainted = true
+      local Sound = require("src.core.Sound")
+      Sound.playCry(self.data, battler.mon.species)
+      Sound.play(self.data, "Faint_Fall")
+      self.fx = self.fx or {}
+      -- SlideDownFaintedMonPic: PIC_HEIGHT (7) slide steps, each closing with
+      -- DelayFrames 2 (core.asm:1186-1222).  The port held this one twice as
+      -- long as hardware.
+      self.fx.faint = { battler = battler, frames = Timing.FAINT_SLIDE }
+    end)
+    self.nextInsert = (self.nextInsert or 0) + 1
+    table.insert(self.queue, self.nextInsert, { wait = Timing.FAINT_SLIDE })
+    if not fieldTerminal and not battler.isPlayer and self.kind == "wild" then
+      -- FaintEnemyPokemon .wild_win (core.asm:792-795): beating a wild
+      -- mon calls EndLowHealthAlarm and starts MUSIC_DEFEATED_WILD_MON
+      -- as the slide lands, BEFORE EnemyMonFaintedText and the exp text;
+      -- trainer battles keep the battle theme until TrainerBattleVictory.
+      -- (Starting it even when the player mon dropped too matches the
+      -- acknowledged core.asm:797-798 bug.)
+      self:actNext(function() self:playVictoryMusic() end)
+    end
+    -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
+    self:sayNext(Strings("%s\nfainted!", displayName(battler)))
   end
-  -- _EnemyMonFaintedText "Enemy X fainted!" / _PlayerMonFaintedText
-  self:sayNext(Strings("%s\nfainted!", displayName(battler)))
   -- Gold announces both faints in a terminal field batch, while the player's
   -- loss alone owns resolution. Do not enqueue enemy EXP, victory or replacement.
   if fieldTerminal then return end
@@ -11824,6 +11865,7 @@ end
 
 -- is the faint slide currently playing for this battler?
 function BattleState:fxFaintActive(battler)
+  if GameVersion.isGen2() and self.faintSlide then return Gen2Faint.owns(self,battler) end
   local fx = self.fx
   return fx and fx.faint and fx.faint.battler == battler
          and fx.faint.frames > 0 or false
@@ -11838,6 +11880,10 @@ end
 -- the full 56px PIC_HEIGHT slide over the 14-frame budget (#671: the
 -- old (30 - frames) math teleported the sprite 32px down on frame one).
 function BattleState:fxFaintOffset(battler, scale)
+  if GameVersion.isGen2() and Gen2Faint.owns(self,battler) then
+    return self:faintSink(battler.isPlayer and 'player' or 'enemy')
+      * (scale or (battler.isPlayer and 2 or 1))
+  end
   local fx = self.fx
   if self:fxFaintActive(battler) then
     scale = scale or (battler.isPlayer and 2 or 1)
@@ -13107,7 +13153,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
      -- ball's timeline: it shrinks into the ball and comes back out of it,
      -- and once it is inside there is nothing to draw at all.
      and not ((self:gen3BallFor(self.enemy) or {}).monHidden) then
-    local img = self:picImage(self.enemy.sprite)
+    local img = self:pictureStill(self.enemy)
     love.graphics.setColor(1, 1, 1, 1)
     local ex, ey = enemyPicXY(img, slide, sx, sy)
     local s = BattleState.resolveBattleScale(self.data, "front",
@@ -13234,13 +13280,14 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
      -- air there is no Pokemon on that side to draw; without this it stood
      -- there at full size waiting for its own ball to arrive.
      and not ((self:gen3BallFor(self.player) or {}).monHidden) then
-    local img = self:picImage(self.player.sprite)
+    local img = self:pictureStill(self.player)
     love.graphics.setColor(1, 1, 1, 1)
     -- feet flush on the text box top (y=96), ignoring baked-in padding
-    local pad = imagePadBottom[self.player.sprite] or 0
-    local padL = imagePadLeft[self.player.sprite] or 0
+    local handle = self:pictureSprite(self.player)
+    local pad = imagePadBottom[handle] or 0
+    local padL = imagePadLeft[handle] or 0
     local s = BattleState.resolveBattleScale(self.data, "back",
-      imagePathOf(self.player.sprite),
+      imagePathOf(handle),
       self.player.mon and self.player.mon.species)
     local gs = self:growInScale(self.player)
     local ballOut = self:gen3BallFor(self.player)
@@ -13263,7 +13310,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       local dx, dy
       if self:gen3Layout() then
         dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                         imagePathOf(self.player.sprite), s)
+                                         imagePathOf(handle), s)
       else
         dx, dy = BattleState.backPlacement(img:getWidth(), img:getHeight(),
                                            pad, padL, s)
@@ -13283,7 +13330,7 @@ function BattleState:drawPicsLayer(slide, sx, sy, onlySide, skipMenuClip)
       love.graphics.setColor(1, 1, 1, 1)
     elseif self:gen3Layout() then
       local dx, dy = Gen3Battle.picPlacement(self, self.player, img,
-                                             imagePathOf(self.player.sprite), s)
+                                             imagePathOf(handle), s)
       self:drawBattlerPic(self.player, dx + sx, dy + sy, s)
     else
       local dx, dy = BattleState.backPlacement(img:getWidth(),
@@ -13833,6 +13880,7 @@ Gen2BattleView.install(BattleState, {
   trueColor = function(image) local meta = imageMeta[image]; return meta and meta.trueColor or false end,
 })
 Gen2Queue.install(BattleState)
+Gen2Faint.install(BattleState)
 
 -- Source wrappers observe the real GBA owner. Unrequested modules and other
 -- generations keep the direct native path; there is no additional clock.
@@ -13904,5 +13952,9 @@ function BattleState:throwBall(ball)
   if source then return source._nativeBegin(self,throwBallNative,ball)end
   return throwBallNative(self,ball)
 end
+
+-- Compose after native/source view installers, retaining their real draw owners.
+require('src.battle.Gen2BgPictures').install(BattleState)
+require('src.battle.Gen2PicturePresentation').install(BattleState)
 
 return BattleState
