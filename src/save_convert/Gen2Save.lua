@@ -1433,4 +1433,11 @@ function Gen2Save.encode(save, data, template)
   return table.concat(buf)
 end
 
+function Gen2Save.pokemonRecord(mon,data)
+ local cw=Gen2Save.crosswalks(data);local b={};for i=1,70 do b[i]='\0'end
+ encodeMon(b,0,mon,true,cw)
+ encodeName(b,48,11,mon.ot or '')
+ encodeName(b,59,11,mon.nickname or(cw.speciesDefs[mon.species]or{}).name or '')
+ local bytes=table.concat(b);return bytes:sub(1,48),bytes:sub(49,59),bytes:sub(60,70)
+end
 return Gen2Save
