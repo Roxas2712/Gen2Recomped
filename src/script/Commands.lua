@@ -1321,6 +1321,11 @@ function Commands.give_pokemon(ctx, species, level, skipNickname, opts)
     level = mon.level,
     location = BattleStateMod.metHere(ctx.game),
   } or nil)
+  local caught=require('src.pokemon.Gen2CaughtData')
+  if caught.hasCaughtData() and not mon.isEgg then
+    if opts and opts.otName then caught.setGiftCaughtData(mon,opts.caughtBy or 'unknown')
+    else caught.record(ctx.game,mon,{overworld=ctx.overworld})end
+  end
   require('src.pokemon.Gen4Origin').stamp(ctx.game,mon,mon.isEgg and 'egg' or 'met',
     BattleStateMod.metHere(ctx.game))
   local addedToParty = Party.add(ctx.save.party, mon)

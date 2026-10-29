@@ -3545,6 +3545,8 @@ function Commands.g2_give_shuckle(ctx)
   mon.nickname = "SHUCKIE"
   mon.ot, mon.otId, mon.traded = SHUCKIE_OT, SHUCKIE_OT_ID, true
   mon.item = "ITEM_173" -- BERRY
+  local caught=require('src.pokemon.Gen2CaughtData')
+  if caught.hasCaughtData()then caught.setGiftCaughtData(mon,'unknown')end
   Party.add(ctx.save.party, mon)
   -- $D968 bit 5, the flag ManiaScript's `checkflag 84` reads to decide
   -- whether he is willing to ask for it back yet
@@ -3698,6 +3700,10 @@ function Commands.g2_trade(ctx, index)
   newMon.traded = true      -- boosted exp, and the Name Rater refuses it
   newMon.ot = (trade.ot ~= "" and trade.ot) or "TRAINER"
   newMon.otId = tonumber(trade.otId) or 0
+  local caught=require('src.pokemon.Gen2CaughtData')
+  if caught.hasCaughtData()then
+    caught.setGiftCaughtData(newMon,tonumber(trade.dialog)==3 and 'girl'or 'unknown')
+  end
   -- The npctrade row's item byte: every one of these mons arrives HOLDING
   -- something (a GOLD BERRY, a METAL COAT, ...), which the extractor was not
   -- reading at all -- so they all came over empty-handed.
@@ -5319,7 +5325,11 @@ function Commands.g2_contest_party_full(ctx)
   local player = save.player or {}
   mon.ot = mon.ot or player.name
   mon.otId = mon.otId or player.id
-  mon.caughtLocation = mon.caughtLocation or "NATIONAL_PARK"
+  if mon.caughtLocation==nil and require('src.pokemon.Gen2CaughtData').hasCaughtData()then
+    -- Legacy contest saves did not stamp the catch. Do not invent its time,
+    -- level or OT; resolve only the known park identity when it is available.
+    mon.caughtLocation=require('src.world.Gen2Landmarks').index(ctx.game.data,'LANDMARK_NATIONAL_PARK')
+  end
   save.party = save.party or {}
   local result, stored = 0, require("src.pokemon.Party").add(save.party, mon)
   if not stored then

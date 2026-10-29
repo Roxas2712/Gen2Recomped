@@ -279,7 +279,10 @@ end
 -- fields at validation, on the actual Pokemon, without a random re-roll or
 -- replacing explicit saved identity. Normal refresh remains the owner below.
 function Pokemon.ensureIdentity(data,mon)
-  if require('src.core.GameVersion').isGen2() then require('src.pokemon.Gen2MonFields').bind(data,mon)end
+  if require('src.core.GameVersion').isGen2() then
+    require('src.pokemon.Gen2CaughtData').hydrate(mon)
+    require('src.pokemon.Gen2MonFields').bind(data,mon)
+  end
   if type(mon)~='table'or type(mon.dvs)~='table'
       or require('src.core.GameVersion').generation()~=2 then return mon end
   local def=data and data.pokemon and data.pokemon[mon.species]

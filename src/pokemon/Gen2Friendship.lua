@@ -65,7 +65,7 @@ function Friendship.levelUp(data, save, mon)
     local location = map and tonumber(map.landmark)
     -- Crystal stores the caught landmark in the low seven bits; Gold and
     -- Silver have no LevelUpHappinessMod and always use the ordinary row.
-    if location and location == (tonumber(mon.caughtData) or 0) % 128 then
+    if location and location == require('src.pokemon.Gen2CaughtData').location(mon) then
       reason = "LEVELUPATHOME"
     end
   end
