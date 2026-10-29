@@ -84,6 +84,7 @@ return function(game)
   state=toss(owner);press('a');assert(state.mode=='done'and game.save.inventory.ANTIDOTE==1)
   press('b');assert(state.committed and game.stack:top()==owner and game.save.inventory.ANTIDOTE==nil)
   assert(owner.rows[owner.index]and owner.rows[owner.index].id~='ANTIDOTE','Last-item removal left a stale bag row/cursor')
+  shot('native-bag-toss-last-item-removed')
   press('b')
   game.save.options.gen3Frame=version=='emerald'and 20 or 10
   owner=bag('ORAN_BERRY',true);state=toss(owner);before=S.encode(game.save)
