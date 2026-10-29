@@ -13,6 +13,8 @@ For an unattended startup capture, set `GEN2_FRAME_TRACE=1`. This records
 process termination can lose the buffered capture. Disk output takes place
 outside captured frames. Captures are explicitly instrumented diagnostics,
 not accepted FPS measurements.
+Starting another capture, including F11, replaces the startup capture and
+is not stopped by the old startup capture's 600-frame limit.
 
 Each frame records its sequence, relative start, duration, completion status,
 window focus and named sections. Each section retains its call count, total
@@ -35,3 +37,5 @@ owned JSON-compatible report, or `write('capture-name.json')` for a bounded
 diagnostic path. `FrameProfile.section/add` already feed the recorder even
 when aggregate profiling is disabled. Disabled recording allocates no events
 and reads no clock. It does not change graphics, collector or JIT settings.
+`start()` returns a capture token; `enabled(token)` answers only for that
+capture, while `enabled()` still reports whether any capture is active.
