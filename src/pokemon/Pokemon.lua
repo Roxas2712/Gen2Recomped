@@ -5,6 +5,9 @@ local Stats = require("src.pokemon.Stats")
 local Gen2PP = require("src.pokemon.Gen2PP")
 
 local Pokemon = {}
+-- Source constructor options are an explicit boundary. Native callers keep
+-- their RNG signature, validated/copied genes and existing birth policies.
+local sourceGen2Birth = {}
 
 -- Starting moves: level-1 moves plus learnset entries at or below the level,
 -- keeping the most recent four (engine/pokemon/learn_move.asm behavior).
@@ -177,19 +180,26 @@ function Pokemon.applySeed(data, mon, seed)
   return true
 end
 
-function Pokemon.new(data, species, level, rng, form, opts)
+function Pokemon.new(data, species, level, rng, form, opts, birth)
+  local source = type(birth)=='table' and birth.token == sourceGen2Birth and birth.api or nil
   species = require("src.core.Gen2SpeciesNames").registryId(data.pokemon, species)
   local generation = require("src.core.GameVersion").generation()
   local nativeForm=(data.constants or {}).gen==4 and (form or 0) or nil
   local speciesDef=(data.pokemon or {})[species]
-  if require("src.core.GameVersion").get()=="polishedcrystal" and speciesDef and speciesDef.forms then
+  if not source and require("src.core.GameVersion").get()=="polishedcrystal" and speciesDef and speciesDef.forms then
     nativeForm=form or require("src.pokemon.PolishedUnown").choose(nil,rng)
   end
   local def = require('src.pokemon.Gen4Forms').definition(data,
     {species=species,form=nativeForm})
   assert(def, "unknown species " .. tostring(species))
-  local dvs
-  if generation == 2 and opts and type(opts.dvs) == "table" then
+  local dvs, statExp, item
+  if source then
+    item = opts.item
+    if opts.wild then item = source.wildItem(def, opts.forceItem, opts.random) end
+    dvs = opts.dvs or (opts.rng and Stats.randomDVs(opts.rng) or source.randomDVs())
+    dvs.hp = source.hpDV(dvs)
+    statExp = opts.statExp or source.newStatExp()
+  elseif generation == 2 and opts and type(opts.dvs) == "table" then
     -- Trainer/trade/egg genes are already decided. Own a copy before any
     -- identity hook can edit it; do not spend a random birth roll first.
     dvs = {}
@@ -202,22 +212,30 @@ function Pokemon.new(data, species, level, rng, form, opts)
   else
     dvs = Stats.randomDVs(rng)
   end
-  local seed = Stats.isGen3(def) and gen3Seed(data, def, rng) or nil
-  local stats = seed
-    and Stats.calc(def, level, seed.ivs, nil, seed.evs, seed.nature)
-    or Stats.calc(def, level, dvs)
+  local seed = not source and Stats.isGen3(def) and gen3Seed(data, def, rng) or nil
+  local stats
+  if source then stats = source.stats(def.baseStats, dvs, level, statExp)
+  elseif seed then stats = Stats.calc(def, level, seed.ivs, nil, seed.evs, seed.nature)
+  else stats = Stats.calc(def, level, dvs) end
   local moves = {}
-  for _, id in ipairs(Pokemon.movesAtLevel(def, level)) do
+  for _, id in ipairs(not source and Pokemon.movesAtLevel(def, level) or {}) do
     local mdef = data.moves[id]
     table.insert(moves, { id = id, pp = mdef and mdef.pp or 0 })
+  end
+  if source then moves = opts.moves or source.movesAtLevel(def, level, data.moves) end
+  local experience
+  if source then
+    experience = source.experienceForLevel(source.growthFor(data, def.growthRate), level)
+  else
+    local growth = generation==2 and Growth.record(data,def.growthRate)
+    experience = growth and Growth.evaluate(growth,level)
+      or Growth.expForLevel(def.growthRate,level)
   end
   local mon = {
     species = species,
     form = nativeForm,
     level = level,
-    exp = generation==2 and Growth.record(data,def.growthRate)
-      and Growth.evaluate(Growth.record(data,def.growthRate),level)
-      or Growth.expForLevel(def.growthRate, level),
+    exp = experience,
     dvs = dvs,
     -- the Gen 3 half.  Absent on the older generations, so nothing there
     -- changes shape and no save written by them grows a field.
@@ -264,7 +282,18 @@ function Pokemon.new(data, species, level, rng, form, opts)
   -- nil and this returns immediately, leaving the cartridge's own 1/8192
   -- exactly as it was.
   local Runtime = require("src.mods.Runtime")
-  if generation == 2 then
+  if source then
+    mon.statExp, mon.item = statExp, item
+    mon.nickname, mon.pokerus = opts.nickname, opts.pokerus or 0
+    mon.hp, mon.happiness = opts.hp or stats.hp, opts.happiness or 70
+    mon.caughtLevel = opts.caughtLevel or level
+    mon.caughtTime, mon.caughtLocation = opts.caughtTime, opts.caughtLocation
+    mon.caughtByGender = opts.caughtByGender
+    mon.shiny = opts.shiny or source.isShiny(dvs, {species=species,def=def,level=level})
+    mon.gender = source.gender(def, dvs, {species=species,level=level})
+    local unown = require('src.pokemon.Gen2Unown')
+    if def == unown.definition(data) then mon.unownLetter = unown.letterFromDVs(dvs) end
+  elseif generation == 2 then
     if opts and opts.shiny then mon.shiny = true
     else
       mon.shiny = require("src.pokemon.IdentityRolls").gen2Shiny(mon, def)
@@ -276,8 +305,41 @@ function Pokemon.new(data, species, level, rng, form, opts)
     end
     if opts and opts.shiny then mon.isShiny, mon.shiny = true, true end
   end
-  Pokemon.rollShiny(data, nil, mon, rng)
+  if not source then Pokemon.rollShiny(data, nil, mon, rng) end
   if generation==2 then require('src.pokemon.Gen2MonFields').bind(data,mon) end
+  return mon
+end
+
+-- Build the source-shaped individual through the actual native birth owner;
+-- the source table is also the dispatch authority for mod-wrapped helpers.
+function Pokemon.fromGen2Source(data, species, level, opts, api)
+  assert(require('src.core.GameVersion').isGen2(), 'source Gen2 birth requires a Gen2 host')
+  species = require('src.core.Gen2SpeciesNames').registryId(data.pokemon, species)
+  if not data.pokemon[species] then return nil end
+  level = math.max(1, math.min(100, level or 5))
+  return Pokemon.new(data, species, level, nil, nil, opts or {},
+    {token=sourceGen2Birth,api=assert(api)})
+end
+
+function Pokemon.displayName(mon)
+  if type(mon)~='table' then return '?' end
+  return mon.nickname or mon.name or mon.species or '?'
+end
+
+function Pokemon.eachSaveMon(save,visit)
+  return require('src.pokemon.SavePokemon').each(save,visit)
+end
+
+function Pokemon.stampGen2OT(save,mon)
+  local player=save and save.player
+  if not(mon and player)then return mon end
+  if player.id==nil then
+    local random=love and love.math and love.math.random or math.random
+    player.id=random(0,65535)
+  end
+  mon.ot=mon.ot or player.name
+  mon.otName=mon.otName or mon.ot
+  if not mon.traded then mon.otId=mon.otId or player.id end
   return mon
 end
 

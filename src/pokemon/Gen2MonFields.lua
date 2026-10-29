@@ -155,21 +155,7 @@ function Fields.bindSave(data, save)
       Fields.bind(data,value)
     end
   end
-  for _,value in pairs(save.party or {})do mon(value)end
-  for _,box in pairs(save.boxes or {})do
-    if type(box)=='table' then for _,value in pairs(box.mons or box)do mon(value)end end
-  end
-  local daycare=save.daycare
-  if type(daycare)=='table' then
-    mon(daycare.mon)
-    local breed=daycare.breed
-    if type(breed)=='table' then
-      for _,index in ipairs{1,2}do
-        local entry=breed[index];if type(entry)=='table' then mon(entry.mon)end
-      end
-      mon(breed.egg)
-    end
-  end
+  require('src.pokemon.SavePokemon').each(save,mon)
   return save
 end
 

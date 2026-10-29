@@ -2,6 +2,20 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+M.MAX_DV,M.PARTY_SIZE=15,6
+local WildItems=require('src.pokemon.Gen2WildItems')
+M.WILD_NO_ITEM_THRESHOLD,M.WILD_ITEM2_THRESHOLD=WildItems.NO_ITEM,WildItems.SECOND_ITEM
+M.wildItem=WildItems.choose
+M.displayName=Native.displayName
+function M.eachSaveMon(save,visit)
+  return require('src.pokemon.SavePokemon').each(save,visit,true)
+end
+function M.syncSaveIdentity(save,data)
+  M.eachSaveMon(save,function(mon)M.syncIdentity(mon,data);M.repairMoves(mon,data)end)
+end
+function M.evolutionAtLevel(def,level)
+  return require('src.pokemon.Evolution').levelEntry(def,level)
+end
 local Progression=require('src.pokemon.Gen2Progression')
 for _,key in ipairs{'MAX_LEVEL','MAX_STAT_EXP','STAT_EXP_ORDER','newStatExp','gainStatExp',
  'experienceGain','partySpecies','writeStats','gainExperience'}do M[key]=Progression[key]end
@@ -40,6 +54,10 @@ end
 function M.syncIdentity(mon,data)return Native.syncIdentity(data,mon)end
 function M.refreshStats(mon,data)return Native.refreshStats(data,mon)end
 function M.new(data,id,level,opts)
+  if require('src.core.GameVersion').isGen2() and (opts==nil or type(opts)=='table') then
+    return Native.fromGen2Source(data,id,level,opts,M)
+  end
+  -- Retain the older native RNG overload and non-GSC compatibility path.
   if type(opts)~='table' then return Native.new(data,id,level,opts) end
   local rng=opts.rng or love.math.random
   local keys={'attack','defense','speed','special'}
@@ -74,6 +92,7 @@ function M.movesAtLevel(def,level,moves)
 end
 function M.learnMove(mon,id,data)return require('src.pokemon.Gen2Learnset').learn(mon,id,data)end
 function M.stampOT(save,mon)
+  if require('src.core.GameVersion').isGen2() then return Native.stampGen2OT(save,mon) end
   return require('src.battle.BattleState').stampOT(save,mon)
 end
 return setmetatable(M,{__index=Native})
