@@ -169,6 +169,21 @@ return function(game)
       assert(best, "scene has no unoccupied native walkable cell")
       U.teleport(game, selected.runtimeId, best[1], best[2], "up")
     end
+    local atlasDraws=0
+    if spec.atlasBridge then
+      assert(Version.isGen3()and not spec.voxel,'atlas bridge requires the Gen-3 field scene')
+      local field=require('src.core.game3.field_view')
+      local native=field.draw
+      -- Use the production replacement boundary, with the native game,
+      -- actors, map graph and clock. No alternate simulation is installed.
+      field.draw=function(...)
+        atlasDraws=atlasDraws+1
+        local ok,why=native(...)
+        assert(ok,why)
+        return ok,why
+      end
+      report.atlasBridge={enabled=true,kind='production source-field adapter in owned QA host'}
+    end
     U.wait(60)
     ow = assert(game.overworld)
     report.setup = {
@@ -225,14 +240,44 @@ return function(game)
       Cap.backgroundPacing=false -- owned benchmark keeps its cap outside the foreground
       Cap.apply(spec.fpsCap)
       love.window.setVSync(0)
+      local sdl3=os.getenv('PERF_BASELINE_UNFOCUSED_SDL3')
+      if sdl3 then report.nativeWindowControl=require('tools.performance_native_window')(sdl3)end
       U.wait(120)
+      report.nativeFocusBefore=love.window.hasFocus()
+      if sdl3 then assert(report.nativeFocusBefore==false,'native window did not relinquish focus')end
       report.variant=spec.variant
       report.pacing={fpsCap=Cap.current,vsync=love.window.getVSync(),backgroundPacing=Cap.backgroundPacing}
       report.switches={idleStream=P.idleStream,gen4ChunkPrebuild=P.gen4ChunkPrebuild}
+      report.switches.atlasWorker=P.atlasWorker
+      local atlas=package.loaded['src.compat.gen1.AtlasBuild']
+      local nativeAtlas=package.loaded['src.core.game3.tileset_native']
+      if spec.atlasBridge then
+        assert(atlasDraws>0 and nativeAtlas and next(nativeAtlas._pairs),'source atlas bridge did not draw')
+        report.atlasBridge.drawsBefore=atlasDraws
+      end
+      if atlas then
+        report.atlasWorkerBefore=atlas._counters()
+        report.atlasCacheBefore=atlas._cacheInfo(nativeAtlas and nativeAtlas._pairs)
+      end
       if V then report.switches.voxelIdlePump=V.require("ChunkMesher").idlePump end
       if spec.variant=="adaptive" then assert(Cap.focused~=false,"adaptive observation requires a focused native window") end
       report.measurement=require("tools.performance_baseline_meter")(game,spec.seconds,#report.targets>1 and walk or nil,
-        function()return P.tier,Cap.focused end)
+        function()return P.tier,love.window.hasFocus() end)
+      report.nativeFocusAfter=love.window.hasFocus()
+      report.nativeFocusStable=report.nativeFocusAfter==report.nativeFocusBefore
+      for _,state in ipairs(report.measurement.tierTrace)do
+        if state.focused~=report.nativeFocusBefore then report.nativeFocusStable=false end
+      end
+      if spec.stableFocus and not report.nativeFocusStable then
+        report.passed=false
+        print('PERF_NATIVE_FOCUS_CHANGED '..Json.encode({before=report.nativeFocusBefore,
+          after=report.nativeFocusAfter,trace=report.measurement.tierTrace}))
+      end
+      if atlas then
+        report.atlasWorkerAfter=atlas._counters()
+        report.atlasCacheAfter=atlas._cacheInfo(nativeAtlas and nativeAtlas._pairs)
+      end
+      if spec.atlasBridge then report.atlasBridge.drawsAfter=atlasDraws end
       if V then
         report.voxelPendingAtEnd=V.require("ChunkMesher").pending()
         local disk=V.require("VoxelDiskCache")
