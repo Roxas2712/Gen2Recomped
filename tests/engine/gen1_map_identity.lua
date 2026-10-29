@@ -14,7 +14,27 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
     nativeKeys[row[3]] = key
   end
   local binding = Identity.bind(maps, edition)
+  -- Differential oracle is the original multi-step runtime resolver. Include
+  -- native aliases and live retirement, not only catalog names.
+  local function oldResolve(id)
+    local native,def=binding:nativeId(id)
+    if not native then
+      local canonical=binding:legacyId(id)
+      if canonical then native,def=binding:nativeId(canonical) end
+    end
+    if native then return native,def,binding:legacyId(native) end
+  end
+  local function equivalent(id)
+    local a,b,c=oldResolve(id);local x,y,z=binding:resolve(id)
+    T.eq(x,a,"combined resolution preserves native key")
+    if a then
+      T.eq(y,b,"combined resolution borrows exact definition")
+      T.eq(z,c,"combined resolution preserves canonical name")
+    end
+  end
   for _, row in ipairs(Names[edition]) do
+    local aliases={row[3],row[4],row[5],nativeKeys[row[3]],row[1]..":"..row[2]}
+    for i=1,5 do if aliases[i]~=nil then equivalent(aliases[i])end end
     local key, def = binding:nativeId(row[3])
     T.eq(key, nativeKeys[row[3]], "original name reaches actual native record")
     T.eq(def, maps[key], "definition is borrowed with its exact identity")
@@ -34,9 +54,17 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
   local first = Names[edition][1]
   local key = nativeKeys[first[3]]
   local def = maps[key]
+  -- A native key may itself look like another map's legacy name. Preserve
+  -- legacy precedence, then its native-alias fallback when the slot retires.
+  maps[first[3]]=maps[nativeKeys[Names[edition][2][3]]]
+  equivalent(first[3])
   maps[key] = nil
+  equivalent(first[3]);equivalent(key)
+  maps[first[3]]=nil
+  equivalent(first[3])
   T.eq(binding:nativeId(first[3]), nil, "removed native record retires its binding")
   maps[key] = { id = key, group = first[1], number = first[2] }
+  equivalent(first[3]);equivalent(key)
   T.eq(binding:nativeId(first[3]), nil, "replacement cannot inherit prior binding")
   maps[key] = def
   local duplicate = { id = "OTHER", group = def.group, number = def.number }
@@ -47,6 +75,11 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
   local aliases = Identity.bind(maps, edition)
   T.eq(aliases:nativeId(first[3]), key, "same-object aliases prefer actual def.id")
   T.eq(aliases:legacyId("OTHER"), first[3], "same-object alias has same legacy identity")
+  local resolved,borrowed,canonical=aliases:resolve("OTHER")
+  T.eq(resolved,key,"combined native alias chooses preferred key")
+  T.eq(borrowed,def,"combined native alias preserves identity")
+  T.eq(canonical,first[3],"combined native alias returns canonical name")
+  T.eq(ambiguous:resolve(first[3]),nil,"combined resolver refuses ambiguous slot")
   def.id='OTHER'
   T.eq(Identity.bind(maps,edition):nativeId(first[3]),'OTHER','same-frame preferred alias changes are observed')
   def.id=key
@@ -56,6 +89,7 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
   maps.OTHER=nil
   T.eq(Identity.bind(maps,edition):nativeId(first[3]),key,'same-frame alias deletion removes ambiguity')
   def.group = 255
+  equivalent(first[3]);equivalent(key)
   T.eq(aliases:nativeId(first[3]), nil, "changed slot retires prior binding")
   T.eq(binding:nativeId("invented"), nil, "unknown mod map is not guessed")
   T.eq(binding:legacyId("invented"), nil, "unknown native map is not guessed")

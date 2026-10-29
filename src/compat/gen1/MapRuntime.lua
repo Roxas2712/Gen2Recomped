@@ -48,12 +48,8 @@ function M.new(getGame, getEdition)
     return game
   end
   local function resolve(id)
-    local native,def=binding:nativeId(id)
-    if not native then
-      local canonical=binding:legacyId(id)
-      if canonical then native,def=binding:nativeId(canonical) end
-    end
-    if native then return native,def,binding:legacyId(native) end
+    local native,def,canonical=binding:resolve(id)
+    if native then return native,def,canonical end
     return nil,'map identity unavailable or retired'
   end
   local function destination(id)
