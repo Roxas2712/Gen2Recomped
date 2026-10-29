@@ -118,13 +118,13 @@ return function(game)
     local restoredRows=Physical.rows(splitLoaded,game.data,'ITEM')
     assert(#restoredRows==2 and restoredRows[1].qty==99 and restoredRows[2].qty==48,
       'Actual disk round trip flattened the two partially consumed stacks')
-    local mon=game.save.party[1];mon.hp=math.max(1,mon.maxHp-5)
+    local mon=game.save.party[1];local maxHp=mon.stats.hp;mon.hp=math.max(1,maxHp-5)
     before=S.encode(game.save);state=action(owner,'use')
     assert(getmetatable(state)==require('src.ui.Gen3PartyMenu'));press('b');unchanged(before)
     state=action(owner,'use');press('a')
     for _=1,180 do if game.stack:top()==owner then break end;press('a')end
     rows=Physical.rows(game.save,game.data,'ITEM')
-    assert(game.stack:top()==owner and mon.hp==mon.maxHp and rows[1].qty==99 and rows[2].qty==47,
+    assert(game.stack:top()==owner and mon.hp==maxHp and rows[1].qty==99 and rows[2].qty==47,
       'Actual medicine flow failed to consume only the selected second stack')
     shot('native-bag-use-second-stack')
     state=toss(owner);assert(state.max==47);state.qty=47;state:refreshMessage()
