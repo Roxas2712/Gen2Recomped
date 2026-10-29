@@ -352,6 +352,11 @@ local STORE_MODES = { "withdraw", "deposit", "toss" }
 local function openStore(game, mode)
   local Gen3BagMenu = require("src.ui.Gen3BagMenu")
   game.save.pcItems = game.save.pcItems or {}
+  local native=require('src.ui.Gen3EmeraldItemStorage')
+  if (mode=='withdraw'or mode=='toss')and native.available(game)then
+    game.stack:push(native.new(game,{toss=mode=='toss'}))
+    return
+  end
   game.stack:push(Gen3BagMenu.new(game, { store = mode }))
 end
 
