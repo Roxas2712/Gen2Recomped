@@ -296,16 +296,37 @@ end
 -- Gen 2 refreshes identity at its summary/stat-refresh boundary. A true
 -- shiny stays authoritative; a cached false and gender are read again.
 function Pokemon.syncIdentity(data, mon)
-  if require('src.core.GameVersion').generation()==2 then
-    require('src.pokemon.Gen2MonFields').bind(data,mon)
-  end
-  if type(mon) ~= "table" or type(mon.dvs)~='table'
-      or require("src.core.GameVersion").generation() ~= 2 then return mon end
-  local Rolls = require("src.pokemon.IdentityRolls")
+  local Version=require('src.core.GameVersion')
+  if Version.generation()~=2 or type(mon)~='table' then return mon end
+  require('src.pokemon.Gen2MonFields').bind(data,mon)
   local def = data and data.pokemon and data.pokemon[mon.species]
   if not def then return mon end
+  -- Derived native names/types stay unstored. An older explicitly stored
+  -- display copy must be refreshed too, as on the source summary boundary.
+  if rawget(mon,'name')~=nil then mon.name=def.name or mon.species end
+  if def.types and rawget(mon,'types')~=nil then mon.types=def.types end
+  if type(mon.dvs)~='table' then return mon end
+  local Rolls = require('src.pokemon.IdentityRolls')
   mon.gender = Rolls.gender(data, mon, 2, mon.level)
   mon.shiny = mon.shiny or Rolls.gen2Shiny(mon, def)
+  local Unown=require('src.pokemon.Gen2Unown')
+  if Unown.supported() then
+    mon.unownLetter=def==Unown.definition(data) and Unown.letterFromDVs(mon.dvs) or nil
+  end
+  return mon
+end
+
+-- GSC summary/stat refresh recalculates an existing block; Stats.ensure is
+-- deliberately different (it preserves an already loaded party stat block).
+-- No current-HP refill, identity re-roll at birth or second Pokemon is made.
+function Pokemon.refreshStats(data, mon)
+  if require('src.core.GameVersion').generation()~=2 or type(mon)~='table' then return mon end
+  local def=data and data.pokemon and data.pokemon[mon.species]
+  if not(def and def.baseStats) then return mon end
+  Pokemon.syncIdentity(data,mon)
+  mon.stats=Stats.calcGen2(def.baseStats,mon.dvs,mon.level or 1,mon.statExp)
+  mon.maxHp=mon.stats.hp
+  if mon.hp==nil or mon.hp>mon.stats.hp then mon.hp=mon.stats.hp end
   return mon
 end
 
