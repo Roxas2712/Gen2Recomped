@@ -6,7 +6,8 @@ local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
 local Numeric=require('src.render.NumericUniformReplay')
 local Keys=require('src.render.ShaderVariantKeyCache')
-local S={deferInactiveNumeric=false,reuseVariantKeys=false}
+local Interface=require('src.render.ShaderUniformInterface')
+local S={deferInactiveNumeric=false,reuseVariantKeys=false,cacheUniformInterfaces=false}
 local installed=false
 local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredNumericUpdates=0,numericReplayWrites=0,keyBuilds=0,keyReuses=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
@@ -18,7 +19,7 @@ local sourceBytes=0
 local raw,compiling
 local function replayNumeric(record,variant)
  local previous=compiling;compiling=true
- local ok,why=pcall(Numeric.apply,record,variant,stats)
+ local ok,why=pcall(Numeric.apply,record,variant,stats,S.cacheUniformInterfaces and Interface.has or nil)
  compiling=previous;return ok,why
 end
 local unpack=table.unpack or unpack
@@ -133,7 +134,10 @@ local function remember(record,method,args)
    Numeric.queue(variant,name);stats.deferredNumericUpdates=stats.deferredNumericUpdates+1
   else
    if variant.numericPending then Numeric.clear(variant,name)end
-   if record.hook.hasUniform(variant.shader,name)then record.hook[method](variant.shader,name,unpack(args,2,args.n))end
+   local present
+   if S.cacheUniformInterfaces then present=Interface.has(record,variant,name,stats)
+   else present=record.hook.hasUniform(variant.shader,name)end
+   if present then record.hook[method](variant.shader,name,unpack(args,2,args.n))end
   end
  end end
  record.bankRevision=record.bankRevision+1

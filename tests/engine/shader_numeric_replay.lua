@@ -11,7 +11,10 @@ local function copy(v)
  if type(v)~='table'then return v end
  local r={};for k,a in pairs(v)do r[k]=copy(a)end;return r
 end
-function methods.hasUniform(self,name)assert(not data[self].released);return data[self].names[name]or false end
+function methods.hasUniform(self,name)
+ assert(not data[self].released);local q=data[self].queries;q[name]=(q[name]or 0)+1
+ return data[self].names[name]or false
+end
 function methods.send(self,name,...)
  local d=assert(data[self]);assert(not d.released and d.names[name],'native validation')
  if name=='amount'and type((...))~='number'then error('native numeric validation')end
@@ -26,7 +29,7 @@ function methods.release(self)data[self].released=true end
 local function compile(source)
  local shader=newproxy(prototype);local names={}
  for name in source:gmatch('uniform%s+[%w_]+%s+([%w_]+)')do names[name]=true end
- data[shader]={names=names,values={},writes={}};return shader
+ data[shader]={names=names,values={},writes={},queries={}};return shader
 end
 local g={newShader=compile,setShader=function(sh)actual=sh end,getShader=function()return actual end,
  getStackDepth=function()return 0 end,getRendererInfo=function()return'Metal'end,isGammaCorrect=function()return false end,
@@ -35,7 +38,7 @@ love={graphics=g,getVersion=function()return 12 end,system={getOS=function()retu
  local value;return{push=function(_,v)value=v end,peek=function()return value end}
 end}}
 jit={arch='arm64'};os.getenv=function(n)if n=='POKEPORT_SHADER_BRANCHES'then return'1'end;return savedEnv(n)end
-local S=assert(loadfile('src/render/ShaderSpecialization.lua'))();S.deferInactiveNumeric=true;S.reuseVariantKeys=true;T.check(S.install())
+local S=assert(loadfile('src/render/ShaderSpecialization.lua'))();S.deferInactiveNumeric=true;S.reuseVariantKeys=true;S.cacheUniformInterfaces=true;T.check(S.install())
 local source='uniform float gate;uniform float amount;uniform float values[4];uniform mat4 matrix;uniform Image tex;vec4 effect(){if(gate>.5)return vec4(amount);return vec4(values[0]);}\n/*'..string.rep('x',65536)..'*/'
 local original=g.newShader(source);original:send('amount',1);original:send('gate',0);g.setShader(original);g.draw()
 local a=actual;T.check(a~=original,'first optional program')
@@ -94,5 +97,12 @@ original:send('amount',6);g.draw()
 T.eq(S.selectionTrace[1].inputs.amount[1].values[1],5,'diagnostic bank detached from later writes')
 T.eq(S.selectionTrace[2].inputs.amount[1].values[1],6,'diagnostic bank reflects current source writes')
 S.selectionTraceBank=nil;S.selectionTrace=nil
+original:send('amount',7);local queryBefore=data[b].queries.amount
+for i=1,100 do original:send('amount',i+7)end
+T.eq(data[b].queries.amount,queryBefore,'actual eager setter reuses the linked interface')
+T.eq(data[b].values.amount[1],107,'interface cache retains every changed native write')
+S.cacheUniformInterfaces=false;original:send('amount',108)
+T.eq(data[b].queries.amount,queryBefore+1,'interface control retains native queries')
+T.check(S.status().interfaceHits>0,'actual interface path exercised')
 love,jit,os.getenv=savedLove,savedJit,savedEnv;package.loaded['src.render.LegacyShaderCompat']=savedLegacy;package.loaded['src.render.AlphaDepthCompat']=savedAlpha
 T.finish('deferred numeric shader banks, array tails, textures and foreign aliases')

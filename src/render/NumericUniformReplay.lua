@@ -35,12 +35,15 @@ end
 function N.clear(variant,name)
  if variant.numericPending and variant.numericPending[name]then variant.numericPending[name]=nil;variant.numericPendingCount=variant.numericPendingCount-1 end
 end
-function N.apply(record,variant,stats)
+function N.apply(record,variant,stats,hasUniform)
  local pending=variant.numericPending;if not pending then return end
  for name in pairs(pending)do
   local bank=assert(record.bank[name],'missing deferred numeric bank')
   assert(N.numericBank(bank),'opaque value reached deferred numeric replay')
-  if record.hook.hasUniform(variant.shader,name)then
+  local present
+  if hasUniform then present=hasUniform(record,variant,name,stats)
+  else present=record.hook.hasUniform(variant.shader,name)end
+  if present then
    for _,row in ipairs(bank)do
     -- These rows contain detached primitive snapshots, with no resources to
     -- restore. Preserve every retained array prefix and matrix-layout tag.
