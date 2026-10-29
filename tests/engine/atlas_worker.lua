@@ -229,12 +229,12 @@ for _,spec in ipairs{{'src.compat.gen1.AtlasPaletteCache','read'},{'src.render.G
  helper[method]=function(...)observed=observed+1;return original(...)end
  f=fresh()
  local bank=f.game.data.map_tilesets.P
- bank.animations={{tile=0,count=1,step=3,frames={bank.tiles:sub(1,32)}}}
+ bank.animations={{tile=0,count=1,step=3,frames={bank.tiles:sub(1,32),string.rep('\255',32)}}}
  before=nextId
  Native.prefetch(f.pair)
  T.eq(nextId,before,'foreign helper methods keep CPU work under their native owner')
  T.check(Native.get(f.pair).image~=nil,'helper override retains immediate native construction')
- T.check(observed>0,'the original main-thread consumer actually invokes the override')
+ T.check(observed>0,'the original main-thread consumer actually invokes '..spec[1]..'.'..method)
  T.eq(Build._cacheInfo(Native._pairs).worker,0,'foreign helper result cannot claim native worker provenance')
  helper[method]=original;Native.release()
 end
