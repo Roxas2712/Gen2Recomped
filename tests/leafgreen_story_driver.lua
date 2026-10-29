@@ -160,6 +160,7 @@ return function(game)
       elseif command.op=='step'then local ok,why=step(assert(command.dir));if not ok then record.outcome=why end
       elseif command.op=='hold'then
         assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=6000)
+        assert(({a=true,b=true,start=true,select=true,up=true,down=true,left=true,right=true,l=true,r=true})[command.button])
         inputLog[#inputLog+1]={key=command.button,heldFrames=command.frames,releaseFrames=command.wait or 8,frame=U.frame()}
         game.input:overlayPressed(command.button);U.wait(command.frames)
         game.input:overlayReleased(command.button);U.wait(command.wait or 8)
@@ -179,6 +180,11 @@ return function(game)
         end
       elseif command.op=='battle-attack'then record.outcome=require('tests.drivers.story_battle').attack(game,U,press,assert(tonumber(command.slot)))
       elseif command.op=='shot'then shot(assert(command.name))
+      elseif command.op=='verify-continue'then
+        assert(report.continuedThroughUI and report.checkpointPartyFlagsAndInventoryPreserved)
+        assert(lineage and lineage.loadedCheckpointSHA256Preserved)
+        report.status='pass';seq=seq+1;busy=false;snapshot()
+        print('PASS_LEAFGREEN_NATIVE_CHECKPOINT_CONTINUE');love.event.quit(0);return
       elseif command.op=='finish'then
         snapshot()
         assert(report.starter and report.starter.level==5,'Starter was not acquired naturally at level five')
