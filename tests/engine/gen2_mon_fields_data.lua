@@ -87,6 +87,24 @@ local customStats=setmetatable({hp=2},{__len=function()return 8 end})
 Fields.stats(customStats)
 T.eq(Fields.plainKind(customStats),nil,'custom stat metadata remains opaque')
 
+local records={}
+for i=1,8 do records[i]={species='QA_MON',stats={hp=i,spatk=2,spdef=3}}end
+local restored={party={records[1]},boxes={{[3]=records[2]},{mons={[7]=records[3]}}},
+  daycare={mon=records[4],breed={{mon=records[5]},{mon=records[6]},egg=records[7]}},
+  modData={consumer=records[8]}}
+local restoredData={pokemon={QA_MON={name='RECONSTRUCTED'}}}
+Version.set('crystal')
+T.eq(Fields.bindSave(restoredData,restored),restored,'semantic save binding retains actual save identity')
+for i=1,7 do
+  T.eq(records[i].name,'RECONSTRUCTED','native saved Pokemon slot rebound')
+  T.eq(records[i].maxHp,i,'native saved stat block retained')
+end
+T.eq(getmetatable(records[8]),nil,'arbitrary mod storage is not traversed')
+local foreign={party={{species='QA_MON'}}}
+Version.set('red');Fields.bindSave(restoredData,foreign)
+T.eq(getmetatable(foreign.party[1]),nil,'non-GSC semantic save is excluded')
+Version.set('crystal')
+
 -- Existing custom behavior remains active. Plain native assignments bypass
 -- __newindex exactly when the real canonical key is already stored.
 local writes=0
