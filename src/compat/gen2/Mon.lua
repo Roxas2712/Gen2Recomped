@@ -5,6 +5,14 @@
 -- source options-record construction remains a separate capability.
 local Native=require('src.pokemon.Pokemon')
 local Mon={}
+local Progression=require('src.pokemon.Gen2Progression')
+for _,key in ipairs{'MAX_LEVEL','MAX_STAT_EXP','STAT_EXP_ORDER','newStatExp','gainStatExp',
+ 'experienceGain','partySpecies','writeStats','gainExperience'}do Mon[key]=Progression[key]end
+local Growth=require('src.pokemon.Growth')
+Mon.growthFor=Growth.record
+Mon.experienceForLevel=Growth.evaluate
+Mon.levelForExperience=Growth.sourceLevel
+Mon.registerInto=Growth.registerCoefficients
 local Caught=require('src.pokemon.Gen2CaughtData')
 for _,key in ipairs{'CAUGHT_TIME_MASK','CAUGHT_LEVEL_MASK','CAUGHT_GENDER_MASK',
  'CAUGHT_LOCATION_MASK','CAUGHT_EGG_LEVEL','LANDMARK_EVENT','LANDMARK_GIFT',

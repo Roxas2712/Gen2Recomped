@@ -8900,14 +8900,17 @@ function BattleState:awardExp(fallen)
     participants, alive = 1, { self.player.mon }
   end
   local HudTiles = require("src.render.HudTiles")
-  local function applyShare(mon, split, announce)
+  local function applyShare(mon, split, announce, opts)
+    if not opts and GameVersion.isGen2()and not(self.data.constants and self.data.constants.gen3Bag)then
+      opts={halved=false,battle=self.battle,loser=foe.mon}
+    end
     -- how full the bar is before any of this is applied; AnimateExpBar starts
     -- from here and creeps to the new length
     local expBefore = self.player and mon == self.player.mon
       and HudTiles.expBarPixels(self.data, mon) or nil
     local levels, gained = Experience.apply(self.data, mon, foe.def,
                                             foe.mon.level, self.kind == "trainer",
-                                            split, mon.traded)
+                                            split, mon.traded, opts)
     -- Track level-ups for EvolveAfterBattle (OverworldState:afterBattle ->
     -- Evolution.checkParty).  B-cancel leaves the mon at/above threshold;
     -- without this gate it re-triggers after every later fight (#213).
@@ -9020,11 +9023,14 @@ function BattleState:awardExp(fallen)
         -- fought and holds one is paid from both halves and prints two
         -- boxes, exactly as the EXP.ALL second pass already does -- GSC
         -- prints one box per gaining mon and no summary line.
+        local gsc=GameVersion.isGen2()and not(self.data.constants and self.data.constants.gen3Bag)
         for _, mon in ipairs(ctx.alive) do
-          ctx.applyShare(mon, math.max(1, ctx.participants) * 2, true)
+          ctx.applyShare(mon, math.max(1, ctx.participants)*(gsc and 1 or 2),true,
+            gsc and {halved=true,battle=self.battle,loser=foe.mon}or nil)
         end
         for _, mon in ipairs(holders) do
-          ctx.applyShare(mon, #holders * 2, true)
+          ctx.applyShare(mon,#holders*(gsc and 1 or 2),true,
+            gsc and {halved=true,battle=self.battle,loser=foe.mon}or nil)
         end
         return
       end
