@@ -2,7 +2,7 @@
 
 This payload builds on the separately offered source-identity integration
 (#402 and its stated prerequisites). Its independently qualified implementation
-is `f549231b36e25d6eddcfb83db3440ee99c6d1ea1`, against original upstream main
+is `6ce0e17c8999f82a5ba0aa3deded8342f78c57cd`, against original upstream main
 `8d5b4387420cc1fdcadf58ad4ca78a7d8596e41d` plus those offered dependencies.
 
 The source Mon caught-data APIs share one owner with actual native catch/box,
@@ -17,12 +17,15 @@ Gen2Save.pokemonRecord dependencies in the older host. Their actual shared
 implementations are included: landmark identities/orders are cartridge/version
 aware; the record exporter calls the same existing encodeMon/name owners.
 No fabricated facade, private mod implementation or changed outcome assertions
-is used to make the tests pass. No newer options-record constructor is claimed.
+is used to make the tests pass. No newer options-record constructor is claimed. The final public setters also
+retain any opaque historical word, matching the source semantics. The codec
+fixtures now call both setters directly on all reserved layouts, rather than
+only assigning canonical fields by hand.
 
 Selected ROM-free suites passed on the qualified implementation:
 
-- source caught-data arithmetic/signatures: 393,300 checks, all 65,536 pairs;
-- native SRAM codec and layout preservation: 7,922 checks;
+- source caught-data arithmetic/signatures: 393,307 checks, all 65,536 pairs;
+- native SRAM codec and layout preservation: 7,970 checks;
 - actual SDK/arrival/consumer and saved RTC paths: 133 checks;
 - source fields on native constructors/validation: 170 checks;
 - native trainer friendship: 24,270 checks;
