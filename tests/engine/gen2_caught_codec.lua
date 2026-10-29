@@ -61,7 +61,12 @@ for _,version in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
  else
   -- Gold/Silver and unreviewed hack layouts must ignore source metadata;
   -- their two opaque bytes are independent of those mod-authored fields.
-  for _,m in ipairs(owners)do m.caughtLocation=94;m.caughtByGender='girl';m.caughtTime=3 end
+  for _,m in ipairs(owners)do
+   C.setCaughtData(m,{landmark=94,playerGender='girl',timeOfDay='NITE'})
+   T.eq(m.caughtData,word,'public source setter cannot erase reserved native bytes')
+   C.setGiftCaughtData(m,'girl')
+   T.eq(m.caughtData,word,'public gift setter cannot erase reserved native bytes')
+  end
  end
  local round=S.encode(decoded,data,raw)
  for _,at in ipairs{S.OFFSETS.partyMons,0x4000+22,0x4450+22,

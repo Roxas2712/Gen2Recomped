@@ -31,7 +31,6 @@ function C.setCaughtData(mon,opts)
  mon.caughtLevel=math.max(0,math.floor(opts.level or mon.level or 0))
  mon.caughtLocation=landmark(opts.landmark)
  mon.caughtByGender=C.caughtGenderOf(opts.playerGender)or 'boy'
- mon.caughtData=nil
  return mon
 end
 function C.packCaughtData(mon)
@@ -52,7 +51,6 @@ function C.setGiftCaughtData(mon,caughtBy)
  local low=126+math.floor(code/2)+(code%2)*128
  local decoded=C.unpackCaughtData(0,low)
  for _,key in ipairs(fields)do mon[key]=decoded[key]end
- mon.caughtData=nil
  return mon
 end
 function C.hasFields(mon)

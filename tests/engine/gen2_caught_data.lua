@@ -45,10 +45,11 @@ for word=0,65535 do
  T.eq(a,hi,'first packed byte');T.eq(b,lo,'second packed byte')
 end
 T.same(Mon.unpackCaughtData(-1,511),{caughtTime=3,caughtLevel=63,caughtLocation=127,caughtByGender='girl'},'source byte normalization')
-local mon={level=75,custom={retained=true}}
+local mon={level=75,custom={retained=true},caughtData=48879}
 local identity=mon.custom
 T.eq(Mon.setCaughtData(mon,{timeOfDay='DAY',landmark=259,playerGender=true}),mon,'setter retains actual Pokemon')
 T.eq(mon.custom,identity,'setter does not copy native/custom fields')
+T.eq(mon.caughtData,48879,'source setter preserves any opaque historical word')
 T.same({mon.caughtTime,mon.caughtLevel,mon.caughtLocation,mon.caughtByGender},{2,75,3,'girl'},'source level is full before physical packing')
 local hi,lo=Mon.packCaughtData(mon);T.eq(hi,139);T.eq(lo,131)
 Mon.setCaughtData(mon,{level=-3,landmark='19',playerGender='unknown'})
@@ -56,6 +57,7 @@ T.same({mon.caughtTime,mon.caughtLevel,mon.caughtLocation,mon.caughtByGender},{0
 for _,case in ipairs{{'unknown',126,'boy'},{'girl',126,'girl'},{'boy',127,'boy'},
  {'GIRL',126,'girl'},{'female',126,'boy'},{1,126,'boy'}}do
  T.eq(Mon.setGiftCaughtData(mon,case[1]),mon,'gift retains same mon')
+ T.eq(mon.caughtData,48879,'source gift setter preserves opaque historical bytes')
  T.same({mon.caughtTime,mon.caughtLevel,mon.caughtLocation,mon.caughtByGender},
   {0,0,case[2],case[3]},'gift byte rotation '..tostring(case[1]))
 end
