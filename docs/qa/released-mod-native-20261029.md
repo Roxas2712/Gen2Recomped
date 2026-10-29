@@ -97,3 +97,49 @@ combined-main qualification; native battles and their HUD/camera; actual 3D NPC
 interaction; connected-map/outdoor traversal; save/restart; the separate
 Legendary host alternative; standalone battle-UI and follower combinations.
 Windows and packaged-release acceptance are not established by these macOS tests.
+
+## Native battle follow-up
+
+The exact tree of source `95e265b16b60ca2ce96f87d033df26b41ec33cc8` passed
+the official full CI: 984/984 engine suites, 4/4 SDK suites, and all available
+ROM-free tiers in run 40898996522. This includes the corrected plain-session
+`Game.keypressed(session, key)` dispatch; the original battle color/music
+regression remains unchanged. The separate macOS download-transport job was
+cancelled twice before receiving a runner (`runner_name` empty, no steps or
+logs). Its Linux and Windows jobs passed. This is not full platform acceptance.
+
+A current-source Crystal journey left Elm's lab, walked in Third Person through
+New Bark to Route29 over the real connection, and displayed the First Person
+exterior in two advancing OS captures. The initial straight grass sweep stalled
+against the legitimate imported actor at `(50,12)`; it did not represent hundreds
+of completed steps. The driver now uses native collision/NPC path planning to
+walk around that actor. No encounter rule or RNG was changed.
+
+A subsequent unchanged-mod run reached a natural wild battle, won through normal
+command input, awarded Cyndaquil EXP135→150 (HP19→15), and returned to the upright
+3D route. Its actual battle window was white except for party-ball slots despite
+a ready 2048×1536 staged canvas. Independent OS review therefore failed the run;
+the raw functional-only receipt is preserved separately from the failed combined
+assessment. Future starters require explicit successful OS reviews as well as a
+successful functional driver.
+
+The engine's implicit Gen2 window pass bypassed classic `draw` decorators and
+their pre-composition world override. Commit `974cc115` retains those classic
+owners at the native UI-canvas boundary while preserving explicit native window
+owners. The actual Game/Renderer regression failed 23 assertions on the prior
+source; the fixed source passed 5,325 assertions across seven relevant suites,
+including native Gen2 windows/scenes, input, and Gen3 UI ordering.
+
+Combined source `de883771ffc44550b3ebbdb0d6c0c9ef8e3cc710`, including current main
+`3b9a842c`, then displayed actual staged terrain, figures and upright native
+"Wild PIDGEY appeared!" text in two OS captures. The world image remained
+vertically inverted. That run is still failed; its manual window acknowledgement
+also arrived after the 180-second review deadline. No completed-battle claim is
+made for this combined-source run.
+
+The follow-up orientation contract admits a direct override only when its exact
+current canvas belongs to a ready, surface-owning battle on the native stack,
+the loader/dataset/registered producer still match, and the published staging,
+projection and orientation helpers match their SHA256 digests. Explicit native
+and portable conventions retain priority. This additional correction still
+requires current-head CI and an actual upright battle/window retest.
