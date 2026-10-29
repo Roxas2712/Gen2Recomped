@@ -25,6 +25,10 @@ function Native.get(pair)
   if type(pair)~='string'then return nil,'atlas pair must be a string'end
   return runtime:get(pair)
 end
+-- Render consumers may hold _pairs across frames. Explicitly refresh the
+-- named projection at the current native clock; never bind/reset a legacy
+-- animation singleton. Keep get() as the replaceable resource/session owner.
+function Native.refresh(pair)return Native.get(pair)end
 local function atlas(pairOrTs)
   if type(pairOrTs)=='table'then return pairOrTs.image and not pairOrTs._retired and pairOrTs or nil end
   return Native.get(pairOrTs)

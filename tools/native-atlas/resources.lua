@@ -105,7 +105,13 @@ function C.run(T,readImage)
     ts=assert(Native.get(f.pair))
     local expected=Pixels.new({primary=base,secondary=f.game.data.map_tilesets.S},f.picture.layout)
     for tick=1,12 do
-      renderer.tick(1/60);Native.update();expected:update(renderer.animFrame())
+      renderer.tick(1/60)
+      local clock=renderer.animFrame();local binding=animation._current
+      T.eq(Native.refresh(f.pair),ts,'held render atlas refresh retains its resource owner')
+      T.eq(renderer.animFrame(),clock,'render refresh never advances simulation time')
+      T.eq(animation._current,binding,'render refresh never rebinds the animation singleton')
+      T.eq(ts._model.ticks,clock,'resident projection observes this draw clock')
+      expected:update(clock)
       T.eq(ts.imageData:getString(),expected:rgba(false),'atlas follows the existing native animation clock')
       equalImage(ts,false,'native-clock pixel updates reach the GPU')
       equalImage(ts,true,'native-clock overhead updates reach the GPU')
@@ -128,6 +134,11 @@ function C.run(T,readImage)
       midToSlot=ts.midToSlot,cols=ts.cols,rows=ts.rows,quads={},overQuads={}}
     Native._pairs[f.pair]=alias
     T.eq(Native.get(f.pair),alias);T.eq(dead(image),false,'cache aliases cannot free borrowed backing textures')
+    T.eq(Native.refresh(f.pair),alias,'refresh preserves public cache replacements')
+    local get=Native.get;local calls=0
+    Native.get=function(pair)calls=calls+1;T.eq(pair,f.pair);return alias end
+    T.eq(Native.refresh(f.pair),alias,'refresh retains a foreign getter owner');T.eq(calls,1)
+    Native.get=get
     Native._pairs[f.pair]=nil
     Native.ready(f.pair);T.eq(dead(image),true,'displaced unreferenced atlases are retired without waiting for exit')
     Native.release();f.views:release()
