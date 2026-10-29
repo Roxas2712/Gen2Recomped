@@ -5,6 +5,10 @@ return function(game)
   local V=require('src.core.GameVersion');local version=V.get()
   assert(V.isGen3())
   local rs=version=='ruby'or version=='sapphire'
+  if V.isFRLG()then
+    assert(require('src.import.Gen3BagRegistrationAssets').valid(game.data.constants.gen3BagScreen.registered,version),
+      'Native registered-item badge is missing')
+  end
   local out=assert(os.getenv('EDITION_QA_OUT'))
   assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-'..version..'%-'))
   for _,event in ipairs{'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',

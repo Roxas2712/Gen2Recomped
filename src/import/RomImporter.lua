@@ -1359,7 +1359,7 @@ local function markerFor(version)
   end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then
-    revision=revision..'frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'
+    revision=revision..'frlg-bag-registration-v1:frlg-ball-sendout-v'..require('src.import.Gen3BallSendOutProfile').REVISION..':'
   end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     revision=revision..'gba-textbox-palette-v2:'
@@ -2098,6 +2098,7 @@ function RomImporter.readyReport(version)
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
     local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
     if #absent==0 then absent=require('src.import.Gen3BagTossAssets').missing(version)end
+    if #absent==0 then absent=require('src.import.Gen3BagRegistrationAssets').missing(version)end
     CacheFs.prefix=savedPrefix
     if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox or bag text is incomplete.'}end
   end
