@@ -9,7 +9,7 @@ return function(game)
   assert(e.host=='Gen2Recomped'and e.language=='de'and e.status=='active',e.session.error or e.status)
   if e.startup and e.startup.open then if e.startup.stage=='reset'then assert(e.startup.back())end;local ok,why=e.startup.choose('de');assert(ok,tostring(why))end
   assert(e.localizationBackend=='native-rom-language-v1')
-  local S=require('src.core.SaveSerializer');local hash=function(s)return love.data.encode('string','hex',love.data.hash('string','sha256',s))end
+  local S=require('src.core.SaveSerializer');local hash=function(s)return love.data.encode('string','hex',love.data.hash('sha256',s))end
   local cache=V.cachePrefix()..'data/generated/'
   local original=assert(loadstring(assert(love.filesystem.read(cache..'constants.lua'))))()
   for _,key in ipairs({'gen3Weather','gen3Layout','gen3BattlerCoords','gen3MoveAnims','gen3HealLocations','gen3NewGameFlags','gen3SystemFlagBase','gen3FRLGBehaviours','gen3Behaviours'})do

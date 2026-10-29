@@ -5,6 +5,14 @@ local Runtime = require("src.mods.Runtime")
 
 local Collision = {}
 
+-- Add class queries without replacing this native collision module or any
+-- existing mover/terrain method. Both mod namespaces retain the same owner.
+local Gen2Permissions = require('src.world.Gen2CollisionPermissions')
+for _,name in ipairs({'LAND','WATER','WALL','of','isLand','isWater','isWall',
+    'isWalkable','isLedge','surfable'})do
+  Collision[name]=Gen2Permissions[name]
+end
+
 local DELTA = { up = { 0, -1 }, down = { 0, 1 }, left = { -1, 0 }, right = { 1, 0 } }
 local OPPOSITE = { up = "down", down = "up", left = "right", right = "left" }
 Collision.DELTA = DELTA

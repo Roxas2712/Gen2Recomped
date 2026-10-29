@@ -36,7 +36,7 @@ function C.easyChat(data,localized,language,own)
    local text
    if vocabulary then
     if word.text==''then text=''else
-     local key=love.data.encode('string','hex',love.data.hash('string','sha256',gid..'\0'..C.wordSource(word.text)))
+     local key=love.data.encode('string','hex',love.data.hash('sha256',gid..'\0'..C.wordSource(word.text)))
      local target=assert(vocabulary[key],'Untranslated Easy Chat word: '..gid..':'..j)
      assert(target.group==gid,'Easy Chat authored group mismatch');text=target.target
     end

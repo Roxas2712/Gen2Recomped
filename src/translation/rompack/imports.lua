@@ -17,7 +17,7 @@ return function(mod,own)
     end
   end
   local function hash(kind,bytes)
-    return love.data.encode('string','hex',love.data.hash('string',kind,bytes))
+    return love.data.encode('string','hex',love.data.hash(kind,bytes))
   end
   local validated={}
   local function readNative(id,offset,length)
