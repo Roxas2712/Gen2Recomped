@@ -96,8 +96,11 @@ for _,version in ipairs({'ruby','sapphire'})do
 end
 V.set('leafgreen')
 local frlg={constants={gen3Bag={pockets={ITEM=42}}},items={POTION={index=13,pocket='ITEM'}}}
-local save={inventory={POTION=99},bagOrder={'POTION'}};local before=S.encode(save)
-check(not Bag.add(save,'POTION',1,frlg),'FRLG retains its own stack policy')
-same(before,save,'FRLG untouched by native RS model')
+local save={inventory={POTION=99},bagOrder={'POTION'}}
+check(Bag.stackLimit('POTION',frlg)==999,'FRLG uses its own native 999-item stack policy')
+check(Bag.add(save,'POTION',900,frlg)and save.inventory.POTION==999,'FRLG fills one 999-item stack')
+local before=S.encode(save)
+check(not Bag.add(save,'POTION',1,frlg),'FRLG refuses overflow past its own stack limit')
+same(before,save,'FRLG overflow preserves the complete save')
 check(not save.gen3RsBagSlots,'Other editions never acquire RS sidecar')
 print('RS_INVENTORY_CONTRACT_CHECKS',n)

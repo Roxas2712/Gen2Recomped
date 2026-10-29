@@ -2096,8 +2096,9 @@ function RomImporter.readyReport(version)
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
     local absent=require('src.import.Gen3NativeHealthboxAssets').missing(version)
+    if #absent==0 then absent=require('src.import.Gen3BagTossAssets').missing(version)end
     CacheFs.prefix=savedPrefix
-    if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox font is incomplete.'}end
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox or bag text is incomplete.'}end
   end
   if version=='ruby'or version=='sapphire'or version=='emerald'or version=='firered'or version=='leafgreen'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
