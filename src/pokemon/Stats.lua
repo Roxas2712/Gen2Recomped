@@ -146,6 +146,7 @@ function Stats.calc(speciesDef, level, dvs, statExp, evs, nature)
     out.spdef = calcOne(base.spdef, dvs.special or 0,
                         statExp.special, level, false)
     out.special = out.spatk
+    require('src.pokemon.Gen2MonFields').stats(out)
   end
   return out
 end
@@ -181,6 +182,9 @@ function Stats.ensure(speciesDef, mon)
       local full = Stats.calc(speciesDef, mon.level or 1, mon.dvs or {},
                               mon.statExp)
       mon.stats.spatk, mon.stats.spdef = full.spatk, full.spdef
+    end
+    if base.spatk and base.spdef then
+      require('src.pokemon.Gen2MonFields').stats(mon.stats)
     end
     return mon
   end

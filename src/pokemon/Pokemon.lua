@@ -272,6 +272,7 @@ function Pokemon.new(data, species, level, rng, form, opts)
     if opts and opts.shiny then mon.isShiny, mon.shiny = true, true end
   end
   Pokemon.rollShiny(data, nil, mon, rng)
+  if generation==2 then require('src.pokemon.Gen2MonFields').bind(data,mon) end
   return mon
 end
 
@@ -279,6 +280,9 @@ end
 -- fields at validation, on the actual Pokemon, without a random re-roll or
 -- replacing explicit saved identity. Normal refresh remains the owner below.
 function Pokemon.ensureIdentity(data,mon)
+  if require('src.core.GameVersion').generation()==2 then
+    require('src.pokemon.Gen2MonFields').bind(data,mon)
+  end
   if type(mon)~='table'or type(mon.dvs)~='table'
       or require('src.core.GameVersion').generation()~=2 then return mon end
   local def=data and data.pokemon and data.pokemon[mon.species]
@@ -292,6 +296,9 @@ end
 -- Gen 2 refreshes identity at its summary/stat-refresh boundary. A true
 -- shiny stays authoritative; a cached false and gender are read again.
 function Pokemon.syncIdentity(data, mon)
+  if require('src.core.GameVersion').generation()==2 then
+    require('src.pokemon.Gen2MonFields').bind(data,mon)
+  end
   if type(mon) ~= "table" or type(mon.dvs)~='table'
       or require("src.core.GameVersion").generation() ~= 2 then return mon end
   local Rolls = require("src.pokemon.IdentityRolls")
