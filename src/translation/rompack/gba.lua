@@ -8,7 +8,7 @@ function G.compile(mod,entry,own,data)
  assert(p.md5==info.md5 and p.sha1==info.sha1 and p.size==info.size,'ROM/profile mismatch')
  local baseInfo=assert(mod.imports:info(entry.game..'_en'),'Add the exact English USA 1.0 base ROM in the language menu once for full GBA localization')
  local english=assert(mod.imports:read(entry.game..'_en',0,baseInfo.size))
- local function hash(s)return love.data.encode('string','hex',love.data.hash('string','sha256',s))end
+ local function hash(s)return love.data.encode('string','hex',love.data.hash('sha256',s))end
  local paths={'@host/gba.lua','@host/gba_dex.lua','@host/type_badges.lua','@host/gba_catalogs.lua','@host/gba_text.lua','@host/gba_world.lua','@host/gba_resources.lua','@host/gba_relocate.lua','@host/gba_battle.lua','@host/addresses/'..entry.game..'.lua','@host/addresses/'..entry.game..'_assets.lua','@host/addresses/'..entry.game..'_world.lua',entry.profile,entry.assets,entry.world,'compiler.lua','cache_codec.lua','gba/ui.lua','vendor/src/core/game3/scripting/text_ir.lua'}
  if entry.glyphsPath then paths[#paths+1]=entry.glyphsPath end
  if entry.authored then paths[#paths+1]=entry.authored end
@@ -213,7 +213,7 @@ function G.apply(data,c,own,compiled)
   local text=aliases[T.source(value)]
   if not text and c.sceneAuthored then
    local encoded=require('src.import.LuaWriter').encode(value)
-   local key=love.data.encode('string','hex',love.data.hash('string','sha256',encoded))
+   local key=love.data.encode('string','hex',love.data.hash('sha256',encoded))
    local row=c.sceneAuthored[key]
    if row and type(row.target)=='string'then text=row.target end
   end

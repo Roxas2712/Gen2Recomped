@@ -32,9 +32,21 @@ end
 -- Exercise sandbox separation and one-install ownership without a cartridge.
 local main=package.loaded['src.translation.rompack.main']
 local ls=love.filesystem
+local dataModule=love.data
+local hashed={}
+love.data={hash=function(algorithm,bytes,...)
+ T.eq(algorithm,'sha256','recipe fingerprint uses the LÖVE 11/12 hash signature')
+ T.eq(select('#',...),0,'no output-container argument is passed to hash')
+ hashed[#hashed+1]=bytes
+ return 'digest'
+end,encode=function(container,format,bytes)
+ T.eq(container,'string');T.eq(format,'hex');T.eq(bytes,'digest');return 'hex-digest'
+end}
 local api={gameVersion='gold',exports={},supports=function()return false end,read=function(_,path)return 'MOD:'..path end}
-love.filesystem={getDirectoryItems=function()return{}end,read=function(path)return 'HOST:'..path end}
+love.filesystem={getDirectoryItems=function()return{'identity.lua'}end,
+ getInfo=function()return{type='file'}end,read=function(path)return 'HOST:'..path end}
 package.loaded['src.translation.rompack.main']=function(proxy)
+ T.eq(proxy.languageRecipe,'src/translation/rompack/identity.lua:hex-digest','native recipe fingerprint is published')
  T.eq(proxy:read('profile.lua'),'MOD:profile.lua','ordinary recipes stay inside the mod')
  T.eq(proxy:read('@host/identity.lua'),'HOST:src/translation/rompack/identity.lua','native helpers are read from the engine')
  T.eq(pcall(proxy.read,proxy,'@host/../core/Game.lua'),false,'host recipe traversal is refused')
@@ -44,11 +56,12 @@ end
 Localization.install({}, {manifest={}},api)
 T.eq(api.localization:install(),true,'public installation dispatches to native code')
 T.eq(api.exports.installed,true,'native provider retains the mod export identity')
+T.same(hashed,{'HOST:src/translation/rompack/identity.lua'},'only actual host recipe bytes are hashed')
 T.eq(pcall(api.localization.install,api.localization),false,'double installation is refused')
 local ds={gameVersion='platinum',supports=function()return false end}
 Localization.install({}, {manifest={}},ds)
 T.eq(pcall(ds.localization.install,ds.localization),false,'unsupported native game cannot install a pack')
-package.loaded['src.translation.rompack.main']=main;love.filesystem=ls
+package.loaded['src.translation.rompack.main']=main;love.filesystem=ls;love.data=dataModule
 
 -- Actual central Assets APIs resolve in-memory native resources without
 -- intercepting LOVE. Retired sessions cannot supply files to the next game.
