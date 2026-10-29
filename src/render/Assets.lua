@@ -10,6 +10,7 @@
 
 local Assets = {}
 local Performance = require('src.core.Performance')
+local Prefetch = require('src.render.GbAssetPrefetch')
 
 -- resolved path -> love Image
 local cache = {}
@@ -17,6 +18,10 @@ local recoveries = {}
 -- downstream caches that must empty when the search path changes
 local invalidators = {}
 local releasers = {}
+local dataCache = {}
+local nativeMutable,nativeShared
+local nativeDecode=love and love.image and love.image.newImageData
+local nativeUpload=love and love.graphics and love.graphics.newImage
 
 -- The loader bridge: overrideOrder() yields mods highest-priority-first
 -- and derivedPath(rel) yields an existing save/mod-derived/<id>/<rel>.
@@ -52,6 +57,42 @@ end
 local function imageSource(path)
   local bytes=languageFile(path)
   return bytes and love.data.newByteData(bytes) or path
+end
+
+-- The PNG header is cheap to read; decoding and recolouring stay in the pool.
+-- Non-PNG and @2x sources retain newImage(path)'s native interpretation.
+function Assets.prefetchPayload(path)
+  if not Assets.canPrefetchPixels()then return end
+  if type(path)~='string'or not path:lower():match('%.png$')or path:match('@%d+x')then return end
+  local resolved=Assets.resolve(path)
+  local raw=languageFile(resolved)
+  local physical=require('src.import.CacheFs').workerReadPath(resolved)
+  local fs=love and love.filesystem
+  if not(fs and fs.read and fs.getInfo)then return end
+  local info=not raw and fs.getInfo(physical,'file')
+  if raw and #raw>Prefetch.MAX_IMAGE_BYTES then return end
+  if not raw and(not info or type(info.size)~='number'or info.size>Prefetch.MAX_IMAGE_BYTES)then return end
+  local head=raw or fs.read(physical,24)
+  local w,h=require('src.render.GbAssetWorker').dimensions(head)
+  if not w then return end
+  local signature=physical..'|'..tostring(raw or '')
+  return {kind='decode',path=physical,bytes=raw,width=w,height=h},signature,w*h*4,resolved
+end
+function Assets.prefetchImage(path,front)
+  if Performance.gbAssetPrefetch==false or type(path)~='string'then return false end
+  local key='image:'..Assets.resolve(path)
+  return Prefetch.request(key,function()
+    local resolved=Assets.resolve(path)
+    if cache[resolved]and dataCache[resolved]then return end
+    return Assets.prefetchPayload(path)
+  end,front)
+end
+local function decoded(path)
+  if Performance.gbAssetPrefetch==false then return end
+  -- Avoid filesystem reads on a cache miss in the speculative store.
+  if not Prefetch.has('image:'..path)then return end
+  local payload,signature=Assets.prefetchPayload(path)
+  return payload and Prefetch.get('image:'..path,signature)
 end
 
 local function exists(path)
@@ -136,7 +177,7 @@ local function loadImage(resolved, recover)
   local ok, image = pcall(function()
     local bytes=languageFile(resolved)
     if bytes then return love.graphics.newImage(love.image.newImageData(love.data.newByteData(bytes))) end
-    return love.graphics.newImage(resolved)
+    return love.graphics.newImage(decoded(resolved)or resolved)
   end)
   if ok then return image, false end
   if not recover then error(image,3) end
@@ -168,6 +209,8 @@ end
 -- make that caller publish invalid dimensions, masks and frame bounds.
 function Assets.imageData(path)
   local resolved = Assets.resolve(path)
+  local data=decoded(resolved)
+  if data then return data:clone()end
   local ok, data = pcall(love.image.newImageData, imageSource(resolved))
   if ok then return data end
   if not canRecover(path) then
@@ -190,7 +233,6 @@ end
 -- the decoded data from a cache instead.  The contract is in the name: a
 -- caller must not paste into, mapPixel over or otherwise change what it
 -- gets back; it may copy from it.  Cleared with the image cache.
-local dataCache = {}
 local dataOrigins = {}
 function Assets.imageDataShared(path)
   if Performance.assetSharedDecode == false then
@@ -207,6 +249,14 @@ function Assets.imageDataShared(path)
   dataCache[resolved] = data
   dataOrigins[resolved] = canRecover(path)
   return data
+end
+nativeMutable,nativeShared=Assets.imageData,Assets.imageDataShared
+function Assets.canPrefetchPixels()
+  local Cache=package.loaded['src.import.CacheFs']
+  local function original(fn)return Cache and Cache.nativeImageConstructor(fn)or fn end
+  return Assets.imageData==nativeMutable and Assets.imageDataShared==nativeShared
+    and love and love.image and original(love.image.newImageData)==original(nativeDecode)
+    and love.graphics and original(love.graphics.newImage)==original(nativeUpload)
 end
 
 -- Gen1Recomp's hook contract distinguishes a soft cache refresh from retiring
@@ -229,6 +279,7 @@ end
 -- cache and fan out to every registered downstream one.  A cache whose
 -- invalidator throws must not strand the ones behind it in the list.
 function Assets.invalidate()
+  Prefetch.clear()
   -- the count is returned, not logged, because this is also the mod loader's
   -- own flush and that one has nothing to say; the caller who cares -- a
   -- version switch -- is the one that reports it
@@ -249,6 +300,7 @@ Assets.flush = Assets.invalidate
 -- leaves live renderers' images usable; only a retired session releases owned
 -- resources. Native missing-sheet aliases may share the same blank image.
 function Assets.releaseSession()
+  Prefetch.clear()
   local released = {}
   local function release(resource)
     if resource and not released[resource] then

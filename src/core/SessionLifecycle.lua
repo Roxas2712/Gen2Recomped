@@ -55,6 +55,7 @@ end
 -- the remaining shutdowns reachable. Game/launcher transitions do not join
 -- these workers: the next game still shares this process.
 local services = {
+  "src.core.BuildWorker",
   "src.core.ChipAudio",
   "src.update.Check",
   "src.render.ShaderBrowser",

@@ -1089,6 +1089,7 @@ local shimPrefix = nil
 -- can only be wrapped once safely (a second wrap makes the first one's
 -- "unwrapped" reference a wrapper, and there is then no way back out).
 local shimInstalled = false
+local imageConstructors=setmetatable({},{__mode='k'})
 
 -- Does `path` exist un-prefixed?  If not, does it exist under the active
 -- version prefix?  Only the second case is rewritten, so a file the game
@@ -1191,19 +1192,22 @@ function CacheFs.installPrefixShim(prefix)
     for _, name in ipairs({ "newImage", "newFont", "newImageFont" }) do
       local real = g[name]
       if type(real) == "function" then
-        g[name] = function(a, ...)
+        local wrapped = function(a, ...)
           if type(a) == "string" then a = shimRedirect(a) end
           return real(a, ...)
         end
+        g[name]=wrapped
+        if name=='newImage'then imageConstructors[wrapped]=real end
       end
     end
   end
   if love.image and type(love.image.newImageData) == "function" then
     local real = love.image.newImageData
-    love.image.newImageData = function(a, ...)
+    local wrapped = function(a, ...)
       if type(a) == "string" then a = shimRedirect(a) end
       return real(a, ...)
     end
+    love.image.newImageData=wrapped;imageConstructors[wrapped]=real
   end
 
   -- Native decoders bypass fs.read and call PhysFS directly. Switch cannot
@@ -1234,6 +1238,16 @@ end
 -- need to reason about read-path state use this instead of poking the local.
 function CacheFs.activePrefixShim()
   return shimPrefix
+end
+
+-- Workers share mounts, but not this Lua state's read wrappers. Capture the
+-- exact native/private-edition path while queuing a speculative image read.
+function CacheFs.workerReadPath(path)
+  return shimRedirect(path)
+end
+function CacheFs.nativeImageConstructor(fn)
+  while imageConstructors[fn]do fn=imageConstructors[fn]end
+  return fn
 end
 
 -- Exact developer-source reads for read-only version datasets. Refuse an

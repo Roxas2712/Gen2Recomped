@@ -1,0 +1,44 @@
+name: Gen1 performance transfers
+on:
+  pull_request:
+    paths:
+      - 'src/core/**'
+      - 'src/battle/**'
+      - 'src/render/**'
+      - 'src/world/OverworldController.lua'
+      - 'src/import/CacheFs.lua'
+      - 'tests/engine/*prefetch*'
+      - 'tests/engine/rs_*'
+      - 'tools/check_gen1_performance.py'
+      - 'tools/check_audio_profile.py'
+      - 'tools/gb-prefetch-check/**'
+      - 'tools/audio-profile-check/**'
+      - '.github/workflows/gen1-performance-transfers.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: gen1-performance-transfers-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-pixels-and-pcm:
+    # Always hosted: local interactive GPU/CPU measurement slots stay exclusive.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ROM-free native runtimes
+        run: sudo apt-get update && sudo apt-get install -y luajit love xvfb xauth libgl1-mesa-dri
+      - name: Verify native threads, GPU pixels, audio PCM and rollback contracts
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+        run: |
+          xvfb-run -a python3 tools/check_gen1_performance.py \
+            --lua /usr/bin/luajit --love /usr/bin/love \
+            --out .local/qa/gen1-performance-ci
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: gen1-performance-transfers
+          path: .local/qa/gen1-performance-ci/
+          include-hidden-files: true
