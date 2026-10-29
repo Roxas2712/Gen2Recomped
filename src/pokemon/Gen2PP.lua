@@ -24,4 +24,41 @@ function P.maximum(def, slot)
   end
   return base + P.ups(def, slot) * P.bonus(base)
 end
+
+-- Source consumers identify the saved slot first, then supply the live move
+-- registry. Keep these operations on those same native tables.
+local function definition(slot, moves)
+  return type(slot)=='table' and moves and moves[slot.id] or nil
+end
+function P.forSlot(slot, moves)
+  if type(slot)~='table' then return 0 end
+  return P.maximum(definition(slot,moves),slot)
+end
+function P.partyMoves(mon)
+  if type(mon)~='table' then return {} end
+  local before=type(mon.volatile)=='table' and mon.volatile.preTransform
+  return (before and before.moves) or mon.moves or {}
+end
+function P.restore(mon, moves)
+  for _,slot in ipairs(type(mon)=='table' and mon.moves or {}) do
+    if type(slot)=='table' and slot.id then
+      local def=definition(slot,moves)
+      local maximum=P.maximum(def,slot)
+      if def and tonumber(def.pp) then slot.maxPp=maximum end
+      slot.pp=maximum
+    end
+  end
+end
+function P.repair(mon, moves)
+  for _,slot in ipairs(type(mon)=='table' and mon.moves or {}) do
+    local def=definition(slot,moves)
+    if def and tonumber(def.pp) then
+      local ups=P.ups(def,slot)
+      if ups>0 or slot.ppUps~=nil then slot.ppUps=ups end
+      local maximum=P.maximum(def,slot)
+      slot.maxPp=maximum
+      slot.pp=math.max(0,math.min(maximum,math.floor(tonumber(slot.pp) or maximum)))
+    end
+  end
+end
 return P

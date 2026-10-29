@@ -16,6 +16,7 @@ on:
         default: false
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: native-preview-publish
   cancel-in-progress: false
@@ -29,10 +30,14 @@ jobs:
       - run: python3 tools/run_retro_launcher_contract.py
       - run: python3 tests/game_payload_test.py
       - run: python3 tests/native_release_test.py
+      - run: python3 -m unittest discover -s tests -p mobile_runtime_component_test.py
       - run: python3 -m unittest discover -s tests -p test_native_preview.py
   runtime:
     needs: contract
     uses: ./.github/workflows/runtime-upvalues.yml
+  android-runtime:
+    needs: contract
+    uses: ./.github/workflows/android-love-runtime.yml
   build:
     needs: [contract, runtime]
     runs-on: macos-15
@@ -95,11 +100,26 @@ jobs:
         with:
           name: native-preview-desktop
           path: ${{ runner.temp }}/desktop
+      - name: Prepare pinned iOS source and native bridges
+        env:
+          LOVE_SOURCE_REF: 937eb3b21f973607ab080aa26b7ef2a6b3b2b663
+          APPLE_DEPENDENCIES_REF: a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e
+          ENGINE_VERSION: ${{ inputs.engine_version }}
+        run: bash scripts/build_ios.sh --fetch --package-only --game-love "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --version "$ENGINE_VERSION"
+      - name: Build and qualify the iOS extended interpreter
+        run: |
+          git init "$RUNNER_TEMP/luajit"
+          git -C "$RUNNER_TEMP/luajit" remote add origin https://github.com/LuaJIT/LuaJIT.git
+          git -C "$RUNNER_TEMP/luajit" fetch --depth 1 origin a4c064539ea931274d407e1249b4bb575424a0f4
+          git -C "$RUNNER_TEMP/luajit" checkout --detach FETCH_HEAD
+          python3 tools/mobile-runtime-check/build_ios.py --source "$RUNNER_TEMP/luajit" --output "$RUNNER_TEMP/mobile-runtime/ios-vm"
+          python3 tools/mobile-runtime-check/qualify_ios_love.py --build "$RUNNER_TEMP/mobile-runtime/ios-vm" --love-source mobile/ios/love-src --output "$RUNNER_TEMP/mobile-runtime/ios-host"
+          python3 tools/mobile-runtime-check/component.py --platform ios --candidate "$RUNNER_TEMP/mobile-runtime" --output "$RUNNER_TEMP/ios-component"
       - name: Build unsigned iOS preview with the frozen engine payload
         env:
           RELEASE_ID: ${{ inputs.release_id }}
           ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/package_native_port.py --platform ios --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/ios"
+        run: python3 tools/package_native_port.py --platform ios --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --runtime-component "$RUNNER_TEMP/ios-component/component.json" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/ios"
       - uses: actions/upload-artifact@v4
         with:
           name: native-preview-ios
@@ -108,7 +128,7 @@ jobs:
           retention-days: 7
   android:
     name: Required Android APK build
-    needs: build
+    needs: [build, android-runtime]
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -130,11 +150,22 @@ jobs:
         with:
           name: native-preview-desktop
           path: ${{ runner.temp }}/desktop
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: android-love-runtime-host-*
+          path: ${{ runner.temp }}/android-components
+      - name: Require all shipping Android ABI host gates
+        run: >-
+          python3 tools/mobile-runtime-check/component.py --platform android
+          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-arm64-v8a"
+          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-armeabi-v7a"
+          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-x86_64"
+          --output "$RUNNER_TEMP/android-component"
       - name: Build and verify the separately identified preview APK
         env:
           RELEASE_ID: ${{ inputs.release_id }}
           ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/package_native_port.py --platform android --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/android"
+        run: python3 tools/package_native_port.py --platform android --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --runtime-component "$RUNNER_TEMP/android-component/component.json" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/android"
       - uses: actions/upload-artifact@v4
         with:
           name: native-preview-android
