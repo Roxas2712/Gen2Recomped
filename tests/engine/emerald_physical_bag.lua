@@ -129,5 +129,31 @@ f.game.save.inventory[potion]=99;f.game.save.inventory[f.id.SUPER_POTION]=45
 before=S.encode(f.game.save);question.choice(true)
 T.eq(S.encode(f.game.save),before,'stale sale selection neither pays nor removes replacement goods')
 f.close()
+-- The shared sale/deposit callbacks must also retain FRLG's single 999-item
+-- representation and leave both stores untouched when a PC stack is full.
+for _,version in ipairs{'firered','leafgreen'}do
+  f=dofile('tests/gba_item_use/fixture.lua').new('.','gen2',version,3,'unified',true)
+  f.game.data.constants.gen3Bag=data(version).constants.gen3Bag
+  f.game.data.constants.gen3BagScreen={layout='frlg'}
+  f.game.save.inventory={};f.game.save.bagOrder={};potion=f.id.POTION
+  T.eq(Bag.add(f.game.save,potion,999,f.game.data),true)
+  owner=f.nativePicker('POTION');f.press('b');T.eq(f.game.stack:top(),owner)
+  T.eq(owner:selected().qty,999);T.eq(owner:selected().rsSlot,nil)
+  f.patch(Q,'new',function(_,opts)sale=opts;return{}end)
+  f.patch(B,'new',function(_game,_text,_done,opts)question=opts;return{}end)
+  owner.sell=true;owner:choose();T.eq(sale.max,999)
+  before=S.encode(f.game.save);sale.onDone(nil);T.eq(S.encode(f.game.save),before)
+  sale.onDone(7);cash=f.game.save.money or 0;question.choice(true)
+  T.eq(f.game.save.inventory[potion],992);T.eq(f.game.save.money,cash+350)
+  T.eq(f.game.save.gen3RsBagSlots,nil)
+  owner.sell=nil
+  f.patch(owner,'askQuantity',function(_self,_id,max,_prompt,done)deposit={max=max,done=done}end)
+  f.patch(owner,'tell',function()end)
+  owner:depositItem(potion);T.eq(deposit.max,992);deposit.done(3,'POTION')
+  T.eq(f.game.save.inventory[potion],989);T.eq(f.game.save.pcItems[potion],3)
+  f.game.save.pcItems[potion]=999;owner:depositItem(potion);before=S.encode(f.game.save)
+  deposit.done(1,'POTION');T.eq(S.encode(f.game.save),before,version..' full PC refusal is atomic')
+  f.close()
+end
 V.set(old)
 T.finish('Emerald physical bag slots, selected quantities, atomic capacity and all-five cartridge save round trips')

@@ -27,12 +27,14 @@ the existing pinned common bag algorithm and its notices remain intact.
 
 ## Validation
 
-- 134 focused checks pass: physical capacity, immutable preflight/cancel,
+- 160 focused checks pass: physical capacity, immutable preflight/cancel,
   selected removal, serialization, all-five cartridge save round trips,
   actual bag/party medicine dispatch, selected sales and PC deposits,
-  full-PC refusal and an outdated sale selection.
+  full-PC refusal, an outdated sale selection and FRLG 999-item sale/deposit
+  callbacks without physical-slot metadata.
 - Existing tests pass 174 bag-toss, 115 physical inventory, 104 item-PC,
   152 mail, 1292 GBA field-item and 1350 object-sheet assertions.
+  The 31 RS bag and 82 all-five pocket/return assertions also pass.
 - Emerald passes the own-cartridge native fixture on `6cf8b100`: 99/51 rows,
   cancellation, removing three from the second stack, real disk save/load of
   99/48, medicine use from that stack, and final duplicate removal with a
@@ -40,8 +42,13 @@ the existing pinned common bag algorithm and its notices remain intact.
   inspected; draw preserves save/RNG and normal elapsed play time is accounted.
   Frozen runtime source remains unchanged. This reuses a separately accepted
   complete own-cartridge import/title with matching import-source fingerprints.
-- FireRed's seven-view native bag regression passes on the same runtime.
-  LeafGreen's regression and final public CI are pending.
+- FireRed and LeafGreen each pass their seven-view native bag regression on
+  the same production runtime, including cancel, result timing, last-item
+  removal, the 999-berry boundary and actual disk save/load. Final public CI
+  remains pending.
+  FireRed's seven original full RGBA frames exactly match its inspected prior
+  views. LeafGreen's six changed inventory-order views were inspected at
+  original resolution; its berry view exactly matches its inspected prior.
 
 This is scoped inventory work. Full Emerald story acceptance and native
 SELECT reorder presentation remain separate open work. No ROMs, generated
