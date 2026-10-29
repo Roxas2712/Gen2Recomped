@@ -400,6 +400,7 @@ local function itemStorage(game, onCancel)
                                      onCancel = onCancel })
   -- placed on the GBA's own 240x160, not the Game Boy's centred 160x144
   function sub:uiSize() return 240, 160 end
+  sub.gen3PlayerPC = true
   game.stack:push(sub)
 end
 
@@ -531,6 +532,7 @@ function Gen3PlayerPC.new(game, opts)
     onCancel = close,
   })
   function menu:uiSize() return 240, 160 end
+  menu.gen3PlayerPC = true
   return menu
 end
 

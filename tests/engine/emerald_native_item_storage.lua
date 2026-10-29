@@ -55,12 +55,15 @@ Context.new=function(_,opts)
  return{load=Loader.new('emerald',bindings),canvas={release=function()releases=releases+1 end}}
 end
 local current,key,closed;local game={data=data,save={}}
+local parent={gen3PlayerPC=true};local alreadyHidden={gen3PlayerPC=true,hidden=true};local unrelated={}
 game.input={wasPressed=function(_,button)return key==button end,isDown=function()return false end}
-game.stack={top=function()return current end,pop=function()local state=current;current=nil;state:exit()end}
+game.stack={states={parent,alreadyHidden,unrelated},top=function()return current end,
+ pop=function()local state=current;current=nil;state:exit()end}
 local function reset(save,toss)
  game.save=save;closed=0;frames={};texts={};cursors={};icons={}
  T.eq(UI.available(game),true)
  current=UI.new(game,{toss=toss,onCancel=function()closed=closed+1 end})
+ current:enter();T.eq(parent.hidden,true);T.eq(alreadyHidden.hidden,true);T.eq(unrelated.hidden,nil)
  current.drawIcon=function(_,n,px,py)icons[#icons+1]={index=n,x=px,y=py}end
  return current
 end
@@ -92,6 +95,7 @@ local goods=S.encode(save.pcItems);press('select');T.eq(state.ui.state,'swap')
 press('down');press('down');press('a');T.eq(state.ui.state,'list')
 T.eq(save.pcOrder[1],'ORAN');T.eq(S.encode(save.pcItems),goods,'SELECT reorders without changing quantities')
 press('b');T.eq(current,nil);T.eq(closed,1);T.eq(state.canvas,nil)
+T.eq(parent.hidden,nil);T.eq(alreadyHidden.hidden,true);T.eq(unrelated.hidden,nil)
 state=reset({inventory={},bagOrder={},pcItems={ORAN=999},pcOrder={'ORAN'}},true)
 press('a');press('down');T.eq(state.ui.quantity,999);press('a');T.eq(state.ui.state,'yesno')
 before=S.encode(game.save);press('b');T.eq(S.encode(game.save),before);T.eq(state.ui.state,'list')

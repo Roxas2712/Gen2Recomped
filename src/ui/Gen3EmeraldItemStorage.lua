@@ -67,6 +67,15 @@ function M:drawIcon(n,x,y)
  love.graphics.setColor(1,1,1,1);love.graphics.draw(image,self.quads[index],x,y)
 end
 function M:uiSize()return 240,160 end
+function M:enter()
+ self.covered={}
+ for _,state in ipairs(self.game.stack.states or{})do
+  if state~=self and state.gen3PlayerPC then
+   self.covered[#self.covered+1]={state=state,hidden=state.hidden}
+   state.hidden=true
+  end
+ end
+end
 function M:wantsFillScale()return true end
 function M:wantsEdgeBleed()return false end
 function M:sgbPalettes()return{require('src.render.PaletteFX').trueColorZone(0,0,29,19)}end
@@ -95,6 +104,8 @@ function M:draw()
 end
 function M:exit()
  self.closed=true
+ for _,row in ipairs(self.covered or{})do row.state.hidden=row.hidden end
+ self.covered=nil
  if self.ui and self.ui.open then self.ui.open=false;self.ui._onClose=nil end
  if self.canvas then self.canvas:release()end
  for _,quad in pairs(self.quads)do quad:release()end
