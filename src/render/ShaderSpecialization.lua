@@ -4,9 +4,9 @@
 -- remains the fallback for unsupported source, values or resource lifetimes.
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
-local S={recycleSnapshots=false}
+local S={recycleSnapshots=false,recycleArguments=false}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,argumentEnvelopeReuses=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -16,6 +16,25 @@ local sourceBytes=0
 local raw,compiling
 local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
+local function arguments(record,...)
+ local n=select('#',...)
+ if n>4 then return pack(...)end
+ -- Common scalar/vector/matrix writes have at most four Lua arguments.
+ -- Lease before the native call: a reentrant setter needs its own buffer.
+ local args=record.argumentSpare
+ if args then stats.argumentEnvelopeReuses=stats.argumentEnvelopeReuses+1 else args={}end
+ record.argumentSpare=nil
+ args.n=n;args[1],args[2],args[3],args[4]=...
+ return args
+end
+local function releaseArguments(record,args,...)
+ if args.n<=4 then
+  -- Never keep a caller table or Texture alive through the reusable envelope.
+  args[1],args[2],args[3],args[4]=nil,nil,nil,nil;args.n=0
+  if S.recycleArguments then record.argumentSpare=args end
+ end
+ return ...
+end
 local function original(record)
  local shader=record.lease:peek()
  originals[shader]=record;record.aliases[shader]=true
@@ -159,7 +178,9 @@ local function hook(shader)
   if h[method]then h.wrapped[method]=function(self,...)
    local record=not compiling and originals[self]
    if not record or record.disabled or record.hook~=h then return h[method](self,...)end
-   return afterSend(record,method,pack(...),h[method](self,...))
+   if not S.recycleArguments then return afterSend(record,method,pack(...),h[method](self,...))end
+   local args=arguments(record,...)
+   return releaseArguments(record,args,afterSend(record,method,args,h[method](self,...)))
   end;methods[method]=h.wrapped[method]end
  end
  methods.release=function(self,...)
