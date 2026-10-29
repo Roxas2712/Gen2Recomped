@@ -12,7 +12,9 @@ function I.has(record,variant,name,stats)
  if value~=nil then stats.interfaceHits=(stats.interfaceHits or 0)+1;return value end
  value=method(variant.shader,name)
  stats.interfaceQueries=(stats.interfaceQueries or 0)+1
- if bank.count<256 then bank.values[name]=value;bank.count=bank.count+1 end
+ -- Unknown interpositions may return an opaque truthy value. Preserve that
+ -- call/result without retaining a new resource through the metadata cache.
+ if type(value)=='boolean'and bank.count<256 then bank.values[name]=value;bank.count=bank.count+1 end
  return value
 end
 return I
