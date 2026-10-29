@@ -22,6 +22,7 @@ return function(game)
  end
  if version=='emerald'then
   assert(require('src.import.Gen3EmeraldBagAssets').valid(game.data.constants.gen3EmeraldBag,version))
+  assert(require('src.import.Gen3EmeraldItemPcAssets').valid(game.data.constants.gen3EmeraldItemPc,version))
  end
  local frlg=version=='firered'or version=='leafgreen'
  if frlg then

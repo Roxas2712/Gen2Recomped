@@ -1364,7 +1364,7 @@ local function markerFor(version)
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     revision=revision..'gba-textbox-palette-v2:gba-native-bag-sale-v1:'
   end
-  if version=='emerald'then revision=revision..'emerald-native-bag-list-v1:'end
+  if version=='emerald'then revision=revision..'emerald-native-bag-list-v1:emerald-native-item-pc-v1:'end
   if GameVersion.generation(version)==2 then
     revision=revision..'gen2-font-extras-v'..require('src.import.Gen2FontExtras').REVISION..':'
     revision=revision..'gen2-vram-layout-v'..require('src.import.Gen2VramLayout').REVISION..':'
@@ -2102,6 +2102,7 @@ function RomImporter.readyReport(version)
     if #absent==0 then absent=require('src.import.Gen3BagRegistrationAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3BagSaleAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3EmeraldBagAssets').missing(version)end
+    if #absent==0 then absent=require('src.import.Gen3EmeraldItemPcAssets').missing(version)end
     CacheFs.prefix=savedPrefix
     if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox or bag text is incomplete.'}end
   end
