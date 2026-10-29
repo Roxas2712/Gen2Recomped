@@ -54,7 +54,8 @@ function Renderer.mirrorsWorldOverride(pipeline)
   if pipeline.worldOrientation == "native" or pipeline.worldFormat == "renderData.v1" then
     return false
   end
-  return pipeline.worldOrientation == "legacy"
+  if pipeline.worldOrientation == "legacy" then return true end
+  return require("src.render.WorldCanvasContracts").orientation(pipeline) == "legacy"
 end
 
 -- The Game Boy surface.  WIDTH/HEIGHT are the classic dimensions every
