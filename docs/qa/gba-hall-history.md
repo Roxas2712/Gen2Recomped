@@ -21,14 +21,19 @@ private scene context and resumes the original script once on return.
 The native controller selects saved members, plays their cries, moves back
 through teams with A and exits with B or A at the oldest team. Missing legacy
 records use the cartridge's original error page. It never induces a new team
-or invokes the save writer. Ruby, Emerald, FireRed and LeafGreen native acceptance now covers
+or invokes the save writer. All five editions now have native fixture acceptance covering
 history save/load, all four PC views, native input/return ownership, atomic
 write failures/retries and actual post-credits CONTINUE with retained teams.
 FireRed/LeafGreen use independent fresh import qualification and each passes
 52 combined native options/PC/ending captures on integrated source 5081f60.
 Representative original-resolution views include current and previous teams,
 eggs, the legacy error page, the player panel, title and actual Pallet CONTINUE.
-Sapphire final native acceptance remains pending.
+Sapphire additionally passes its independent fresh import and 25-view native
+PC/ending matrix on source c5cc461. A targeted Emerald matrix on that same
+source passes all 37 options/PC/ending captures after the public-main renderer
+merge. Source-canvas and complete-window title ink agree in every measured
+options state. These are functional and visual checks, not performance
+measurements or complete ordinary playthroughs.
 CPU input checks alone are not visual acceptance.
 
 Ruby/Sapphire use their own PC presentation facts from
