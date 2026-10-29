@@ -139,3 +139,14 @@ Voxel four cases: harness commit `e353116cf2a1d48f1fdd15de17df6eda14c0227c`, com
 The measured renderer/mod runtime equals `b15e74c1`; the voxel launcher observed newer main `2fdfe77f0cade522d73fdacd6f8b7128e4c265d5` and correctly records `runtimeMatchesMain=false` because native Gen-2 presentation, options and lifecycle changes (`14169e20`) and #162 landed after the measured runtime. Those changes are not included in this baseline; later Gen-2 comparisons must account for them. The baseline remains explicitly pinned to `b15e74c1`, rather than claiming an exact newer-main measurement.
 
 Raw evidence: [native cases](perf-baseline-data-2026-10-27/native.json), [voxel cases](perf-baseline-data-2026-10-27/voxel.json). ROM SHA-1 revisions and per-host adaptations are recorded there.
+
+## Follow-up: W1a source atlas worker
+
+Candidate `a474e83b` (main `9d8eec4c`) exercises the production Gen-3 source
+field adapter, a distinct workload from the ordinary native renderer in the
+baseline above. Same-source OFF/ON averages are 8.489 / 8.533 ms; seam maxima
+are 191.981 / 195.725 ms and 147.404 / 151.738 ms. A worker atlas is actually
+published and used. Focus states differ between the cases despite fixed HIGH
+and disabled background capping, so these runs establish no causal speedup.
+R7 status: neutral / no gain accepted. The switch and all evidence remain in
+the draft candidate; runtime integration is held. [Details](gen3-atlas-worker.md).

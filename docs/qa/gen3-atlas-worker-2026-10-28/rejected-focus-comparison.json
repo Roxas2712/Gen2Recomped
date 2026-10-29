@@ -1,0 +1,105 @@
+{
+  "accepted_performance_comparison": false,
+  "reason": "The same-source OFF and ON cases have individually stable but different actual native focus (false / true). The ABBA controller rejects this pair before starting on-b. No speedup conclusion or runtime merge approval.",
+  "controls": {
+    "seconds_per_case": 60,
+    "tier": "high",
+    "fps_cap": 160,
+    "vsync": 0,
+    "background_cap_disabled": true,
+    "hidden_native_window": true,
+    "SDL_MAC_BACKGROUND_APP": "1"
+  },
+  "runs": [
+    {
+      "case": "off-a",
+      "source": "74e48eadbe82cf1ecac4b3d46226c6453abf9ba7",
+      "passed_case": true,
+      "native_focus_stable": true,
+      "native_focus": false,
+      "frame": {
+        "maxMs": 1001.1858333333307,
+        "avgMs": 8.809744231145698
+      },
+      "seams_ms": [
+        183.87616666666773,
+        157.35620833333286
+      ],
+      "actual_walks": [
+        {
+          "source": "MAP_G00_N16",
+          "target": "MAP_G00_N10",
+          "crossed": true,
+          "preflight_wait_frames": 0
+        },
+        {
+          "source": "MAP_G00_N10",
+          "target": "MAP_G00_N18",
+          "crossed": true,
+          "preflight_wait_frames": 0
+        }
+      ],
+      "worker_before": {
+        "submitted": 0,
+        "published": 0,
+        "failed": 0,
+        "cancelled": 0
+      },
+      "worker_after": {
+        "submitted": 0,
+        "published": 0,
+        "failed": 0,
+        "cancelled": 0
+      },
+      "cache_after": {
+        "native": 2,
+        "worker": 0
+      }
+    },
+    {
+      "case": "on-a",
+      "source": "74e48eadbe82cf1ecac4b3d46226c6453abf9ba7",
+      "passed_case": true,
+      "native_focus_stable": true,
+      "native_focus": true,
+      "frame": {
+        "maxMs": 154.79495833333345,
+        "avgMs": 6.405186254625676
+      },
+      "seams_ms": [
+        154.7530833333326,
+        154.79495833333345
+      ],
+      "actual_walks": [
+        {
+          "source": "MAP_G00_N16",
+          "target": "MAP_G00_N10",
+          "crossed": true,
+          "preflight_wait_frames": 0
+        },
+        {
+          "source": "MAP_G00_N10",
+          "target": "MAP_G00_N18",
+          "crossed": true,
+          "preflight_wait_frames": 15
+        }
+      ],
+      "worker_before": {
+        "submitted": 1,
+        "published": 0,
+        "cancelled": 1,
+        "failed": 0
+      },
+      "worker_after": {
+        "submitted": 2,
+        "published": 1,
+        "cancelled": 1,
+        "failed": 0
+      },
+      "cache_after": {
+        "native": 1,
+        "worker": 1
+      }
+    }
+  ]
+}
