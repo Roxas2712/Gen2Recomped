@@ -59599,6 +59599,7 @@ function RomExtractorGen3:run()
   require('src.import.Gen3FrlgHallAssets').extract(self)
   require('src.import.Gen3FrlgCreditsAssets').extract(self)
   if self.version~='emerald'then require('src.import.Gen3NativeOptionsAssets').extract(self)end
+  require('src.import.Gen3HallPcAssets').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
   -- Script and late UI stages can add prose after the initial scan. Snapshot

@@ -89,6 +89,8 @@ return function(game)
  local durable=assert(Save.decode(assert(disk())))
  assert(durable.player.map=='MAP_G01_N80'and durable.specialSaveWarpFlags%2==1 and durable.continueGameWarp.map=='MAP_G03_N00')
  assert(durable.hallOfFame==1 and durable.gen3Stats[10]==1 and durable.flags.FLAG_G3_082C)
+ assert(type(durable.gen3HallOfFameTeams)=='table'and#durable.gen3HallOfFameTeams==1,'League retries duplicated or discarded the Hall team')
+ assert(#durable.gen3HallOfFameTeams[1]==6,'Actual Hall record did not retain all six team members')
  for _,mon in ipairs(durable.party)do assert(mon.ribbons.champion)end
  press('a');for _=1,1200 do if game.stack:top()~=h then break end;U.wait(1)end
  credits=game.stack:top();assert(getmetatable(credits)==require('src.ui.Gen3FrlgCredits'))
@@ -132,6 +134,7 @@ return function(game)
  assert(player.map==home.map and player.x==home.x and player.y==home.y and player.facing=='down','CONTINUE missed outdoor Pallet')
  assert(game.save.lastHeal.map=='MAP_G04_N00'and game.save.lastHeal.x==8 and game.save.lastHeal.y==5,'Whiteout destination became the outdoor Fly point')
  assert(game.save.specialSaveWarpFlags%2==0 and game.save.hallOfFame==1 and game.save.gen3Stats[10]==1)
+ assert(Save.encode(game.save.gen3HallOfFameTeams)==Save.encode(durable.gen3HallOfFameTeams),'Actual CONTINUE changed compact Hall history')
  assert(Save.encode(game.save.party)==Save.encode(durable.party),'CONTINUE changed champion party')
  assert(Save.decode(disk()).specialSaveWarpFlags%2==1,'CONTINUE rewrote durable snapshot')
  shot('frlg-league-continue-pallet');game.writeSave=actualWrite;Sound.playId,Sound.playCry=play,cry
