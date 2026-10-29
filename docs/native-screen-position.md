@@ -25,12 +25,14 @@ Implementation `f137c679` passes 1,145 selected contract checks across eight
 editions, portrait/landscape/Retina sizes, all three positions, safe insets,
 the actual skin parser, source queries and native option input/save/boot
 application. Existing frame-query 4,454, chrome 116, viewport 56, skin 59,
-playfield 585 and battle-window 315 checks also pass. A later probe adds
-actual final world/UI blit observations; that extended probe has not yet
-been run at this checkpoint.
+playfield 585 and battle-window 315 checks also pass. The extended probe on committed source `35ca1197` passes all 1,151 checks,
+including actual final native world/UI blits and retained window coverage.
+Both managed test hosts are cleaned after successful exit.
 
 Complete composed-tree tests, actual GPU/window acceptance, every custom
 skin/device and final release qualification remain open. The older upstream
 adaptation is prepared against its actual `Renderer:endFrame` and flat
 options menu, without adding the newer fork's `frameRects` or grouped-menu
-methods. Its independent qualification is pending.
+methods. Its independent selected qualification passes 1,031 position checks,
+4,454 frame-query checks and 116 chrome checks; see upstream PR398. These
+proofs do not establish GPU or complete older-host qualification.
