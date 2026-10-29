@@ -576,4 +576,13 @@ function Gen3Tiles:colourTable()
 end
 
 
+-- Private native-method guard for CPU worker admission.
+local workerMethods={}
+for key,value in pairs(Gen3Tiles)do workerMethods[key]=value end
+function Gen3Tiles._workerCompatible()
+  if getmetatable(Gen3Tiles)~=nil then return false end
+  for key,value in pairs(workerMethods)do if Gen3Tiles[key]~=value then return false end end
+  for key in pairs(Gen3Tiles)do if key~='_workerCompatible' and workerMethods[key]==nil then return false end end
+  return true
+end
 return Gen3Tiles

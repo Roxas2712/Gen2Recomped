@@ -1,0 +1,307 @@
+{
+  "source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+  "cpu_passed": true,
+  "cpu_inputs_unchanged": true,
+  "cpu_source_unchanged": true,
+  "cpu_groups": [
+    {
+      "name": "atlas_worker",
+      "exit": 0,
+      "summary": [
+        "867/867 checks passed  (Gen3 atlas core bytes, live animations and worker ownership)"
+      ],
+      "log_sha256": "395fa2e1e6221be8a809d0544960f0306750addc0dcdc72bf26a5b3fa5cd7916"
+    },
+    {
+      "name": "native_atlas_pixels",
+      "exit": 0,
+      "summary": [
+        "1748/1748 checks passed  (native atlas pixel projection)"
+      ],
+      "log_sha256": "06416508d91d35c20de16fb03b00dd18713a636346f79b8733b3cc4163749ae2"
+    },
+    {
+      "name": "native_atlas_resources",
+      "exit": 0,
+      "summary": [
+        "526/526 checks passed  (native atlas resource lifecycle)"
+      ],
+      "log_sha256": "25dd0f9f411752cc4d23a9144e18ba51a55cebb559b8e717b8c21a6fb2e89042"
+    },
+    {
+      "name": "native_atlas_palettes",
+      "exit": 0,
+      "summary": [
+        "602/602 checks passed  (native source palette word projection)"
+      ],
+      "log_sha256": "9acf4f747066b19d05e08f85a9004d66219ada67c11676a9e1679a2fcc4d60ab"
+    },
+    {
+      "name": "native_battle_player_gender",
+      "exit": 0,
+      "summary": [
+        "60/60 checks passed  (five-edition native battle player identity, read-only fields and retired observations)"
+      ],
+      "log_sha256": "2d99eb70c23057f083dd87d6623ad318ad2af0ce34f6282e67df9bc5dfedc1fe"
+    },
+    {
+      "name": "shader_branches",
+      "exit": 0,
+      "summary": [
+        "55/55 checks passed  (shader branch planning, unchanged arithmetic and conservative source guards)"
+      ],
+      "log_sha256": "a0bbb27ff8c4e3458f7abf32520c16da919e047c9088bb62277d642f52ceeaf9"
+    },
+    {
+      "name": "alpha_depth_compat",
+      "exit": 0,
+      "summary": [
+        "69/69 checks passed  (Metal alpha-cutout late depth, exact native shader/target/lifetime contracts)"
+      ],
+      "log_sha256": "f0e824065e457e2f791c615d7438ce6b76f0dbd300e567d5bfd60ca226918f0a"
+    },
+    {
+      "name": "battler_data",
+      "exit": 0,
+      "summary": [
+        "691/691 checks passed  (native battler data without L\u00d6VE or presentation resources)"
+      ],
+      "log_sha256": "bcd25a7cdbcc2fbb0b1bef4c01c4e1e0e12cdb4b798b2f4dd4dc8711ed3d85ba"
+    },
+    {
+      "name": "battler_native_construction",
+      "exit": 0,
+      "summary": [
+        "972/972 checks passed  (shared native battler construction and actual art hydration across editions)"
+      ],
+      "log_sha256": "bd312e506e65f7311abd7d896692fd587f0ccc97eb7b188d86e5a04b5fa4c2a0"
+    },
+    {
+      "name": "gba_evolution_background",
+      "exit": 0,
+      "summary": [
+        "644/644 checks passed  (native evolution wallpaper keeps tile/palette/flip rows and excludes battle platforms)"
+      ],
+      "log_sha256": "61e93272234fd0028715b2404402e17cd4ce046d51bc67fdb1f786a7acd8c7b7"
+    },
+    {
+      "name": "gba_evolution_mon_anim",
+      "exit": 0,
+      "summary": [
+        "11/11 checks passed  (native evolution five-argument front animation, cry callback and private motion progress)"
+      ],
+      "log_sha256": "270d8c42318b1485629ae028c2e15d5467d0052dd49c94f8979315858e0cdf9b"
+    },
+    {
+      "name": "gba_reference_evolution_admission",
+      "exit": 0,
+      "summary": [
+        "37/37 checks passed  (reference evolution admission uses RS raw panels and E/FRLG native panels)"
+      ],
+      "log_sha256": "398ccfb859b69829db550a6f37dd4a72032b81b8cadfeffe61655da0fd83d922"
+    },
+    {
+      "name": "gen2_caught_codec",
+      "exit": 0,
+      "summary": [
+        "7970/7970 checks passed  (native Crystal caught-data party/box/daycare import, edits, legacy hydration and reserved-layout preservation)"
+      ],
+      "log_sha256": "00488773c2db61c59b68d13f644be2d1fc00bdb18b687edf01f82ecf4988c79c"
+    },
+    {
+      "name": "gen2_caught_data",
+      "exit": 0,
+      "summary": [
+        "393307/393307 checks passed  (source GSC caught-data signatures, constants, exhaustive two-byte codec and gift semantics)"
+      ],
+      "log_sha256": "146868d9b7501b4cfbd0094f820a0f7be2e6e42422244166c08bab105ac44b74"
+    },
+    {
+      "name": "gen2_caught_native",
+      "exit": 0,
+      "summary": [
+        "133/133 checks passed  (source SDK and native catch/box/contest/gift/trade/hatch, friendship, OT display and save consumers)"
+      ],
+      "log_sha256": "2160d7508227538aed553fab3ee8afb2a2c9c85d3cd7b19983559a498a9dde1d"
+    },
+    {
+      "name": "gen2_frame_queries",
+      "exit": 0,
+      "summary": [
+        "4454/4454 checks passed  (source Game2 frame queries through the SDK and actual native compositor)"
+      ],
+      "log_sha256": "aa65627087ff239e5bfde14bf2cc1c6f2271f7215188e2e48223afa383111361"
+    },
+    {
+      "name": "gen2_lifecycle_callbacks",
+      "exit": 0,
+      "summary": [
+        "80/80 checks passed  (native Gen2 lifecycle callbacks through public mod registrations)"
+      ],
+      "log_sha256": "0147999137e87ea1abb61832b988009d564a025e4341f8396f425c132cf256be"
+    },
+    {
+      "name": "gen2_model_rng",
+      "exit": 0,
+      "summary": [
+        "7951/7951 checks passed  (native source model RNG fields, domains, replacement, switch and lifetime)"
+      ],
+      "log_sha256": "ff712936b631e05ca49433621b5d07599c76b8551e648468203fa934bf1bbc13"
+    },
+    {
+      "name": "gen2_model_rng_checkpoint",
+      "exit": 0,
+      "summary": [
+        "57/57 checks passed  (native source model RNG adapters across semantic checkpoint reconstruction)"
+      ],
+      "log_sha256": "e25ed854ea11243adcdb9af8884b67bfde43cfbfddcdf883f36b80d0c73c4f16"
+    },
+    {
+      "name": "gen2_model_rng_link",
+      "exit": 0,
+      "summary": [
+        "210/210 checks passed  (actual source RNG callbacks in native GSC link participant and spectator roles)"
+      ],
+      "log_sha256": "d8ef9827db78e1ca07f25e83b5255f9a87ebb8bc3859f0f3bb2d8992468500be"
+    },
+    {
+      "name": "gen2_model_round_clock",
+      "exit": 0,
+      "summary": [
+        "400/400 checks passed  (native GSC source model round clock at actual queue and API2 event edges)"
+      ],
+      "log_sha256": "73fd128fa83a2847bfca0f35f891798f8a5432329edbfc4a444fd98178db2be8"
+    },
+    {
+      "name": "gen2_mon_fields_checkpoint",
+      "exit": 0,
+      "summary": [
+        "100/100 checks passed  (native GSC field views across actual world and battle semantic reconstruction)"
+      ],
+      "log_sha256": "f016a59233bf9e8138824bc3dd96dd640283e3728514d9f558e88dd5d95f3272"
+    },
+    {
+      "name": "gen2_mon_fields_data",
+      "exit": 0,
+      "summary": [
+        "184/184 checks passed  (native GSC source fields, live ownership, custom tables and collection without L\u00d6VE)"
+      ],
+      "log_sha256": "d3d31e673ff7f28f07268cf73f5691e49bdf14c541c280130e4b06abde7a6429"
+    },
+    {
+      "name": "gen2_mon_fields_native",
+      "exit": 0,
+      "summary": [
+        "177/177 checks passed  (source GSC fields through native birth, save codec, validation, combat, boxes and SDK registries)"
+      ],
+      "log_sha256": "a4ca9e453899edf899d9bb14eb9885139afa8d988170789ea1d6eb84c2198691"
+    },
+    {
+      "name": "gen2_mon_pp",
+      "exit": 0,
+      "summary": [
+        "6642/6642 checks passed  (source GSC PP methods, actual SDK slots, native healing and restored saves)"
+      ],
+      "log_sha256": "6343569707d3002419007aba36e9c5ba10ad7c9ca5bfb7f4ddb4dde9976704a2"
+    },
+    {
+      "name": "gen2_source_identity_data",
+      "exit": 0,
+      "summary": [
+        "262168/262168 checks passed  (source GSC gene signatures, exhaustive shiny/gender predicates and RNG ownership without LOVE)"
+      ],
+      "log_sha256": "d32af19bbe9971c0bd8e20d7b468d7faaf63ccbeb05b98b879f8afb9976f400a"
+    },
+    {
+      "name": "gen2_source_identity_native",
+      "exit": 0,
+      "summary": [
+        "450/450 checks passed  (actual source GSC identity SDK, live native hooks, context identity, retirement and RNG ownership)"
+      ],
+      "log_sha256": "6fced33c6abc9aa91f1757c88aef579686c6e64f9adc314f4760088850c4b35e"
+    },
+    {
+      "name": "gen2_stat_refresh_data",
+      "exit": 0,
+      "summary": [
+        "185360/185360 checks passed  (source and native GSC stat formula, all genes, legacy fallbacks and generation guards without LOVE)"
+      ],
+      "log_sha256": "d6ab1ebc9615113e1a9bb4a3a69be42b5b4ce03cea8b58b5128415768dcd7461"
+    },
+    {
+      "name": "gen2_stat_refresh_native",
+      "exit": 0,
+      "summary": [
+        "238/238 checks passed  (actual source SDK refresh/identity and native summary stat recalculation)"
+      ],
+      "log_sha256": "25047596e80ae57c1fa52ae9dfe753a10cfeaace884273a1794e216d2bbb0d7d"
+    },
+    {
+      "name": "gen2_trainer_friendship",
+      "exit": 0,
+      "summary": [
+        "24270/24270 checks passed  (native GSC trainer class predicates, constructor friendship, live events and scoped party)"
+      ],
+      "log_sha256": "472ae3c781dc08abcb5066633d188215420e58f385ea09bbbfddeb4a6c6cb9a4"
+    },
+    {
+      "name": "gen2_trainer_friendship_checkpoint",
+      "exit": 0,
+      "summary": [
+        "30/30 checks passed  (native trainer friendship across semantic checkpoint reconstruction)"
+      ],
+      "log_sha256": "44e26efe1e035d632413befc5738dafc1becbe28267195feebaad65925bc03b7"
+    },
+    {
+      "name": "native_screen_position",
+      "exit": 0,
+      "summary": [
+        "1151/1151 checks passed  (native screen position: compositor, source queries, safe areas, skins and saved menu input)"
+      ],
+      "log_sha256": "1f6c01462a4321cbe047ad52ccbf48042663b17ef9f7613e185502242199560a"
+    }
+  ],
+  "gpu_passed": true,
+  "gpu_inputs_unchanged": true,
+  "gpu_source_unchanged": true,
+  "gpu": [
+    {
+      "backend": "metal",
+      "exit": 0,
+      "tail": [
+        "ATLAS_NATIVE_GPU_PASS {\"editions\":5,\"realThreads\":true,\"realTextureReadback\":true,\"boundedUploads\":true,\"checks\":400,\"passed\":true}"
+      ],
+      "log_sha256": "d91fad52f39397deac7867e58e3bfe59ad6c868d541c433ba0b4bc565dc77b71"
+    },
+    {
+      "backend": "opengl",
+      "exit": 0,
+      "tail": [
+        "ATLAS_NATIVE_GPU_PASS {\"realTextureReadback\":true,\"boundedUploads\":true,\"checks\":226,\"passed\":true,\"editions\":5,\"realThreads\":true}"
+      ],
+      "log_sha256": "4553686cdc31b245ca9c10d5528ec546f7154b3fbb2fd279de1edb0bcfd33ba7"
+    }
+  ],
+  "prior_full_ci": {
+    "source_head": "1f4a70645e45a2e781dc00c2af760349ae5eede1",
+    "checkout_merge": "8e1724b",
+    "base": "43abf33ddbe5e04b2043d21a2816c32eb5a6b4c9",
+    "engine": "935/935",
+    "sdk": "4/4",
+    "all_rom_free_tiers": "passed",
+    "job_url": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40787066705/job/123162797949"
+  },
+  "current_ci": {
+    "head": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+    "checkout_merge": "e4c2251",
+    "base": "dc691d6269e85cb7957d106f4de5e3e52fc04ff0",
+    "job_id": 123320644371,
+    "job_url": "https://github.com/Roxas2712/Gen2Recomped/actions/runs/40835948253/job/123320644371",
+    "status": "success",
+    "engine": "956/956",
+    "sdk": "4/4",
+    "all_rom_free_tiers": "passed",
+    "all_active_head_checks": 74,
+    "skipped": 1
+  }
+}

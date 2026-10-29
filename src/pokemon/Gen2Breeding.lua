@@ -41,6 +41,8 @@ end
 
 function Breeding.hatch(game, mon)
   Breeding.setOwner(game.save,mon)
+  local caught=require('src.pokemon.Gen2CaughtData')
+  caught.record(game,mon,{level=caught.CAUGHT_EGG_LEVEL})
   local def=game.data.pokemon[mon.species]
   if def then mon.stats=require("src.pokemon.Stats").calc(def,mon.level,mon.dvs,mon.statExp) end
   require('src.pokemon.Pokemon').syncIdentity(game.data,mon)

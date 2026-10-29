@@ -13,7 +13,149 @@ major update through fork PR61, preserving the fork's native interfaces.
 File-path differences are audit candidates, not missing-feature counts. No
 percentage can be inferred from them or from the number of passing tests.
 
-Current public preview: `ed564cb54fb42f1ea5c977ceb38fe883f3ceae07`, merged
+## Current checkpoint, 29 October 2026
+
+The fetched fork main is `4a28411d4a965afaf1491edb8e0f63522f9773b5`,
+including source-PP PR355, transport-test PR354, stat-refresh PR353, native Pokemon-field PR352, screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
+the earlier native RNG PR336. PR349's exact composed tree passes942/942
+engine suites,4/4 SDK suites and every available official ROM-free tier;
+all77 exact-head CI checks succeeded or were skipped before its strict
+merge. Its earlier standalone PR341/346 reviews are closed as superseded
+after verifying that adding their heads changes no byte of current main.
+The preceding
+RNG merge `43abf33d` has 88 successful/skipped exact-head checks and an
+independently qualified identical tree: 934/934 engine suites, 4/4 SDK suites
+and all available official ROM-free tiers. Current main is integrated into
+the native battler development branch; the earlier receipt does not qualify
+the subsequently changed combined tree.
+
+The newest release by publication time observed through GitHub's release
+API is `desktop-test-20261028.3`, RetroRecomped 0.8.57, published
+28 October at 20:02:55 UTC from `90a3b093e62d85440d0a1b8288e30e0caf3cc358`.
+`native-preview-20261028.2` is a separate earlier preview. Neither release
+is qualified here as containing all subsequent main/development changes.
+No release assets were updated during this checkpoint.
+
+Historical friendship source `26037683` passes a complete independent run:
+936/936 engine suites, 4/4 SDK suites and every available official ROM-free
+tier. Its merge gate stopped when main advanced through PR344 during that
+run. The subsequently qualified PR349 composition contains friendship,
+the round-clock implementation and battler extraction on the newer main.
+The public live clock has
+400 focused checks, actual native link observations have 210 and semantic
+checkpoint observations have 57. The
+[battler data/presentation extraction](native-battler-construction.md),
+has 691 plain-Lua checks without LÖVE, 972 checks through actual wild
+constructors/switches across 18 editions, and 270 independently matched
+original-versus-extracted native data/art-selector cases.
+Native Game2 frame/viewport queries are merged PR350. Its initial
+real Metal check identified a drawable-pixel/DPI mismatch missed by the
+logical-input tests. The correction passes4454 expanded query checks plus
+the existing viewport/window/chrome regressions. A fresh owned Metal run
+with unchanged VASC confirms the actual drawable query agrees with native
+composition, after real checkpoint CONTINUE, a connected walk and a natural
+encounter. Four inspected OS images cover both selected field camera flags;
+both select the same authored battle-stage view. All27336 mod files/copies,
+ROM and earned source checkpoint retain their hashes. Exact head `7da7b119`
+passes943/943 engine suites,4/4 SDK suites and every available official tier;
+all76 exact-head CI checks succeed or are skipped. The actual main merge has
+the identical qualified tree. This does not accept full visual parity:
+bottom command artwork is partly clipped in both the existing Gen1 reference
+and fresh fork images, whose logical hit layouts agree but DPI/lighting differ.
+The corresponding coherent older-host offers
+are upstream PR396 (battle foundations) and PR397 (frame queries with the
+already offered viewport/chrome prerequisites). No upstream merge occurs.
+
+[Native screen positioning](native-screen-position.md) is merged PR351: CENTER/UPPER/TOP, saved native options, safe top insets,
+skin/split ownership and enough world coverage below a raised camera. The
+selected actual fitting/input/save/boot/final-blit probe passes1151 checks.
+Upstream PR398 independently passes1031 position,4454 frame-query and116
+chrome checks through its actual older compositor and flat options menu.
+Exact head `a6eb0c05` independently passes944/944 engine suites,4/4 SDK
+suites and all available official ROM-free tiers. All77 latest exact-head
+CI checks succeeded or were skipped, including the same-head rerun of a
+failed macOS transport timeout. The strict merge tree equals the qualified
+tree. Actual GPU/window and release qualification remain open.
+[Live native GSC Pokemon fields](native-gen2-mon-fields.md), merged PR352,
+addresses five actual missing source field reads on native Pokemon records.
+Corrected source `23d4aaa5` passes184 pure-data,177 native and100 actual
+world/battle checkpoint checks, plus all13 checkpoint suites that failed
+in the first complete run. The corrected codecs retain strict refusal of
+custom runtime state and byte-identical recapture. Earlier construction,
+identity and save regressions also passed on the initial source. The preceding
+engine fails all five source-field checks and the absent-helper check.
+Exact source `da71c3d3` passes947/947 engine suites,4/4 SDK suites and every
+available official ROM-free tier; all83 exact-head CI checks succeed or are
+skipped. Strict merge `152e2372` has the identical qualified tree. A real
+unchanged-VASC Crystal instance verifies party fields and the actual CENTER
+option/source query. CUA reports the Mac locked; the bounded run ends with
+no OS image and does not accept the remaining positions or camera/battle
+phases. All original/copy mod, ROM and source checkpoint hashes match.
+Actual unchanged-mod GPU/window and final release qualification remain open.
+Upstream PR399 independently passes184 pure-data/170 actual older-host native
+checks plus4454/116/1031 frame/chrome/position regressions.
+
+[Native GSC stat refresh](native-gen2-stat-refresh.md) is merged PR353:
+shared native/source formula, explicit source identity argument order,
+actual summary recalculation and weak shared-combat-stat rebinding. Source
+273692e8 passes185360 data/238 native checks and existing identity, summary,
+field, battler and checkpoint regressions; predecessor main fails the exact
+new source formula/signature/refresher probes. Exact PR head `aabc0ed5`
+passes949/949 engine suites,4/4 SDK suites and all available official
+ROM-free tiers; all74 latest CI checks pass or are skipped. Strict merge
+`25c67691` has the identical qualified tree. Upstream PR400 composes actual
+original main `8d5b4387` and the offered appearance, Unown, battler and field
+prerequisites. Its independently corrected older-host source `26114b40`
+passes all17 selected suites, including185360 formula/238 native refresh
+checks; the initial composition's cross-generation binding regression was
+fixed and the original negative-generation guards now pass.
+
+[Download worker retirement](native-download-worker-retirement.md), merged
+PR354, corrects a transport fixture race without changing production workers,
+queue bounds or request timeouts. Its real official LOVE11.5 macOS TLS
+fixture passes1512 checks and the exact final PR head `0185fb13` passes all
+949/949 engine and4/4 SDK suites. All70 exact-head CI checks succeed or are
+skipped, including three real platform transports and separately dispatched
+native HTTP, import and package contracts. Strict merge `d822aba8` has the
+identical independently qualified tree.
+[Source PP operations](native-gen2-mon-pp.md), merged PR355, add the actual
+native slot API and shared healing/save repair. Corrected source `43f697d8`
+passes6642 new checks and six actual existing regression groups. The exact
+fixture against predecessor main fails25 missing-method probes. Exact head
+`d2555abf` passes950/950engine and4/4SDK suites with75latest CI checks
+succeeding or skipped; strict merge `4a28411d` has the identical qualified
+tree. Upstream PR401 independently passes6642API/92actual item-link checks
+and five older native regressions. Existing upstream HTTP PR273 is updated
+to `8e015af6`: its older actual official LOVE11.5 TLS fixture passes1521checks
+with its45-second process deadline unchanged. No unchanged-mod menu
+interaction or release acceptance is inferred.
+
+[Source identity signatures](native-gen2-source-identity.md) are the next
+candidate: gene/definition arguments over native shared hook owners, including
+the previously incompatible inherited `Mon.isShiny` signature. Source
+`c38d06a6` passes262168data/450SDK-native checks plus the existing identity,
+appearance, PP and stat groups. Full composed-tree qualification is pending.
+
+Full source-model `Battle.new`, the standalone turn/event API and arbitrary
+writable model fields remain open; these foundations do not close them.
+
+Recent unchanged-VASC evidence includes a real 80,842,206-byte sprite-pack
+download, native save/restart, verified mount and decoding all 120 images
+in that pack. The drawn Cyndaquil follower selected the mod's bundled
+flame-card runtime, so this does not prove downloaded-pack actor selection
+or every package. A Metal native victory spent three PP and awarded EXP
+135 to 151; a later image was already another encounter, so stable world
+return still needs visible proof. The latest OpenGL attempt reached both
+camera selections and battle admission but exceeded its story deadline
+before an accepted attack. It is retained as a failed attempt.
+
+Matched Gen1/fork visual and conditional menu coverage, every relevant
+download path, full native source-model semantics, and exact Windows/macOS
+package acceptance remain required. The ledger below retains historical
+source-specific evidence; older “remaining” entries are not a fresh audit
+of current main and older previews are not the current release.
+
+Historical public preview: `ed564cb54fb42f1ea5c977ceb38fe883f3ceae07`, merged
 as fork PR97 (`c79921ff`, identical tree `a7122aa5`). The existing
 `native-preview-20261025.1` Windows/macOS assets were updated in place. All
 six served hashes, binary manifest, release text and unchanged original tag

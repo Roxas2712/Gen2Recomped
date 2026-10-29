@@ -21,7 +21,11 @@ local function clone(value, seen, budget, depth)
 		assert(value == value and value ~= math.huge and value ~= -math.huge, "nonfinite number")
 		return value
 	end
-	assert(kind == "table" and getmetatable(value) == nil, "checkpoint requires plain data")
+	-- Native GSC field views are plain on the wire. The owner authenticates
+	-- its exact unmodified wrapper; arbitrary custom metatables remain opaque.
+	local fields = package.loaded["src.pokemon.Gen2MonFields"]
+	assert(kind == "table" and (getmetatable(value) == nil
+		or fields and fields.plainKind(value)), "checkpoint requires plain data")
 	seen, budget, depth = seen or {}, budget or { n = 0 }, depth or 0
 	assert(not seen[value] and depth < MAX_DEPTH, "cyclic or deeply nested checkpoint")
 	seen[value] = true

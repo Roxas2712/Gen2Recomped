@@ -108,6 +108,8 @@ Performance.gen4ChunkPrebuild = true
 -- W1: a pool of worker threads for the builds that need no GPU
 -- (src/core/BuildWorker.lua); false keeps every build on the main thread.
 Performance.buildWorkers = true
+-- W1a: copied Gen-3 compatibility atlas pixels; uploads stay on the main thread.
+Performance.atlasWorker = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005

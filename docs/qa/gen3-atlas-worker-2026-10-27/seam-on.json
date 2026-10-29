@@ -1,0 +1,571 @@
+{
+  "passed": true,
+  "sourceCommit": "a474e83bbf085292ee37797e307e05e08a374208",
+  "sourceStable": true,
+  "inventoryOnly": false,
+  "referenceMainCommit": "9d8eec4c371a7becf41b903cf7641c68dc52ff7b",
+  "runtimeMatchesMain": false,
+  "performanceBaseline": true,
+  "freshImports": true,
+  "playerProfilesUsed": false,
+  "originalEntrypointSha256": "c7a34566d2dc90f3345cd41050d6bacdf3d5d4e75e8c5758bb0019ef7b626112",
+  "hostEntrypointSha256": "155947e1cdcb5bf6b364da4fa10151a2b7426d1667a4529913b0ce3684c7c30f",
+  "testAdaptations": [
+    "Enable existing native pacing in the owned driver host",
+    "Use the interactive PlatformHooks.update and real dt after each driver observation",
+    "Profile selected native calls in the owned copy with argument/return-preserving adapters"
+  ],
+  "separateCaseProfiles": true,
+  "instrumentedFiles": {
+    "src/render/TileRenderer.lua": {
+      "originalSha256": "07b372d2579902f955fe8af9542ddcae19c8edd5092cd848b702ab3169209667",
+      "hostSha256": "b0c28dc401c03eb584245531380e3d9c179ff4f523396db035b222e6874adcd5"
+    },
+    "src/render/Gen4Ground.lua": {
+      "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+      "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+    },
+    "src/core/Music.lua": {
+      "originalSha256": "663fba80e6f524949d894b7d4af9b54644f4f76d55480ca236032594a5996e23",
+      "hostSha256": "df120e997cf736e5e4f86117405a7ee42d1f03cc2447cad1ead8df75379a3ead"
+    }
+  },
+  "hostSyntaxChecked": true,
+  "hardware": {
+    "cpu": "Apple M2",
+    "physicalCores": 8,
+    "logicalCores": 8,
+    "memoryBytes": 17179869184,
+    "gpus": [
+      {
+        "name": "Apple M2",
+        "cores": "10"
+      }
+    ],
+    "panels": [
+      {
+        "name": "Color LCD",
+        "desktopMode": "1710 x 1107 @ 60.00Hz",
+        "backingPixels": "3420 x 2214",
+        "physicalPanelMode": "spdisplays_2880x1864Retina"
+      }
+    ]
+  },
+  "benchmarkControls": {
+    "fpsCap": 160,
+    "seconds": 60,
+    "performanceOverrides": "atlasWorker=1",
+    "atlasBridge": true,
+    "nativePacing": true,
+    "vsync": 0,
+    "backgroundCapDisabled": true,
+    "randomSeed": 12345
+  },
+  "romSha1": {
+    "emerald": "f3ae088181bf583e55daf962a92bb46f4f1d07b7"
+  },
+  "results": [
+    {
+      "scene": "emerald-route101-103",
+      "variant": "idle-on",
+      "exit": 0,
+      "report": {
+        "atlasBridge": {
+          "drawsBefore": 180,
+          "kind": "production source-field adapter in owned QA host",
+          "enabled": true,
+          "drawsAfter": 7214
+        },
+        "atlasWorkerBefore": {
+          "published": 0,
+          "submitted": 1,
+          "failed": 0,
+          "cancelled": 1
+        },
+        "gpu": {
+          "device": "Apple M2",
+          "vendor": "",
+          "api": "2.1",
+          "renderer": "Metal"
+        },
+        "atlasCacheBefore": {
+          "native": 1,
+          "worker": 0
+        },
+        "pixels": [
+          2048,
+          1536
+        ],
+        "variant": "idle-on",
+        "atlasWorkerAfter": {
+          "published": 1,
+          "submitted": 2,
+          "failed": 0,
+          "cancelled": 1
+        },
+        "viewport": [
+          1024,
+          768
+        ],
+        "targets": [
+          {
+            "canonical": "EM_ROUTE101",
+            "name": "ROUTE101",
+            "normalized": "emroute101",
+            "matches": [
+              {
+                "runtimeId": "MAP_G00_N16",
+                "fields": {
+                  "mapType": "ROUTE",
+                  "width": 20,
+                  "height": 20,
+                  "id": "MAP_G00_N16"
+                },
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "weather",
+                  "width"
+                ],
+                "key": "EM_ROUTE101"
+              }
+            ]
+          },
+          {
+            "canonical": "EM_OLDALE_TOWN",
+            "name": "OLDALE_TOWN",
+            "normalized": "emoldaletown",
+            "matches": [
+              {
+                "runtimeId": "MAP_G00_N10",
+                "fields": {
+                  "mapType": "TOWN",
+                  "width": 20,
+                  "height": 20,
+                  "id": "MAP_G00_N10"
+                },
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "coordEvents",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "key": "EM_OLDALE_TOWN"
+              }
+            ]
+          },
+          {
+            "canonical": "EM_ROUTE103",
+            "name": "ROUTE103",
+            "normalized": "emroute103",
+            "matches": [
+              {
+                "runtimeId": "MAP_G00_N18",
+                "fields": {
+                  "mapType": "ROUTE",
+                  "width": 80,
+                  "height": 22,
+                  "id": "MAP_G00_N18"
+                },
+                "keys": [
+                  "allowCycling",
+                  "allowEscaping",
+                  "allowRunning",
+                  "battleScene",
+                  "blockPx",
+                  "blocks",
+                  "border",
+                  "borderBlock",
+                  "cave",
+                  "collisionCells",
+                  "connections",
+                  "elevationCells",
+                  "flags",
+                  "group",
+                  "height",
+                  "id",
+                  "layoutId",
+                  "mapScripts",
+                  "mapType",
+                  "music",
+                  "number",
+                  "objects",
+                  "outdoor",
+                  "regionMapSection",
+                  "requiresFlash",
+                  "showMapName",
+                  "signs",
+                  "source",
+                  "sourceBorder",
+                  "sourceBorderHeight",
+                  "sourceBorderWidth",
+                  "sourceConnections",
+                  "tileset",
+                  "warps",
+                  "weather",
+                  "width"
+                ],
+                "key": "MAP_G00_N18"
+              }
+            ]
+          }
+        ],
+        "edition": "emerald",
+        "preparedState": {
+          "repelSteps": 10000,
+          "partyLevel": 10,
+          "kind": "owned post-starter QA save",
+          "gen3Flags": [
+            82,
+            130,
+            132,
+            301,
+            700,
+            720,
+            723,
+            750,
+            979,
+            2144
+          ]
+        },
+        "runtime": [
+          12,
+          0,
+          0
+        ],
+        "atlasCacheAfter": {
+          "native": 1,
+          "worker": 1
+        },
+        "measurement": {
+          "seconds": 60.010422958333336,
+          "bakes": {
+            "gen3.worker.atlas": {
+              "peakPerFrame": 1,
+              "total": 1
+            }
+          },
+          "walks": [
+            {
+              "source": "MAP_G00_N16",
+              "steps": 33,
+              "pathCells": 33,
+              "crossed": true,
+              "windowFrames": 2,
+              "fromSeconds": 8.863604833333333,
+              "toSeconds": 9.073394458333333,
+              "target": "MAP_G00_N10",
+              "actual": "MAP_G00_N10",
+              "landing": {
+                "y": 20,
+                "x": 11
+              },
+              "maxFrameMs": 195.72450000000075
+            },
+            {
+              "source": "MAP_G00_N10",
+              "steps": 20,
+              "pathCells": 20,
+              "crossed": true,
+              "windowFrames": 2,
+              "fromSeconds": 14.643948583333337,
+              "toSeconds": 14.79709341666667,
+              "target": "MAP_G00_N18",
+              "actual": "MAP_G00_N18",
+              "landing": {
+                "y": 22,
+                "x": 10
+              },
+              "maxFrameMs": 151.73812499999784
+            }
+          ],
+          "frame": {
+            "maxMs": 195.72450000000075,
+            "avgMs": 8.53269201739419
+          },
+          "present": {
+            "maxMs": 0.9470416666665926,
+            "avgMs": 0.1745979845016438
+          },
+          "limitations": [
+            "inclusive sections cannot be summed",
+            "instrumented driver host; no screenshot readback during measurement",
+            "process CPU time includes active worker threads; no GPU utilization or energy measurement"
+          ],
+          "tierTrace": [
+            {
+              "seconds": 0,
+              "focused": true,
+              "tier": "high"
+            },
+            {
+              "seconds": 42.53061245833333,
+              "focused": false,
+              "tier": "high"
+            },
+            {
+              "seconds": 58.53745079166667,
+              "focused": true,
+              "tier": "high"
+            }
+          ],
+          "timing": "present-completion intervals and FrameProfile wall-time sections; GPU submission only, no completion fence",
+          "sections": {
+            "  renderer: zone blit": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.01617294658511119,
+              "maxMsPerFrame": 1.1028750000008358
+            },
+            "  update: graphics stack drain": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.0019381131805982176,
+              "maxMsPerFrame": 0.46162500000690443
+            },
+            "  logic: stack:update": {
+              "observedFrames": 3536,
+              "avgMsPerFrame": 0.4551474240485168,
+              "maxMsPerFrame": 168.564374999999
+            },
+            "present (GPU wait / vsync)": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.18205583795432861,
+              "maxMsPerFrame": 0.952083333333853
+            },
+            "frame pacing: sleep": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 1.3395407839234514,
+              "maxMsPerFrame": 14.360125000003165
+            },
+            "  update: fixed steps": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.4654638726953979,
+              "maxMsPerFrame": 168.58545833333238
+            },
+            "draw: whole frame": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 1.4185194025782726,
+              "maxMsPerFrame": 42.986958333329994
+            },
+            "  update: music": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.011422081615290638,
+              "maxMsPerFrame": 0.9092499999994175
+            },
+            "  step: whole": {
+              "observedFrames": 3536,
+              "avgMsPerFrame": 0.4631801625669241,
+              "maxMsPerFrame": 168.57929166666707
+            },
+            "  update: tilt": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.0015555298829903737,
+              "maxMsPerFrame": 0.06754166665956518
+            },
+            "    step: mod input.step": {
+              "observedFrames": 3536,
+              "avgMsPerFrame": 0.0010435091710978637,
+              "maxMsPerFrame": 2.4624583333334726
+            },
+            "  update: discord": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.0030268318403842164,
+              "maxMsPerFrame": 0.07316666666845606
+            },
+            "update: whole frame": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.616931211194911,
+              "maxMsPerFrame": 168.77108333333268
+            },
+            "  update: gc step": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.00880309493340563,
+              "maxMsPerFrame": 0.19133333333343217
+            },
+            "  pipelines: update": {
+              "observedFrames": 7033,
+              "avgMsPerFrame": 0.0022621925210214128,
+              "maxMsPerFrame": 0.11075000000015933
+            }
+          },
+          "frames": 7033,
+          "processCpuSeconds": 25.410603,
+          "processCpuPercent": 42.34364923180626
+        },
+        "passed": true,
+        "inventoryOnly": false,
+        "performanceBaseline": true,
+        "dataKeys": [
+          "_bootKeys",
+          "_gen3MapNames",
+          "_pristineKeys",
+          "ai_classes",
+          "applyMapEditorOverlay",
+          "applyVersionedFieldData",
+          "audio",
+          "balls",
+          "commands",
+          "constants",
+          "encounters",
+          "ensure",
+          "evolution_methods",
+          "field",
+          "font",
+          "gen3_frontier_speech",
+          "gen3_object_sheets",
+          "gen3_trade_art",
+          "growth_rates",
+          "icons",
+          "isGen3Cache",
+          "isGen4Cache",
+          "items",
+          "load",
+          "map_layouts",
+          "map_scripts",
+          "map_tilesets",
+          "maps",
+          "move_effects",
+          "moves",
+          "pokemon",
+          "publishGen2MapMetadata",
+          "publishGen2Palettes",
+          "publishGen2TilesetNames",
+          "reloadGenerated",
+          "resolveText",
+          "rulesets",
+          "save_layout",
+          "scenes",
+          "seedCinnabarGymTrainerHeaders",
+          "seedDefaults",
+          "seedFightingDojoKarateMaster",
+          "songs",
+          "sprites",
+          "statuses",
+          "text",
+          "textEntry",
+          "text_pointers",
+          "tilesets",
+          "tokens",
+          "trainerHeader",
+          "trainers",
+          "transitions",
+          "type_chart",
+          "unloadGenerated"
+        ],
+        "loadedMods": [],
+        "setup": {
+          "connections": {
+            "south": {
+              "map": "MAP_G00_N09",
+              "offset": 0
+            },
+            "north": {
+              "map": "MAP_G00_N10",
+              "offset": 0
+            }
+          },
+          "worldActive": true,
+          "worldOnTop": true,
+          "scriptRunning": false,
+          "width": 20,
+          "height": 20,
+          "map": "MAP_G00_N16",
+          "player": {
+            "y": 18,
+            "x": 10
+          },
+          "requested": {
+            "y": 18,
+            "x": 10
+          },
+          "walkable": true
+        },
+        "boot": {
+          "playerName": "BRENDAN",
+          "startFacing": "down",
+          "startMap": "MAP_G25_N40",
+          "rivalName": "MAY",
+          "startX": 2,
+          "startY": 2,
+          "version": "emerald",
+          "startMoney": 3000
+        },
+        "switches": {
+          "idleStream": true,
+          "gen4ChunkPrebuild": true,
+          "atlasWorker": true
+        },
+        "pacing": {
+          "backgroundPacing": false,
+          "fpsCap": 160,
+          "vsync": 0
+        },
+        "scene": "emerald-route101-103"
+      }
+    }
+  ]
+}
