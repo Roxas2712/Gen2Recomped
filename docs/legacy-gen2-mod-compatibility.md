@@ -4,6 +4,43 @@ API 1/2 source mods can still target the shared native engine. These adapters
 translate their original contracts at the loader boundary; no mod identifier is
 special-cased and no second battle controller, wallet or encounter engine runs.
 
+## Native Gen2 mods remain supported
+
+Gen1 compatibility adds entry points alongside the native Gen2 interfaces.
+It does not require an existing Gen2 mod to change its manifest, opt into a
+source profile, migrate its save, or convert its data to Gen1 formats. Module
+names alone are not evidence that two functions have interchangeable contracts.
+Keep native arguments, return values, RNG consumption and record ownership when
+adding a source adapter. Both consumer paths belong in regression tests.
+
+In particular, `src.pokemon.Pokemon.new(data, species, level, rng, form, opts)`
+keeps the native two-bound RNG and validated, copied Gen2 DVs. Its source
+counterpart, `src.battle.gen2.Mon.new(data, species, level, opts)`, accepts the
+original source options: nickname, HP, happiness, Pokerus, caught data, authored
+moves/stat experience, and held-item selection. Explicit source arrays and DVs
+remain the caller's objects. Both constructors create the actual native
+Pokemon; `experience` and `maxHp` remain live views of native storage rather
+than a second saved balance. The older function-RNG overload of the compatibility
+constructor also remains available.
+
+The source helpers `displayName`, `eachSaveMon`, `syncSaveIdentity`,
+`evolutionAtLevel` and `wildItem` are additive. The held-item helper implements
+the two cartridge byte gates; this does not establish that native ROM imports
+already publish every species' held-item metadata. Save traversal covers real
+party, box and Day-Care records without treating unrelated mod data as Pokemon.
+Native sparse-slot traversal and source array traversal retain their respective
+policies. Source OT stamping returns the actual Pokemon; the existing native
+battle stamping method retains its own return and metadata behavior.
+
+`tests/engine/gen2_source_birth.lua` loads native and source consumers side by
+side, checks their distinct constructor contracts across the supported Gen2
+editions, and exercises the complete held-item byte domain. The ordinary
+engine and SDK suites remain required for both paths. These checks do not
+establish compatibility with every private engine-internals modification or
+replace the unchanged-mod graphics, download and gameplay acceptance runs.
+
+## Existing compatibility boundaries
+
 - Source encounter edits during legacy event callbacks update the native
   grass/time, water, tree and fishing records. The derived view remains read-only
   outside that callback scope, including after a throwing callback.

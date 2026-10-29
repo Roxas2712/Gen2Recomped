@@ -50,6 +50,8 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.raises(function()Native.new(data,'FIXMON_A',7,nil,nil,{dvs={attack=99}})end,
     'invalid native Gen2 DV','native validation stays active')
   T.eq(Mon.new(data,'NO_SUCH_SPECIES',5),nil,'source missing species returns nil')
+  T.eq(Mon.new(nil,'FIXMON_A',5),nil,'source missing dataset returns nil')
+  T.eq(Mon.new({},'FIXMON_A',5),nil,'source missing Pokemon registry returns nil')
   local function seeded()return 2 end
   T.eq(Mon.new(data,'FIXMON_A',nil,{rng=seeded}).level,5,'source default level')
   T.eq(Mon.new(data,'FIXMON_A',-3,{rng=seeded}).level,1,'source minimum level')

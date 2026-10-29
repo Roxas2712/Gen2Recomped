@@ -314,6 +314,7 @@ end
 -- the source table is also the dispatch authority for mod-wrapped helpers.
 function Pokemon.fromGen2Source(data, species, level, opts, api)
   assert(require('src.core.GameVersion').isGen2(), 'source Gen2 birth requires a Gen2 host')
+  if type(data)~='table' or type(data.pokemon)~='table' then return nil end
   species = require('src.core.Gen2SpeciesNames').registryId(data.pokemon, species)
   if not data.pokemon[species] then return nil end
   level = math.max(1, math.min(100, level or 5))
