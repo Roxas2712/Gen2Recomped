@@ -82,6 +82,16 @@ T.eq(description,false,'sale dialogue suppresses the underlying description inst
 top=owner;texts={};view:drawNative();description=false
 for _,row in ipairs(texts)do if row.text=='Heals HP.'then description=true end end
 T.eq(description,true,'ordinary lists retain their item description')
+top={emeraldBagMessageOwner=owner,presentation={rows={{id='POTION',label='POTION',qty=12,description='OLD DESCRIPTION'}},index=1,top=1}}
+texts={};view:drawNative();local oldCount=false;description=false
+for _,row in ipairs(texts)do
+ if row.text=='x12'then oldCount=true end
+ if row.y==105 then description=true end
+end
+T.eq(oldCount,true,'deposit results retain the original visible row until acknowledgement')
+T.eq(description,false,'the original description stays behind the full dialogue')
+T.eq(owner.rows[1].qty,1,'temporary presentation never replaces the actual bag rows')
+top=owner
 texts={};owner.rows={{id='KEY',label='KEY',qty=1,important=true},{close=true}}
 owner.pockets[1].key='KEY_ITEM';view:drawNative()
 local badge;for _,row in ipairs(draws)do if row[1].path==A.ROOT..'select.png'then badge=row end end
