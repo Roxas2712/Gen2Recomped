@@ -16,6 +16,7 @@ end
 -- This is an audited boundary catalog, not a claim that every game executes
 -- every seam. The source-catalog test requires a decision for each new seam.
 C.hooks = names([[
+ shiny.roll gender.roll
  battle.accuracy battle.catch_exp battle.crit battle.damage battle.enemy_action battle.exp_award
  battle.low_health_alarm battle.overlay battle.run battle.status_hud_visible battle.turn_order catch.rate
  encounter.fishing encounter.roll encounter.species evolution.check exp.gain fieldmove.eligibility
@@ -39,6 +40,8 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["shiny.roll"] = { "context" },
+  ["gender.roll"] = { "context" },
   ["battle.accuracy"] = { "context" },
   ["battle.damage"] = { "context" },
   ["battle.crit"] = { "context" },
@@ -162,7 +165,8 @@ function C.install(loader, api, owner, generation)
             if role == "items" or role == "moves" then
               v = boundary.native(role, v, original[i])
             elseif role then
-              v = boundary.restore(v, role)
+              local identity=api3 and (name=='shiny.roll' or name=='gender.roll')
+              v = boundary.restore(v, role, identity and original[i] or nil)
             end
             out[i] = v
           end

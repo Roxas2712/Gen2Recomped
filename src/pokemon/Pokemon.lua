@@ -258,6 +258,12 @@ function Pokemon.new(data, species, level, rng, form, opts)
   -- meaning "in tall grass only".  At the default setting shinyOddsOf answers
   -- nil and this returns immediately, leaving the cartridge's own 1/8192
   -- exactly as it was.
+  if generation==3 then
+    if require('src.mods.Runtime').wantsHook('gender.roll') then
+      mon.gender=require('src.pokemon.IdentityRolls').gender(data,mon,3)
+    end
+    if opts and opts.shiny then mon.isShiny,mon.shiny=true,true end
+  end
   if generation==2 and opts and opts.shiny then mon.shiny=true
   else Pokemon.rollShiny(data, nil, mon, rng) end
   if generation==2 then
@@ -346,6 +352,9 @@ Pokemon.SHINY_DVS = { attack = 14, defense = 10, speed = 10, special = 10, hp = 
 -- player passes it here and the personality is moved for real at birth.
 function Pokemon.forceShiny(data, mon, rng, otId)
   if type(mon) ~= "table" then return mon end
+  local generation=require('src.core.GameVersion').generation()
+  if generation==2 then mon.shiny=true end
+  if generation==3 then mon.isShiny=true end
   -- A GEN 3 POKEMON IS NOT MADE SHINY BY ITS DVs, because it has none.  Its
   -- personality and the trainer's id decide it, and Stats.shinyPersonality
   -- moves the half of the personality that decides nothing else -- so the
@@ -465,6 +474,20 @@ end
 --                             what an editor writes
 function Pokemon.isShiny(mon)
   if type(mon) ~= "table" then return false end
+  local generation = require("src.core.GameVersion").generation()
+  if generation == 2 and mon.shiny ~= nil then return not not mon.shiny end
+  if generation == 3 then
+    if mon.isShiny ~= nil then return not not mon.isShiny end
+    if require("src.mods.Runtime").wantsHook("shiny.roll") then
+      return require("src.pokemon.IdentityRolls").gen3Shiny(mon)
+    end
+    -- Split trainer IDs and the reference's trainerId alias are explicit
+    -- identity data too; a delegating hook must not be their only reader.
+    if mon.otSecretId ~= nil or (mon.otId == nil and mon.trainerId ~= nil) then
+      return require("src.pokemon.IdentityRolls").nativeGen3Shiny(
+        mon.personality, mon.otId or mon.trainerId, mon.otSecretId) or mon.shiny == true
+    end
+  end
   -- PERSONALITY FIRST, and this order is the whole correctness of it:
   -- Pokemon.new rolls DVs for every Pokemon including Hoenn's, so a Gen 3 mon
   -- has BOTH fields and asking `dvs` first sent it down Johto's branch, where
@@ -479,9 +502,6 @@ function Pokemon.isShiny(mon)
     -- a save editor's flag still counts, and so does a mon marked shiny
     -- before its OT was stamped
     return mon.shiny == true
-  end
-  if require('src.core.GameVersion').generation()==2 and mon.shiny~=nil then
-    return mon.shiny==true
   end
   if type(mon.dvs) == "table" then return Stats.isShiny(mon.dvs) end
   return mon.shiny == true

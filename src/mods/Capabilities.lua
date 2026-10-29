@@ -33,6 +33,7 @@ add("hooks", "123", "render.viewport render.window battle.overlay ui.naming.grid
 add("hooks", "12", "ui.pc.items")
 add("hooks", "45", "battle.status_hud_visible")
 add("hooks", "12", "intro.oak_speech.build")
+add("hooks", "23", "shiny.roll gender.roll")
 
 add("events", "12345", [[
   assets.transformed battle.ball_thrown battle.battler_switched battle.damage_dealt
