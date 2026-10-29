@@ -928,6 +928,7 @@ function Gen3Save.crosswalks(data)
       end
     end
   end
+  local bagConstants=data and data.constants or{}
   return { pokemonByIndex = pokemonByIndex, pokemonIndex = pokemonIndex,
            pokemonDex = pokemonDex,
            movesByIndex = movesByIndex, movesIndex = movesIndex,
@@ -935,6 +936,8 @@ function Gen3Save.crosswalks(data)
            -- ...and the records themselves, because writing the bag back
            -- needs to know which POCKET each item goes in (gItems[].pocket)
            itemDefs = (data and data.items) or {},
+           nativeBagData = data and{items=data.items,constants={
+             gen3Bag=bagConstants.gen3Bag,gen3RsBag=bagConstants.gen3RsBag}},
            -- ...and the maps by id, for the other direction: decode turns a
            -- group and a number into a map id, and the writer has to turn one
            -- back
@@ -1987,6 +1990,24 @@ function Gen3Save.applyBlocks(blocks, save, cw)
       for i = 1, #order do slots[i] = {} end
       local byName = {}
       for i, name in ipairs(order) do byName[name] = i end
+      local physical
+      if cw.nativeBagData then
+        physical={}
+        for p,name in ipairs(order)do
+          local rows=require('src.inventory.Gen3RsInventory').rows(save,cw.nativeBagData,name)
+          if not rows then physical=nil;break end
+          physical[p]=rows
+        end
+      end
+      if physical then
+        -- Preserve selected/reordered partial stacks, rather than exporting
+        -- their aggregate as one over-sized cartridge slot.
+        for p,rows in ipairs(physical)do
+          for _,row in ipairs(rows)do
+            slots[p][#slots[p]+1]={index=assert(cw.itemsIndex[row.id]),count=row.qty}
+          end
+        end
+      else
       for _, id in ipairs(sequence) do
         local index = cw.itemsIndex[id]
         local def = cw.itemDefs[id]
@@ -2012,6 +2033,7 @@ function Gen3Save.applyBlocks(blocks, save, cw)
             { what = "item", id = id,
               reason = "this item names no pocket, so there is no array for it" }
         end
+      end
       end
       for p, at in ipairs(bagLayout.pockets) do
         for slot = 0, bagLayout.capacities[p] - 1 do
@@ -2303,18 +2325,30 @@ function Gen3Save.decode(bytes, data)
   -- imported item a count in the tens of thousands.
   local bagKey = Gen3Save.encryptionKey(blocks.block2)
   local order = {}
-  for _, pocket in ipairs(Gen3Save.bag(blocks.block1, bagKey) or {}) do
+  local nativeNames={ITEM='ITEMS',KEY_ITEM='KEY_ITEMS',BALL='POKE_BALLS',TM_HM='TM_CASE',BERRY='BERRY_POUCH'}
+  local physical={format=1,version=Gen3Save.gameVersion,pockets={}}
+  for p, pocket in ipairs(Gen3Save.bag(blocks.block1, bagKey) or {}) do
+    local nativeName=nativeNames[Gen3Save.POCKET_ORDER[p]]
+    local rows={};physical.pockets[nativeName]=rows
     for _, slot in ipairs(pocket) do
       local id = cw.itemsByIndex[slot.item]
       if id then
         save.inventory[id] = (save.inventory[id] or 0) + slot.count
         order[#order + 1] = id
+        rows[#rows+1]={id=id,qty=slot.count}
       else
         warn(("unknown item %d in the bag"):format(slot.item))
       end
     end
   end
   save.bagOrder = order
+  -- This optional mirror is admitted only for supported edition data and
+  -- exact agreement with the canonical imported goods. Other editions keep
+  -- their existing representation.
+  local shadow={inventory=save.inventory,gen3RsBagSlots=physical}
+  if require('src.inventory.Gen3RsInventory').consistent(shadow,data)then
+    save.gen3RsBagSlots=physical
+  end
   local pcOrder = {}
   -- ...and the PC's quantities are stored PLAIN, which is why the same call
   -- reads them without the key applied to them (Gen3Save.bag leaves the pc

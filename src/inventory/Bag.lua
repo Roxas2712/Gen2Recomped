@@ -255,6 +255,9 @@ function Bag.canAdd(save,id,qty,data)
   if not(save and type(save.inventory)=='table')then return false end
   qty=qty or 1
   if type(qty)~='number'or qty~=qty or qty%1~=0 or qty<=0 or qty>999 then return false end
+  data=data or require('src.core.Data')
+  local handled,ok=require('src.inventory.Gen3RsInventory').canAdd(save,data,id,qty)
+  if handled then return ok end
   local shadow={inventory={},bagOrder={},gen3PyramidBag=save.gen3PyramidBag and true or nil}
   for key,value in pairs(save.inventory)do shadow.inventory[key]=value end
   for i,value in ipairs(save.bagOrder or{})do shadow.bagOrder[i]=value end

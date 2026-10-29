@@ -13,12 +13,15 @@ function M.open(owner,id,berry)
   if not M.available(game)then return false end
   if require('src.ui.Gen3BagMenu').isImportant(game,id)then return true end
   local held=(game.save.inventory or{})[id]or 0
+  local row=owner.selected and owner:selected()
+  local slot=row and row.id==id and row.rsSlot
+  if slot then held=math.min(held,row.qty)end
   if held<1 then return true end
   local def=game.data.items and game.data.items[id]
   game.stack:push(M.new(game,owner,{max=held,name=def and def.name or id,
     berry=berry==true or(def and def.pocket=='BERRY'),onCommit=function(qty)
       if qty<1 or qty%1~=0 or qty>((game.save.inventory or{})[id]or 0)then return false end
-      require('src.inventory.Bag').remove(game.save,id,qty,game.data)
+      if require('src.inventory.Bag').remove(game.save,id,qty,game.data,slot)==false then return false end
       owner:rebuild();return true
     end}))
   return true

@@ -62,8 +62,8 @@ local function buildItems(game, pocket)
 end
 
 local function selectedSlot(list,id)
-  local row=list and list.rs and list.selected and list:selected()
-  return row and row.id==id and row.rsSlot or nil
+  local row=list and list.selected and list:selected()
+  return type(row)=='table'and row.id==id and row.rsSlot or nil
 end
 local function consume(game, id, list)
   Bag.remove(game.save, id, 1, game.data, selectedSlot(list,id))

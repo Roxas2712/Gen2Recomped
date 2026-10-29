@@ -11,9 +11,12 @@ local function integer(n)
 end
 local function badge(id) return type(id)=='string' and id:find('BADGE',1,true) end
 local function context(data,save)
-  local spec=data and data.constants and data.constants.gen3RsBag
-  if not (type(spec)=='table' and spec.format==1
-    and (spec.version=='ruby' or spec.version=='sapphire')) or save.gen3PyramidBag then return end
+  local constants=data and data.constants
+  local spec=constants and constants.gen3RsBag
+  local rs=type(spec)=='table'and spec.format==1 and(spec.version=='ruby'or spec.version=='sapphire')
+  local emerald=not rs and constants and type(constants.gen3Bag)=='table'and constants.gen3Bag.version=='emerald'
+  if emerald then spec=constants.gen3Bag end
+  if not(rs or emerald)or save.gen3PyramidBag then return end
   local configured=data.constants.gen3Bag and data.constants.gen3Bag.pockets or {}
   local signature={}
   for _,p in ipairs({'ITEM','BALL','TM_HM','BERRY','KEY_ITEM'})do signature[#signature+1]=tostring(configured[p])end
@@ -22,7 +25,15 @@ local function context(data,save)
   if cached and cached.items==data.items and cached.spec==spec and cached.version==spec.version
     and cached.signature==signature then return cached end
   local load=Loader.new(spec.version)
-  local policy=load('src.core.game3.profiles.rs.bag')
+  local policy
+  if emerald then
+    -- Independent metadata adapter, verified against Gen1Recomp fb7b0366
+    -- profiles/emerald/bag.lua. Capacities still come from this ROM's layout.
+    for host in pairs(HOST)do if not integer(configured[host])or configured[host]<1 then return end end
+    policy={pockets={'ITEMS','POKE_BALLS','TM_CASE','BERRY_POUCH','KEY_ITEMS'},capacity={},
+      slotMax={default=99,BERRY_POUCH=999},splitSlots={ITEMS=true,POKE_BALLS=true,KEY_ITEMS=true},
+      sortHmsFirst={},sortById={TM_CASE=true,BERRY_POUCH=true}}
+  else policy=load('src.core.game3.profiles.rs.bag')end
   local byNumber,byId={},{}
   for id,def in pairs(data.items or {}) do
     if type(id)=='string' and integer(def.index) and def.index>0 then
@@ -181,6 +192,13 @@ local function mutation(save,data,id,qty,kind,selection)
 end
 function M.add(save,data,id,qty)return mutation(save,data,id,qty,'add')end
 function M.remove(save,data,id,qty,selection)return mutation(save,data,id,qty,'remove',selection)end
+function M.canAdd(save,data,id,qty)
+  local c=context(data,save)
+  if not c or badge(id)or not c.byId[id]then return false end
+  if not integer(qty)or qty<1 then return true,false end
+  local bag=project(c,save)
+  return true,bag~=nil and c.native.canAdd(bag,id,qty)or false
+end
 function M.swap(save,data,first,second)
   local c=context(data,save);if not c then return false end
   local bag=project(c,save)
