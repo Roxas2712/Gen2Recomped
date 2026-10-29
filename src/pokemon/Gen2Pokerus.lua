@@ -6,6 +6,7 @@ local function value(mon)
   if n~=n or math.abs(n)==math.huge then return 0 end
   return math.max(0,math.floor(n))%256
 end
+function P.doublesStatExp(mon)return value(mon)~=0 end
 local function write(party,index,byte,source)
   local mon=party[index];mon.pokerus=byte
   local Runtime=require('src.mods.Runtime')
