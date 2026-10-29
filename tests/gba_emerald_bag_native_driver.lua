@@ -41,12 +41,13 @@ return function(game)
  assert(game.stack:top()==world and closed==1);sameExceptClock(before)
  local items,keys={},{}
  for id,def in pairs(game.data.items)do
-  if def.pocket=='ITEM'and not def.keyItem and(tonumber(def.importance)or 0)==0 then items[#items+1]=id end
+  if def.pocket=='ITEM'and(tonumber(def.index)or 0)>0 and not def.keyItem
+   and(tonumber(def.importance)or 0)==0 then items[#items+1]=id end
   if def.pocket=='KEY_ITEM'and(tonumber(def.registrability)or 0)>0 then keys[#keys+1]=id end
  end
  local function byIndex(a,b)return game.data.items[a].index<game.data.items[b].index end
  table.sort(items,byIndex);table.sort(keys,byIndex);assert(#items>=12 and#keys>0)
- for i=1,12 do assert(Bag.add(game.save,items[i],1,game.data))end
+ for i=1,12 do assert(Bag.add(game.save,items[i],1,game.data),'Cannot prepare own real item '..items[i])end
  for _,entry in ipairs{{'POKE_BALL',12},{'ORAN_BERRY',999},{'TM01',1},{'HM01',1},{keys[1],1}}do
   assert(Bag.add(game.save,entry[1],entry[2],game.data))
  end
