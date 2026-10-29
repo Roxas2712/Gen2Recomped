@@ -448,6 +448,9 @@ function Evolution.learnMoves(game,mon,moves,onDone)
     end
     local mdef = game.data.moves[moveId]
     if not mdef then return nextStep() end
+    if require('src.core.GameVersion').isGen2() then
+      return (game.learnMoveOn or require('src.core.Game').learnMoveOn)(game,mon,moveId,nextStep)
+    end
     local name = mon.nickname or def.name
     if #mon.moves < 4 then
       table.insert(mon.moves, { id = moveId, pp = mdef.pp })

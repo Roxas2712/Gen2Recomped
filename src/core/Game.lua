@@ -21,6 +21,11 @@ local Screens = require("src.ui.Screens")
 
 local Game = {}
 
+-- Source Game2 spelling; the native field paths use the same GSC learner.
+function Game:learnMoveOn(mon,moveId,onDone)
+  return require('src.pokemon.Gen2MoveLearning').teach(self,mon,moveId,onDone)
+end
+
 -- Native input sees the live world beneath an empty Gen2 overlay stack.
 local function activeTop(stack)
   if not stack then return nil end

@@ -32,6 +32,20 @@ Native sparse-slot traversal and source array traversal retain their respective
 policies. Source OT stamping returns the actual Pokemon; the existing native
 battle stamping method retains its own return and metadata behavior.
 
+`src.core.Game2:learnMoveOn(mon, moveId, onDone)` is the public GSC field
+teaching entry. Native TM/HM, Rare Candy and evolution/reminder field paths
+dispatch through that same method. A free slot writes once and completes after
+its message; a known move reports false. A full set uses the actual native
+Gen2 four-row picker, protects HMs, and supports cancellation and the stop/retry
+loop. `src.ui.gen2.ForgetMoveList` resolves to the native list module, so a
+presentation wrapper reaches the picker without editing the mod. These field
+contracts do not implement the separate source Battle turn/event interface.
+
+`tests/engine/gen2_field_learning.lua` drives the actual text/choice/picker
+stack through free, known, full, HM-refusal and cancellation paths. It also
+checks that sequential native field learning reaches a source wrapper and that
+loader teardown restores the original native method.
+
 `tests/engine/gen2_source_birth.lua` loads native and source consumers side by
 side, checks their distinct constructor contracts across the supported Gen2
 editions, and exercises the complete held-item byte domain. The ordinary
