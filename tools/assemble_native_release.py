@@ -79,8 +79,16 @@ The Switch preview does not include the stable channel's OTA updater.
 
 Build verification is recorded separately from launch and physical-device evidence.
 This publication does not claim a successful game session on a phone or console.
-Mobile/console mod networking and extended-upvalue runtime qualification remain open.
 """
+    qualified_mobile = all(next(b for b in builds if b['platform'] == platform).get('extendedUpvaluesQualified')
+                           for platform in ('android', 'ios'))
+    if qualified_mobile:
+        notes += ('Android and iOS contain qualified experimental 120-upvalue runtimes. '
+                  'iOS remains interpreter-only and retains its standard restriction on dynamic FFI callbacks. '
+                  'See the per-platform build metadata for emulator/simulator scope. '
+                  'Switch extended-upvalue qualification and complete device/mod gameplay acceptance remain open.\n')
+    else:
+        notes += 'Mobile/console mod networking and extended-upvalue runtime qualification remain open.\n'
     (out / "README-Testrelease.txt").write_text(notes)
     files = sorted(out.iterdir())
     (out / "SHA256SUMS.txt").write_text("".join(digest(path) + "  " + path.name + "\n" for path in files))
