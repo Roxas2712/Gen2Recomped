@@ -176,7 +176,7 @@ assert(loadfile(root..'/src/core/chip_worker.lua'))()
   -- construction or after a completed buffer has occupied the worker.
   local calls=0
   local long=Asm.song({tempo=0x100,channels={{hw=1,program={
-    {duty=2},{notetype={speed=1,volume=12,fade=0}},{octave=4},{note='C',len=64}}}}})
+    {duty=2},{notetype={speed=1,volume=12,fade=0}},{octave=4},{note='C',len=16}}}}})
   assert(Synth.renderEffectData(data,long,{},function()calls=calls+1;return calls==3 end)==nil and calls==3,
     'long chip synthesis did not cooperatively abandon cancelled work')
   local ordinary=Synth.renderEffectData(data,beep,{})
