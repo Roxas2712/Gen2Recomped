@@ -20,6 +20,15 @@ local GameVersion = require("src.core.GameVersion")
 local ModRuntime = require("src.mods.Runtime")
 
 local PikachuFollower = {}
+-- Universal source mods import this shared controller even on Gen2. Expose
+-- the same native Gen2 predicate setter as src.world.gen2.Follower there.
+-- Resolve by the current edition, not module-load time: Gen1 consumers must
+-- retain their existing spawn gate/shim across title switches in one process.
+setmetatable(PikachuFollower, { __index = function(_, key)
+  if key == "setShouldSpawn" and GameVersion.isGen2() then
+    return require("src.world.OptionalFollower").setShouldSpawn
+  end
+end })
 
 local INDEX = 99 -- synthetic object index, clear of any map's real objects
 

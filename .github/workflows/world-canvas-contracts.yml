@@ -1,0 +1,25 @@
+name: Verified world canvas contracts
+on:
+  pull_request:
+    paths:
+      - 'src/render/WorldCanvasContracts.lua'
+      - 'src/render/Renderer.lua'
+      - 'src/mods/Loader.lua'
+      - 'tests/engine/world_canvas_contracts.lua'
+      - 'tests/engine/world_canvas_battle_contracts.lua'
+      - '.github/workflows/world-canvas-contracts.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Producer ownership and native compositor contract
+        run: |
+          luajit tests/engine/world_canvas_contracts.lua
+          luajit tests/engine/world_canvas_battle_contracts.lua
+          luajit tests/engine/legacy_shader_compat.lua

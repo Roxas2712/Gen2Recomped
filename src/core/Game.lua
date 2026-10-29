@@ -143,6 +143,12 @@ function Game:load()
   -- seed=true keeps what entry chunks wrote through mod.save before any
   -- save existed; the skeleton fires save.created exactly once
   self:adoptSave(self.save, true)
+  -- GSC creation callbacks may sync other display settings from the live
+  -- pipeline ladder. Restore it first, as the source Game2 boot does;
+  -- otherwise that sync replaces a saved camera level with boot's zero.
+  if require("src.core.GameVersion").isGen2() then
+    require("src.render.Pipelines").applyOptions(self.save.options)
+  end
   ModRuntime.emit("save.created", { save = self.save })
   -- apply the persisted audio + display options before anything plays
   self:applyOptions(self.save.options)
@@ -1263,9 +1269,11 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex then
+      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex
+          and ScreenSpaceUI.windowStackState(state) then
         if renderVisible(self.stack,state) and state.draw then windowUIOverlay=true end
-      elseif nativeWindowStack and state~=self.overworld then
+      elseif nativeWindowStack and state~=self.overworld
+          and ScreenSpaceUI.windowStackState(state) then
         -- Paint this native state once at output resolution below. Keeping
         -- its controller on the native stack does not require rasterising
         -- vector menus and text through the cartridge-sized canvas.
@@ -1380,7 +1388,7 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
   if Renderer.gen2FrameManaged and (windowUI or nativeWindowStack) then
     Renderer.gen2WindowDraw = function(viewport)
       if windowUI then
-        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,false)
+        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
         if windowUIOverlay then ScreenSpaceUI.drawNativeStack(self.stack,scene,windowUIIndex+1,
           self.overworld,Renderer,viewport,false) end
       else ScreenSpaceUI.drawNativeStack(self.stack,scene,drawFrom,self.overworld,
@@ -1668,6 +1676,143 @@ function Game:cycleGen4CameraTilt()
   return true
 end
 
+-- Public display-control seam shared by native and source Gen2 mods.
+-- Keeping it separate from keypressed lets a renderer claim its own ladder
+-- before the native tilt branch while retaining input.key and screen ownership.
+function Game:hotkey(key)
+  if key == "f1" then
+    -- QUICK SAVE ONLY FROM FREE ROAM.  Mid-battle (or under any menu or
+    -- cutscene) the save table is half way through a change, and a frozen
+    -- battle is exactly when a player mashes keys.
+    if self.overworld and activeTop(self.stack) == self.overworld then
+      self:writeSave()
+    end
+    return true
+  elseif key == "f2" then
+    local loaded, recovered = SaveData.load()
+    if loaded then self:continueGame(loaded, recovered) end
+    return true
+  elseif key == "1" then
+    self:_cycleSpeed(1)
+    return true
+  elseif key == "-" then
+    self:zoomStep(-1)
+    return true
+  elseif key == "=" then
+    self:zoomStep(1)
+    return true
+  elseif key == "2" then
+    -- cycle COLORS (GBC / OG / OG INV / GBC INV / CLASSIC); the pack change
+    -- forces Game.overworld:reloadMap, which rebuilds the live NPC array, so
+    -- hold it while a warp/transition or an on-screen scripted cutscene is
+    -- driving the overworld rather than tear the escort's NPCs out mid-move
+    local ow = self.overworld
+    local top = activeTop(self.stack)
+    local busy = ow and (ow.transitioning
+      or (top == ow and (
+           (ow.runner and ow.runner.isRunning and ow.runner:isRunning())
+        or (ow.scriptMoves and #ow.scriptMoves > 0)
+        or ow.engaging or ow.emote)))
+    if not busy then
+      local PaletteFX = require("src.render.PaletteFX")
+      PaletteFX.writeColorOption(self.save.options, PaletteFX.cycleMode())
+      self:writeOptions()
+    end
+    return true
+  elseif key == "3" then
+    -- cycle TILT OFF → 15 → 35 → 50 → OFF (mnemonic: 3D), free-roam only
+    local Tilt = require("src.render.Tilt")
+    if Tilt.gateOK(activeTop(self.stack), self.overworld) then
+      -- ON A SINNOH MAP THIS KEY MOVES THE GEN 4 CAMERA INSTEAD.
+      --
+      -- There are two tilts in this engine and they are not alternatives: the
+      -- one above is the Gen 1/2 warp applied to a finished flat picture, and
+      -- `Gen4Camera` is the actual field camera the cartridge's own header
+      -- names.  Pressing "3" in Sinnoh used to run the first, which warped a
+      -- world that had already been projected and dragged the ground out from
+      -- under the sprites -- reported as *"messes up the placement of sprites
+      -- and isnt changing the in game camera tilt/angle"*.  Both complaints,
+      -- one cause.
+      -- LIFTED INTO A METHOD so the R button can step the same ladder without
+      -- a second copy of it -- see `Game:cycleGen4CameraTilt`.
+      if self:cycleGen4CameraTilt() then
+        -- handled
+      else
+        self.save.options.tilt = Tilt.cycle()
+      end
+      self:writeOptions()
+    end
+    return true
+  elseif key == "," or key == "." or key == ";" or key == "'" then
+    -- THE ORBIT CONTROLS, and they exist only where there is a camera to orbit.
+    --
+    -- Reported from play: *"theres no free movement or orbital camera"*.  The
+    -- free camera was pinned to the player's own facing, so it could only ever
+    -- look the way they were walking -- never AT them, never round a building.
+    --
+    -- Four keys rather than a modifier because the arrows already move the
+    -- player, and these two pairs sit together under the right hand.  They do
+    -- NOTHING unless the tilt ladder is on `third` or `first`, so they stay free
+    -- for everything else in the engine and on every other cartridge.
+    local ow = self.overworld
+    local renderer = ow and ow.map and ow.map.renderer
+    local ground = renderer and renderer.gen4Ground
+    local view = ground and ground.view3d
+    if view and view.isFree and view:isFree() and view.orbit then
+      local Gen4View = require("src.render.Gen4View")
+      if key == "," then view:orbit(-Gen4View.ORBIT_YAW_STEP, 0)
+      elseif key == "." then view:orbit(Gen4View.ORBIT_YAW_STEP, 0)
+      elseif key == ";" then view:orbit(0, Gen4View.ORBIT_RISE_STEP)
+      else view:orbit(0, -Gen4View.ORBIT_RISE_STEP) end
+      -- The ground places the camera from the player every frame, so nothing
+      -- has to be redrawn here -- the next `follow` reads the new angles.
+    end
+    return true
+  elseif key == "4" then
+    -- cycle ZOOM through every integer level (survey → FIT → close-up → wrap)
+    local Zoom = require("src.render.Zoom")
+    if Zoom.gateOK(activeTop(self.stack), self.overworld) then
+      self.save.options.zoom = Zoom.cycle(Renderer:fitScale())
+      self:writeOptions()
+    end
+    return true
+  elseif key == "5" then
+    -- cycle GBC FX OFF → 1 → 2 → 3 → 4 (unlit-GBC ladder); always on
+    -- desktop.  Mobile refuses the present shader (issue #136).
+    local GBCFX = require("src.render.GBCFX")
+    if not GBCFX.isSupported() then return true end
+    self.save.options.gbcfx = GBCFX.cycle()
+    self:writeOptions()
+    return true
+  end
+  -- Mod render pipelines claim their hotkeys last, so one can never shadow
+  -- an engine display key however a mod declares it (12 §rendering
+  -- pipelines).  syncOptions writes the whole ladder back, including the
+  -- tilt exclusion a world pipeline forces.
+  local Pipelines = require("src.render.Pipelines")
+  if Pipelines.hotkey(key, activeTop(self.stack), self.overworld) then
+    Pipelines.syncOptions(self.save.options)
+    require("src.render.Tilt").setLevel(self.save.options.tilt or 0)
+    self:writeOptions()
+    return true
+  end
+  return false
+end
+
+-- Gen2's persistent world has an empty overlay stack during free roam.
+-- Return the actual native field owner only while it accepts menu input;
+-- transitions, scripts, moving players and overlays keep their existing gate.
+function Game:pipelineGate()
+  local world = self.overworld or self.world
+  if not (world and world.map) then return nil, nil end
+  local top = self.stack and self.stack:top()
+  if top then return top, world end
+  if type(world.acceptsMenuInput) == 'function' and not world:acceptsMenuInput() then
+    return nil, world
+  end
+  return activeTop(self.stack) or world, world
+end
+
 local function keypressedBody(self, key)
   -- ...ahead of the delegation below, which is unconditional.
   if key == "f8" then
@@ -1694,122 +1839,10 @@ local function keypressedBody(self, key)
     self.stack:push(require("src.dev.Console").new(self))
     return
   end
-  if key == "f1" then
-    -- QUICK SAVE ONLY FROM FREE ROAM.  Mid-battle (or under any menu or
-    -- cutscene) the save table is half way through a change, and a frozen
-    -- battle is exactly when a player mashes keys.
-    if self.overworld and activeTop(self.stack) == self.overworld then
-      self:writeSave()
-    end
-    return
-  elseif key == "f2" then
-    local loaded, recovered = SaveData.load()
-    if loaded then self:continueGame(loaded, recovered) end
-    return
-  elseif key == "1" then
-    self:_cycleSpeed(1)
-    return
-  elseif key == "-" then
-    self:zoomStep(-1)
-    return
-  elseif key == "=" then
-    self:zoomStep(1)
-    return
-  elseif key == "2" then
-    -- cycle COLORS (GBC / OG / OG INV / GBC INV / CLASSIC); the pack change
-    -- forces Game.overworld:reloadMap, which rebuilds the live NPC array, so
-    -- hold it while a warp/transition or an on-screen scripted cutscene is
-    -- driving the overworld rather than tear the escort's NPCs out mid-move
-    local ow = self.overworld
-    local top = activeTop(self.stack)
-    local busy = ow and (ow.transitioning
-      or (top == ow and (
-           (ow.runner and ow.runner.isRunning and ow.runner:isRunning())
-        or (ow.scriptMoves and #ow.scriptMoves > 0)
-        or ow.engaging or ow.emote)))
-    if not busy then
-      local PaletteFX = require("src.render.PaletteFX")
-      PaletteFX.writeColorOption(self.save.options, PaletteFX.cycleMode())
-      self:writeOptions()
-    end
-    return
-  elseif key == "3" then
-    -- cycle TILT OFF → 15 → 35 → 50 → OFF (mnemonic: 3D), free-roam only
-    local Tilt = require("src.render.Tilt")
-    if Tilt.gateOK(activeTop(self.stack), self.overworld) then
-      -- ON A SINNOH MAP THIS KEY MOVES THE GEN 4 CAMERA INSTEAD.
-      --
-      -- There are two tilts in this engine and they are not alternatives: the
-      -- one above is the Gen 1/2 warp applied to a finished flat picture, and
-      -- `Gen4Camera` is the actual field camera the cartridge's own header
-      -- names.  Pressing "3" in Sinnoh used to run the first, which warped a
-      -- world that had already been projected and dragged the ground out from
-      -- under the sprites -- reported as *"messes up the placement of sprites
-      -- and isnt changing the in game camera tilt/angle"*.  Both complaints,
-      -- one cause.
-      -- LIFTED INTO A METHOD so the R button can step the same ladder without
-      -- a second copy of it -- see `Game:cycleGen4CameraTilt`.
-      if self:cycleGen4CameraTilt() then
-        -- handled
-      else
-        self.save.options.tilt = Tilt.cycle()
-      end
-      self:writeOptions()
-    end
-    return
-  elseif key == "," or key == "." or key == ";" or key == "'" then
-    -- THE ORBIT CONTROLS, and they exist only where there is a camera to orbit.
-    --
-    -- Reported from play: *"theres no free movement or orbital camera"*.  The
-    -- free camera was pinned to the player's own facing, so it could only ever
-    -- look the way they were walking -- never AT them, never round a building.
-    --
-    -- Four keys rather than a modifier because the arrows already move the
-    -- player, and these two pairs sit together under the right hand.  They do
-    -- NOTHING unless the tilt ladder is on `third` or `first`, so they stay free
-    -- for everything else in the engine and on every other cartridge.
-    local ow = self.overworld
-    local renderer = ow and ow.map and ow.map.renderer
-    local ground = renderer and renderer.gen4Ground
-    local view = ground and ground.view3d
-    if view and view.isFree and view:isFree() and view.orbit then
-      local Gen4View = require("src.render.Gen4View")
-      if key == "," then view:orbit(-Gen4View.ORBIT_YAW_STEP, 0)
-      elseif key == "." then view:orbit(Gen4View.ORBIT_YAW_STEP, 0)
-      elseif key == ";" then view:orbit(0, Gen4View.ORBIT_RISE_STEP)
-      else view:orbit(0, -Gen4View.ORBIT_RISE_STEP) end
-      -- The ground places the camera from the player every frame, so nothing
-      -- has to be redrawn here -- the next `follow` reads the new angles.
-    end
-    return
-  elseif key == "4" then
-    -- cycle ZOOM through every integer level (survey → FIT → close-up → wrap)
-    local Zoom = require("src.render.Zoom")
-    if Zoom.gateOK(activeTop(self.stack), self.overworld) then
-      self.save.options.zoom = Zoom.cycle(Renderer:fitScale())
-      self:writeOptions()
-    end
-    return
-  elseif key == "5" then
-    -- cycle GBC FX OFF → 1 → 2 → 3 → 4 (unlit-GBC ladder); always on
-    -- desktop.  Mobile refuses the present shader (issue #136).
-    local GBCFX = require("src.render.GBCFX")
-    if not GBCFX.isSupported() then return end
-    self.save.options.gbcfx = GBCFX.cycle()
-    self:writeOptions()
-    return
-  end
-  -- Mod render pipelines claim their hotkeys last, so one can never shadow
-  -- an engine display key however a mod declares it (12 §rendering
-  -- pipelines).  syncOptions writes the whole ladder back, including the
-  -- tilt exclusion a world pipeline forces.
-  local Pipelines = require("src.render.Pipelines")
-  if Pipelines.hotkey(key, activeTop(self.stack), self.overworld) then
-    Pipelines.syncOptions(self.save.options)
-    require("src.render.Tilt").setLevel(self.save.options.tilt or 0)
-    self:writeOptions()
-    return
-  end
+  -- Existing public callers can invoke Game.keypressed(session, key) on a
+  -- native session table without inheriting Game. Keep that class-call path
+  -- while allowing a session/mod's own display-key override to take priority.
+  if (self.hotkey or Game.hotkey)(self, key) then return end
   Input:keypressed(key)
 end
 

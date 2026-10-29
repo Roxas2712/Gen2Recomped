@@ -1635,6 +1635,7 @@ local function notifyCompatibilityReset()
 end
 
 function Loader:load(data)
+  require("src.render.WorldCanvasContracts").reset()
   local paletteContext=package.loaded["src.render.PaletteFX"]
   if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]
@@ -1658,6 +1659,7 @@ function Loader:load(data)
   retireCompatibilityMaps()
   self.baseData = data
   require("src.core.Gen2SpeciesNames").publish(data)
+  require("src.world.Gen2SpriteMetadata").publish(data)
   require("src.pokemon.Gen2MonFields").publish(data)
   require("src.pokemon.Gen2Mail").load(data)
   require("src.compat.gen2.Decorations").useRegistry(data)
@@ -2022,6 +2024,8 @@ function Loader:load(data)
   -- from the next image load on.  No mods means an empty search path,
   -- which resolves every path to itself (14 §asset resolution).
   Assets.installLoader(self)
+  local canvasContracts = require("src.render.WorldCanvasContracts").bind(self, data)
+  if canvasContracts > 0 then Logger.info("verified published world-canvas contracts: %d", canvasContracts) end
   self.events:emit("mods.loaded", { loader = self, data = data })
   self.initialized = true
   return #self.errors == 0
@@ -2065,6 +2069,7 @@ end
 -- boots) ran on a modded engine whose mod instance nothing drives any more,
 -- and the next Play loaded every mod on top of what the last one left.
 function Loader.teardown()
+  require("src.render.WorldCanvasContracts").reset()
   local paletteContext=package.loaded["src.render.PaletteFX"]
   if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]

@@ -8,7 +8,17 @@ local Scope = require('src.render.GraphicsScope')
 local M = {}
 
 function M.install(Screen)
-  function Screen:drawsWidescreen() return Version.isGen2() end
+  local nativeDraw=Screen.draw
+  local nativeWindowDraw
+  function Screen:drawsWidescreen()
+    -- A shared draw wrapper owns the classic canvas protocol: it may clear
+    -- that canvas and submit a world override before Renderer:endFrame.
+    -- Calling drawScene directly would bypass it, while replaying it in the
+    -- late window pass submits the override after its composition boundary.
+    -- An explicitly replaced window drawer still owns its native protocol.
+    return Version.isGen2() and (self.draw==nativeDraw
+      or self.drawWidescreen~=nativeWindowDraw)
+  end
 
   function Screen:panelSize() return self:uiSize() end
 
@@ -39,5 +49,6 @@ function M.install(Screen)
     end)
     if not ok then error(why, 0) end
   end
+  nativeWindowDraw=Screen.drawWidescreen
 end
 return M

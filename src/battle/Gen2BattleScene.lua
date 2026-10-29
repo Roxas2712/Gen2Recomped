@@ -24,7 +24,11 @@ function M.install(Screen)
   -- intro slide-in offset: 2 px per frame, so 144 px over 72 frames
   local slide = (self.introSlide or 0) * Timing.BATTLE_SLIDE_PX_PER_FRAME
 
-  if self:colorMode() then
+  -- A staged world already owns the colour surface. Its native GSC UI must
+  -- retain RGB HP/EXP tiles rather than feed grayscale through the classic
+  -- whole-panel SGB pass (which a presentation provider may recolour too).
+  -- Keep the ordinary cartridge panel on its existing zone pipeline.
+  if self:colorMode() and not self:worldStaged() then
     -- SGB pipeline: gray BG canvas -> (wavy) -> zone recolor with the
     -- BGP fade -> mon pics -> OAM anim sprites (never BGP-faded)
     local g = love.graphics

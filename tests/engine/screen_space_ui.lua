@@ -56,6 +56,12 @@ T.eq(UI.hasNativeStack(filtered,{states={world,hidden}},1,world),false,'world an
 love.graphics.setCanvas(output);love.graphics.setColor(.2,.3,.4,1)
 UI.drawNativeStack(filtered,scene,1,world,renderer,viewport,false)
 T.same(trace,{'native','front'},'world stays single-pass and native stack draw order is retained')
+local classic={draw=function()error('classic owner replayed in window pass')end,
+ drawsWidescreen=function()return false end,drawWidescreen=function()end}
+T.eq(UI.hasNativeStack(filtered,{states={world,classic}},1,world),false,'declined explicit window protocol keeps its classic canvas owner')
+scene.states={world,classic,native,front};trace={}
+UI.drawNativeStack(filtered,scene,1,world,renderer,viewport,false)
+T.same(trace,{'native','front'},'mixed native overlays never replay an earlier classic owner')
 T.eq(love.graphics.getCanvas(),output,'native pass restores output target')
 T.eq(select(1,love.graphics.getColor()),.2,'native pass restores caller color')
 trace={};UI.drawNativeStack(filtered,scene,4,world,renderer,viewport,false)

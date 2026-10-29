@@ -48,13 +48,15 @@ local Renderer = {}
 -- are painted into their canvases (LegacyShaderCompat). Ordinary world images
 -- are therefore upright too. A producer of an explicitly unconverted image
 -- can still request the old presentation convention.
-function Renderer.mirrorsWorldOverride(pipeline)
+function Renderer.mirrorsWorldOverride(pipeline, canvas)
   if not love.getVersion or love.getVersion() < 12 then return false end
-  pipeline = pipeline or {}
-  if pipeline.worldOrientation == "native" or pipeline.worldFormat == "renderData.v1" then
+  if pipeline and (pipeline.worldOrientation == "native" or pipeline.worldFormat == "renderData.v1") then
     return false
   end
-  return pipeline.worldOrientation == "legacy"
+  if pipeline and pipeline.worldOrientation == "legacy" then return true end
+  local contracts=require("src.render.WorldCanvasContracts")
+  if pipeline then return contracts.orientation(pipeline)=="legacy" end
+  return contracts.canvasOrientation(canvas)=="legacy"
 end
 
 -- The Game Boy surface.  WIDTH/HEIGHT are the classic dimensions every
@@ -166,7 +168,7 @@ function Renderer:setWorldOverride(canvas, pipeline)
   -- to the 2D path rather than trust it.
   if canvas ~= nil and not isCanvas(canvas) then canvas = nil end
   self.worldOverride = canvas
-  self.worldOverrideMirrored = canvas ~= nil and Renderer.mirrorsWorldOverride(pipeline)
+  self.worldOverrideMirrored = canvas ~= nil and Renderer.mirrorsWorldOverride(pipeline, canvas)
 end
 
 -- Integer framebuffer pixels per GB pixel that fit the window.  Zoom /

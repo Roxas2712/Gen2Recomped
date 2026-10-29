@@ -1,0 +1,41 @@
+name: Native Gen2 people and sprite definitions
+on:
+  pull_request:
+    paths:
+      - 'src/world/NPC.lua'
+      - 'src/world/OverworldController.lua'
+      - 'src/world/OptionalFollower.lua'
+      - 'src/world/PikachuFollower.lua'
+      - 'src/world/Gen2SpriteMetadata.lua'
+      - 'src/render/SpriteRenderer.lua'
+      - 'src/core/Data.lua'
+      - 'src/core/Game.lua'
+      - 'src/mods/Loader.lua'
+      - 'tests/engine/gen2_people_sprites.lua'
+      - 'tests/engine/gen2_world_palettes.lua'
+      - 'tests/engine/gen2_atlas_consumer.lua'
+      - 'tests/engine/gen2_follower_predicate.lua'
+      - 'tests/engine/native_display_hotkey.lua'
+      - 'tests/engine/battle_colors_bug484.lua'
+      - '.github/workflows/gen2-people-sprites.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Actual native object, source consumer, and public NPC regressions
+        run: |
+          luajit tests/engine/gen2_people_sprites.lua
+          luajit tests/engine/gen2_world_palettes.lua
+          luajit tests/engine/gen2_atlas_consumer.lua
+          luajit tests/engine/gen2_follower_predicate.lua
+          luajit tests/engine/native_display_hotkey.lua
+          luajit tests/engine/battle_colors_bug484.lua
+          luajit tests/engine/api3_npc.lua
+          luajit tests/engine/legacy_npc_controls.lua
+          luajit tests/engine/gen2_alias_world_reads.lua

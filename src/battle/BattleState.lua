@@ -13674,6 +13674,7 @@ function BattleState:drawHUDs(slide)
   -- per-pixel tint (grayFill) -- otherwise GREENBAR's red-channel-0 fill
   -- double-applies and the zone shade shader maps the whole bar to black (#229).
   local grayFill = self:colorMode()
+    and not (GameVersion.isGen2() and self:worldStaged())
   local showStatus = self:statusHUDVisible()
   local barData = self.data
   local fx = self.fx
@@ -14155,7 +14156,6 @@ end
 
 require('src.battle.Gen2MovePresentation').install(BattleState)
 require('src.battle.Gen2BattleScene').install(BattleState)
-require('src.battle.Gen2BattleWindow').install(BattleState)
 Gen2BattleView.install(BattleState, {
   load = getImage,
   palette = monPalette,
@@ -14242,5 +14242,10 @@ require('src.battle.Gen2PicturePresentation').install(BattleState)
 require('src.battle.Gen2PictureArt').install(BattleState,{load=getImage,palette=monPalette,path=imagePathOf,
   source=function(image)return imageMeta[image]end})
 Gen2Vanish.install(BattleState)
+
+-- Capture the completed native draw owner, after native view installers.
+-- Later classic draw wrappers and explicit window drawers keep distinct
+-- composition boundaries without changing this battle's controller.
+require('src.battle.Gen2BattleWindow').install(BattleState)
 
 return BattleState

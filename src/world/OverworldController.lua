@@ -259,6 +259,14 @@ end
 setmetatable(OverworldState, {
   __index = function(world, key)
     if key == "playerState" then return world:movementState() end
+    -- Source Gen2 renderers ask Palettes.bgSet(world.palettes, map.def,
+    -- world.daytime). Share Data's live, owner-bound view so special-map
+    -- palettes and roof colors follow the native bake without a second cache.
+    -- An authored raw world.palettes field still takes ordinary Lua precedence.
+    if key == "palettes" and GameVersion.isGen2() then
+      local data = Game and Game.data
+      return data and data.gen2Palettes
+    end
     if (key == "daytime" or key == "flashUsed") and GameVersion.isGen2() and world.map then
       if key == "daytime" then return PaletteFX.effectiveGen2Tod() end
       if key == "flashUsed" then return Game and Game.save and Game.save.flashLit == true or false end
@@ -1159,7 +1167,7 @@ end
 -- across maps: the player, and each sheet cached on first use behind an `if
 -- not self.<name>` guard.  Anything added to that pattern later belongs here.
 local DATA_DERIVED = {
-  "player",
+  "player", "peopleFromMap", "breedmonSprites", "breedmonSources",
   "birdSprite", "flyBirdImg", "flyBirdQuads", "flyMonImg",
   "healMachineImg", "healMachineQuads",
   "cutTreeImg", "cutTreeQuads",
@@ -1851,6 +1859,9 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     -- again (Field_InitMapObjectsFromZoneEventData reads them from ROM)
     require("src.script.Gen4Commands").restorePlacedObjects(self.map.def)
   end
+  if GameVersion.isGen2() then
+    self:rebuildPeople({ mapEntry = true })
+  else
   for _, obj in ipairs(self.map.def.objects or {}) do
     if objectVisible(Game.save, mapId, obj) then
       local npc = pooledNPC(self.npcPool, Game.data, mapId, obj)
@@ -1860,6 +1871,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
       npc.gen3ScriptFrozen = nil
       table.insert(self.npcs, npc)
     end
+  end
   end
   -- ...and whatever the player has PUT OUT here, which is not in the map's
   -- object list because it was never in the cartridge's either
@@ -3501,6 +3513,72 @@ function OverworldState:rebuildEntities()
   for _, npc in ipairs(self.npcs) do out[#out + 1] = npc end
   for _, e in ipairs(extras) do out[#out + 1] = e end
   self.entities = out
+end
+
+-- The day-care yard uses the deposited species' actual imported icon,
+-- independently of shared overworld sprite replacements. Source consumers can
+-- decorate this definition; the normal native object resolver also calls it.
+function OverworldState:breedmonSpriteDef(species)
+  if not GameVersion.isGen2() then return nil end
+  local data = self.game and self.game.data
+  if not data then return nil end
+  local Names = require("src.core.Gen2SpeciesNames")
+  local index = Names.number(data, species)
+  if index <= 0 or index % 1 ~= 0 then return nil end
+  species = Names.fromNumber(data, index)
+  local icons = data.icons and data.icons.bySpecies
+  local entry = icons and (icons[species] or icons[string.format("SPECIES_%03d", index)])
+  if not (entry and type(entry.image) == "string") then return nil end
+  self.breedmonSprites, self.breedmonSources = self.breedmonSprites or {}, self.breedmonSources or {}
+  if self.breedmonSources[species] == entry.image then return self.breedmonSprites[species] end
+  local def = { id = "SPRITE_DAY_CARE_MON", image = entry.image, frames = 2,
+    walker = false, monIcon = true, trueColor = true,
+    spriteType = "POKEMON_SPRITE", species = species }
+  self.breedmonSources[species], self.breedmonSprites[species] = entry.image, def
+  return def
+end
+
+-- Rebuild actual GSC map objects without replaying setMap's scripts, warp,
+-- weather, phone, roamer or player-placement lifecycle. Render consumers wrap
+-- this boundary before construction and resynchronize pooled sheets after it.
+function OverworldState:rebuildPeople(opts)
+  if not GameVersion.isGen2() or not (self.map and self.map.def and Game)
+      or self.game ~= Game then return false end
+  opts = opts or {}
+  local previous = self.peopleFromMap or {}
+  local guests = {}
+  for _, npc in ipairs(self.npcs or {}) do
+    if not previous[npc] and (npc.mapId == nil
+        or MapIdentity.same(Game.data, npc.mapId, self.map.id)) then
+      guests[#guests + 1] = npc
+    end
+  end
+  -- A normal source rebuild resets the map-owned pool; the actual map entry
+  -- already chose its pool above. Seamless refreshes retain moving actors.
+  if not (opts.mapEntry or opts.seamless) or not self.npcPool then self.npcPool = {} end
+  local made, actors = {}, {}
+  for _, obj in ipairs(self.map.def.objects or {}) do
+    if objectVisible(Game.save, self.map.id, obj) then
+      local npc = pooledNPC(self.npcPool, Game.data, self.map.id, obj)
+      if opts.mapEntry then npc.frozen = false; npc.gen3ScriptFrozen = nil end
+      made[npc] = true
+      actors[#actors + 1] = npc
+    end
+  end
+  for _, npc in ipairs(guests) do if not made[npc] then actors[#actors + 1] = npc end end
+  self.peopleFromMap, self.npcs = made, actors
+  if not opts.mapEntry then
+    -- Retired map actors are not guest entities. Keep real non-map spawns,
+    -- then use the existing native entity builder for player/NPC ordering.
+    local kept = {}
+    for _, entity in ipairs(self.entities or {}) do
+      if not previous[entity] then kept[#kept + 1] = entity end
+    end
+    self.entities = kept
+    self:rebuildEntities()
+    self:rebuildNeighbors()
+  end
+  return true
 end
 
 -- The same rebuild, but it says something the first time it has to repair a
@@ -17282,7 +17360,9 @@ function OverworldState:atlasFor(mapDef)
   local tileset = map and map.tileset
   if not tileset then
     local data = Game and Game.data
-    local tilesets = data and data.tilesets
+    -- Title-screen mesh precaching supplies a data-only world with its own
+    -- tilesets and this method, before a live OverworldState is entered.
+    local tilesets = self.tilesets or (data and data.tilesets)
     tileset = tilesets and mapDef.tileset and tilesets[mapDef.tileset] or nil
   end
 
@@ -17299,7 +17379,8 @@ function OverworldState:atlasFor(mapDef)
   -- the half they walk behind.  So the Gen 3 answer carries a descriptor
   -- saying so (third return), and the view it hands back as the tileset
   -- states `atlasUnit = "cell"` rather than pretending to be a tile sheet.
-  local gen3 = self:gen3WorldFor(mapDef, map, tileset)
+  local descriptor = self.gen3WorldFor or OverworldState.gen3WorldFor
+  local gen3 = descriptor(self, mapDef, map, tileset)
   if gen3 then return gen3.bottom, gen3.tileset, gen3 end
 
   if not (tileset and tileset.image) then return nil end

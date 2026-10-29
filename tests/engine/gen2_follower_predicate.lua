@@ -9,10 +9,11 @@ T.eq(Follower, require("src.world.OptionalFollower"), "alias is the actual nativ
 
 -- Use the real mod loader, native NPCs, maps, interpolation and map-entry
 -- producer. Only cartridge art/data and the outer application are fixtures.
-local function load(f, failing)
-  local entry = [[
+local function load(f, failing, shared)
+  local entry = (shared and 'local followerModule="src.world.PikachuFollower"\n'
+    or 'local followerModule="src.world.gen2.Follower"\n') .. [[
     local mod = ...
-    local F = require("src.world.gen2.Follower")
+    local F = require(followerModule)
     mod.exports.api = mod
     mod.exports.allow, mod.exports.calls = false, 0
     local previous = F.setShouldSpawn(function(game, world)
@@ -35,11 +36,14 @@ local function load(f, failing)
   })
 end
 
+for _, shared in ipairs({false,true}) do
 for _, version in ipairs({ "gold", "silver", "crystal", "prism" }) do
   local f = Fixture.new(".", "gen2", version, 2, "native")
   f.close() -- remove the fixture's portable hook before loading the setter mod
   local nativeDefault = Follower.setShouldSpawn(nil)
-  local result = load(f)
+  T.eq(require('src.world.PikachuFollower').setShouldSpawn,Follower.setShouldSpawn,
+    'universal source import exposes the same actual Gen2 setter')
+  local result = load(f, false, shared)
   T.eq(#result.errors, 0, "legacy setter mod loads on " .. version)
   local e = result.loader.exports.follower_setter
   T.eq(e.previous, nativeDefault, "setter returns the actual previous predicate")
@@ -93,18 +97,21 @@ for _, version in ipairs({ "gold", "silver", "crystal", "prism" }) do
   T.eq(e.calls, calls, "unloaded callback no longer runs")
   T.eq(Follower.current(f.world), nil, "unload removes companion through native update")
   T.eq(f.world.npcs[1], bystander, "unload preserves map objects")
-  local failed = load(f, true)
+  local failed = load(f, true, shared)
   T.check(#failed.errors > 0, "failed entry is reported")
   T.eq(Follower.setShouldSpawn(nil), nativeDefault, "failed entry rolls back legacy setter")
   f.tick()
   T.eq(Follower.current(f.world), nil, "failed mod cannot leave a companion running")
   failed.release()
 end
+end
 
 -- Installing a Gen2 predicate must not replace Yellow's native companion or
 -- enable an optional GBA companion. Both remain under their existing owners.
 for _, version in ipairs({ "red", "yellow", "firered" }) do
   local f = Fixture.new(".", "gen2", version, 2, "native")
+  T.eq(require('src.world.PikachuFollower').setShouldSpawn,nil,
+    'other generations retain their existing native/shim entry contract')
   local calls = 0
   local previous = Follower.setShouldSpawn(function() calls = calls + 1; return true end)
   f.tick()

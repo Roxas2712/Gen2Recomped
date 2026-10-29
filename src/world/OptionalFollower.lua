@@ -56,6 +56,7 @@ end
 local function spawn(game, world, opts, viaMapLoad)
   local keep = opts and (opts.keepFollower or opts.keepPikachu)
   if keep then
+    keep.mapId = world.map.id
     table.insert(world.npcs, keep)
     table.insert(world.entities, keep)
     world.follower, world.cast = keep, nil

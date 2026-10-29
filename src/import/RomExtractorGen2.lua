@@ -11828,18 +11828,10 @@ function RomExtractorGen2:gen2TownMap()
     self:saveImage(image, "ui/town_map_cursor.png")
     out.cursor = "assets/generated/ui/town_map_cursor.png"
   end)
-  -- Nest icon (dex AREA) if a dedicated symbol exists
-  pcall(function()
-    local pixels = self:gen2Lz("TownMapCursorGFX") or self:gen2Lz("PokegearSpritesGFX")
-    if pixels and #pixels >= 16 then
-      local slice = {}
-      for i = 1, math.min(#pixels, 2 * 16) do slice[i] = pixels[i] end
-      while #slice < 16 do slice[#slice + 1] = 0 end
-      local image = ImageWriter.matteColor0(ImageWriter.decode2bpp(slice, 8, 8, true))
-      self:saveImage(image, "ui/town_map_nest.png")
-      out.nest = { path = "assets/generated/ui/town_map_nest.png" }
-    end
-  end)
+  -- AREA owns a raw 16-byte symbol, not the fly cursor's LZ sprite sheet.
+  -- A two-tile slice sent to the strict one-tile decoder used to be caught
+  -- silently here, leaving every nest as a solid fallback rectangle.
+  out.nest=require('src.import.Gen2TownMapAssets').nest(self)
   return out
 end
 
