@@ -33,9 +33,12 @@ been run at this checkpoint.
 Complete composed-tree tests, actual GPU/window acceptance, every custom
 skin/device and final release qualification remain open. This offer is stacked on PR397 and its existing viewport/chrome prerequisites.
 It uses this older host's actual `Renderer:endFrame` and flat options menu,
-without adding the newer fork's `frameRects` or grouped-menu methods. Its
-independent qualification is pending; the newer fork's 1,145 checks alone do
-not qualify this offered host.
+without adding the newer fork's `frameRects` or grouped-menu methods. Its independent qualification on offered source `b83c8fa4` passes 1,031
+screen-position checks, including actual world/UI blits and real flat-menu
+input/save/boot application. Its existing 4,454 frame-query and 116 chrome
+checks also pass. The managed frozen host is cleaned after successful exit.
+These are selected plain-Lua/compositor-stub proofs, not GPU or full-suite
+qualification of this older host.
 
 Existing engine authors' rights remain effective. Independently owned integration/test
 contributions by Roxas2712 are offered under
