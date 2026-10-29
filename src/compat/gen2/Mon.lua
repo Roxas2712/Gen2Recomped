@@ -2,6 +2,11 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+local Caught=require('src.pokemon.Gen2CaughtData')
+for _,key in ipairs{'CAUGHT_TIME_MASK','CAUGHT_LEVEL_MASK','CAUGHT_GENDER_MASK',
+ 'CAUGHT_LOCATION_MASK','CAUGHT_EGG_LEVEL','LANDMARK_EVENT','LANDMARK_GIFT',
+ 'CAUGHT_BY','hasCaughtData','caughtTimeOf','caughtGenderOf','setCaughtData',
+ 'setGiftCaughtData','packCaughtData','unpackCaughtData'}do M[key]=Caught[key]end
 local function identity()return require('src.pokemon.IdentityRolls')end
 function M.vanillaShiny(dvs)return identity().gen2VanillaShiny(dvs)end
 function M.isShiny(dvs,context)return identity().gen2GeneShiny(dvs,context)end

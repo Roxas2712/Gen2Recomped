@@ -238,6 +238,7 @@ local LAYOUT_PRISM = {
 --   0x2009 + (wPokemonData $DCD7 - $D47B) = 0x2865 = sPokemonData
 --   0x2009 + (wPokemonDataEnd $DFF5 - $D47B) = 0x2B83 = sGameDataEnd
 local LAYOUT_CRYSTAL = {
+  caughtDataFormat = 'crystal',
   wramAnchor = 0xD47B, sramAnchor = 0x2009, wramEnd = 0xDFF5,
   -- sCrystalData $BE3D is bank 1, so file 0x2000 + ($BE3D - $A000) = 0x3E3D.
   -- It sits OUTSIDE the checksummed range, exactly as the cartridge has it.
@@ -298,6 +299,8 @@ local MACHINE_FLAGS
 local CHECK_VALUE_1, CHECK_VALUE_2
 local WRAM_ANCHOR, SRAM_ANCHOR, WRAM_END
 local EXTRA_BLOCKS
+local CRYSTAL_CAUGHT_DATA
+local CaughtData=require('src.pokemon.Gen2CaughtData')
 local BADGE_BYTES
 
 local TERMINATOR = 0x50       -- "@", the text terminator
@@ -347,6 +350,7 @@ local ABSOLUTE_KEYS = {
 }
 
 local function applyLayout(spec)
+  CRYSTAL_CAUGHT_DATA=spec.caughtDataFormat=='crystal'
   WRAM_ANCHOR, SRAM_ANCHOR = spec.wramAnchor, spec.sramAnchor
   WRAM_END = spec.wramEnd
   MAX_ITEMS, MAX_KEY_ITEMS = spec.maxItems, spec.maxKeyItems
@@ -766,11 +770,11 @@ local function decodeMon(bytes, off, isParty, cw)
     happiness = u8(bytes, off + 27),
     level = u8(bytes, off + 31),
     moves = {},
-    -- kept verbatim so an export reproduces them: this port models
-    -- neither, and re-deriving would quietly wipe a real cartridge's data
+    -- Pokerus and non-Crystal reserved caught bytes stay byte-exact.
     pokerus = u8(bytes, off + 28),
     caughtData = u16be(bytes, off + 29),
   }
+  if CRYSTAL_CAUGHT_DATA then CaughtData.hydrate(mon,'crystal') end
   if not mon.species then
     mon.species = string.format("SPECIES_%03d", speciesIdx)
   end
@@ -825,7 +829,7 @@ local function encodeMon(buf, off, mon, isParty, cw)
     setByte(buf, off + 27, mon.happiness or 0)
   end
   setByte(buf, off + 28, mon.pokerus or 0)
-  setU16be(buf, off + 29, mon.caughtData or 0)
+  setU16be(buf, off + 29, CRYSTAL_CAUGHT_DATA and CaughtData.word(mon)or mon.caughtData or 0)
   setByte(buf, off + 31, mon.level or 1)
   if isParty then
     setByte(buf, off + 32, encodeStatus(mon.status))

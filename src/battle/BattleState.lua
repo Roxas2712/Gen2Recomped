@@ -11156,6 +11156,7 @@ function BattleState:storeCaughtMon()
   -- the whole reason the cartridge stores it separately.
   stampOT(game.save, self.enemy.mon,
           { level = self.enemy.mon.level, location = BattleState.metHere(game) })
+  require('src.pokemon.Gen2CaughtData').record(game,self.enemy.mon)
   require('src.pokemon.Gen4Origin').stamp(game,self.enemy.mon,'met',BattleState.metHere(game))
   if isNew then
     -- _ItemUseBallText06 + ShowPokedexData
@@ -11723,6 +11724,8 @@ function BattleState:storeContestMon()
     -- .generatestats rebuilds the mon from base data before storing it, the
     -- same reload a normal catch does (storeCaughtMon's restoreMimicked).
     self:restoreMimicked(self.enemy)
+    require('src.pokemon.Gen2CaughtData').record(self.game,caught,{landmark=
+      require('src.world.Gen2Landmarks').index(self.game.data,'LANDMARK_NATIONAL_PARK')})
     BugContest.setCaught(save, caught)
     self:sayNext(Strings("Caught %s!", name))
   end

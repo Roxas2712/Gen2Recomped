@@ -281,6 +281,7 @@ end
 -- replacing explicit saved identity. Normal refresh remains the owner below.
 function Pokemon.ensureIdentity(data,mon)
   if require('src.core.GameVersion').generation()==2 then
+    require('src.pokemon.Gen2CaughtData').hydrate(mon)
     require('src.pokemon.Gen2MonFields').bind(data,mon)
   end
   if type(mon)~='table'or type(mon.dvs)~='table'
