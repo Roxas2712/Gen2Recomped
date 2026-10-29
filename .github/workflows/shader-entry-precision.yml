@@ -6,6 +6,7 @@ on:
       - 'src/render/LegacyShaderCompat.lua'
       - 'tests/engine/shader_entry_precision.lua'
       - 'tests/engine/legacy_shader_compat.lua'
+      - 'tests/gpu/shader_entry_precision.lua'
       - '.github/workflows/shader-entry-precision.yml'
   workflow_dispatch:
 permissions:
