@@ -259,6 +259,14 @@ end
 setmetatable(OverworldState, {
   __index = function(world, key)
     if key == "playerState" then return world:movementState() end
+    -- Source Gen2 renderers ask Palettes.bgSet(world.palettes, map.def,
+    -- world.daytime). Share Data's live, owner-bound view so special-map
+    -- palettes and roof colors follow the native bake without a second cache.
+    -- An authored raw world.palettes field still takes ordinary Lua precedence.
+    if key == "palettes" and GameVersion.isGen2() then
+      local data = Game and Game.data
+      return data and data.gen2Palettes
+    end
     if (key == "daytime" or key == "flashUsed") and GameVersion.isGen2() and world.map then
       if key == "daytime" then return PaletteFX.effectiveGen2Tod() end
       if key == "flashUsed" then return Game and Game.save and Game.save.flashLit == true or false end

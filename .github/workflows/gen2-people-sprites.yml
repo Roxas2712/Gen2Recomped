@@ -10,6 +10,7 @@ on:
       - 'src/core/Data.lua'
       - 'src/mods/Loader.lua'
       - 'tests/engine/gen2_people_sprites.lua'
+      - 'tests/engine/gen2_world_palettes.lua'
       - '.github/workflows/gen2-people-sprites.yml'
   workflow_dispatch:
 permissions:
@@ -24,6 +25,7 @@ jobs:
       - name: Actual native object, source consumer, and public NPC regressions
         run: |
           luajit tests/engine/gen2_people_sprites.lua
+          luajit tests/engine/gen2_world_palettes.lua
           luajit tests/engine/api3_npc.lua
           luajit tests/engine/legacy_npc_controls.lua
           luajit tests/engine/gen2_alias_world_reads.lua
