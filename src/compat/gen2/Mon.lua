@@ -70,11 +70,9 @@ function M.new(data,id,level,opts)
   return mon
 end
 function M.movesAtLevel(def,level,moves)
-  local ids=Native.movesAtLevel(def,level)
-  if not moves then return ids end
-  local out={};for _,id in ipairs(ids)do out[#out+1]={id=id,pp=Native.maxPP(moves[id],nil,2)}end
-  return out
+  return require('src.pokemon.Gen2Learnset').slots(def,level,moves)
 end
+function M.learnMove(mon,id,data)return require('src.pokemon.Gen2Learnset').learn(mon,id,data)end
 function M.stampOT(save,mon)
   return require('src.battle.BattleState').stampOT(save,mon)
 end

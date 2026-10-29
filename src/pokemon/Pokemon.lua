@@ -9,6 +9,9 @@ local Pokemon = {}
 -- Starting moves: level-1 moves plus learnset entries at or below the level,
 -- keeping the most recent four (engine/pokemon/learn_move.asm behavior).
 function Pokemon.movesAtLevel(speciesDef, level)
+  if require('src.core.GameVersion').isGen2()then
+    return require('src.pokemon.Gen2Learnset').ids(speciesDef,level,true)
+  end
   local moves = {}
   local function add(id)
     for _, existing in ipairs(moves) do

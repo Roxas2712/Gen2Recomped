@@ -10325,8 +10325,12 @@ function BattleState:learnMove(mon, moveId)
     if mv.id == moveId then return end
   end
   if #mon.moves < 4 then
-    table.insert(mon.moves, { id = moveId, pp = mdef.pp })
-    Runtime.emit("pokemon.move_learned", { mon = mon, moveId = moveId })
+    if GameVersion.isGen2()then
+      require('src.pokemon.Gen2Learnset').learn(mon,moveId,self.data)
+    else
+      table.insert(mon.moves, { id = moveId, pp = mdef.pp })
+      Runtime.emit("pokemon.move_learned", { mon = mon, moveId = moveId })
+    end
     local who = mon.nickname or self.data.pokemon[mon.species].name
     -- Black / White's battle line (bank 14 line 688), else the cartridge's own
     local bw = require("src.ui.Gen5MoveLearnMenu").learnedLine(self.game, who, mdef.name, true)
