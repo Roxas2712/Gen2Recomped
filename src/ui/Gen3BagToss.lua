@@ -84,13 +84,14 @@ function M:update()
     elseif input:wasPressed('a')then
       changed=true
       if self.index==2 then self:close()
-      elseif not self.committed then
-        -- Only the caller's existing Bag.remove/rebuild path mutates items.
-        if self.onCommit(self.qty)==false then self:close()
-        else self.committed=true;self.mode='done';self:refreshMessage()end
-      end
+      else self.mode='done';self:refreshMessage()end
     end
-  elseif input:wasPressed('a')or input:wasPressed('b')then self:close();changed=true end
+  elseif input:wasPressed('a')or input:wasPressed('b')then
+    -- The reference removes items when the result is acknowledged, keeping
+    -- the original list/count visible behind the result until that input.
+    if not self.committed then self.committed=self.onCommit(self.qty)~=false end
+    self:close();changed=true
+  end
   if changed then require('src.core.Sound').play(self.game.data,'Press_AB')end
 end
 function M:drawNative()

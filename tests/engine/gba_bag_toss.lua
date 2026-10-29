@@ -72,8 +72,10 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
   T.eq(state.message,'OWN 3 A%BC','item names and chosen count expand without pattern substitution')
   press('b');T.eq(commits,0);T.eq(S.encode(game.save),before,'B at confirmation cannot remove an item')
   state=make();press('right');press('right');press('a');press('a')
-  T.eq(state.mode,'done');T.eq(commits,1);T.eq(game.save.inventory.POTION,9,'YES removes exactly the selected quantity')
-  T.eq(state.message,'DONE 3 A%BC');press('a');key='a';state:update();key=nil
+  T.eq(state.mode,'done');T.eq(commits,0);T.eq(game.save.inventory.POTION,12,'result keeps the original count until acknowledged')
+  T.eq(state.message,'DONE 3 A%BC');press('a')
+  T.eq(game.save.inventory.POTION,9,'result acknowledgement removes exactly the selected quantity')
+  key='a';state:update();key=nil
   T.eq(commits,1);T.eq(pops,1,'late input cannot commit or close twice');T.eq(game.save.unrelated,'KEEP')
   state=make(1);T.eq(state.mode,'confirm','one item skips the quantity step');press('b')
   state=make(999);state.berry=true;state.qty=999;draws={};state:drawNative()
