@@ -41,6 +41,9 @@ return function(game)
   end
   local owner=UI.new(game,{pocket='KEY_ITEM'});game.stack:push(owner);U.wait(40)
   local function select(id)
+    -- RS clamps at the last row; it does not wrap down to the first item.
+    -- Reach the known list start with ordinary UP input before searching.
+    for _=1,#owner.rows do if owner.index==1 then break end;press('up')end
     for _=1,#owner.rows+1 do if owner:selected().id==id then return end;press('down')end
     error('Ordinary input could not find own key item')
   end
