@@ -1,0 +1,24 @@
+name: Legacy shader entry precision
+on:
+  pull_request:
+    paths:
+      - 'src/render/ShaderEntryPrecision.lua'
+      - 'src/render/LegacyShaderCompat.lua'
+      - 'tests/engine/shader_entry_precision.lua'
+      - 'tests/engine/legacy_shader_compat.lua'
+      - '.github/workflows/shader-entry-precision.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Shader source, constructor, validator, and projection contracts
+        run: |
+          luajit tests/engine/shader_entry_precision.lua
+          luajit tests/engine/legacy_shader_compat.lua
+          luajit tests/engine/alpha_depth_compat.lua
