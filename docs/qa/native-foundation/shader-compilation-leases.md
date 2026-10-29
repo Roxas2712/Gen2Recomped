@@ -21,3 +21,11 @@ without changing shader output or tuning garbage collection/JIT settings.
 The CPU contract exercises nested leases, live values and array tails, cached
 keys, unrelated shaders and source retirement. Native pixel qualification is
 performed separately by the owning QA host.
+
+The source owner may instead call `useOriginal(shader)` once to retire optional
+specialization for that program's lifetime. The original native C shader already
+has every successful uniform write; its identity, live values and native errors
+remain. An active variant returns to the original immediately. Optional resources
+are reclaimed by normal stack-aware retirement. Subsequent sends bypass unused
+snapshot bookkeeping. Other sources and mods retain their policy. A new Shader
+is required to opt back into specialization; no partial uniform bank is guessed.

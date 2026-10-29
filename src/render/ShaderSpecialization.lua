@@ -310,6 +310,16 @@ function S.pauseCompilation(shader)
   return true
  end
 end
+-- The owner may permanently keep this source's native program. Its C shader
+-- already holds every successful write. Disable switches a selected variant
+-- back immediately; normal stack-aware retirement releases optional state.
+-- Re-enabling optimization requires a new Shader, never an incomplete bank.
+function S.useOriginal(shader)
+ local record=originals[shader]
+ if not record or record.disabled or record.retired then return false end
+ disable(record);stats.originalSources=(stats.originalSources or 0)+1
+ return true
+end
 function S.status()
  local out={installed=installed,sourceBytes=sourceBytes}
  for k,v in pairs(stats)do out[k]=v end
