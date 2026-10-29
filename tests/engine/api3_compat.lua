@@ -92,6 +92,8 @@ end
 -- Real legacy loaders keep native defaults, API-2 status vocabulary and callback catalog.
 for _, api in ipairs({ 1, 2 }) do
   local m = boot(api)
+  T.eq(m.features,nil,'legacy API has no optional API3 feature facade')
+  T.eq(m:supports('features','gen1.battle-simulation-v1'),false,'legacy API cannot advertise an absent facade')
   T.eq(m.contentFormat, "native", "legacy content native")
   T.eq(m.callbackFormat, "native", "legacy callbacks native")
   T.eq(m.scriptFormat, "native", "legacy scripts native")
@@ -141,6 +143,11 @@ end
 -- Availability must be honest, and a probe cannot construct Game or attach a world.
 do
   local m, loader, attach, probes = boot(3, nil, true)
+  T.check(m:supports('features','gen1.battle-simulation-v1'),'API3 advertises detached source simulation')
+  T.check(m:supports('features','gen1.save5-v1'),'GB host advertises explicit Save5 converter')
+  T.eq(m:supports('features','gen1.gba-exchange-v1'),false,'GB host does not advertise GBA exchange')
+  T.check(type(m.features.gen1.battle.new)=='function','real loader publishes opt-in constructor')
+  T.check(type(m.features.gen1.save5.import)=='function','real loader publishes explicit data converter')
   T.eq(probes(), 0, "entry does not resolve Game")
   T.eq(m.bank.version,1,'API 3 exposes the same Bank interchange version')
   T.check(m:supports('storage','shared') and m:supports('bank','inspect'),'API 3 reports shared storage and Bank capabilities')
@@ -169,6 +176,9 @@ do
     T.eq(m:supports("world", name), true, "implemented world method " .. name)
   end
   T.eq(probes(), 0, "capability and unsupported calls do not resolve Game")
+  T.eq(m.features.gen1.world(),nil,'optional world feature never bootstraps Game')
+  T.eq(m.features.gen1.link3.hello(),nil,'optional link feature requires active native owner')
+
   T.eq(world:party(), nil, "no-game party refuses safely")
   T.eq(battle:snapshot(), nil, "no-game battle refuses safely")
   T.eq(m.datasets:open("gold"), nil, "unavailable dataset API callable")

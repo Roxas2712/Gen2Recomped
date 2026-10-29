@@ -9,7 +9,7 @@ Its image ID is pinned under the operator's private `~/recomp-qa/image-id`.
 
 Install `tools/nas-qa-run.sh` as `~/recomp-qa/run-qa` on the NAS. A dedicated
 snapshot lives at `~/recomp-qa/jobs/<id>/project`; upload only selected source and
-test fixtures, never the checkout's `.git`, `.local`, credentials, imported ROMs,
+test fixtures (including the small versioned test PNGs needed for image dimensions), never the checkout's `.git`, `.local`, credentials, imported ROMs,
 models or saves. No existing service container is used to run suites.
 
 Run over the existing SSH alias:

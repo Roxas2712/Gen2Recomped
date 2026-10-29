@@ -67,7 +67,8 @@ def main():
         for name in sorted(set(names)):
             path = ROOT / name
             if (not name or path.is_symlink() or not path.is_file()
-                    or path.suffix.lower() not in allowed or path.stat().st_size > 8 * 1024**2):
+                    or (path.suffix.lower() not in allowed and not (name.startswith("tests/") and path.suffix.lower() == ".png"))
+                    or path.stat().st_size > 8 * 1024**2):
                 continue
             if any(part in {".local", ".git", "__pycache__", "generated"} for part in Path(name).parts):
                 continue

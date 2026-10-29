@@ -50,10 +50,12 @@ The new NAS tooling and its resource limits are documented in [NAS-QA.md](NAS-QA
 Headless validation does not establish native GPU, device-audio or Windows
 behaviour. No hosted workflow is started by the NAS tooling.
 
-## Remaining separate contracts
+## Additional Battle, Game3, Save and Link features
 
-The full independent Gen1 Gen2-battle constructor/turn/event engine, Game3/map
-simulation ownership, complete Gen1 fishing/terrain-emote sheet contract, and
-cross-engine Save-5/Link-3 interchange are still separate integration work.
-The fork continues to advertise its native Save-4/Link-2 contracts. These are
-not made interoperable by incrementing a version number or adding aliases.
+The optional API-3 `mod.features.gen1` surface now provides a detached source
+GSC battle engine, native-owned Game3 load/script/prefetch sessions, explicit
+Gen1 Save-5/Save-4 conversion, Link-3 party codecs and GB trade sessions, and
+Game3 block/commit verification. See [the versioned contract and examples](GEN1-COMPATIBILITY-FEATURES.md).
+Native Save-4/Link-2 remain the defaults. Full cross-engine multiplayer battle
+lockstep, Game3 room/cable/mail/relay-recovery integration and the separate full
+fishing/terrain-emote-sheet contract remain outside these features.

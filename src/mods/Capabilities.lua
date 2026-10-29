@@ -90,6 +90,16 @@ for name in ([[
 ]]):gmatch("%S+") do world[name] = true end
 
 function Capabilities.supports(surface, name, version)
+  if surface=='features'then
+    local gen=GameVersion.generation(version)
+    if name=='gen1.battle-simulation-v1' then return true end
+    if name=='gen1.world-session-v1' then return gen==3 end
+    if name=='gen1.save5-v1' then return gen==1 end
+    if name=='gen1.link3-trade-v1' then return gen==1 or gen==2 end
+    if name=='gen1.gba-exchange-v1' then return gen==3 end
+    if name=='gen1.link3-codec-v1' then return gen>=1 and gen<=3 end
+    return false,'unknown optional feature'
+  end
   if surface == 'suspend' then
     if name == 'portable-v1' then return true end
     return false, 'unknown suspend capability'

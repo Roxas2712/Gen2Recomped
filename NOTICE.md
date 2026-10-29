@@ -80,3 +80,16 @@ artwork are not included.
 GAMES, LLC. Their GPLv3 and Section 7 terms are retained in
 `compat/gen1-gsc/LICENSE.MD`; source hashes and integration changes are in
 `compat/gen1-gsc/provenance.json`. Existing rights remain effective.
+
+## Optional Gen1 battle and wire contracts
+
+`src/features/gen1_gsc/vendor/` and the pinned reference fixtures in
+`tests/fixtures/gen1_interfaces/` come from Gen1Recomp revision
+`2aec7650cb01845a4e98f1dbcf8a5c652990d984`.
+Copyright (C) 2026 BOIS CLUB GAMES, LLC. Their GPLv3 and Section 7 terms
+are preserved in [src/features/gen1_gsc/LICENSE.MD](src/features/gen1_gsc/LICENSE.MD).
+Original source hashes, adapted test scope and derived wire functions are
+recorded in `src/features/gen1_gsc/provenance.json`. The derived TradeWire
+module and source-derived TextBox stripping bridge retain those terms.
+Roxas2712's integration credit does not replace existing grants or credits.
+No excluded proprietary launcher code or game content is included here.
