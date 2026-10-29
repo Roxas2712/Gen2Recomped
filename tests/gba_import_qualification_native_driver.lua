@@ -19,6 +19,7 @@ return function(game)
  assert(itemCount>0)
  local frlg=version=='firered'or version=='leafgreen'
  if frlg then
+  assert(require('src.import.Gen3BagRegistrationAssets').valid(game.data.constants.gen3BagScreen.registered,version))
   assert(game.data.constants.gen3FRLGTitle.cry==(version=='firered'and'CHARIZARD'or'VENUSAUR'))
  else
   assert(game.data.constants[version=='emerald'and'gen3EmeraldPresentation'or'gen3RsPresentation'].version==version)

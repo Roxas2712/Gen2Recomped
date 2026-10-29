@@ -45033,6 +45033,7 @@ function RomExtractorGen3:extractBagScreenFireRed()
   constants.gen3BagScreen = record
   self._constants = constants
   self:write("constants", constants)
+  require('src.import.Gen3BagRegistrationAssets').extract(self)
   Logger.info("Gen3 bag screen (FRLG): %d tiles, list (%d,%d) %dx%d = %d rows, "
                 .. "description (%d,%d) %dx%d", B.TILES, win.list.x, win.list.y,
               win.list.width, win.list.height, record.list.rows,
