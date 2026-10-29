@@ -552,7 +552,11 @@ end
 
 -- ...and one it stops for, which is a real box the player dismisses.  Used
 -- for the answers ("Withdrew 5 POTIONs."), which the cartridge waits on.
-function Gen3BagMenu:tell(text)
+function Gen3BagMenu:tell(text, presentation)
+  if self.emerald and self.store == "deposit" then
+    self.game.stack:push(require("src.ui.Gen3EmeraldBagMessage").new(self.game, self, text, presentation))
+    return
+  end
   -- FireRed's deposit flow never leaves the bag for its answer.  ShowBagWindow
   -- overlays sWindowTemplates[9] on the lower-right description area and waits
   -- for A/B there.  Keep that message owned by this state so the bag, item
@@ -626,16 +630,18 @@ function Gen3BagMenu:depositItem(id)
   if selection then held=math.min(held,row.qty)end
   local function deposit(qty, name)
     if type(qty)~='number'or qty%1~=0 or qty<1 or qty>held then return end
+    if qty>((game.save.inventory or{})[id]or 0)then return end
     local stored=(game.save.pcItems or{})[id]or 0
     if self:pcFull(id)or stored+qty>999 then
       return self:tell(bagWord(game,'noRoomStore'))
     end
+    local presentation=self.emerald and{rows=self.rows,index=self.index,top=self.top}or nil
     if Bag.remove(game.save,id,qty,game.data,selection)==false then return end
     game.save.pcItems = game.save.pcItems or {}
     game.save.pcItems[id] = (game.save.pcItems[id] or 0) + qty
     self:rebuild()
     Sound.play(game.data, "Withdraw_Deposit")
-    self:tell(fillLine(bagWord(game, "deposited"), name, qty))
+    self:tell(fillLine(bagWord(game, "deposited"), name, qty), presentation)
   end
   -- item_menu.c Task_ChooseHowManyToDeposit skips the quantity UI when there
   -- is exactly one.  That is the common early-game POTION case in the user's
@@ -654,6 +660,8 @@ function Gen3BagMenu:withdrawItem(id)
   local held = pc[id] or 1
   self:askQuantity(id, held, Gen3BagMenu.pcWord(game, "withdrawPrompt"),
     function(qty, name)
+      if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+        or qty<1 or qty>(pc[id]or 0)then return end
       if not Bag.add(game.save, id, qty, game.data) then
         return self:tell(Gen3BagMenu.pcWord(game, "bagFull"))
       end
@@ -676,11 +684,14 @@ function Gen3BagMenu:tossStored(id)
   local pc = game.save.pcItems or {}
   local held = pc[id] or 1
   self:askQuantity(id, held, bagWord(game, "tossHowMany"), function(qty, name)
+    if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+      or qty<1 or qty>(pc[id]or 0)then return end
     local TextBox = require("src.render.TextBox")
     game.stack:push(TextBox.new(game,
       fillLine(bagWord(game, "tossConfirm"), name, qty), nil, {
         choice = function(yes)
           if not yes then return end
+          if game.save.pcItems~=pc or qty>(pc[id]or 0)then return end
           pc[id] = (pc[id] or 0) - qty
           if pc[id] <= 0 then pc[id] = nil end
           self:rebuild()

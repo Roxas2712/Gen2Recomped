@@ -24,11 +24,13 @@ jobs:
         run: |
           luajit tests/engine/gba_field_item_use.lua
           luajit tests/engine/gba_key_item_registration.lua
+          luajit tests/engine/gba_save_result.lua
           luajit tests/engine/frlg_bag_registration_assets.lua
           luajit tests/engine/gba_bag_sale.lua
           luajit tests/engine/emerald_native_bag.lua
           luajit tests/engine/emerald_deposit_quantity.lua
           luajit tests/engine/emerald_native_item_storage.lua
+          luajit tests/engine/gba_pc_transfer_guards.lua
           luajit tests/engine/item_use_dispatch.lua
           luajit tests/engine/api3_compat.lua
           luajit tests/engine/unified_mod_callbacks.lua
