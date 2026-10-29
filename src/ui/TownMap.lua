@@ -283,7 +283,7 @@ function TownMap.new(game, opts)
     if self.mode=='gen2' and require('src.core.GameVersion').isGen2() then
       local byLandmark={}
       for _,loc in ipairs(self.locs)do byLandmark[loc.landmark]=loc end
-      for _,index in ipairs(require('src.world.Gen2Nests').find(game.data,opts.nestSpecies,nil,game.save))do
+      for _,index in ipairs(require('src.compat.gen2.Nests').find(game.data,opts.nestSpecies,nil,game.save))do
         local loc=byLandmark[index]
         if loc then self.nests[#self.nests+1]=loc end
       end

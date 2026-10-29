@@ -78,7 +78,8 @@ ModCompat.ALIASES = {
   ["src.core.gen2.Save"] = "src.core.SaveData",
   ["src.core.gen2.HallOfFame"] = "src.compat.gen2.HallOfFame",
   ["src.core.gen2.Phone"] = "src.compat.gen2.Phone",
-  ["src.core.gen2.Nests"] = "src.world.Gen2Nests",
+  -- Source landmark records use screen coordinates, native ones OAM bytes.
+  ["src.core.gen2.Nests"] = "src.compat.gen2.Nests",
   ["src.core.gen2.Evolution"] = "src.compat.gen2.Evolution",
   ["src.battle.gen2.Encounter"] = "src.compat.gen2.Encounter",
 

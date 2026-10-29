@@ -101,10 +101,36 @@ T.same(N.find(d,'RAIKOU',nil,roaming),{1},'verified source/native map alias reso
 local loaded=T.sdk.loadMods({'mods/nest_reader'},{data=d,fs=T.sdk.memfs({
  ['mods/nest_reader/manifest.json']='{"id":"nest_reader","name":"Nest reader","version":"1.0.0","api":2,"entry":"main.lua"}',
  ['mods/nest_reader/main.lua']=[[
-  local mod=...;mod.exports.Nests=require('src.core.gen2.Nests')
+  local mod=...;local N=require('src.core.gen2.Nests');mod.exports.Nests=N
+  mod.exports.calls=0;local find=N.find
+  N.find=function(...)
+   mod.exports.calls=mod.exports.calls+1
+   return find(...)
+  end
  ]],
 })})
-T.eq(#loaded.errors,0);T.eq(loaded.loader.exports.nest_reader.Nests,N)
+T.eq(#loaded.errors,0)
+local probe=loaded.loader.exports.nest_reader;local Source=probe.Nests
+T.eq(Source,require('src.compat.gen2.Nests'))
+local row=d.field.townMap.landmarks[1];local view=Source.landmark(d,1)
+T.eq(view.x,row.x-8,'source X removes the hardware OAM origin')
+T.eq(view.y,row.y-16,'source Y removes the hardware OAM origin')
+T.eq(view.index,1);T.eq(view.id,Source.landmarkId(d,1))
+T.eq(Source.landmark(d,1),view,'retained source record view keeps its identity')
+view.x,view.y,view.name=20,30,'SOURCE PATCHED'
+T.eq(row.x,28);T.eq(row.y,46);T.eq(row.name,'SOURCE PATCHED','source edits reach the actual native record')
+row.x,row.y=40,60
+T.eq(view.x,32);T.eq(view.y,44,'native edits remain visible through the source record')
+local copied={};for key,value in pairs(view)do copied[key]=value end
+T.eq(copied.x,32);T.eq(copied.y,44);T.eq(copied.index,1)
+T.eq(next(view)~=nil,true,'ordinary Lua-5.1 next sees the source record')
+d.field.townMap.johto='fixture-johto.png'
+d.encounters={NATIVE_ROUTE={water={slots={{species='SPECIES_243',level=40}}}}}
+local ui=TownMap.new({data=d,save=Save.newGame()},{nestSpecies='RAIKOU'})
+T.eq(probe.calls,1,'native AREA dispatches through the public source search wrapper')
+T.eq(ui.nests[1].px,view.x+4);T.eq(ui.nests[1].py,view.y+4,'both coordinate contracts locate the same marker')
+T.eq(N.landmark(d,1),row,'native getters retain raw OAM record identity')
+T.eq(row.index,nil,'source view does not stamp derived metadata into an older native record')
 T.eq(Landmarks.record(d,256),nil)
-loaded.release();V.set(previous)
+require('src.mods.Loader').teardown();loaded.release();V.set(previous)
 T.finish('native/source GSC nests, live regional landmarks and actual native AREA ownership')

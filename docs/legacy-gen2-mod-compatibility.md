@@ -50,9 +50,12 @@ Johto roamers contribute sorted, deduplicated landmark indices. Fishing,
 headbutt-only, swarm replacement and Fast Ship entries do not become ordinary
 nest markers. An unmet roamer with zero HP remains visible; a retired or
 unreleased one does not. Reads use the current native map header rather than a
-saved landmark copy, without moving roamers or migrating saves. Landmark
-getters return the actual native records, and region boundaries follow the
-active cartridge/imported metadata, including Crystal's inserted Battle Tower.
+saved landmark copy, without moving roamers or migrating saves. Native
+landmark getters retain the raw OAM records. The source getter supplies a live
+screen-coordinate view (`x - 8`, `y - 16`); edits convert back to that same
+native record, and ordinary `pairs`/`next` expose the source values. Region
+boundaries follow active cartridge/imported metadata, including Crystal's
+inserted Battle Tower.
 
 `tests/engine/gen2_field_learning.lua` drives the actual text/choice/picker
 stack through free, known, full, HM-refusal and cancellation paths. It also
