@@ -115,6 +115,10 @@ if args.story_save_source:
     assert prior.name.startswith('gen2recomp-qa-'+args.edition+'-')and not prior.is_symlink()
     sv=json.loads((prior/'verification.json').read_text());sr=json.loads((prior/'result.json').read_text())
     checkpoint=json.loads((prior/'normal-save-checkpoint.json').read_text())
+    assert sv['identity']=='oasc-edition-qa-'+prior.name[len('gen2recomp-qa-'):]
+    prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
+    for path in (prior,prior_profile):qa_source(path)
+    recovered_source_proof=None
     assert sv['cartridgeSHA1']==hashlib.sha1(args.rom.read_bytes()).hexdigest()
     if args.edition in ('ruby','sapphire'):
         from rs_story_checkpoint import qualify
@@ -123,8 +127,24 @@ if args.story_save_source:
             # No unprocessed input may hide progress after the saved tail.
             assert len(json.loads((prior/'story-commands.json').read_text()))==len(sr['commands'])
     else:
-        assert sv['frozenSourceUnchanged']and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
-        assert sv['status']=='pass'or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')=='native QA timeout')
+        source_unchanged=sv.get('frozenSourceUnchanged',False)
+        interrupted=sv['status']=='fail'and sv.get('stoppedOwnChildReason')=='absolute resource-slot deadline'
+        if interrupted and not source_unchanged:
+            # An outer deadline can stop the runner before its final source
+            # audit. Restore only its archived own host and perform that audit
+            # independently; leave the failed verification/result untouched.
+            from story_frozen_sources import verify_frozen_sources
+            from qa_storage import qa_restore_copy
+            qa_restore_copy(prior/'engine')
+            recovered_source_proof=verify_frozen_sources(prior/'engine',prior/'frozen-files.json')
+            source_unchanged=True
+        assert source_unchanged and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
+        assert sv['status']=='pass'or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')in
+            ('native QA timeout','absolute resource-slot deadline'))
+        if interrupted:
+            from story_frozen_sources import verify_processed_queue
+            verify_processed_queue(json.loads((prior/'story-commands.json').read_text()),sr,
+                json.loads((prior/'story-state.json').read_text()))
         assert sv['cartridgeSHA1']==hashlib.sha1(args.rom.read_bytes()).hexdigest()
         assert checkpoint['sourceRun']==prior.name and checkpoint['profileIdentity']==sv['identity']
         assert checkpoint['producedThroughNormalSaveMenu']and checkpoint['personalSave']is False
@@ -147,8 +167,6 @@ if args.story_save_source:
         # only the receipt from the checked prior input trace/checkpoint.
         inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or
             checkpoint['snapshotAfterSaveCommand'].get('inventory',{}).get('TM39',0)>0)
-    prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
-    for path in (prior,prior_profile):qa_source(path)
     assert prior_profile.resolve()==prior_profile
     story_save=prior_profile/checkpoint['saveRelativePath'];assert not story_save.is_symlink()
     assert digest(story_save)==checkpoint['sha256']
@@ -157,6 +175,7 @@ if args.story_save_source:
            'inherited':inherited,
            'priorRunCompleted':sv['status']=='pass',
            'runtimeUpgrade':True,'personalSave':False}
+    if recovered_source_proof:story['interruptedSourceProof']=recovered_source_proof
 stamp=datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
 identity='oasc-edition-qa-'+args.edition+'-'+stamp
 out=ROOT/'.local/qa'/('gen2recomp-qa-'+args.edition+'-'+stamp);engine=out/'engine'

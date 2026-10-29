@@ -1,0 +1,19 @@
+name: Interrupted story checkpoint source proof
+on:
+  pull_request:
+    paths:
+      - 'tools/story_frozen_sources.py'
+      - 'tools/run_edition_native.py'
+      - 'tests/test_story_frozen_sources.py'
+      - '.github/workflows/story-checkpoint-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Reject changed sources and unprocessed input before checkpoint recovery
+        run: python3 tools/run_story_source_checks.py
