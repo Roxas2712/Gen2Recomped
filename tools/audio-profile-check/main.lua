@@ -124,13 +124,16 @@ local function qualifyEffects()
     until builds >= count or love.timer.getTime() > deadline
     assert(builds >= count, "prewarm worker did not deliver its PCM")
   end
+  -- No worker exists yet. Repeated native invalidations must not strand the
+  -- first generation of effects when the lazy worker finally starts.
+  Sound.invalidate();Chip.cancelEffects();Chip.cancelEffects()
   assert(Sound.prewarmCry(data,'MON'),'priority cry must queue before the registry scan')
   wait(2)
   Performance.audioWorkerOptimization=false
   local expectedPriorityCry=Synth.renderEffectData(data,beep,{frequencyOffset=0,cryLength=128})
   Performance.audioWorkerOptimization=true
   assert(effects[1].sd:getString()==expectedPriorityCry:getString(),'priority cry PCM/order differs from native synthesis')
-  checks=checks+1
+  checks=checks+2
   assert(played == 0 and effects[1].plays == 0 and effects[2].plays == 0, "prewarm played/emitted")
   Performance.audioWorkerOptimization = false
   local expected = Synth.renderEffectData(data, beep, { frequencyOffset = 0, frameTicks = 256 })

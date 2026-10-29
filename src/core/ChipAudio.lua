@@ -184,6 +184,10 @@ local function ensureWorker()
   cmdCh = love.thread.getChannel("chipaudio_cmd")
   outCh = love.thread.getChannel("chipaudio_out")
   fxCh = love.thread.getChannel("chipaudio_fx")
+  -- Invalidations may precede lazy startup. The fresh worker must learn the
+  -- current generation before its first effect, or it silently drops that
+  -- entire generation while the main state waits for replies that never come.
+  cmdCh:push({ cmd = "fxCancel", generation = fxGeneration })
   local started = pcall(function() thread:start() end)
   if not started then
     workerReady = false

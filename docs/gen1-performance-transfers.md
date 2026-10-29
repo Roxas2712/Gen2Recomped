@@ -30,6 +30,13 @@ callbacks retain CPU data; actual GPU creation remains at native demand sites.
 
 RED++ plans copy concrete palette rows, borrowed-tile colors and aliases. Native
 admission recomputes the signature, rejecting stale palettes before upload.
+The worker transport contains each distinct palette once, with numeric palette
+indices for tiles and aliases. Stock selectors snapshot each shared row once
+per plan; admission builds only the validation signature, without copying RGB
+tables again. Custom selectors still resolve and validate every tile, including
+selectors that edit a shared row during traversal. The memo lasts for one call,
+so palette, tile-group and alias changes before admission still reject stale
+output.
 Misses, errors, unsupported inputs, disabled workers and unfinished hints use
 the original synchronous paths. Normal asset invalidation/session retirement
 cancels pending work and releases ready pixels. File edits follow the existing
@@ -49,6 +56,14 @@ Source admission on first use. Preparation never plays a Source or emits a
 sound event. The 16 MiB speculative PCM limit remains; ordinary registry scans
 leave 4 MiB for imminent effects. The two-job limit and native playback keys,
 arbitration, pitch/tempo and suspend/invalidation behavior are retained.
+
+Lazy chip-worker startup sends the current effect-generation cancellation
+command before the first effect. Cache invalidations can advance that generation
+before any thread exists; without the startup command a fresh worker would
+silently discard those initial requests as belonging to another generation.
+The real PCM qualification exercises several invalidations before first startup
+and requires the initial priority cry and registry effect to arrive and match
+native synthesis.
 
 ## Ruby/Sapphire battle paint
 
