@@ -1105,7 +1105,9 @@ return function(Gen3Commands)
   -- ---- the Pokemon Centre PC (EventScript_PC) ------------------------------
   alias(215, 218)                            -- AnimatePcTurnOff = DoPCTurnOffEffect
   alias(251, 254)                            -- ShowTownMap = FieldShowRegionMap
-  def(263, function() end)                   -- HallOfFamePCBeginFade (no HoF PC viewer yet)
+  def(263, function(ctx)                    -- HallOfFamePCBeginFade
+    return runScene(ctx,function(done)return require('src.ui.Gen3HallPc').new(ctx.game,done)end)
+  end)
   -- CreatePCMenu (script_menu.c CreatePCMenuWindow): SOMEONE'S / BILL'S PC,
   -- the player's PC, then PROF. OAK'S PC with the POKeDEX, HALL OF FAME once
   -- the league is beaten, LOG OFF.  VAR_RESULT is the row, 127 for B.

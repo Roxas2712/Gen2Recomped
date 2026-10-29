@@ -15,6 +15,7 @@ local T = require("tests.modkit")
 local Game = require("src.core.Game")
 local TitleState = require("src.ui.TitleState")
 local IntroMovie = require("src.ui.IntroMovie")
+local Gen3Options = require('src.ui.Gen3Options')
 
 -- --------------------------------------------------------------- the opt-in
 
@@ -46,5 +47,17 @@ T.eq(Game.fillScaleInStack(stack(overworld)), false,
 -- whole-stack rule a battle relies on
 T.eq(Game.fillScaleInStack(stack(title, {})), true,
   "a menu opened over the title screen keeps it filling")
+
+-- Scroll indicators can touch the native option surface's last pixel row.
+-- Extending those edge pixels produces a long shaft through the window bars.
+local options=setmetatable({}, {__index=Gen3Options})
+T.eq(Game.edgeBleedAllowedInStack(stack(overworld,options)),false,
+  'cartridge options do not stretch scroll indicators into the margins')
+T.eq(Game.edgeBleedAllowedInStack(stack(overworld,options,{})),false,
+  'a child option page cannot re-enable edge stretching')
+T.eq(Game.uiAnchorsHeldInStack(stack(overworld,options)),true,
+  'native option frames retain their own cartridge anchors')
+T.eq(Game.edgeBleedAllowedInStack(stack(overworld)),true,
+  'closing the option screen restores the world edge policy')
 
 T.finish("title fill scale")
