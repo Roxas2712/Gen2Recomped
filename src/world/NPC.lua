@@ -231,6 +231,11 @@ local function resolveBreedSprite(sprites, spriteId)
   local save = require("src.core.Game").save
   local mon = require("src.pokemon.DayCare").mon(save, tonumber(slot))
     or (save and save.daycare and save.daycare.mon)
+  local world = require("src.core.Game").overworld
+  if mon and world and type(world.breedmonSpriteDef) == "function" then
+    local def = world:breedmonSpriteDef(mon.species)
+    if def then return def end
+  end
   local species = mon and require('src.core.Gen2SpeciesNames').number(require('src.core.Game').data,mon)
   return (species and sprites[string.format("SPRITE_MON_%03d", species)])
     or spriteByIndex(sprites, 1)
@@ -475,7 +480,11 @@ function NPC.new(data, mapId, objDef)
   local self = setmetatable({}, NPC)
   self.def = objDef
   self.id = string.format("%s_obj_%d", mapId, objDef.index)
-  self.sprite = SpriteRenderer.new(withBigFlag(resolveSpriteDef(data, objDef.sprite), objDef.sprite, objDef), self.id)
+  -- Public map provenance follows the loaded registry alias; the native
+  -- object/pool identity above deliberately retains its existing storage key.
+  self.mapId = require("src.core.MapIdentity").runtimeId(data, mapId)
+  self.spriteDef = withBigFlag(resolveSpriteDef(data, objDef.sprite), objDef.sprite, objDef)
+  self.sprite = SpriteRenderer.new(self.spriteDef, self.id)
   -- 2x2 footprint for Snorlax / Lapras dolls (Collision.occupied reads this)
   self.big = (self.sprite and self.sprite.big) or objDef.big
     or objDef.sprite == "SPRITE_BIG_SNORLAX"
@@ -730,8 +739,19 @@ end
 
 -- Re-resolve the sheet after a `variablesprite` assignment: a map's callback
 -- can fill the slot in after its objects have already been built.
+function NPC:setSpriteDef(spriteDef, force)
+  if type(spriteDef) ~= "table" or (spriteDef == self.spriteDef and not force) then return false end
+  -- Construct first: a failed asset cannot leave the public definition and
+  -- the actual renderer describing different pictures.
+  local sprite = SpriteRenderer.new(spriteDef, self.id)
+  self.spriteDef, self.sprite = spriteDef, sprite
+  return true
+end
+
 function NPC:refreshSprite(data)
-  self.sprite = SpriteRenderer.new(withBigFlag(resolveSpriteDef(data, self.def.sprite), self.def.sprite, self.def), self.id)
+  -- variablesprite may mutate a shared definition in place. Native refresh
+  -- still repaints it even when the ordinary source setter is a no-op.
+  return NPC.setSpriteDef(self, withBigFlag(resolveSpriteDef(data, self.def.sprite), self.def.sprite, self.def), true)
 end
 
 -- Gen 3 stores an object's current elevation separately from its template.
