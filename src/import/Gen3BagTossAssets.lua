@@ -13,7 +13,8 @@ end
 function M.extract(x)
   if not versions[x.version]then return end
   x:beginStage('Original bag toss quantity and confirmation')
-  local load=require('compat.gen1-rs.Loader').new(x.version)
+  local load=require('compat.gen1-rs.Loader').new(x.version,{
+    ['src.core.GameVersion']=require('src.core.GameVersion'),__package={loaded={}}})
   local IR=load('src.core.game3.scripting.text_ir');local symbols,labels
   if x.version=='emerald'then symbols=load('src.import.gba.syms').of(x.version)
   else labels=require('src.import.gba.text_labels.'..x.version)end

@@ -9,7 +9,8 @@ love.filesystem.load=function(path)return loadfile(path)end
 local Sound=require('src.core.Sound');local play=Sound.play;Sound.play=function()end
 for _,version in ipairs{'emerald','firered','leafgreen'}do
   V.set(version)
-  local load=Loader.new(version);local IR=load('src.core.game3.scripting.text_ir')
+  local load=Loader.new(version,{['src.core.GameVersion']=V,__package={loaded={}}})
+  local IR=load('src.core.game3.scripting.text_ir')
   local symbols=version=='emerald'and load('src.import.gba.syms').of(version)
   local labels=not symbols and require('src.import.gba.text_labels.'..version)
   local starts={};for _,key in pairs(Assets.labels(version))do starts[symbols and symbols.off(key)or labels[key]]=true end
