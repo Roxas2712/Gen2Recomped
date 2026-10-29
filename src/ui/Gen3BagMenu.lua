@@ -571,6 +571,17 @@ function Gen3BagMenu:askQuantity(id, held, prompt, done)
   local game = self.game
   local def = game.data.items and game.data.items[id]
   local name = (def and def.name) or id
+  if self.emerald and self.store == "deposit" then
+    game.stack:push(require("src.ui.Gen3EmeraldDepositQuantity").new(game, self, {
+      max = math.max(1, math.floor(held or 1)),
+      berry = def and def.pocket == "BERRY",
+      prompt = fillLine(prompt, name, held),
+      onDone = function(qty)
+        if qty and qty > 0 then done(qty, name) end
+      end,
+    }))
+    return
+  end
   if self.frlg and self.itemPc and self.store == "deposit" then
     game.stack:push(require("src.ui.Gen3ItemPcQuantity").new(game, self, {
       max = math.max(1, math.floor(held or 1)),
