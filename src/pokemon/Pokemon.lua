@@ -264,7 +264,7 @@ function Pokemon.new(data, species, level, rng, form, opts)
     mon.shiny=mon.shiny or Rolls.gen2Shiny(mon,def)
     mon.gender=Rolls.gender(data,mon,2,level)
   end
-  require('src.pokemon.Gen2MonFields').bind(data,mon)
+  if generation==2 then require('src.pokemon.Gen2MonFields').bind(data,mon) end
   return mon
 end
 
