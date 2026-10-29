@@ -83,7 +83,8 @@ end
 -- The fake native seam counts calls but performs no Lua value copies here.
 local vectors={};for i=1,128 do vectors[i]={1,2,3,4}end
 local timings={}
-quiet=true
+-- Isolate snapshot allocation when composed with an independent dedup adapter.
+S.deduplicateUniforms=false;quiet=true
 for _,reuse in ipairs{false,true,true,false}do
  S.recycleSnapshots=reuse
  local s=g.newShader(source);g.setShader(s);s:send('gate',0);s:send('lit',true);g.draw()
