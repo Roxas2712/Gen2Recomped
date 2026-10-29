@@ -609,11 +609,16 @@ function Gen3ShopMenu.sellItem(game, id, host)
                                price(game, paid)),
                        { VAR1 = tostring(paid), VAR2 = tostring(paid),
                          VAR3 = tostring(paid) })
-      game.stack:push(TextBox.new(game, ask, nil, {
-        choice = function(yes)
+      local function confirm(answer)
+        if host and host.confirm then return host.confirm(ask,answer) end
+        game.stack:push(TextBox.new(game,ask,nil,{choice=answer}))
+      end
+      confirm(function(yes)
           if not yes then return end
+          if qty>((game.save.inventory or{})[id]or 0)then return end
           if Bag.remove(game.save,id,qty,game.data,host and host.bagSlot)==false then return end
           game.save.money = (tonumber(game.save.money) or 0) + paid
+          if host and host.creditLimit then game.save.money=math.min(host.creditLimit,game.save.money)end
           if host and host.refresh then host.refresh() end
           -- Emerald: "Turned over the {VAR2}\nand received ¥{VAR1}." --
           -- FireRed: "Turned over the {VAR1}...\nworth ¥{VAR3}."  The two
@@ -628,8 +633,7 @@ function Gen3ShopMenu.sellItem(game, id, host)
             soldVars = { VAR1 = tostring(paid), VAR2 = label }
           end
           say(line(game, "sold", Strings("Thank you!"), soldVars))
-        end,
-      }))
+      end)
     end,
   })
 end
@@ -644,12 +648,15 @@ end
 
 -- The bag, opened to sell out of: every pocket, and the pick sells rather
 -- than opening the USE/TOSS question.
-function Gen3ShopMenu.openSellBag(game)
+function Gen3ShopMenu.newSellBag(game)
   local ok, Gen3BagMenu = pcall(require, "src.ui.Gen3BagMenu")
   if not (ok and Gen3BagMenu) then
-    return game.stack:push(Gen3ShopMenu.new(game, { mode = "sell" }))
+    return Gen3ShopMenu.new(game, { mode = "sell" })
   end
-  return game.stack:push(Gen3BagMenu.new(game, { sell = true }))
+  return Gen3BagMenu.new(game, { sell = true })
+end
+function Gen3ShopMenu.openSellBag(game)
+  return game.stack:push(Gen3ShopMenu.newSellBag(game))
 end
 
 function Gen3ShopMenu:update()

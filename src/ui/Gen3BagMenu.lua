@@ -691,6 +691,12 @@ function Gen3BagMenu:choose()
   -- way the cartridge's shop flag makes it
   if self.sell then
     if self.onSell then return self.onSell(row.id,self)end
+    if self.frlg and (row.id=='TM_CASE'or row.id=='BERRY_POUCH')then
+      local screen=row.id=='TM_CASE'and'src.ui.Gen3TMCase'or'src.ui.Gen3BerryPouch'
+      self.game.stack:push(require(screen).new(self.game,{sell=true,onCancel=function()self:rebuild()end}))
+      return
+    end
+    if require('src.ui.Gen3BagSale').open(self,row)then return end
     return require("src.ui.Gen3ShopMenu").sellItem(self.game, row.id, {
       bagSlot = row.rsSlot, max = row.qty,
       say = function(text) self:say(text) end,
