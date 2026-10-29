@@ -751,7 +751,7 @@ end
 function NPC:refreshSprite(data)
   -- variablesprite may mutate a shared definition in place. Native refresh
   -- still repaints it even when the ordinary source setter is a no-op.
-  return self:setSpriteDef(withBigFlag(resolveSpriteDef(data, self.def.sprite), self.def.sprite, self.def), true)
+  return NPC.setSpriteDef(self, withBigFlag(resolveSpriteDef(data, self.def.sprite), self.def.sprite, self.def), true)
 end
 
 -- Gen 3 stores an object's current elevation separately from its template.
