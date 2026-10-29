@@ -55,7 +55,7 @@ def main():
     if os.name!='nt' and not os.getenv('GITHUB_ACTIONS') and (root/'tools/qa_storage.py').is_file():
         from qa_storage import qa_source,qa_copy,qa_profile,qa_run
         qa_source(root);qa_source(source);qa_source(executable)
-        project=qa_copy(root/'.local/qa'/('native-http-test-'+token)/'unit')
+        project=qa_copy(root/'.local/qa'/('native-http-test-'+token)/'unit',ephemeral=True)
         profile=(pathlib.Path.home()/'Library/Application Support/LOVE'/identity if os.uname().sysname=='Darwin'
                  else pathlib.Path.home()/'.local/share/love'/identity)
         qa_profile(profile)
@@ -68,7 +68,7 @@ def main():
                  'src/net/AsyncDownload.lua','src/net/DownloadTransport.lua','src/net/DownloadPublish.lua','src/net/download_worker.lua',
                  'src/mods/Net.lua','src/core/HostShell.lua'):
         target=project/name;target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(source/name,target)
-    for name in ('main.lua','conf.lua','download_test_worker.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
+    for name in ('main.lua','conf.lua','download_test_worker.lua','poll_guard.lua'):shutil.copy2(root/'tools/async-get-check'/name,project/name)
     server=http.server.ThreadingHTTPServer(('127.0.0.1',0),Handler);server.posts=[]
     cert=None
     if args.tls:
