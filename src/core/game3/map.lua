@@ -38,6 +38,16 @@ function Map.ensureMidLayout(game,id,def)
   if def and not runtime:isOwned(def)then return nil,'native or foreign map definitions are not writable compatibility views' end
   return runtime:layout(id,def)
 end
+-- Optional synchronous drawing scope, never a frame/update or global cache.
+function Map.withLayoutSnapshot(game,work,...)
+  local runtime=getContext(game)
+  if not runtime then return work(...)end
+  return runtime:withLayoutSnapshot(work,...)
+end
+function Map.layoutSnapshotStats(game)
+  local runtime=getContext(game)
+  return runtime and runtime:layoutSnapshotStats()or{active=false,hits=0,reads=0}
+end
 function Map.definitions(game)
   local runtime,why=getContext(game);if not runtime then return nil,why end
   return runtime:definitions()
