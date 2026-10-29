@@ -143,6 +143,10 @@ if args.story_save_source:
                    and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in r['before']['stack'])
                    for r in rows[first-1:last]),'Checkpoint needs an actual YES in the normal SAVE flow'
         inherited={k:sr[k]for k in ('starter','parcelObtained','parcelReturned','pokedexObtained')}
+        # A later ordinary playthrough may have consumed Brock's TM. Retain
+        # only the receipt from the checked prior input trace/checkpoint.
+        inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or
+            checkpoint['snapshotAfterSaveCommand'].get('inventory',{}).get('TM39',0)>0)
     prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
     for path in (prior,prior_profile):qa_source(path)
     assert prior_profile.resolve()==prior_profile

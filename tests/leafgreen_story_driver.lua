@@ -68,6 +68,7 @@ return function(game)
     for k,v in pairs(game.save.inventory or {})do state.inventory[k]=v
       if tostring(k):find('PARCEL')and tonumber(v)and v>0 then seenParcel=true;report.parcelObtained=true end
     end
+    if (state.inventory.TM39 or 0)>0 then report.brockTmRewardObserved=true end
     if #state.party>0 and lastParty==0 and not report.starter then
       report.starter=state.party[1];report.events[#report.events+1]={kind='first-party-member',frame=U.frame(),mon=state.party[1]}
     end
@@ -183,7 +184,8 @@ return function(game)
         assert(report.starter and report.starter.level==5,'Starter was not acquired naturally at level five')
         assert(report.parcelObtained and report.parcelReturned and report.pokedexObtained,'Continuous parcel/Pokedex sequence incomplete')
         assert(game.save.flags.FLAG_G3_0820 and game.save.flags.FLAG_G3_0254,'Brock and badge not complete')
-        assert((game.save.inventory.TM39 or 0)>=1,'Brock TM reward missing')
+        assert(report.brockTmRewardObserved,'Brock TM reward was never observed in ordinary progress')
+        report.badgesAtFinish=require('src.inventory.Badges').count(game.data,game.save)
         -- The inherited normal NEW GAME/SAVE trace proves natural progress;
         -- an opening-only level cap must not reject later earned experience.
         report.partyAtFinish=snapshot().party
