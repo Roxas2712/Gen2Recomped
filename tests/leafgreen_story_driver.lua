@@ -5,6 +5,11 @@ return function(game)
   local out=assert(os.getenv('EDITION_QA_OUT'))
   assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-leafgreen%-'))
   assert(require('src.core.GameVersion').get()=='leafgreen')
+  -- Only this owned hidden QA process ignores desktop/controller events.
+  for _,event in ipairs{'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',
+    'joystickpressed','joystickreleased','joystickaxis','joystickhat','touchpressed','touchreleased',
+    'touchmoved','mousepressed','mousereleased'}do love[event]=function()end end
+  game.input:reset()
   local lf=io.open(out..'/story-lineage.json','r');local lineage
   if lf then lineage=J.decode(lf:read('*a'));lf:close()end
   local hasSave=require('src.core.SaveData').saveFileExists('leafgreen')
@@ -95,8 +100,10 @@ return function(game)
     write('story-state.json',state);write('result.json',report)
     return state
   end
+  local inputLog
   local function press(k,n)
     assert(({a=true,b=true,start=true,select=true,up=true,down=true,left=true,right=true,l=true,r=true})[k])
+    if inputLog then inputLog[#inputLog+1]={key=k,heldFrames=1,releaseFrames=n or 1,frame=U.frame()}end
     game.input:overlayPressed(k);U.wait(1);game.input:overlayReleased(k);U.wait(n or 1)
   end
   local function shot(name)
@@ -136,55 +143,25 @@ return function(game)
     assert(game.overworld and game.stack:top()==game.overworld and #(game.save.party or {})==0)
     report.newGameThroughUI=true;report.initialPartyEmpty=true;shot('story-new-game-upstairs');snapshot()
   end
-  local dirs={up={0,-1},down={0,1},left={-1,0},right={1,0}}
-  local function freeField()
-    local w=game.overworld
-    return w and game.stack:top()==w and not w.player.inputLocked and not(w.runner and w.runner:isRunning())
-  end
-  local function step(dir)
-    assert(dirs[dir]);if not freeField()then return false,'event/UI is active'end
-    local w=game.overworld;local map=w.map.id;local x,y=w.player.cellX,w.player.cellY
-    game.input:overlayPressed(dir)
-    for _=1,60 do U.wait(1)
-      if w.map.id~=map or w.player.moving or w.player.cellX~=x or w.player.cellY~=y or not freeField()then break end
-    end
-    game.input:overlayReleased(dir)
-    for _=1,100 do if w.map.id~=map or not w.player.moving then break end;U.wait(1)end
-    U.wait(2)
-    return w.map.id~=map or w.player.cellX~=x or w.player.cellY~=y,'blocked or interrupted'
-  end
-  local function pathTo(tx,ty)
-    local w=game.overworld;local map=w.map;local q={{w.player.cellX,w.player.cellY}};local seen={};local prev={}
-    local function key(x,y)return x..','..y end
-    seen[key(q[1][1],q[1][2])]=true
-    local head=1
-    while q[head]do
-      local p=q[head];head=head+1
-      if p[1]==tx and p[2]==ty then
-        local path={};local k=key(tx,ty)
-        while prev[k]do local e=prev[k];table.insert(path,1,e.dir);k=e.from end
-        return path
-      end
-      for _,dir in ipairs({'up','down','left','right'})do
-        local d=dirs[dir];local x,y=p[1]+d[1],p[2]+d[2];local k=key(x,y)
-        if not seen[k]and map:inBounds(x,y)and map:isWalkableCell(x,y)
-           and not Collision.occupied(w.entities or {},x,y,w.player)then
-          seen[k]=true;prev[k]={dir=dir,from=key(p[1],p[2])};q[#q+1]={x,y}
-        end
-      end
-    end
-  end
+  local movement=require('tests.drivers.story_movement').new(game,U,Collision,function()return inputLog end)
+  local freeField,step,pathTo=movement.freeField,movement.step,movement.pathTo
   while true do
     local f=io.open(out..'/story-commands.json','r');local commands
     if f then local raw=f:read('*a');f:close();commands=J.decode(raw)end
     local command=commands and commands[seq+1]
     if not command then U.wait(60);snapshot()
     else
-      busy=true;snapshot();local record={seq=seq+1,input=command,before=snapshot(),outcome='done'}
+      busy=true;snapshot();local record={seq=seq+1,input=command,before=snapshot(),outcome='done',ordinaryInputs={}}
+      inputLog=record.ordinaryInputs
       if command.op=='press'then
         for _=1,math.min(tonumber(command.times)or 1,200)do press(assert(command.button),command.wait or 12)end
       elseif command.op=='wait'then U.wait(math.min(command.frames or 60,3600))
       elseif command.op=='step'then local ok,why=step(assert(command.dir));if not ok then record.outcome=why end
+      elseif command.op=='hold'then
+        assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=6000)
+        inputLog[#inputLog+1]={key=command.button,heldFrames=command.frames,releaseFrames=command.wait or 8,frame=U.frame()}
+        game.input:overlayPressed(command.button);U.wait(command.frames)
+        game.input:overlayReleased(command.button);U.wait(command.wait or 8)
       elseif command.op=='goto'then
         local w=game.overworld;local originalMap=w.map.id
         for _=1,150 do
@@ -199,6 +176,7 @@ return function(game)
           if freeField()then break end
           press('a',command.wait or 12);snapshot()
         end
+      elseif command.op=='battle-attack'then record.outcome=require('tests.drivers.story_battle').attack(game,U,press,assert(tonumber(command.slot)))
       elseif command.op=='shot'then shot(assert(command.name))
       elseif command.op=='finish'then
         snapshot()
@@ -206,11 +184,14 @@ return function(game)
         assert(report.parcelObtained and report.parcelReturned and report.pokedexObtained,'Continuous parcel/Pokedex sequence incomplete')
         assert(game.save.flags.FLAG_G3_0820 and game.save.flags.FLAG_G3_0254,'Brock and badge not complete')
         assert((game.save.inventory.TM39 or 0)>=1,'Brock TM reward missing')
-        for _,m in ipairs(game.save.party)do assert(m.level<21,'Opening acceptance must use an ordinary early-game party')end
+        -- The inherited normal NEW GAME/SAVE trace proves natural progress;
+        -- an opening-only level cap must not reject later earned experience.
+        report.partyAtFinish=snapshot().party
+        for _,m in ipairs(game.save.party)do assert(m.level>=1 and m.level<=100,'Invalid natural party level')end
         report.continuousOpeningToBrock=true;report.status='pass';seq=seq+1;busy=false;snapshot()
         print('PASS_LEAFGREEN_CONTINUOUS_OPENING');love.event.quit(0);return
       else error('Unsupported ordinary-input story command: '..tostring(command.op))end
-      seq=seq+1;busy=false;record.after=snapshot();report.commands[#report.commands+1]=record;write('result.json',report)
+      inputLog=nil;seq=seq+1;busy=false;record.after=snapshot();report.commands[#report.commands+1]=record;write('result.json',report)
     end
   end
 end

@@ -60,6 +60,8 @@ if args.freeze:
            and (name.startswith(('src/','data/','compat/','lib/','tools/map-editor/'))or name in ('main.lua','conf.lua')
                 or re.fullmatch(r'tools/rom_manifest_[a-z0-9_]+\.json',name))}
     paths.update([str(driver),'tests/drivers/util.lua'])
+    if str(driver)in ('tests/rs_story_driver.lua','tests/leafgreen_story_driver.lua'):
+        paths.update(('tests/drivers/story_battle.lua','tests/drivers/story_movement.lua'))
     if str(driver)=='tests/rs_battle_panel_native_driver.lua':
         paths.add('tests/rs_battle_panel_reference.lua')
     if str(driver)=='tests/gba_hall_integration_native_driver.lua':
