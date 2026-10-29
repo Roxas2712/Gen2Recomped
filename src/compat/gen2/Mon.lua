@@ -5,6 +5,17 @@
 -- source options-record construction remains a separate capability.
 local Native=require('src.pokemon.Pokemon')
 local Mon={}
+local function identity()return require('src.pokemon.IdentityRolls')end
+function Mon.vanillaShiny(dvs)return identity().gen2VanillaShiny(dvs)end
+function Mon.isShiny(dvs,context)return identity().gen2GeneShiny(dvs,context)end
+function Mon.vanillaGender(def,dvs)return identity().gen2VanillaGender(def,dvs)end
+function Mon.gender(def,dvs,context)return identity().gen2GeneGender(def,dvs,context)end
+function Mon.randomDVs()
+  local random=love and love.math and love.math.random or math.random
+  local dvs=require('src.pokemon.Stats').randomDVs(random)
+  dvs.hp=nil -- Source birth derives HP later, after any authored gene edits.
+  return dvs
+end
 local PP=require('src.pokemon.Gen2PP')
 function Mon.ppUpsOf(move,data)return PP.ups(data and data.moves and type(move)=='table' and data.moves[move.id],move)end
 function Mon.maxPpOf(move,data)return PP.forSlot(move,data and data.moves)end
