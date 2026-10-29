@@ -23,12 +23,19 @@ Emerald's remaining physical split-slot behavior for repeated ordinary stacks.
   removal and serialization; edition-owned limits; own text/cache admission;
   quantity bounds; custom names; cancellation and single result commit.
 - 31 Ruby/Sapphire bag contract and 82 all-five pocket/return assertions pass.
-- Emerald production source `46511b62` passes a fresh full import and own title,
-  followed by six final-renderer bag captures: quantity three, NO, YES, result,
-  a single item and 999 berries using frame 20. All were inspected at original
-  resolution. Ordinary item actions, cancel/save immutability with the normal
-  clock accounted, actual list rebuild/return, and disk save/load pass.
-- FireRed/LeafGreen native import and bag acceptance remain pending.
+- Emerald, FireRed and LeafGreen each pass a fresh complete own-cartridge
+  import/title and a seven-capture native bag fixture: quantity three, NO,
+  YES, result, a single item, the rebuilt list after that final item is
+  removed, and 999 berries using the last frame (Emerald 20; FRLG 10).
+  Ordinary item actions, cancel/save immutability with the normal clock
+  accounted, exact removal timing, cursor/list refresh and real disk
+  save/load pass. Both A and B result acknowledgement paths are exercised.
+- Runtime source is `46511b62`; the final native fixture on `e4f90042` changes
+  only test coverage. Each verification confirms unchanged frozen source.
+  Original-resolution frames were inspected. Original full RGBA comparisons
+  prove the six follow-up Emerald/FireRed views equal their inspected prior
+  views, and all seven final LeafGreen views equal the inspected FireRed
+  counterparts. The games still qualify from their own cartridges and titles.
 
 The first native fixture correctly refused to prepare 999 berries before the
 inventory fix; that failed run is not an accepted UI cache. A fresh independent
