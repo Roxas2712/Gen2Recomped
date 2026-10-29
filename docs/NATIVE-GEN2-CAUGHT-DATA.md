@@ -26,11 +26,11 @@ Pokemon/stat/move identity. Already authored source fields remain untouched.
 
 ## Validation
 
-Committed implementation `9d4eb7e3cc666c252274648e0495e4945debbb55`:
+Committed implementation `6f870c5b9741cd93777c56785bacd9dab984c41c`:
 
-- `gen2_caught_data`: 393,300 checks, including all 65,536 physical pairs,
+- `gen2_caught_data`: 393,307 checks, including all 65,536 physical pairs,
   source normalization, masks and gift rotation; no LOVE runtime.
-- `gen2_caught_codec`: 7,922 checks across native party, boxes, both daycare
+- `gen2_caught_codec`: 7,970 checks across native party, boxes, both daycare
   parents and pending egg, live edits, checksums, legacy hydration and opaque
   reserved layouts. All 256 possible values of each physical record byte are
   exercised through the actual native record exporter.
@@ -42,8 +42,14 @@ Committed implementation `9d4eb7e3cc666c252274648e0495e4945debbb55`:
 - Existing field, semantic checkpoint, friendship, party-full catch, decoration
   SRAM and Mom-account suites passed on the same production implementation.
 
-The same three new fixtures on predecessor main
+The initial three fixtures at `9d4eb7e3` on predecessor main
 `490eef1a0b4bd3b4f8d6cbdc78c0701e7e615d97` fail with 24 missing-API assertions.
+The final fixture also exercises both public setters against every reserved
+layout. A review found the initial setters cleared an opaque historical word;
+they now retain it, matching the source setter contract. Only packed-only
+Crystal records hydrate into canonical fields, and explicit Crystal export
+reads the live fields even when an older historical word remains present.
+
 This is a ROM-free semantic and native-owner qualification. It does not prove
 GUI/Windows/macOS package acceptance, full VASC compatibility, source constructor
 parity, standalone battle simulation or completion of other missing Mon APIs.
