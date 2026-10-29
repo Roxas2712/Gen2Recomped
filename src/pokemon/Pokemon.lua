@@ -324,7 +324,16 @@ function Pokemon.refreshStats(data, mon)
   local def=data and data.pokemon and data.pokemon[mon.species]
   if not(def and def.baseStats) then return mon end
   Pokemon.syncIdentity(data,mon)
-  Stats.replace(mon,Stats.calcGen2(def.baseStats,mon.dvs,mon.level or 1,mon.statExp))
+  local calculated
+  if Stats.isGen3(def) then
+    -- A GSC-hosted extension can explicitly use the native later stat model.
+    -- Preserve that structural owner, its six IVs, EVs and nature too.
+    calculated=Stats.calc(def,mon.level or 1,mon.ivs or mon.dvs,mon.statExp,mon.evs,mon.nature)
+  else
+    calculated=Stats.calcGen2(def.baseStats,mon.dvs,mon.level or 1,mon.statExp)
+  end
+  Stats.replace(mon,calculated)
+  require('src.pokemon.Gen2MonFields').bind(data,mon)
   mon.maxHp=mon.stats.hp
   if mon.hp==nil or mon.hp>mon.stats.hp then mon.hp=mon.stats.hp end
   return mon

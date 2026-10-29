@@ -66,6 +66,16 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   local unknown={species='MISSING',stats={hp=2},hp=1}
   T.eq(api.refresh(unknown,data),unknown,'unknown source species remains untouched')
   T.eq(unknown.stats.hp,2,'missing definition cannot replace caller stats')
+  if edition=='polishedcrystal' then
+    data.pokemon.FIXMON_A.evYield={hp=1}
+    local modern=Pokemon.new(data,'FIXMON_A',25)
+    modern.evs={hp=200,spatk=120,spdef=40}
+    local expected=Stats.calc(data.pokemon.FIXMON_A,25,modern.ivs,nil,modern.evs,modern.nature)
+    api.refresh(modern,data)
+    T.eq(modern.stats.hp,expected.hp,'an explicit later native stat model retains six-IV/EV arithmetic')
+    T.eq(modern.stats.spatk,expected.spatk,'explicit native later-model Special Attack is retained')
+    T.eq(modern.stats.specialAttack,expected.spatk,'GSC-hosted source names still follow the actual selected stat model')
+  end
   run.release()
 end
 Version.set(initial)
