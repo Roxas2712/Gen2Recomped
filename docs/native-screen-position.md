@@ -29,8 +29,13 @@ playfield 585 and battle-window 315 checks also pass. The extended probe on comm
 including actual final native world/UI blits and retained window coverage.
 Both managed test hosts are cleaned after successful exit.
 
-Complete composed-tree tests, actual GPU/window acceptance, every custom
-skin/device and final release qualification remain open. The older upstream
+Exact head `a6eb0c05` independently passes944/944 engine suites,4/4 SDK
+suites and all available official ROM-free tiers. All77 latest exact-head
+CI checks succeeded or were skipped. The macOS transport timeout passed on
+one rerun of the identical head, without changing its limits or tests.
+PR351 is merged as `25c0b749`; its tree is identical to the qualified tree.
+Actual GPU/window acceptance, every custom skin/device and final release
+qualification remain open. The older upstream
 adaptation is prepared against its actual `Renderer:endFrame` and flat
 options menu, without adding the newer fork's `frameRects` or grouped-menu
 methods. Its independent selected qualification passes 1,031 position checks,

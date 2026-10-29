@@ -15,8 +15,8 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `836125c17952e9535f05db7d9a8682bd16438c8d`,
-including native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
+The fetched fork main is `25c0b749c1476c83d1729c67a5dbdabe598dd8a8`,
+including screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
 the earlier native RNG PR336. PR349's exact composed tree passes942/942
 engine suites,4/4 SDK suites and every available official ROM-free tier;
 all77 exact-head CI checks succeeded or were skipped before its strict
@@ -66,14 +66,27 @@ The corresponding coherent older-host offers
 are upstream PR396 (battle foundations) and PR397 (frame queries with the
 already offered viewport/chrome prerequisites). No upstream merge occurs.
 
-[Native screen positioning](native-screen-position.md) is separate draft
-PR351 on the new main: CENTER/UPPER/TOP, saved native options, safe top insets,
+[Native screen positioning](native-screen-position.md) is merged PR351: CENTER/UPPER/TOP, saved native options, safe top insets,
 skin/split ownership and enough world coverage below a raised camera. The
 selected actual fitting/input/save/boot/final-blit probe passes1151 checks.
 Upstream PR398 independently passes1031 position,4454 frame-query and116
 chrome checks through its actual older compositor and flat options menu.
-Complete current-tree and actual GPU/release qualification of this new
-position feature remain open; PR350's943-suite receipt does not qualify it.
+Exact head `a6eb0c05` independently passes944/944 engine suites,4/4 SDK
+suites and all available official ROM-free tiers. All77 latest exact-head
+CI checks succeeded or were skipped, including the same-head rerun of a
+failed macOS transport timeout. The strict merge tree equals the qualified
+tree. Actual GPU/window and release qualification remain open.
+[Live native GSC Pokemon fields](native-gen2-mon-fields.md), draft PR352,
+addresses five actual missing source field reads on native Pokemon records.
+Corrected source `23d4aaa5` passes184 pure-data,177 native and100 actual
+world/battle checkpoint checks, plus all13 checkpoint suites that failed
+in the first complete run. The corrected codecs retain strict refusal of
+custom runtime state and byte-identical recapture. Earlier construction,
+identity and save regressions also passed on the initial source. The preceding
+engine fails all five source-field checks and the absent-helper check.
+Full composed-tree, unchanged-mod GPU/menu and release qualification of
+this addition remain open.
+
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.
 

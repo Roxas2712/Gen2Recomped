@@ -184,7 +184,9 @@ local function encode(game, root)
       return { node = seen[v] }
     end
     local actionSlot
-    if getmetatable(v) ~= nil then
+    local fields = package.loaded['src.pokemon.Gen2MonFields']
+    local nativeFields = fields and fields.plainKind(v)
+    if getmetatable(v) ~= nil and not nativeFields then
       -- Only the native PP-slot owner can authenticate this action view.
       -- Its existing factory reconstructs the binding; no metatable is saved.
       local choices = package.loaded["src.battle.EnemyMoveChoice"]
@@ -291,6 +293,12 @@ local function decode(game, graph, battle)
         -- Earlier owners read held items directly and have no separate binder.
         local itemReads = package.loaded["src.battle.HeldItemRead"]
         if type(itemReads) == "table" then itemReads.bind(t, battle) end
+        -- Serialized stats are raw data. Reinstall the native derived
+        -- names on restored current stats too (Transform can own a separate
+        -- block), without serializing a closure or changing graph identity.
+        if require('src.core.GameVersion').isGen2() then
+          require('src.pokemon.Gen2MonFields').stats(t.curStats)
+        end
         local modelReads = package.loaded['src.battle.Gen2BattleRead']
         if type(modelReads) == 'table' then modelReads.bind(t, battle) end
       end
