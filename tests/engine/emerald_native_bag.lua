@@ -49,7 +49,7 @@ local owner={game=game,pockets={{key='ITEM',name='ITEMS'}},pocket=1,index=1,top=
  rows={{id='POTION',label='POTION',qty=1,description='Heals HP.'},{close=true}}}
 function owner:selected()return self.rows[self.index]end
 function owner:itemIcon(_,forced)forcedIcon=forced end
-game.stack={top=function()return owner end}
+local top=owner;game.stack={top=function()return top end}
 local manifest={background={png='bg',variants={female='female-bg'}},indicator={png='indicator',variants={female='female-indicator'}},
  sprites={male={png='male-bag'},female={png='female-bag'},arrows={png='arrows',w=16,h=16}},
  palettes={male={},female={}},textIR={close=IR.fromAscii('CLOSE BAG'),count=IR.fromAscii('x{STR_VAR_1}'),
@@ -76,6 +76,12 @@ local quantity;for _,row in ipairs(texts)do if row.text=='x 1'then quantity=row 
 T.check(quantity,'single items retain their native quantity');T.eq(quantity.x,216);T.eq(quantity.y,17)
 T.eq(quantity.opts.font,'narrow');T.eq(texts[2].opts.font,'narrow')
 T.eq(Serial.encode(game.save),before,'drawing does not edit the save')
+top=setmetatable({owner=owner},require('src.ui.Gen3BagSale'));texts={};view:drawNative()
+local description=false;for _,row in ipairs(texts)do if row.y==105 then description=true end end
+T.eq(description,false,'sale dialogue suppresses the underlying description instead of leaving a clipped line')
+top=owner;texts={};view:drawNative();description=false
+for _,row in ipairs(texts)do if row.text=='Heals HP.'then description=true end end
+T.eq(description,true,'ordinary lists retain their item description')
 texts={};owner.rows={{id='KEY',label='KEY',qty=1,important=true},{close=true}}
 owner.pockets[1].key='KEY_ITEM';view:drawNative()
 local badge;for _,row in ipairs(draws)do if row[1].path==A.ROOT..'select.png'then badge=row end end

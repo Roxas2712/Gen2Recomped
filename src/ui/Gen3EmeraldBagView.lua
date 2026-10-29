@@ -129,7 +129,8 @@ function M:drawNative(action)
   {colors={fg=color(17),shadow=color(20),bg={0,0,0,0}}})
  local bag=man.sprites[female and'female'or'male'];path=bag.png;image=self:image(path);iw,ih=image:getDimensions()
  g.setColor(1,1,1,1);g.draw(image,self:quad(path,0,(FRAME[pocket.key]or 1)*64,64,64,iw,ih),36,34)
- local selected=self.game.stack:top()~=owner
+ local top=self.game.stack:top();local selected=top~=owner
+ local sale=selected and not action and getmetatable(top)==require('src.ui.Gen3BagSale')
  for i=0,7 do
   local row=owner.rows[owner.top+i];if not row then break end
   local y=17+i*16
@@ -160,7 +161,7 @@ function M:drawNative(action)
   local destination=self.load('src.core.game3.scripting.text_ir').toAscii(assert(man.returnToIR[loc]))
   desc=self:text('returnTo',{destination})
  end
- if not(action and pocket.key=='TM_HM'and self:drawMoveInfo(row))and desc then
+ if not sale and not(action and pocket.key=='TM_HM'and self:drawMoveInfo(row))and desc then
   font.draw(desc,3,105,{colors=normal,maxWidth=109})
  end
  if action then self:drawActions(action)end
