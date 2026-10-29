@@ -66,7 +66,7 @@ Q.new=oldNew;owner.emerald=true;owner.message='KEEP'
 -- Real inventory IO must remove only the chosen physical stack.
 local V=require('src.core.GameVersion');local oldVersion=V.get();V.set('emerald')
 local Bag=require('src.inventory.Bag');local Native=require('src.inventory.Gen3RsInventory')
-game.data.constants={gen=3,gen3Bag={version='emerald',pockets={ITEM=30,BERRY=46}}}
+game.data.constants={gen=3,gen3Bag={version='emerald',pockets={ITEM=30,BERRY=46,KEY_ITEM=30,BALL=16,TM_HM=64}}}
 game.data.items.POTION.index=13;game.save={inventory={},bagOrder={},pcItems={}}
 T.eq(Bag.add(game.save,'POTION',111,game.data),true)
 local row=Native.rows(game.save,game.data,'ITEM')[2]
