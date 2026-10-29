@@ -614,6 +614,7 @@ function Gen3BagMenu:depositItem(id)
   if selection then held=math.min(held,row.qty)end
   local function deposit(qty, name)
     if type(qty)~='number'or qty%1~=0 or qty<1 or qty>held then return end
+    if qty>((game.save.inventory or{})[id]or 0)then return end
     local stored=(game.save.pcItems or{})[id]or 0
     if self:pcFull(id)or stored+qty>999 then
       return self:tell(bagWord(game,'noRoomStore'))
@@ -642,6 +643,8 @@ function Gen3BagMenu:withdrawItem(id)
   local held = pc[id] or 1
   self:askQuantity(id, held, Gen3BagMenu.pcWord(game, "withdrawPrompt"),
     function(qty, name)
+      if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+        or qty<1 or qty>(pc[id]or 0)then return end
       if not Bag.add(game.save, id, qty, game.data) then
         return self:tell(Gen3BagMenu.pcWord(game, "bagFull"))
       end
@@ -664,11 +667,14 @@ function Gen3BagMenu:tossStored(id)
   local pc = game.save.pcItems or {}
   local held = pc[id] or 1
   self:askQuantity(id, held, bagWord(game, "tossHowMany"), function(qty, name)
+    if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+      or qty<1 or qty>(pc[id]or 0)then return end
     local TextBox = require("src.render.TextBox")
     game.stack:push(TextBox.new(game,
       fillLine(bagWord(game, "tossConfirm"), name, qty), nil, {
         choice = function(yes)
           if not yes then return end
+          if game.save.pcItems~=pc or qty>(pc[id]or 0)then return end
           pc[id] = (pc[id] or 0) - qty
           if pc[id] <= 0 then pc[id] = nil end
           self:rebuild()
