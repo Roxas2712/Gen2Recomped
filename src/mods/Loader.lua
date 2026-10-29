@@ -1400,6 +1400,11 @@ function Loader:load(data)
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods reloaded")
+  require("src.core.Gen2SpeciesNames").publish(data)
+  local palette=package.loaded['src.render.PaletteFX']
+  if palette and palette.clearGen2Context then palette.clearGen2Context()end
+  local clock = package.loaded["src.core.Gen2Clock"]
+  if clock then clock.resetObservations() end
   -- A SECOND LOAD IN ONE PROCESS STARTS FROM THE ENGINE, NOT FROM THE LAST
   -- LOAD'S MODS.  EXIT GAME -> launcher -> Play runs every mod's main.lua
   -- again (and the launcher backdrop boots the plain game in between); the
@@ -1753,6 +1758,10 @@ function Loader.teardown()
   Api3NPC.cancelAll()
   Api3Warp.cancelAll()
   PortableScripts.cancelAll(nil, nil, "mods unloaded")
+  local palette=package.loaded['src.render.PaletteFX']
+  if palette and palette.clearGen2Context then palette.clearGen2Context()end
+  local clock = package.loaded["src.core.Gen2Clock"]
+  if clock then clock.resetObservations() end
   local undone = select(1, ModSeams.unwindAll())
   pcall(function()
     Runtime.install(Events.new(), Hooks.new(), nil)
