@@ -69,6 +69,37 @@ engine and SDK suites remain required for both paths. These checks do not
 establish compatibility with every private engine-internals modification or
 replace the unchanged-mod graphics, download and gameplay acceptance runs.
 
+## GSC evolution presentation
+
+`src.ui.gen2.EvolutionAnim` resolves to `src.compat.gen2.EvolutionAnim`.
+Both imports expose the same subclassable class, including `setPhase`,
+`updateFlash`, `picPath`, `drawPanel` and `drawWidescreen`. Legacy presentation
+mods can override the picture, phase and completion methods without replacing
+the native Game or changing their manifest. The existing ordinary evolution
+screen remains on its current dispatch path.
+
+The options constructor accepts `mon`, `entry`, `index`, `party`, `save`,
+`force` and `onDone`. Target rows accept source `into` and native `species`.
+Writeback delegates to the native evolution/stat/event owner and retains the
+actual Pokemon record. An explicit save receives its own Pokedex marks;
+cancellation does not evolve or teach. Native Gen2 move learning handles
+free/full/known slots and the actual forget screen.
+
+The Gen2 evolution module additionally exposes the cartridge presentation
+constants, fresh `flashRounds()` tables, `flashFrames()` and `speciesName()`.
+The path-first `Sprites.pic(path, context)` uses the same live
+`pokemon.sprite` hook as native `Sprites.path`, including true-colour results.
+Crystal picture scripts use the native PicAnim owner with the evolution
+idle/wait/cry/play order. Indexed palettes, true-colour replacement art and
+Classic mode remain owned by the native palette renderer.
+
+Qualification includes the unchanged published Ascendant 6.7.38 Gen2 entry
+through the actual SDK with synthetic data, its original Mega subclass on both
+sides, and actual LÖVE 12 Metal/OpenGL GPU reads with generated fixture art.
+These checks establish the reported load/animation contract; they do not claim
+a complete Windows game session, every optional mod feature, or the separately
+reported Kris/Gold player-selection issue.
+
 ## Existing compatibility boundaries
 
 - Source encounter edits during legacy event callbacks update the native

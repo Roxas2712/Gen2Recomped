@@ -12,9 +12,12 @@
     "src/ui/gen2/BattleAnimView.lua": "c67613148f14987bdc76d01ace2cd90e89f7d742e4c4a0e95889707f5a9d0e61",
     "src/ui/gen2/BattleState.lua": "6789c83e5124701d7ebfb1bdc74389102fa85c02f5ecdb812baf0905bded723c",
     "src/ui/gen2/Chrome.lua": "a81231beac5334eae58df0936fed1f4fec90b3d986e8caf8b31b5e522180dc52",
-    "src/battle/gen2/AnimRunner.lua": "4f31c23a94e14d5796a125237ab205342e6b3b63134915cda67373005536ce71"
+    "src/battle/gen2/AnimRunner.lua": "4f31c23a94e14d5796a125237ab205342e6b3b63134915cda67373005536ce71",
+    "src/ui/gen2/EvolutionAnim.lua": "0add778cabb85cbb0a33e8a5facffc849c6f02706aa43be6fbcb8d9f7cd0ed81",
+    "src/core/gen2/Evolution.lua": "24295697280d78c7bb0d5f85f398a09f69fbd26acf482fa2fcccf01249a5464b",
+    "src/pokemon/Sprites.lua": "32568c7447881f68ebe70bc0c31d0c9a19f7251953e83baac49e05ab1e39f661"
   },
-  "scope": "GSC BG and object state machines, command VM, BG presenter, arithmetic and identifier orders. No launcher, game assets, ROM bytes or player state copied.",
+  "scope": "GSC BG and object state machines, command VM, BG presenter, arithmetic and identifier orders. No launcher, game assets, ROM bytes or player state copied. GSC evolution presentation and the path-first Pokemon picture seam.",
   "modifications": [
     "BgEffects arithmetic dependency uses Gen2AnimMath instead of the full reference object pool.",
     "A missing jump-table list resolves through edition-specific Gen2BgEffectIds for older native caches.",
@@ -27,7 +30,8 @@
     "The native importer preserves the crossed battler-row macro/handler names. A Gen2-only cache revision rejects old generated commands and preserves game saves.",
     "Crystal actor copies now distinguish vTiles0 staging from BG publication. Positive imported symbol capabilities preserve GS dummy commands; this intentionally corrects the pinned reference for Transform and Minimize.",
     "ROM-derived full Substitute/Minimize boxes use native indexed image/palette/geometry owners. Opposite captures retain actual battler identity with requested box size. No ROM bytes/images are distributed.",
-    "Picture pins reconcile the actual interpreter stopped field; programs returning without an image opcode cannot retain stale visuals."
+    "Picture pins reconcile the actual interpreter stopped field; programs returning without an image opcode cannot retain stale visuals.",
+    "Gen2 evolution presentation retains the reference phase/subclass protocol and timing arithmetic, with native palette, PicAnim, live sprite hook, stats/Pokedex and move-learning owners. No duplicate Pokemon builder or detached evolution save state."
   ],
   "licence": "Gen1Recomp GPLv3 with its Additional Terms, retained in LICENSE.MD. Existing authors retain their rights; Roxas2712 integration changes in these derived files are offered on those applicable terms.",
   "qualification": "Crystal ROM source f5572ee1: fresh native move IDs/GFX/palette/art import,10880 picture pixels independently checked,2804 cases and355718 frames. Exact primary actor staging/publication at frames8/57 replaces picOverride equality only for two known pinned-reference bugs (Transform/Minimize); all other command/OAM/BG observations remain compared. No generated-cache input. Fork CPU source c50da691 passes27 selected groups including shared native picture/Gen3 Substitute regressions; independent upstream e9ec0554 passes10 targeted groups. Publication changes after these sources are documentation/comments; new broad upstream qualification and any GPU/client/Windows/release acceptance remain separate.",

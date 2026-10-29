@@ -14,6 +14,23 @@ local Sprites = {}
 
 local function samePath(path) return path end
 
+-- Legacy path-first call; share the same live hook and true-colour context.
+-- Adapted from Gen1Recomp 535a5ec0 under compat/gen1-gsc/LICENSE.MD.
+function Sprites.pic(path, ctx)
+  ctx = ctx or {}
+  ctx.side = ctx.side == "back" and "back" or "front"
+  ctx.kind = ctx.kind or "battle"
+  if ctx.trueColor == nil then
+    local def = ctx.data and ctx.data.pokemon and ctx.data.pokemon[ctx.species]
+    ctx.trueColor = def and def.trueColor and true or false
+  end
+  if path and Runtime.wantsHook("pokemon.sprite") then
+    local hooked = Runtime.call("pokemon.sprite", samePath, path, ctx)
+    if type(hooked) == "string" and hooked ~= "" then path = hooked end
+  end
+  return path, ctx.trueColor and true or false
+end
+
 -- GetUnownLetter packs the middle two bits of the atk/def/spd/spc DVs into
 -- one byte and divides by 10, giving letter 1..26.  A species record only
 -- carries `forms` when the ROM has per-form pics (UNOWN).
@@ -82,11 +99,7 @@ function Sprites.path(data, species, side, opts)
     trueColor = def.trueColor and true or false,
     data = data,
   }
-  if path and Runtime.wantsHook("pokemon.sprite") then
-    local hooked = Runtime.call("pokemon.sprite", samePath, path, ctx)
-    if type(hooked) == "string" and hooked ~= "" then path = hooked end
-  end
-  return path, ctx.trueColor and true or false
+  return Sprites.pic(path, ctx)
 end
 
 -- Resolve the player's own trainer pic path.

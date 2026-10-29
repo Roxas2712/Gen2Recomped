@@ -42,6 +42,7 @@ function love.load()
   love.thread.getChannel("download-qa-completed"):clear()
   love.thread.getChannel("download-qa-retire-entered"):clear()
   love.thread.getChannel("download-qa-retire-release"):clear()
+  love.thread.getChannel("download-qa-publish-release"):clear()
   local Download=require('src.net.AsyncDownload')
   local download=Download.download
   Download.download=function(url,destination,options)
@@ -238,11 +239,13 @@ function love.run()
         observedPublication=true
         check(not Fetch.cancel(finishing),'cancellation after publication claim is refused without waiting')
         check(state.cancellable==false,'committing request reports cancellation boundary')
+        love.thread.getChannel("download-qa-publish-release"):push(true)
       end
       check(love.timer.getTime()-finishingAt<5,'delayed publication completes')
       love.timer.sleep(.005)
     end
-    check(observedPublication and state.status=='ok','main thread pumps during slow filesystem publication')
+    check(observedPublication,'main thread pumps during slow filesystem publication')
+    check(state.status=='ok','claimed publication completes: '..tostring(state.status)..' '..tostring(state.err))
     check(love.filesystem.read(delayedPath)==expected,'claimed publication completes with exact bytes')
     Fetch.release(finishing)
     local invalidTarget=assert(Fetch.download(base..'/binary','downloads',{size=14}))
