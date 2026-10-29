@@ -59,6 +59,34 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(other.pokemon.QA_MON.baseStats.spdef,53,'base-stat edits reach native column')
 end
 
+-- Semantic snapshots may strip only the exact native wrapper. A cloned,
+-- customized or modified metatable is still an opaque external owner.
+local native={species='QA_MON',stats={hp=9,spatk=2,spdef=3}}
+Fields.bind({pokemon={QA_MON={name='NATIVE'}}},native)
+T.eq(Fields.plainKind(native),'mon','native Pokemon wrapper authenticated for raw serialization')
+T.eq(Fields.plainKind(native.stats),'stats','native stats wrapper authenticated for raw serialization')
+T.eq(Fields.plainKind({}),nil,'ordinary data does not claim native wrapper ownership')
+T.eq(Fields.plainKind(1),nil,'scalar has no native wrapper')
+local nativeMeta=getmetatable(native)
+local impostor={};local copied={};for k,v in pairs(nativeMeta)do copied[k]=v end
+setmetatable(impostor,copied)
+T.eq(Fields.plainKind(impostor),nil,'copying a metatable does not authenticate it')
+local originalIndex=nativeMeta.__index
+nativeMeta.__index=function()return 'opaque'end
+T.eq(Fields.plainKind(native),nil,'modified native metatable is rejected')
+nativeMeta.__index=originalIndex
+T.eq(Fields.plainKind(native),'mon','restoring exact native wrapper restores authentication')
+nativeMeta.external=true
+T.eq(Fields.plainKind(native),nil,'additional metatable key is opaque')
+nativeMeta.external=nil
+T.eq(Fields.plainKind(native),'mon','exact original wrapper remains available')
+local customNative=setmetatable({stats={hp=3}},{__index=function()return 1 end})
+Fields.bind({},customNative)
+T.eq(Fields.plainKind(customNative),nil,'custom source fields cannot weaken plain checkpoint admission')
+local customStats=setmetatable({hp=2},{__len=function()return 8 end})
+Fields.stats(customStats)
+T.eq(Fields.plainKind(customStats),nil,'custom stat metadata remains opaque')
+
 -- Existing custom behavior remains active. Plain native assignments bypass
 -- __newindex exactly when the real canonical key is already stored.
 local writes=0

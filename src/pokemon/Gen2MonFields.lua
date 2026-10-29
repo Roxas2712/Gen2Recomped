@@ -3,7 +3,7 @@
 -- aliases are never duplicated into saves and keep observing native writes.
 local Fields = {}
 local installed = setmetatable({}, {__mode='k'})
-local dataKey, baseKey = {}, {}
+local dataKey, baseKey, signatureKey = {}, {}, {}
 -- Both entries are weak: a value retaining its dataset must not root that
 -- weak key on LuaJIT. Live Pokemon retain their own dataset via the metatable.
 local monPlain = setmetatable({}, {__mode='kv'})
@@ -52,7 +52,8 @@ local function metatableFor(kind, previous, data)
   if found then return found end
   local meta={}
   for key,value in pairs(previous or {})do meta[key]=value end
-  if kind=='mon' then meta[dataKey],meta[baseKey]=data,previous or false end
+  meta[baseKey]=previous or false
+  if kind=='mon' then meta[dataKey]=data end
   local oldIndex,oldWrite=meta.__index,meta.__newindex
   meta.__index=function(object,key)
     local value=getter(kind,object,key,oldIndex,data)
@@ -67,6 +68,11 @@ local function metatableFor(kind, previous, data)
     end
     return write(oldWrite,object,key,value)
   end
+  -- Keep authentication with the live metatable, not in a global value
+  -- that could retain its dataset/Pokemon cycle on LuaJIT.
+  local signature={}
+  for key,value in next,meta do signature[key]=value end
+  meta[signatureKey]=signature
   installed[meta]=kind
   if kind=='mon' then
     if not previous then
@@ -88,6 +94,23 @@ local function attach(object, kind, data)
   if meta and rawget(meta,'__metatable')~=nil then return false end
   setmetatable(object,metatableFor(kind,meta,data))
   return true
+end
+
+-- The checkpoint codecs store only raw record entries, never these
+-- derived aliases or their data-owner closure. Authenticate our unchanged
+-- plain wrappers; custom, protected, copied or edited metatables stay opaque.
+function Fields.plainKind(object)
+  if type(object)~='table' then return nil end
+  local meta=getmetatable(object)
+  local kind=installed[meta]
+  if not kind or getmetatable(meta)~=nil or rawget(meta,baseKey)~=false then return nil end
+  local signature=rawget(meta,signatureKey)
+  if type(signature)~='table' then return nil end
+  for key,value in next,signature do if rawget(meta,key)~=value then return nil end end
+  for key,value in next,meta do
+    if key~=signatureKey and rawget(signature,key)~=value then return nil end
+  end
+  return kind
 end
 
 function Fields.stats(stats)
