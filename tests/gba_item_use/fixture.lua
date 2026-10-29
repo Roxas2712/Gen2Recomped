@@ -261,7 +261,7 @@ function M.new(root, backend, version, api, format, noMod, failing)
     assert(game.stack:top()):update(1 / 60)
     game.input.pressed = {}
   end
-  local function nativePicker(key)
+  local function nativePicker(key, occurrence)
     assert(backend == "gen2", "Gen2 native UI fixture")
     local Data = require("src.core.Data")
     for _, name in ipairs({ "items", "constants", "pokemon", "moves", "audio" }) do
@@ -275,10 +275,11 @@ function M.new(root, backend, version, api, format, noMod, failing)
     game.stack.states = { game.overworld }
     local menu = require("src.ui.Gen3BagMenu").new(game, {})
     game.stack:push(menu)
+    local seen=0
     for i, row in ipairs(menu.rows) do
       if row.id == nativeIds[key] then
-        menu.index = i
-        break
+        seen=seen+1
+        if seen==(occurrence or 1)then menu.index=i;break end
       end
     end
     for _ = 1, 1200 do

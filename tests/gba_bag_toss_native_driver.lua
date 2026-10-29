@@ -50,20 +50,22 @@ return function(game)
     assert(owner.rows[owner.index].id==id,'Ordinary bag cursor could not select '..id)
     return owner
   end
-  local function toss(owner)
+  local function action(owner,kind)
     press('a');local menu=game.stack:top()
     assert(getmetatable(menu)==require('src.ui.Gen3ItemMenu'),'Original item action menu missing')
-    local target;for i,row in ipairs(menu.entries)do if row.kind=='toss'then target=i end end
-    assert(target,'Selected ordinary item has no TOSS action')
+    local target;for i,row in ipairs(menu.entries)do if row.kind==kind then target=i end end
+    assert(target,'Selected ordinary item has no '..kind..' action')
     local cols=menu.columns
     if (menu.index-1)%cols~=(target-1)%cols then press('right')end
     for _=1,menu.rows do
       if menu.index==target then break end;press('down')
     end
-    assert(menu.index==target,'Ordinary action input did not reach TOSS')
-    press('a');local state=game.stack:top();assert(getmetatable(state)==UI and state.owner==owner)
+    assert(menu.index==target,'Ordinary action input did not reach '..kind)
+    press('a');local state=game.stack:top()
+    if kind=='toss'then assert(getmetatable(state)==UI and state.owner==owner)end
     return state
   end
+  local function toss(owner)return action(owner,'toss')end
   local owner=bag('POTION');local state=toss(owner);local before=S.encode(game.save)
   assert(state.mode=='quantity'and state.qty==1);press('down');assert(state.qty==1)
   press('right');press('right');assert(state.qty==3);shot('native-bag-toss-quantity-three')
@@ -92,8 +94,57 @@ return function(game)
   state.qty=999;state:refreshMessage();shot('native-bag-toss-berry-999-last-frame')
   press('up');assert(state.qty==999);press('b');unchanged(before);press('b')
   assert(game.stack:top()==world and game.save.inventory.ORAN_BERRY==999 and game.save.inventory.ANTIDOTE==nil)
+  if version=='emerald'then
+    local Physical=require('src.inventory.Gen3RsInventory')
+    assert(Bag.add(game.save,'POTION',90,game.data))
+    assert(Bag.add(game.save,'POTION',51,game.data))
+    local rows=Physical.rows(game.save,game.data,'ITEM')
+    assert(#rows==2 and rows[1].qty==99 and rows[2].qty==51)
+    owner=bag('POTION');press('down')
+    assert(owner:selected().id=='POTION'and owner:selected().rsSlot.index==2)
+    state=toss(owner);before=S.encode(game.save)
+    assert(state.max==51 and owner:selected().rsSlot.index==2,'TOSS borrowed from another physical stack')
+    state.qty=51;state:refreshMessage();shot('native-bag-toss-second-stack-limit')
+    press('b');unchanged(before)
+    state=toss(owner);press('right');press('right');press('a');press('a')
+    assert(state.mode=='done'and game.save.inventory.POTION==150)
+    press('a');rows=Physical.rows(game.save,game.data,'ITEM')
+    assert(state.committed and game.save.inventory.POTION==147 and rows[1].qty==99 and rows[2].qty==48)
+    assert(owner:selected().rsSlot.index==2 and owner:selected().qty==48)
+    shot('native-bag-toss-second-stack-three')
+    assert(game:writeSave()==true);local splitLoaded=assert(IO.load(version))
+    assert(S.encode(splitLoaded.inventory)==S.encode(game.save.inventory))
+    assert(S.encode(splitLoaded.gen3RsBagSlots)==S.encode(game.save.gen3RsBagSlots))
+    local restoredRows=Physical.rows(splitLoaded,game.data,'ITEM')
+    assert(#restoredRows==2 and restoredRows[1].qty==99 and restoredRows[2].qty==48,
+      'Actual disk round trip flattened the two partially consumed stacks')
+    local mon=game.save.party[1];local maxHp=mon.stats.hp;mon.hp=math.max(1,maxHp-5)
+    before=S.encode(game.save);state=action(owner,'use')
+    assert(getmetatable(state)==require('src.ui.Gen3PartyMenu'));press('b');unchanged(before)
+    state=action(owner,'use');press('a')
+    for _=1,180 do if game.stack:top()==owner then break end;press('a')end
+    rows=Physical.rows(game.save,game.data,'ITEM')
+    assert(game.stack:top()==owner and mon.hp==maxHp and rows[1].qty==99 and rows[2].qty==47,
+      'Actual medicine flow failed to consume only the selected second stack')
+    shot('native-bag-use-second-stack')
+    state=toss(owner);assert(state.max==47);state.qty=47;state:refreshMessage()
+    press('a');press('a');assert(game.save.inventory.POTION==146)
+    press('b');rows=Physical.rows(game.save,game.data,'ITEM')
+    assert(state.committed and #rows==1 and rows[1].qty==99 and game.save.inventory.POTION==99)
+    local selected=owner:selected()
+    assert(selected and(selected.close or(selected.id=='POTION'and selected.qty==99)),
+      'Removing the final duplicate left a stale row/cursor')
+    shot('native-bag-toss-second-stack-removed');press('b');assert(game.stack:top()==world)
+    report.emeraldPhysicalSlots={selectedStackLimit=true,cancelPreservesPhysicalOrder=true,
+      selectedStackRemoval=true,otherStackPreserved=true,lastDuplicateRemovalAndCursorValid=true,
+      partialDuplicateDiskRoundTrip=true,medicineCancelPreservesSave=true,medicineUsesSelectedStack=true}
+  end
   assert(game:writeSave()==true);local loaded=assert(IO.load(version))
   assert(S.encode(loaded.inventory)==S.encode(game.save.inventory),'Actual save/load lost the selected toss result')
+  if version=='emerald'then
+    assert(S.encode(loaded.gen3RsBagSlots)==S.encode(game.save.gen3RsBagSlots),'Actual save/load lost physical bag slots')
+    report.emeraldPhysicalSlots.actualDiskRoundTrip=true
+  end
   report.cases={quantityCancelPreservesSave=true,noPreservesSave=true,bPreservesSave=true,
     selectedQuantityCommittedOnce=true,nativeCountAndFrames=true,threeDigitBerryAndPouch=true,
     oneItemSkipsQuantity=true,lastItemRemovalAndCursorValid=true,bagRebuildAndReturn=true,actualDiskRoundTrip=true}

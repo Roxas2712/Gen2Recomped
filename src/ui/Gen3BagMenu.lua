@@ -387,7 +387,7 @@ function Gen3BagMenu:rebuild()
   end
   local want = self.pockets[self.pocket].key
   local rows = {}
-  local nativeRows=self.rs and require('src.inventory.Gen3RsInventory').rows(game.save,game.data,want)
+  local nativeRows=require('src.inventory.Gen3RsInventory').rows(game.save,game.data,want)
   local ordered={}
   if nativeRows then
     for i,row in ipairs(nativeRows)do ordered[i]=row.id end
@@ -604,8 +604,16 @@ function Gen3BagMenu:depositItem(id)
     return self:tell(bagWord(game, "noRoomStore"))
   end
   local held = (game.save.inventory or {})[id] or 1
+  local row=self:selected()
+  local selection=row and row.id==id and row.rsSlot
+  if selection then held=math.min(held,row.qty)end
   local function deposit(qty, name)
-    Bag.remove(game.save, id, qty)
+    if type(qty)~='number'or qty%1~=0 or qty<1 or qty>held then return end
+    local stored=(game.save.pcItems or{})[id]or 0
+    if self:pcFull(id)or stored+qty>999 then
+      return self:tell(bagWord(game,'noRoomStore'))
+    end
+    if Bag.remove(game.save,id,qty,game.data,selection)==false then return end
     game.save.pcItems = game.save.pcItems or {}
     game.save.pcItems[id] = (game.save.pcItems[id] or 0) + qty
     self:rebuild()
@@ -678,6 +686,7 @@ function Gen3BagMenu:choose()
   if self.sell then
     if self.onSell then return self.onSell(row.id,self)end
     return require("src.ui.Gen3ShopMenu").sellItem(self.game, row.id, {
+      bagSlot = row.rsSlot, max = row.qty,
       say = function(text) self:say(text) end,
       refresh = function() self:rebuild() end,
     })
