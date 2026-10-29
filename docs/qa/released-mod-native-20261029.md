@@ -277,3 +277,81 @@ copies. Actual available storage rose from 26.9 to 31.6 GiB. The 20-GiB reserve,
 original data and active-reader protections remain unchanged. A previously
 archived runtime is restored through `qa_restore_copy` and hash-verified before
 reuse; no player instance or protected Gen1 checkout is used.
+
+## Yellow: actual interiors, NPC interaction, battle and earned save
+
+Current source `68961bdc` also passed the official full CI in run40925706060:
+992/992 engine suites, 4/4 SDK suites and all available ROM-free tiers. The
+hosted checkout `a9b4f632` has the exact committed tree
+`c7b8ccb8f6ff1dd00ef09b04cf7bee4a9976a7dd`. The focused queue/screen workflow
+run40925709660 independently passed on that same tree, including the216 native
+boot-order assertions. These are source/contract qualifications, not release
+or universal-mod acceptance.
+
+A new isolated actual Metal Yellow journey installed these published packages
+without modification: Battle Art1.11.2 (534 files), Legendary Interiors0.20.0
+(84), TRUE3D NPCs1.1.6-test16 (717), and Free Orbit0.1.0-test4 (12). All1347
+installed files matched their source ZIP members, and original ZIPs, ROM and
+checkpoint inputs were unchanged.
+
+Normal NEW GAME/input reached the furnished bedroom, stairs and first floor.
+Two advancing OS captures per phase verified detailed interior geometry,
+lights/shadows and the textured3D mother NPC. Ordinary movement/A opened the
+native MOM dialogue while the model faced the player. An initial private
+navigation assertion expected a literal PALLET_TOWN exit; the real door uses
+LAST_MAP. The private navigator now uses the existing native
+`Warp.peekDestination`, with the same remembered-outdoor/heal fallback as the
+native mover. No warp engine or mod code was changed for that test assumption.
+
+The following ordinary journey continued through the actual dynamic house exit
+to Pallet Town, Oak's native Pikachu capture demonstration and escort, and the
+detailed3D lab. Native interaction with the Eevee ball awarded Pikachu level5,
+19HP and125EXP. Oak, the rival and other NPC models rendered upright. A private
+observer at the native graphics boundary recorded64 real graphics draws whose
+live call stack contained the unchanged exported visible NPC provider; neither
+that provider nor another published mod function was replaced.
+
+Walking toward the door naturally triggered the rival trainer battle. Actual
+OS reviews verified the staged3D lab, challenge dialogue, green HP/19-of-19,
+FIGHT/PKMN/ITEM/RUN, and THUNDERSHOCK/GROWL with ELECTRIC/30-of-30 PP. Native
+open-screen touch drag changed the published camera's orbit goal from0 to0.075,
+and subsequent OS frames showed the changed world viewpoint with upright move
+panels. This proves camera input, not every possible figure/UI overlap or
+layout. Normal attack input won the battle (opponent HP0; player HP9 before
+the native story heal). Earned Pikachu reached level6/222EXP and the native
+story healed it to21HP; the rival exited and normal3D field ownership resumed.
+
+Normal START→SAVE wrote `profiles/guest/save_yellow.lua`. Native disk reload
+then matched the earned party, level/HP/EXP and all three move IDs/PP, including
+the newly learned TAIL_WHIP. The preserved earned-save witness has SHA256
+`f73b33c9726d5c69b9b3cafc5e0e268e832c887151fec74a8e922a95c8f14168`.
+The full journey still has a **failed** combined receipt: its12-minute bound
+expired before the last post-save OS acceptance/result. The final attempted
+captures showed LOVE's no-game window and a stale draw serial, so they were
+not accepted as game evidence. Earlier scoped observations remain preserved;
+normal fresh-process CONTINUE and restored camera windows remain separate cases.
+The raw failed receipt is not relabelled as a full journey pass.
+
+The alternative Legendary host, standalone Better Battle UI/follower gameplay,
+remaining Crystal visual attribution and packaged/Windows acceptance remain
+open. Published mod code, the player instance and protected Gen1 checkouts were
+not modified.
+
+A separate fresh Yellow process on the same source normally selected CONTINUE
+from a new isolated profile containing byte-identical copies of that earned
+SAVE and options. Native checks matched OAKS_LAB(5,6), Pikachu level6/21HP/222EXP,
+THUNDERSHOCK30/GROWL40/TAIL_WHIP30 PP and the saved display level1 before any
+camera input. Two advancing OS frames accepted the upright furnished lab with
+player, Pikachu and textured3D NPCs. The next Third Person images advanced and
+showed the selected mode, but their manual acknowledgement arrived after the
+native180-second deadline. That process exited1, the raw receipt remains
+failed and First Person was not reached. Close billboard/floor edge streaks
+are recorded for reference attribution; functional camera selection is not
+artifact-free visual acceptance. All1347 installed members and original
+ROM/archive/checkpoint/SAVE/options inputs remained unchanged.
+
+The installed managed storage sweep previously reclaimed3975.7MiB of idle
+test copies with source/model preservation. A further sweep at the explicit
+request to free storage found no additional eligible bytes; actual free space
+was24.4GiB, above the mandatory20GiB reserve. No system swap or player data
+was removed.
