@@ -33,7 +33,7 @@ function L.install(loader, record, api, engineCall)
         local info=love.filesystem.getInfo(path)
         if info and info.type=='directory' then fingerprint(path)
         elseif info and name:match('%.lua$') then
-          recipes[#recipes+1]=path..':'..love.data.encode('string','hex',love.data.hash('string','sha256',assert(love.filesystem.read(path))))
+          recipes[#recipes+1]=path..':'..love.data.encode('string','hex',love.data.hash('sha256',assert(love.filesystem.read(path))))
         end
       end
     end

@@ -75,6 +75,14 @@ function Bag.stackLimit(id,data)
  data=data or require('src.core.Data')
  local native=require('src.inventory.Gen3RsInventory').stackLimit(data,id)
  if native then return native end
+ local bag=data and data.constants and data.constants.gen3Bag
+ if Bag.gen3Pockets(data) then
+   local version=bag.version or require('src.core.GameVersion').get()
+   -- Pinned Gen1Recomp fb7b0366: Emerald bag.slotMax and FireRed's
+   -- shared FRLG profile. Ruby/Sapphire's physical-slot policy stays first.
+   if version=='firered'or version=='leafgreen'then return 999 end
+   if (version=='emerald'or version=='ruby'or version=='sapphire')and pocketOf(id,data)=='BERRY'then return 999 end
+ end
  if Bag.gen4Pockets(data) and pocketOf(id,data)~='TM_HM' then return 999 end
  return 99
 end
@@ -247,6 +255,9 @@ function Bag.canAdd(save,id,qty,data)
   if not(save and type(save.inventory)=='table')then return false end
   qty=qty or 1
   if type(qty)~='number'or qty~=qty or qty%1~=0 or qty<=0 or qty>999 then return false end
+  data=data or require('src.core.Data')
+  local handled,ok=require('src.inventory.Gen3RsInventory').canAdd(save,data,id,qty)
+  if handled then return ok end
   local shadow={inventory={},bagOrder={},gen3PyramidBag=save.gen3PyramidBag and true or nil}
   for key,value in pairs(save.inventory)do shadow.inventory[key]=value end
   for i,value in ipairs(save.bagOrder or{})do shadow.bagOrder[i]=value end

@@ -15,7 +15,11 @@ local I={of=function()return entries end,have=function(_,e)return e.id=='gold_en
  install=function(_,e,bytes)assert(e.id=='gold_ptbr');if fail then return nil,'disk full'end;installed=bytes;return true end}
 package.loaded['src.mods.ModImports']=I
 love={filesystem={read=function(path)if path:match('index.json$')then return J.encode({format='native-ptbr-bps-v1',recipes={recipe}})end;return files[path]end},
- data={encode=function(_,_,bytes)return bytes end,hash=function(_,kind,bytes)return hash(kind,bytes)end}}
+ data={encode=function(_,_,bytes)return bytes end,hash=function(kind,bytes,...)
+  assert(select('#',...)==0,'LÖVE hash takes algorithm and bytes')
+  assert(kind=='sha256'or kind=='sha1'or kind=='md5','unsupported hash algorithm')
+  return hash(kind,bytes)
+ end}}
 local P=require('src.translation.PtbrPatch')
 check(P.describe('gold',{}).baseReady,'supported retained base resolves')
 check(not P.describe('emerald',{}),'unavailable editions cannot invent a recipe')

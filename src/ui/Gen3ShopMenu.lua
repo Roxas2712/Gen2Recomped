@@ -578,6 +578,7 @@ function Gen3ShopMenu.sellItem(game, id, host)
   end
   local unit = math.max(0, sellPriceOf(def))
   local held = (game.save.inventory or {})[id] or 1
+  if host and host.max then held=math.min(held,host.max)end
   local TextBox = require("src.render.TextBox")
   local ask = (host and host.ask) or function(opts)
     -- no host dialogue of its own: the Game Boy box, which is what the bag
@@ -595,6 +596,7 @@ function Gen3ShopMenu.sellItem(game, id, host)
                    { VAR1 = label }),
     onDone = function(qty)
       if not qty then return end
+      if type(qty)~='number'or qty%1~=0 or qty<1 or qty>held then return end
       local paid = unit * qty
       -- WHICH {VARn} CARRIES THE PRICE IS NOT THE SAME NUMBER ON BOTH
       -- CARTRIDGES.  Emerald's line is "I can pay ¥{STR_VAR_1}." -- FireRed's
@@ -610,8 +612,8 @@ function Gen3ShopMenu.sellItem(game, id, host)
       game.stack:push(TextBox.new(game, ask, nil, {
         choice = function(yes)
           if not yes then return end
+          if Bag.remove(game.save,id,qty,game.data,host and host.bagSlot)==false then return end
           game.save.money = (tonumber(game.save.money) or 0) + paid
-          Bag.remove(game.save, id, qty)
           if host and host.refresh then host.refresh() end
           -- Emerald: "Turned over the {VAR2}\nand received ¥{VAR1}." --
           -- FireRed: "Turned over the {VAR1}...\nworth ¥{VAR3}."  The two

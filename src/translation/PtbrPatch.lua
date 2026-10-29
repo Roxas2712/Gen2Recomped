@@ -1,7 +1,7 @@
 -- Offline PT-BR construction from the player's supported US cartridge.
 -- Copyright (c) 2026 Roxas2712. GPL-3.0; translation credits in the bundle.
 local P={INDEX='assets/language-patches/pt-BR/index.json'}
-local function hash(kind,bytes)return love.data.encode('string','hex',love.data.hash('string',kind,bytes))end
+local function hash(kind,bytes)return love.data.encode('string','hex',love.data.hash(kind,bytes))end
 function P.recipes()
  local bytes=love.filesystem.read(P.INDEX)
  if not bytes then return {} end

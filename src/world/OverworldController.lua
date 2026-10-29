@@ -205,6 +205,19 @@ function OverworldState:playerCollision()
   return self.map:cellCollision(player.cellX, player.cellY)
 end
 
+function OverworldState:cellCollisionAcross(map,x,y)
+  return require('src.world.Gen2FieldContext').collisionAcross(self,map,x,y)
+end
+
+function OverworldState:blockIndexAt(x,y)
+  return require('src.world.Gen2FieldContext').blockIndex(self,x,y)
+end
+
+function OverworldState:fieldContext(mon)
+  if not GameVersion.isGen2() then return nil end
+  return require('src.world.Gen2FieldContext').read(self,Game,mon)
+end
+
 function OverworldState:grassAt(x, y)
   return self.map ~= nil and self.map:isGrassCell(x, y) or false
 end
