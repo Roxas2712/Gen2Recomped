@@ -60,6 +60,8 @@ if args.freeze:
            and (name.startswith(('src/','data/','compat/','lib/','tools/map-editor/'))or name in ('main.lua','conf.lua')
                 or re.fullmatch(r'tools/rom_manifest_[a-z0-9_]+\.json',name))}
     paths.update([str(driver),'tests/drivers/util.lua'])
+    if str(driver)in ('tests/rs_story_driver.lua','tests/leafgreen_story_driver.lua'):
+        paths.update(('tests/drivers/story_battle.lua','tests/drivers/story_movement.lua'))
     if str(driver)=='tests/rs_battle_panel_native_driver.lua':
         paths.add('tests/rs_battle_panel_reference.lua')
     if str(driver)=='tests/gba_hall_integration_native_driver.lua':
@@ -141,6 +143,10 @@ if args.story_save_source:
                    and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in r['before']['stack'])
                    for r in rows[first-1:last]),'Checkpoint needs an actual YES in the normal SAVE flow'
         inherited={k:sr[k]for k in ('starter','parcelObtained','parcelReturned','pokedexObtained')}
+        # A later ordinary playthrough may have consumed Brock's TM. Retain
+        # only the receipt from the checked prior input trace/checkpoint.
+        inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or
+            checkpoint['snapshotAfterSaveCommand'].get('inventory',{}).get('TM39',0)>0)
     prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
     for path in (prior,prior_profile):qa_source(path)
     assert prior_profile.resolve()==prior_profile
