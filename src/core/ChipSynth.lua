@@ -1094,8 +1094,9 @@ end
 -- sample costs one buffer's memory and makes effects route exactly like
 -- music.  Deliberately not sampleStereo: that honors the NR51 panning byte
 -- and would newly hard-pan any effect whose header issues command 0xEE.
-local function renderEffectData(data, header, options)
+local function renderEffectData(data, header, options, cancelled)
   if not header then return nil end
+  if cancelled and cancelled()then return nil end
   options = options or {}
   options.sfx = true
   options.allowLoops = false
@@ -1104,8 +1105,12 @@ local function renderEffectData(data, header, options)
   local values = {}
   local count = 0
   while count < maximum and not engine:finished() do
-    count = count + 1
-    values[count] = engine:sample()
+    if cancelled and cancelled()then return nil end
+    local boundary=cancelled and math.min(maximum,count+1024)or maximum
+    while count<boundary and not engine:finished()do
+      count = count + 1
+      values[count] = engine:sample()
+    end
   end
   if count < math.floor(SAMPLE_RATE / 100) then return nil end
   return require('src.core.AudioPcm').arrays(values,nil,count,SAMPLE_RATE)
