@@ -206,6 +206,9 @@ function M.write(target, registry)
     if state and getmetatable(target) == state.meta and type(value) == "table"
        and state.aliases[value.id] == id then value.id = id end
     target[id] = value
+    if supported() and type(value)=='table' and type(value.baseStats)=='table' then
+      require('src.pokemon.Gen2MonFields').stats(value.baseStats)
+    end
   end
 end
 return M
