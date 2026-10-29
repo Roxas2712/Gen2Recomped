@@ -91,10 +91,14 @@ end
 function M:drawRs()
  local scene=self.scene;local g=love.graphics;local font=self.load('src.ui.game3.frlg_font')
  local gfx=self.load('src.ui.game3.hall_of_fame_gfx');gfx.drawStripes();gfx.drawBands(16,7)
- local text=self.load('src.core.game3.rom_text');local white={fg=font.STDPAL[1],shadow=font.STDPAL[2],bg=font.STDPAL[0]}
+ local text=self.load('src.core.game3.rom_text')
+ -- Native RS text.c:1525 uses ink 15 / shadow 8 on the Hall bands and
+ -- ink 1 / shadow 8 in a standard window. Slot 2 is red in this palette.
+ local white={fg=font.STDPAL[15],shadow=font.STDPAL[8],bg=font.STDPAL[0]}
  if scene._corrupted then
   local window=self.load('src.ui.game3.window');window.stdFrame(window.template(3,15,24,4))
-  font.draw(text.plain('gText_HOFCorrupted'),24,120,{colors=white});return
+  font.draw(text.plain('gText_HOFCorrupted'),24,120,
+   {colors={fg=font.STDPAL[1],shadow=font.STDPAL[8],bg=font.STDPAL[0]}});return
  end
  local team=scene._teams[scene._team];local positions=#team>3 and{{120,40},{56,40},{184,40},{120,88},{200,88},{40,88}}
   or{{120,64},{56,64},{184,64}}

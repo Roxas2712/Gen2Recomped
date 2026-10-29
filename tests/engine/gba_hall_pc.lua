@@ -57,4 +57,23 @@ for _,id in ipairs{266,0x1000+263}do
  done();done();T.eq(resumed,1,'both script families resume their caller exactly once')
 end
 UI.new=make
+-- The RS font's native slot 2 is red, unlike the FRLG shadow slot. Exercise
+-- both real draw branches so the PC cannot inherit a red shadow again.
+local palette={};for i=0,15 do palette[i]={index=i}end
+local colors
+local modules={
+ ['src.ui.game3.frlg_font']={STDPAL=palette,draw=function(_,_,_,opts)colors=opts.colors end},
+ ['src.ui.game3.hall_of_fame_gfx']={drawStripes=function()end,drawBands=function()end},
+ ['src.core.game3.rom_text']={plain=function(key)return key end},
+ ['src.core.game3.pokemon']={},
+ ['src.ui.game3.window']={template=function()return{}end,stdFrame=function()end},
+}
+local screen={load=function(key)return assert(modules[key])end,dimShader={},
+ scene={_teams={{}},_team=1,_number=1,_mon=1}}
+UI.drawRs(screen)
+T.eq(colors.fg,palette[15],'RS Hall caption retains native white ink')
+T.eq(colors.shadow,palette[8],'RS caption shadow never uses native red slot 2')
+screen.scene._corrupted=true;UI.drawRs(screen)
+T.eq(colors.fg,palette[1],'RS error window uses its native dark ink')
+T.eq(colors.shadow,palette[8],'RS error window retains native gray shadow')
 T.finish('five-edition original Hall PC input, retained teams, cry ownership, metadata and real script callbacks')
