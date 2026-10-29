@@ -29,6 +29,9 @@ def main():
     out=ROOT/'.local/qa'/('story-source-checks-'+datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f'))
     qa_storage.qa_cache(out);out.mkdir(parents=True)
     env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1',STORY_QA_TEST_TEMP=str(out))
+    if args.deadline_utc:
+        remaining=min(remaining,(args.deadline_utc-datetime.now(timezone.utc)).total_seconds())
+        assert remaining>0, 'Resource slot expired during preparation'
     with (out/'tests.log').open('wb')as log:
         result=qa_storage.qa_run([sys.executable,'-m','unittest','discover','-s','tests',
             '-p','test_story_frozen_sources.py','-v'],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=remaining)

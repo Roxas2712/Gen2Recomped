@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'tools/story_frozen_sources.py'
+      - 'tools/run_story_source_checks.py'
       - 'tools/run_edition_native.py'
       - 'tests/test_story_frozen_sources.py'
       - '.github/workflows/story-checkpoint-source.yml'
