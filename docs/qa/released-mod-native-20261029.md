@@ -143,3 +143,32 @@ the loader/dataset/registered producer still match, and the published staging,
 projection and orientation helpers match their SHA256 digests. Explicit native
 and portable conventions retain priority. This additional correction still
 requires current-head CI and an actual upright battle/window retest.
+
+## Combined-main and storage follow-up
+
+Source `a2fe4cbc0610c63ebe0c40f0cd93c1b2163309cb` incorporates main
+`381e113d080745f08e2c990f13300d97af320cec`, including the native evolution and
+key-item contracts. Seven focused ROM-free suites passed 884 assertions on this
+exact committed source: world-canvas admission (28), direct staged canvases (45),
+classic draw ownership (111), screen-space UI (35), native Gen2 battle windows
+(432), evolution presentation compatibility (23), and native UI passes (210).
+Hosted world-canvas/shader contracts also passed 201 assertions on `7991eaa2`
+in run 40909846053. These results do not replace full CI on the combined source.
+
+The subsequent isolated Crystal run installed the same 601 published mod files
+byte-identically and reached a natural Route29 battle. Its saved OS capture now
+shows upright terrain, trainer, wild Pidgey and native dialogue together. The
+actual direct canvas resolved to the verified legacy orientation policy. Only
+one OS capture was recorded before the manual review deadline expired; the
+driver exited with a review-timeout error and the combined receipt remains
+failed. Command HUD, move selection, battle completion and return are therefore
+not established by this run. The saved image is scoped visual evidence, not a
+successful complete battle test. ROM, original ZIPs and checkpoint were unchanged.
+
+Following the explicit request to reclaim space, the installed storage helper
+preserved and reclaimed idle managed QA copies. This maintenance freed about
+2.8 GiB of actual storage, raising available space from approximately 19.8 to
+22.6 GiB. The mandatory 20-GiB test reserve remains enforced. Original sources,
+models, ROMs and saves were retained; no system swap files were removed. Native
+children terminated and managed host cleanup completed before hardware was
+returned to the other test owner.
