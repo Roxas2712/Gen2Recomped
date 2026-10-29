@@ -577,6 +577,9 @@ end
 
 function Pokemon.restorePP(mon, moves)
   moves = moves or require("src.core.Data").moves
+  if require('src.core.GameVersion').isGen2() then
+    return Gen2PP.restore(mon,moves)
+  end
   if moves then
     for _, mv in ipairs(mon.moves or {}) do
       local mdef = moves[mv.id]

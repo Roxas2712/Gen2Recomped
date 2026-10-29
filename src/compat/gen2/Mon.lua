@@ -2,6 +2,12 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+local PP=require('src.pokemon.Gen2PP')
+function M.ppUpsOf(move,data)return PP.ups(data and data.moves and type(move)=='table' and data.moves[move.id],move)end
+function M.maxPpOf(move,data)return PP.forSlot(move,data and data.moves)end
+function M.partyMoves(mon)return PP.partyMoves(mon)end
+function M.restoreAllPp(mon,data)return PP.restore(mon,data and data.moves)end
+function M.repairMoves(mon,data)return PP.repair(mon,data and data.moves)end
 function M.hpDV(dvs)return require('src.pokemon.Stats').hpDV(dvs)end
 function M.stats(base,dvs,level,statExp)
   return require('src.pokemon.Stats').calcGen2(base,dvs,level,statExp)
