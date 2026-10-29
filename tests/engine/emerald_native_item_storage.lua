@@ -32,7 +32,7 @@ for _,name in ipairs(A.labels)do spec.textIR[name]=IR.fromAscii(ownText[name]or 
 local bagSpec={format=1,version='emerald',manifest=BagAssets.ROOT..'manifest.lua',resources={}}
 for _,name in ipairs(BagAssets.files)do bagSpec.resources[#bagSpec.resources+1]=BagAssets.ROOT..name end
 for _,name in ipairs(BagAssets.fonts)do bagSpec.resources[#bagSpec.resources+1]=BagAssets.FONTS..name end
-local data={constants={gen=3,gen3Bag={version='emerald',pockets={ITEM=30,BERRY=46}},
+local data={constants={gen=3,gen3Bag={version='emerald',pockets={ITEM=30,BERRY=46,KEY_ITEM=30,BALL=16,TM_HM=64}},
  gen3EmeraldBag=bagSpec,gen3EmeraldItemPc=spec,gen3EmeraldHall={manifest='OWN'},gen3ItemIcons={count=377}},
  items={POTION={index=13,pocket='ITEM',name='POTION',description='Heals HP.'},
  ANTIDOTE={index=14,pocket='ITEM',name='ANTIDOTE'},ORAN={index=139,pocket='BERRY',name='ORAN BERRY'}}}
@@ -108,5 +108,19 @@ game.save.pcItems={UNKNOWN=1};T.eq(UI.available(game),false,'unknown imported it
 game.save.pcItems={POTION=1000};T.eq(UI.available(game),false)
 for _,version in ipairs{'ruby','sapphire','firered','leafgreen','gold'}do V.set(version);T.eq(UI.available(game),false)end
 T.eq(releases,3,'every closed native storage releases its owned canvas')
+-- The original default transaction configuration remains usable for both RS games.
+for _,version in ipairs{'ruby','sapphire'}do
+ V.set(version)
+ local rs={data={items=data.items,constants={gen=3,gen3RsBag={format=1,version=version},
+  gen3Bag={version=version,pockets={ITEM=20,KEY_ITEM=20,BALL=16,TM_HM=64,BERRY=46}}}},
+  save={inventory={POTION=5},bagOrder={'POTION'},pcItems={POTION=12}}}
+ local tx=require('src.inventory.Gen3RsItemPcTransaction').new(rs)
+ T.eq(tx.valid,true);T.eq(tx.policy.pcItems,50);T.eq(tx.policy.pcSlotMax,999)
+ T.eq(tx:withdraw(13,3),true);T.eq(rs.save.inventory.POTION,8);T.eq(rs.save.pcItems.POTION,9)
+ local row=require('src.inventory.Gen3RsInventory').rows(rs.save,rs.data,'ITEM')[1]
+ T.eq(tx:deposit(row.slot,2),true);T.eq(rs.save.inventory.POTION,6);T.eq(rs.save.pcItems.POTION,11)
+ T.eq(tx:toss(13,2),true);T.eq(rs.save.pcItems.POTION,9)
+ local raw=S.encode(rs.save);T.eq(tx:withdraw(13,10),false);T.eq(S.encode(rs.save),raw)
+end
 V.set(oldV);Fs.read=oldRead;love.filesystem.load=oldLoad;Context.new=oldContext;love.graphics=oldGraphics
 T.finish('Emerald original PC windows, controller, atomic transfers, reorder and stale-state refusal')
