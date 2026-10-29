@@ -15,8 +15,14 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `39113358ebcaa8e8f018fab3a7bbff18bb00fb31`,
-including GBA evolution PR344 and the earlier native RNG PR336. The preceding
+The fetched fork main is `f610ab751b92dddbded25db4681f8b0fdc8b7ab9`,
+including the qualified native battle batch PR349, GBA evolution PR344 and
+the earlier native RNG PR336. PR349's exact composed tree passes942/942
+engine suites,4/4 SDK suites and every available official ROM-free tier;
+all77 exact-head CI checks succeeded or were skipped before its strict
+merge. Its earlier standalone PR341/346 reviews are closed as superseded
+after verifying that adding their heads changes no byte of current main.
+The preceding
 RNG merge `43abf33d` has 88 successful/skipped exact-head checks and an
 independently qualified identical tree: 934/934 engine suites, 4/4 SDK suites
 and all available official ROM-free tiers. Current main is integrated into
@@ -30,19 +36,25 @@ API is `desktop-test-20261028.3`, RetroRecomped 0.8.57, published
 is qualified here as containing all subsequent main/development changes.
 No release assets were updated during this checkpoint.
 
-Friendship source `26037683` passes a fresh complete independent run:
+Historical friendship source `26037683` passes a complete independent run:
 936/936 engine suites, 4/4 SDK suites and every available official ROM-free
 tier. Its merge gate stopped when main advanced through PR344 during that
-run. The updated combination requires fresh qualification. PR349 now
-composes the friendship and round-clock implementations from PR341/346
-with the battler extraction on current main; the earlier PRs stay draft
-until the complete batch is qualified and merged. The public live clock has
+run. The subsequently qualified PR349 composition contains friendship,
+the round-clock implementation and battler extraction on the newer main.
+The public live clock has
 400 focused checks, actual native link observations have 210 and semantic
 checkpoint observations have 57. The
 [battler data/presentation extraction](native-battler-construction.md),
 has 691 plain-Lua checks without LÖVE, 972 checks through actual wild
 constructors/switches across 18 editions, and 270 independently matched
 original-versus-extracted native data/art-selector cases.
+Native Game2 frame/viewport queries are separate draft PR350. Its initial
+real Metal check identified a drawable-pixel/DPI mismatch missed by the
+logical-input tests. The correction passes4454 expanded query checks plus
+the existing viewport/window/chrome regressions; fresh GPU and complete
+tree acceptance remain open. The corresponding coherent older-host offers
+are upstream PR396 (battle foundations) and PR397 (frame queries with the
+already offered viewport/chrome prerequisites). No upstream merge occurs.
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.
 

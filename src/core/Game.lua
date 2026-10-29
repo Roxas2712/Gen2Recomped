@@ -1182,6 +1182,40 @@ function Game:toggleFrameProfile()
   return FrameProfile.toggle()
 end
 
+-- Source Game2 queries use the native Gen2 chrome's coordinate contract.
+-- These are observations only: do not resize a canvas or change the active
+-- compositor, skin rectangle, renderer scale or cartridge on a query.
+function Game:frameFit(w, h)
+  local window = love and love.window
+  local dpi = window and window.getDPIScale and tonumber(window.getDPIScale()) or 1
+  local pw, ph = GameViewport.pixelDimensions()
+  local ww, wh = GameViewport.dimensions()
+  -- Source battle scenes query their actual drawable size, whereas menus
+  -- query LOVE-unit dimensions. Do not multiply a framebuffer query by DPI
+  -- a second time. Share the compositor's integer-pixel policy and origin.
+  if w == pw and h == ph and (pw ~= ww or ph ~= wh) then
+    local fit = require('src.render.PixelFit')
+    local surfaceW, surfaceH = Renderer:uiSize()
+    local scale = surfaceW == 160 and surfaceH == 144 and Renderer:fitScale()
+      or fit.scale(pw, ph, 160, 144)
+    local x, y = fit.origin(pw, ph, 160, 144, scale)
+    return scale, x, y, dpi, pw, ph
+  end
+  local chrome = require('src.ui.Gen2Chrome')
+  local scale = chrome.fitScale(w, h)
+  local x, y = chrome.fitOrigin(w, h, scale)
+  return scale, x, y, dpi, pw, ph
+end
+
+function Game:viewport(w, h)
+  local scale, x, y, dpi = self:frameFit(w, h)
+  return {
+    width=w, height=h, gameX=x, gameY=y,
+    gameWidth=160*scale, gameHeight=144*scale,
+    scale=scale, dpiX=dpi, dpiY=dpi,
+  }
+end
+
 local function viewportSnapshot(viewport)
   return {
     width=viewport.width,height=viewport.height,gameX=viewport.gameX,gameY=viewport.gameY,
