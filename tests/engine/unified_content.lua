@@ -69,8 +69,8 @@ local function run(gen, body, format, extra, supplied, selected)
     read = function(path)
       local id = path:match("^mods/([^/]+)/manifest.json$")
       local mod = id and mods[id]
-      if mod then return ('{"id":"%s","name":"Probe","version":"1.0.0","api":2,"entry":"main.lua","content_format":"%s","priority":%d}')
-        :format(id, mod.format or "unified", mod.priority or 0) end
+      if mod then return ('{"id":"%s","name":"Probe","version":"1.0.0","api":%d,"entry":"main.lua","content_format":"%s","priority":%d}')
+        :format(id, mod.api or 2, mod.format or "unified", mod.priority or 0) end
     end,
     getDirectoryItems = function(path)
       if path ~= "mods" then return {} end
@@ -125,6 +125,11 @@ for gen = 1, 5 do
     local _, why = mod.content.pokemon:patch("PIKACHU", pokemon)
     T.check(why and why:find("read%-only"), "native diagnostics cannot be written")
     ok(mod.content.pokemon:patch("PIKACHU", { baseStats = { special = 70 } }))
+    ok(mod.content.pokemon:patch("PIKACHU", { battleScaleFront = 0.75, battleScaleBack = 3 }))
+    T.eq(mod.content.pokemon:get("PIKACHU").battleScaleFront, 0.75, "portable front scale is readable")
+    T.eq(mod.content.pokemon:get("PIKACHU").battleScaleBack, 3, "portable back scale is readable")
+    raises(function() mod.content.pokemon:patch("PIKACHU", { battleScaleFront = 5 }) end,
+      "expected number", "portable scale bounds reject invalid edits")
     ok(mod.content.moves:patch("TACKLE", { power = 45 }))
     ok(mod.content.items:patch("POTION", { price = 100 }))
     local trainerId = gen >= 4 and "7" or "OPP_PROBE"
@@ -151,6 +156,8 @@ for gen = 1, 5 do
   T.eq(loader.mods.probe.state, "loaded", versions[gen] .. ": real entry/merge succeeds")
   T.eq(#loader.errors, 0, versions[gen] .. ": no cross-reference errors")
   T.eq(data.pokemon[keys.mon].baseStats.special, 70, "native Special alias updated")
+  T.eq(data.pokemon[keys.mon].battleScaleFront, 0.75, "front scale reaches native renderer record")
+  T.eq(data.pokemon[keys.mon].battleScaleBack, 3, "back scale reaches native renderer record")
   T.eq(data.pokemon[keys.mon].baseStats.spdef, gen > 1 and 70 or nil, "native Special Defense updated")
   T.eq(data.pokemon[keys.mon].customNative.sentinel, "retained", "native extensions survive")
   T.eq(data.moves[keys.move].power, 45, "native move power updated")
@@ -516,6 +523,23 @@ for gen = 1, 3 do
   end, "native", nil, Merge.deepCopy(input))
   T.eq(#legacy.errors, 0, "legacy native class references still load")
   T.eq(legacyData.ai_classes.AI_NATIVE.item, keys.item, "legacy class item key is unchanged")
+end
+
+do
+  local body = function(mod)
+    ok(mod.content.field:patch('emotes', {shock='mods/probe/shock.png',order={'heart','shock'}}))
+    ok(mod.content.pokemon:patch('PIKACHU', {battleScaleFront=1.5,battleScaleBack=2.5}))
+  end
+  local imported=fixture(2)
+  imported.field={emotes={order={'shock','question','happy','sad','heart','bolt','sleep','fish'}}}
+  local _,loader,data,keys=run(2,body,'unified',{probe={entry=body,format='unified',api=3}},imported)
+  T.eq(loader.mods.probe.manifest.api,3,'field additions are exercised through API 3')
+  T.eq(loader.mods.probe.state,'loaded','API 3 emote and scale mod loads through real loader')
+  T.eq(#loader.errors,0,'API 3 fields validate without native diagnostics escape')
+  local E=require('src.world.Gen2FieldEmotes')
+  T.eq(E.kind(data,0),'heart','native showemote reads merged API 3 order')
+  T.eq(E.path(data,'shock'),'mods/probe/shock.png','native draw selects merged API 3 path')
+  T.eq(data.pokemon[keys.mon].battleScaleBack,2.5,'API 3 scale reaches native data')
 end
 
 Version.set(original)

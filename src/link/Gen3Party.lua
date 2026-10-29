@@ -61,16 +61,7 @@ function C.pack(mon, plainCopy)
     or nil
   local slot = mon.abilitySlot or (mon.altAbility and 2) or pid % 2 + 1
   local fullOt = integer(mon.otId, 0, 4294967295, 0)
-  local ribbons = integer(mon.ribbons, 0, 4294967295, 0)
-  if mon.modernFatefulEncounter ~= nil then
-    local has = math.floor(ribbons / 2147483648) % 2 == 1
-    if mon.modernFatefulEncounter and not has then
-      ribbons = ribbons + 2147483648
-    end
-    if not mon.modernFatefulEncounter and has then
-      ribbons = ribbons - 2147483648
-    end
-  end
+  local ribbons, fateful = require("src.pokemon.Gen3Ownership").ribbonWord(mon)
   local moves = {}
   for i, mv in ipairs(tableOf(mon.moves)) do
     if i > 4 then
@@ -112,8 +103,8 @@ function C.pack(mon, plainCopy)
     ball = mon.ball,
     isEgg = mon.isEgg == true,
     eggCycles = mon.isEgg and integer(mon.eggCycles, 0, 255, 0) or nil,
-    fatefulEncounter = mon.fatefulEncounter == true,
-    modernFatefulEncounter = mon.modernFatefulEncounter == true,
+    fatefulEncounter = fateful,
+    modernFatefulEncounter = fateful,
     extra = plainCopy(mon.extra),
   }
 end
@@ -304,11 +295,17 @@ function C.unpack(data, packed, opts, plainCopy)
     metGame = integer(packed.metGame, 0, 15, 0),
     isEgg = packed.isEgg == true or nil,
     eggCycles = packed.isEgg == true and integer(packed.eggCycles, 0, 255, 0) or nil,
-    fatefulEncounter = packed.fatefulEncounter == true,
+    fatefulEncounter = packed.modernFatefulEncounter == true
+      or math.floor(integer(packed.ribbons, 0, 4294967295, 0) / 2147483648) % 2 == 1,
     modernFatefulEncounter = packed.modernFatefulEncounter == true
       or math.floor(integer(packed.ribbons, 0, 4294967295, 0) / 2147483648) % 2 == 1,
     extra = plainCopy(packed.extra),
   }
+  -- Older peers may send a modern true flag without updating the word.
+  -- Normalize all aliases once; the obsolete legacy wire flag cannot
+  -- override an actually encoded modern ribbon word.
+  mon.ribbons = require("src.pokemon.Gen3Ownership").ribbonWord(mon)
+  mon.gen3Ribbons = mon.ribbons
   for _, k in ipairs(CONDITIONS) do
     mon.contest[k] = integer(tableOf(packed.contest)[k], 0, 255, 0)
   end

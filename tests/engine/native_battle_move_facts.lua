@@ -38,6 +38,12 @@ for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
  mon.gen3Ribbons=0;T.eq(u.mon.fatefulEncounter,false,'native encoded ribbon word is authoritative')
  mon.gen3Ribbons=2147483648;T.eq(u.mon.fatefulEncounter,true)
  mon.gen3Ribbons=2147483647;T.eq(u.mon.fatefulEncounter,false,'other ribbons do not imply fateful encounter')
+ mon.modernFatefulEncounter=true
+ T.eq(u.mon.modernFatefulEncounter,true,'modern source observation reads authored event state')
+ T.eq(u.mon.fatefulEncounter,true,'historical observation shares modern flag semantics')
+ mon.modernFatefulEncounter=false
+ T.eq(u.mon.modernFatefulEncounter,false,'explicit modern false remains observable')
+ mon.modernFatefulEncounter=nil
  mon.gen3Ribbons=nil;mon.fatefulEncounter=nil
  local facts={};for k,v in pairs(u)do facts[k]=v end;T.eq(facts.expLockedMove,nil)
  mon.ot='VISIBLE';T.eq(require('src.compat.gen1.TableIteration').snapshot(u.mon).otName,'VISIBLE')

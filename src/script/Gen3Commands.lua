@@ -7498,9 +7498,11 @@ function Commands.g3_check_obedience(ctx)
   setResult(ctx, 1)
 end
 
-function Commands.g3_check_fateful(ctx)
-  setVar(ctx.save, VAR_RESULT, 0)
-  setResult(ctx, 0)
+function Commands.g3_check_fateful(ctx, slot)
+  local mon = ctx.save and (ctx.save.party or {})[valueOf(ctx, slot) + 1]
+  local marked = mon and require('src.pokemon.Gen3Ownership').fateful(mon) == true
+  setVar(ctx.save, VAR_RESULT, marked and 1 or 0)
+  setResult(ctx, marked and 1 or 0)
 end
 
 -- erasebox clears a region of the text window; the port has one text box and
@@ -7546,7 +7548,14 @@ function Commands.g3_set_met_location(ctx, slot, location)
 end
 
 function Commands.g3_set_fateful(ctx, slot)
-  record(ctx.save, "fateful", tonumber(slot) or 0, true)
+  local index = valueOf(ctx, slot)
+  local mon = ctx.save and (ctx.save.party or {})[index + 1]
+  if mon then
+    mon.modernFatefulEncounter = true
+    mon.ribbons = require('src.pokemon.Gen3Ownership').ribbonWord(mon)
+    mon.gen3Ribbons = mon.ribbons
+  end
+  record(ctx.save, "fateful", index, true)
 end
 
 -- STUBBED ---------------------------------------------------------------

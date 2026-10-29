@@ -1165,6 +1165,7 @@ local DATA_DERIVED = {
   "cutTreeImg", "cutTreeQuads",
   "rodImg", "rodQuads",
   "smokeImg", "emoteImg", "pikaPic",
+  "gen2EmoteImages",
 }
 
 function OverworldState:enter(mapId, x, y, facing, opts)
@@ -18550,6 +18551,12 @@ function OverworldState:_worldFxEmote(cam)
   local half = math.floor(((npc.sprite and npc.sprite.tileH) or 16) / 2)
   local ex = npc.px - cam.x
   local ey = npc.py - cam.y - 12 - half
+  if GameVersion.isGen2() then
+    local Emotes = require('src.world.Gen2FieldEmotes')
+    local kind = self.emote.bubble
+    if type(kind) ~= 'string' then kind = Emotes.kind(Game.data, (kind or 1)-1) end
+    if Emotes.draw(Game.data, self, kind, ex, ey) then return end
+  end
   local bubble = Game.data.field.emotionBubbles
   local drawn = false
 

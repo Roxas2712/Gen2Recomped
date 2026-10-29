@@ -21,7 +21,7 @@ local function status(mon)
 end
 local function integer(v,lo,hi)return type(v)=='number'and v==v and v%1==0 and v>=lo and v<=hi end
 local monKeys={'species','nickname','level','hp','maxHp','attack','defense','speed','spAtk','spDef',
- 'moves','pp','maxPp','item','status','ability','personality','friendship','isEgg','otId','otSecretId','otName','fatefulEncounter'}
+ 'moves','pp','maxPp','item','status','ability','personality','friendship','isEgg','otId','otSecretId','otName','fatefulEncounter','modernFatefulEncounter'}
 local battlerKeys={'id','side','flank','mon','species','type1','type2','ability','item','status','fainted','stages','partyIndex','expLockedMove','expEncoreMove'}
 local stateKeys={'player','enemy','battlers','party','playerParty','enemyParty','turn','wild','double','over','result',
  'weather','weatherTurns','session','playerGender','playerIndex','enemyIndex','trainerClass','trainerName','trainerPicId',
@@ -132,7 +132,7 @@ function M.new(game,screen,valid,identifiers)
    if statNames[key]then return raw.stats and raw.stats[statNames[key]]end
    if key=='status'then return status(raw)end
    if key=='moves'or key=='pp'or key=='maxPp'then return moveArrays(raw)[key]end
-   if key=='fatefulEncounter'then return require('src.pokemon.Gen3Ownership').fateful(raw)end
+   if key=='fatefulEncounter'or key=='modernFatefulEncounter'then return require('src.pokemon.Gen3Ownership').fateful(raw)end
    if key=='otName'then return raw.ot end
    if key=='otId'then return raw.otId or raw.otID end
    if key=='otSecretId'then return raw.otSecretId or raw.secretId end
