@@ -43,8 +43,17 @@ through this older host's actual compositor and116 menu-chrome checks.
 The expanded probe includes actual drawable arguments, the recorded Retina
 regression, odd pixel dimensions and decorated native fitting. The same
 shared-policy correction passes the newer fork's4454 query checks plus
-its existing window/playfield/chrome regressions. Actual corrected GPU
-observations and complete current-tree qualification remain pending.
+its existing window/playfield/chrome regressions.
+
+The newer fork's corrected source `123b8036` also passes a fresh actual Metal
+checkpoint CONTINUE, connected walk and natural encounter with unchanged
+VASC. Its observed drawable query returns scale10/origin224,48, matching
+the native compositor. Four inspected owned OS images cover both selected
+field camera flags; both select the same authored battle-stage view.
+All 27336 mod files, their QA copies, the ROM and the earned source checkpoint
+are unchanged. This is evidence for the shared coordinate correction on the
+newer fork, not an actual GPU qualification of this older offered host.
+Bottom command art remains partly clipped; full visual parity is rejected.
 
 Complete combined-host tests, every custom skin/cutout/safe-area and odd
 fractional-DPI logical configuration, physical Windows behavior, matched unchanged
