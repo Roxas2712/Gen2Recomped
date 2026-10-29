@@ -33,10 +33,15 @@ the existing pinned common bag algorithm and its notices remain intact.
   full-PC refusal and an outdated sale selection.
 - Existing tests pass 174 bag-toss, 115 physical inventory, 104 item-PC,
   152 mail, 1292 GBA field-item and 1350 object-sheet assertions.
-- Native own-cartridge selected-stack acceptance is pending. The extended
-  fixture covers 99/51 rows, cancellation, removing three from the second
-  stack, real disk save/load of 99/48, medicine use from that stack, and final
-  duplicate removal with a valid cursor.
+- Emerald passes the own-cartridge native fixture on `6cf8b100`: 99/51 rows,
+  cancellation, removing three from the second stack, real disk save/load of
+  99/48, medicine use from that stack, and final duplicate removal with a
+  valid cursor. Eleven original-resolution final-renderer captures were
+  inspected; draw preserves save/RNG and normal elapsed play time is accounted.
+  Frozen runtime source remains unchanged. This reuses a separately accepted
+  complete own-cartridge import/title with matching import-source fingerprints.
+- FireRed's seven-view native bag regression passes on the same runtime.
+  LeafGreen's regression and final public CI are pending.
 
 This is scoped inventory work. Full Emerald story acceptance and native
 SELECT reorder presentation remain separate open work. No ROMs, generated
