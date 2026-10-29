@@ -766,12 +766,15 @@ function Gen3BagMenu.actionList(game, id)
   return list, menu
 end
 
--- ...and the one question the overworld asks of it: may this item sit on
--- SELECT?  Emerald asks the POCKET rather than the item -- the whole KEY
--- ITEMS pocket offers REGISTER and nothing else does -- which is why no Hoenn
--- item carries a per-item flag for it to be read off.
+-- RS keeps its pocket-wide REGISTER action and SELECT reordering. Emerald
+-- and FRLG additionally consult the item's own registrability byte.
 function Gen3BagMenu.canRegister(game, id)
   local list, menu = Gen3BagMenu.actionList(game, id)
+  local version = require('src.core.GameVersion').get()
+  if version == 'emerald' or version == 'firered' or version == 'leafgreen' then
+    local def = game and game.data and game.data.items and game.data.items[id]
+    if not def or (tonumber(def.registrability) or 0) <= 0 then return false end
+  end
   for _, action in ipairs(list or {}) do
     if (menu.kinds or {})[action] == "register" then return true end
   end
@@ -793,10 +796,18 @@ function Gen3BagMenu:actionsFor(id)
                 and id == (self.game.save or {}).registeredItem)
                and menu.register or nil
   local entries = {}
+  local registrable = Gen3BagMenu.canRegister(self.game, id)
   for i, action in ipairs(list) do
     if swap and action == swap then action = menu.deselect end
-    entries[i] = { label = menu.labels[action] or "",
-                   kind = menu.kinds[action] or "other" }
+    local kind = menu.kinds[action] or "other"
+    if kind == 'register' and not registrable then
+      -- Hoenn retains its two-column holes; FRLG compacts its single list.
+      if (menu.columns or 2) > 1 then
+        entries[#entries + 1] = { label = '', kind = 'blank' }
+      end
+    else
+      entries[#entries + 1] = { label = menu.labels[action] or "", kind = kind }
+    end
   end
   return { entries = entries, columns = menu.columns or 2 }
 end
@@ -834,6 +845,8 @@ function Gen3BagMenu:act(kind, id)
     return
   end
   if kind == "register" then
+    if not Gen3BagMenu.canRegister(game, id)
+      or ((game.save.inventory or {})[id] or 0) <= 0 then return end
     -- ItemMenu_Register says nothing: the badge on the row and the DESELECT
     -- row next time are the whole acknowledgement, so the list has to be
     -- rebuilt or the screen genuinely does not change.
@@ -916,7 +929,15 @@ function Gen3BagMenu:update(dt)
     return
   end
   if self.rs then return require('src.ui.Gen3RsBagInput').update(self,input) end
-  if input:wasPressed("down") then self:moveCursor(1)
+  if input:wasPressed('select') then
+    local row = self:selected()
+    local version = require('src.core.GameVersion').get()
+    if (version == 'emerald' or version == 'firered' or version == 'leafgreen')
+      and not (self.battle or self.pick or self.sell or self.store or self.itemPc or self.scriptRows)
+      and row and row.id and Gen3BagMenu.canRegister(self.game, row.id) then
+      self:act('register', row.id)
+    end
+  elseif input:wasPressed("down") then self:moveCursor(1)
   elseif input:wasPressed("up") then self:moveCursor(-1)
   elseif input:wasPressed("right") then self:movePocket(1)
   elseif input:wasPressed("left") then self:movePocket(-1)

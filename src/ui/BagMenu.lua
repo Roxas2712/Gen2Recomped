@@ -1413,14 +1413,9 @@ BagMenu.pocketOf = pocketOf
 -- items you may put there (see the SEL row above), and the Gen 2 extractor
 -- carries it as `registerable`.
 --
--- EMERALD ASKS THE POCKET.  Its bag offers USE / REGISTER / CANCEL for the
--- whole KEY ITEMS pocket and per-item nothing, which is why Gen3BagMenu
--- already offers REGISTER off the pocket's own action list
--- (RomExtractorGen3:itemMenuActions) rather than off a flag.  No Hoenn item
--- carries `registerable` at all -- so asking for one here answered no for
--- every one of them, and the answer was not merely "nothing happened": the
--- line below CLEARS the registration on a no, so a Gen 3 save that reached
--- this would have quietly forgotten the item it had just registered.
+-- Gen 3 delegates to its own bag: RS uses the pocket action list, while
+-- Emerald/FRLG also require gItems[].registrability. Keep that separate from
+-- GSC's differently named property and from the item's TOSS protection.
 function BagMenu.canRegister(game, id)
   local data = game and game.data
   local def = data and data.items and data.items[id]
