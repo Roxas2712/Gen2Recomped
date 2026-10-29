@@ -8133,6 +8133,18 @@ Gen3Commands.SPECIALS[265] = function(ctx)
   askChoices(ctx, rows)
 end
 
+-- AccessHallOfFamePC shares the ordinary script owner and resumes it once.
+Gen3Commands.SPECIALS[266] = function(ctx)
+  local game,runner=ctx.game,ctx.runner
+  if not(game and runner)then return end
+  local resumed=false
+  local screen=require('src.ui.Gen3HallPc').new(game,function()
+    if resumed then return end;resumed=true;runner:resume()
+  end)
+  if not screen then return end
+  game.stack:push(screen);runner:yield()
+end
+
 -- ---------------------------------------------------------------------------
 -- SECRET BASES: 6, 7, 8, 9, 10, 18, 21, 24 and 332
 --

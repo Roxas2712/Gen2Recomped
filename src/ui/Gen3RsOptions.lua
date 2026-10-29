@@ -48,19 +48,7 @@ function M.new(owner,record)
       assert(id=='option'and game.stack:top()==owner);owner:close()
     end},
     ['src.ui.game3.option_rows']={withCart=function(_,native,category)
-      local rows={};for _,key in ipairs(Values.keys)do rows[#rows+1]=assert(native[key])end
-      local extras={}
-      for _,row in ipairs(owner.rows)do if row.engine then
-        local engine=row.engine
-        extras[#extras+1]={label=row.label,value=function()return owner:valueText(row)end,
-          step=engine.step and function(_,dir)return engine.step(game,dir)end,
-          activate=engine.activate and function()return engine.activate(game)end}
-      end end
-      if#extras>0 then
-        local label=require('src.core.Strings')('MORE OPTIONS')
-        rows[#rows+1]={label=label,activate=function()category(label,extras)end}
-      end
-      return rows
+      return require('src.ui.Gen3OptionRows').withCart(owner,native,category)
     end},
   }
   local context=require('src.ui.Gen3RsSceneContext').new(game,{bindings=bindings,

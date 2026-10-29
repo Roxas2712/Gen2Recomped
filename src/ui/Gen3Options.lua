@@ -38,6 +38,7 @@ local Gen3Options = {}
 Gen3Options.__index = Gen3Options
 Gen3Options.isOpaque = true
 Gen3Options.shaderPresetBypass = true
+Gen3Options.holdsUIAnchors = true
 
 local GBA_W, GBA_H = 240, 160
 
@@ -55,6 +56,7 @@ local VISIBLE = 5
 
 function Gen3Options:uiSize() return GBA_W, GBA_H end
 function Gen3Options:wantsFillScale() return true end
+function Gen3Options:wantsEdgeBleed() return false end
 
 function Gen3Options:sgbPalettes()
   local P = require("src.render.PaletteFX")
@@ -192,7 +194,10 @@ function Gen3Options.new(game, opts)
 
   self.scroll = 0
   local Rs=require('src.ui.Gen3RsOptions');local rsRecord=Rs.record(game)
-  if rsRecord then self.rsNative=Rs.new(self,rsRecord)end
+  if rsRecord then self.rsNative=Rs.new(self,rsRecord)
+  else local Native=require('src.ui.Gen3NativeOptions');local spec=Native.record(game)
+    if spec then self.rsNative=Native.new(self,spec)end
+  end
   if #self.rows == 0 then
     Logger.warn("gen3 options: this dataset carries no OPTION vocabulary")
   end
