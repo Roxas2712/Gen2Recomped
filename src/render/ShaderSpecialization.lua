@@ -4,7 +4,7 @@
 -- remains the fallback for unsupported source, values or resource lifetimes.
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
-local S={recycleSnapshots=true}
+local S={recycleSnapshots=false}
 local installed=false
 local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}

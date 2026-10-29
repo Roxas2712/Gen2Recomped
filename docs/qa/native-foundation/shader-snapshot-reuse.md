@@ -11,8 +11,9 @@ copy mutable caller tables, and retain weak texture references. A source keeps
 at most one spare row, within the existing 32,768-node snapshot bound. Unsupported
 values continue to use the original native shader.
 
-`ShaderSpecialization.recycleSnapshots=false` provides the allocation control
-path. It does not change graphics output or tune garbage collection.
+`ShaderSpecialization.recycleSnapshots=true` opts into the candidate; it is off
+by default pending native scene qualification. The false setting retains the
+allocation control path. It does not change graphics output or tune garbage collection.
 
 Validation: `tests/engine/shader_snapshot_reuse.lua` compares original and variant
 values through changing prefixes, caller mutations, variant switches, matrix
