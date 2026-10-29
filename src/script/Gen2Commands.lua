@@ -4363,7 +4363,7 @@ function Gen2Commands.dayCareWithdraw(ctx, which)
     mon.status = nil
     for _, move in ipairs(mon.moves or {}) do
       local moveDef = game.data.moves and game.data.moves[move.id]
-      if moveDef then move.pp = moveDef.pp + (move.ppUps or 0) * math.floor(moveDef.pp / 5) end
+      if moveDef then move.pp = Pokemon.maxPP(moveDef, move, 2) end
     end
   end
   table.insert(save.party, mon)
