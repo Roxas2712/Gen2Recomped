@@ -131,10 +131,15 @@ function M:drawNative(action)
  g.setColor(1,1,1,1);g.draw(image,self:quad(path,0,(FRAME[pocket.key]or 1)*64,64,64,iw,ih),36,34)
  local top=self.game.stack:top();local selected=top~=owner
  local sale=selected and not action and getmetatable(top)==require('src.ui.Gen3BagSale')
+ local message=top.emeraldBagMessageOwner==owner
+ local presentation=message and top.presentation
+ local rows=presentation and presentation.rows or owner.rows
+ local index=presentation and presentation.index or owner.index
+ local first=presentation and presentation.top or owner.top
  for i=0,7 do
-  local row=owner.rows[owner.top+i];if not row then break end
+  local row=rows[first+i];if not row then break end
   local y=17+i*16
-  if owner.top+i==owner.index then
+  if first+i==index then
    font.drawGlyph(font.CHAR_SELECTOR_ARROW,112,y,{colors=selected
     and{fg=color(19),shadow=color(22),bg={0,0,0,0}}or normal})
   end
@@ -151,7 +156,7 @@ function M:drawNative(action)
    end
   end
  end
- local row=owner:selected();local count=(self.game.data.constants.gen3ItemIcons or{}).count
+ local row=rows[index];local count=(self.game.data.constants.gen3ItemIcons or{}).count
  local icon,quad=owner:itemIcon(row and row.id or nil,row and row.close and count and count-1 or nil)
  if icon then g.setColor(1,1,1,1);g.draw(icon,quad,8,72)end
  local desc=owner.message or(row and row.description)
@@ -161,7 +166,7 @@ function M:drawNative(action)
   local destination=self.load('src.core.game3.scripting.text_ir').toAscii(assert(man.returnToIR[loc]))
   desc=self:text('returnTo',{destination})
  end
- if not sale and not(action and pocket.key=='TM_HM'and self:drawMoveInfo(row))and desc then
+ if not sale and not message and not(action and pocket.key=='TM_HM'and self:drawMoveInfo(row))and desc then
   font.draw(desc,3,105,{colors=normal,maxWidth=109})
  end
  if action then self:drawActions(action)end

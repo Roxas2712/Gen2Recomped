@@ -552,7 +552,11 @@ end
 
 -- ...and one it stops for, which is a real box the player dismisses.  Used
 -- for the answers ("Withdrew 5 POTIONs."), which the cartridge waits on.
-function Gen3BagMenu:tell(text)
+function Gen3BagMenu:tell(text, presentation)
+  if self.emerald and self.store == "deposit" then
+    self.game.stack:push(require("src.ui.Gen3EmeraldBagMessage").new(self.game, self, text, presentation))
+    return
+  end
   -- FireRed's deposit flow never leaves the bag for its answer.  ShowBagWindow
   -- overlays sWindowTemplates[9] on the lower-right description area and waits
   -- for A/B there.  Keep that message owned by this state so the bag, item
@@ -630,12 +634,13 @@ function Gen3BagMenu:depositItem(id)
     if self:pcFull(id)or stored+qty>999 then
       return self:tell(bagWord(game,'noRoomStore'))
     end
+    local presentation=self.emerald and{rows=self.rows,index=self.index,top=self.top}or nil
     if Bag.remove(game.save,id,qty,game.data,selection)==false then return end
     game.save.pcItems = game.save.pcItems or {}
     game.save.pcItems[id] = (game.save.pcItems[id] or 0) + qty
     self:rebuild()
     Sound.play(game.data, "Withdraw_Deposit")
-    self:tell(fillLine(bagWord(game, "deposited"), name, qty))
+    self:tell(fillLine(bagWord(game, "deposited"), name, qty), presentation)
   end
   -- item_menu.c Task_ChooseHowManyToDeposit skips the quantity UI when there
   -- is exactly one.  That is the common early-game POTION case in the user's

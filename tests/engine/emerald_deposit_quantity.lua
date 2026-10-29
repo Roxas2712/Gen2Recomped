@@ -7,9 +7,11 @@ love.filesystem.load=loadfile
 Sound.play=function()end
 local frames,texts,releases={}, {},0
 local font={COLOR={NORMAL={}},measure=function(s)return#s*6 end,
+ wrap=function(text)return text end,linePitch=function()return 16 end,
  draw=function(s,x,y,opts)texts[#texts+1]={text=s,x=x,y=y,opts=opts}end}
 local window={template=function(x,y,w,h)return{x=x,y=y,w=w,h=h}end,
  stdFrame=function(r)frames[#frames+1]=r end}
+local dialogues=0;window.dialogueFrame=function()dialogues=dialogues+1 end
 love.graphics={newCanvas=function(w,h,opts)
  T.eq(w,240);T.eq(h,160);T.eq(opts.dpiscale,1)
  return{setFilter=function()end,release=function()releases=releases+1 end}
@@ -77,5 +79,14 @@ owner:depositItem('POTION');state=current;T.eq(state.max,12)
 press('right');press('a');T.eq(game.save.pcItems.POTION,11);T.eq(game.save.inventory.POTION,100)
 local rows=Native.rows(game.save,game.data,'ITEM');T.eq(rows[1].qty,99);T.eq(rows[2].qty,1)
 T.check(message and#message>0,'the original completion callback still publishes its result')
+owner.tell=Menu.tell;owner.message='KEEP';texts={};local releaseBefore=releases
+before=S.encode(game.save);owner:tell('Deposited 11\nPOTION(s).');state=current
+T.eq(getmetatable(state),require('src.ui.Gen3EmeraldBagMessage'))
+T.eq(state.emeraldBagMessageOwner,owner);state:drawNative()
+T.eq(dialogues,1);T.eq(texts[1].text,'Deposited 11\nPOTION(s).')
+T.eq(texts[1].x,16);T.eq(texts[1].y,121);T.eq(texts[1].opts.maxWidth,208)
+T.eq(S.encode(game.save),before,'the complete native result does not edit inventory')
+press('b');T.eq(current,owner);T.eq(owner.message,'KEEP');T.eq(state.canvas,nil)
+T.eq(releases,releaseBefore+1);key='a';state:update();key=nil;T.eq(releases,releaseBefore+1)
 V.set(oldVersion);Sound.play=oldPlay;love.graphics=oldGraphics;love.filesystem.load=oldLoad
 T.finish()
