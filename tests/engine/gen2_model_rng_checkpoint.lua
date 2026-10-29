@@ -20,6 +20,9 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  local f=Fixture.boot(edition);local game=f.game
  local b=Native.newWild(game,'FIXMON_B',15);game.stack.states={f.world,b}
  b.queue,b.current,b.phase,b.afterQueue,b.introSlide={},nil,'menu','menu',0
+ T.eq(b.battle.turn,0,'fresh actual source model starts at round zero')
+ b:beginTurn();b:beginTurn()
+ T.eq(b.battle.turn,2,'actual native round starts reach the public model')
  local count=calls
  local loveRng,random,roller=b.battle.rng,b.battle.random,b.battle:roller()
  T.eq(calls,count,'creating every source adapter draws no native randomness')
@@ -36,6 +39,9 @@ for _,edition in ipairs{'gold','silver','crystal'}do
    local restored=game.stack:top();local model=restored.battle
    T.neq(restored,b,'checkpoint creates a fresh native controller')
    T.neq(model,b.battle,'checkpoint creates a fresh source model')
+   T.eq(model.turn,2,'semantic reconstruction restores the actual native round')
+   restored:beginTurn()
+   T.eq(model.turn,3,'restored native round continues instead of restarting')
    T.neq(model.rng,loveRng,'new controller gets its own source LOVE adapter')
    T.neq(model:roller(),roller,'new controller gets its own source cart adapter')
    T.eq(seed,captured,'the actual native RNG state restores before the next draw')
