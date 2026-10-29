@@ -172,3 +172,44 @@ preserved and reclaimed idle managed QA copies. This maintenance freed about
 models, ROMs and saves were retained; no system swap files were removed. Native
 children terminated and managed host cleanup completed before hardware was
 returned to the other test owner.
+
+## Staged HUD colour and extended journey findings
+
+The official full CI for `2a4e571d6c7b8151f1aa0b0811c3e2e02cc7d9e9`
+passed 990/990 engine suites, 4/4 SDK suites and all available ROM-free tiers
+in run 40913135327. The hosted checkout tree was independently matched to the
+committed tree. Later HUD changes below need their own current-head full CI.
+
+Two further isolated Crystal journeys used the same byte-identical published
+mods. Advancing OS captures verified an upright First Person route and battle
+dialogue. Actual FIGHT input reached the public GSC `moves` state and displayed
+TACKLE/LEER, NORMAL and 35/35 PP. The first driver's `moveSelect`-only assertion
+was wrong; its failure was corrected in the private driver, not in the engine.
+The later run completed a normal native victory and returned to the route.
+The original ROM, ZIPs and earned lab checkpoint remained unchanged.
+
+These journeys are **not visual passes**. HP bars appeared white despite full
+native 48-pixel HP, correct ROM palettes and a direct published HUD texture
+containing green. A naturally reached Rattata encounter also placed figures
+behind raised terrain. The normal SAVE dialogue was readable but exposed an
+underlying START-menu CACHE row between its panels. The private driver then
+waited without pressing A at the overwrite dialogue's scrolling third line;
+its assertion ended that run before saving/restart. The driver now advances
+that native page using normal A input. No save/restart pass is claimed.
+
+The focused engine correction keeps staged GSC panels and their HP/EXP tiles
+on the direct colour path, avoiding the additional grayscale zone composition.
+Ordinary Gen2 panels retain their zone pass, Gen1 keeps its existing protocol,
+and a provider that unloads or declines surface ownership cannot select this
+path. Source `10cb5a9d` passed 106 assertions through real native panel/HUD
+methods. Its unchanged engine implementation on `af83c205` also passed native
+scene (60), classic draw-owner (111), Gen2 window (432), and native UI (210)
+regressions. The initial new test fixture had replaced the species palette
+dictionary and failed during construction; preserving that dictionary fixed
+the fixture without changing the engine implementation.
+
+The staged-colour correction still requires a real window retest. Terrain
+occlusion, SAVE modal stacking, completed save/restart and the remaining Yellow
+and standalone mod combinations remain required. A negative-source comparison
+was deferred because another owner acquired the hardware lock; no parallel
+test was started.
