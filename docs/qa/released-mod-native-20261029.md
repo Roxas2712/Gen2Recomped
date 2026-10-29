@@ -213,3 +213,67 @@ occlusion, SAVE modal stacking, completed save/restart and the remaining Yellow
 and standalone mod combinations remain required. A negative-source comparison
 was deferred because another owner acquired the hardware lock; no parallel
 test was started.
+
+## Actual coloured HUD, earned SAVE and restored-camera follow-up
+
+The same new HUD fixture against prior source `2a4e571d` failed six assertions
+at the actual panel/colour route (34/40), rather than failing in construction.
+Actual Metal source `ed492310` then displayed green full HP bars, upright
+native commands and TACKLE/LEER with NORMAL/35 PP in two advancing OS frames
+per phase. Its natural Hoothoot encounter completed normally: Cyndaquil
+HP19→15, EXP135→151, TACKLE35→32 PP, followed by route return. This visible
+encounter does not close the earlier Rattata terrain-occlusion finding.
+
+Normal START→SAVE, including the scrolling overwrite page, wrote the own
+Crystal slot successfully at Route29 (51,13), with the earned party and move
+PP. The SAVE panel still exposed the CACHE underlay and remains a visual
+failure. The following process initially failed because the private bootstrap
+installed the ZIPs a second time; the native installer correctly selected a
+second folder. The bootstrap now installs once and uses normal CONTINUE.
+
+Full hosted CI run 40919695544 passed 991/991 engine suites, 4/4 SDK suites
+and all available ROM-free tiers. It tested GitHub's PR merge `09fc5678`
+against main `22836638`, not just the branch tip `ed492310`. Local combined
+commit `a07ad019` has the identical tree `e527f324991fb0fb2fa45e1fcf3ad0442c377077`.
+This verifies that combined source; subsequent changes require new CI.
+
+A fresh own profile received byte-identical copies of the earned SAVE and
+its options. Normal CONTINUE restored the correct route position, but the
+saved camera level6 became0. A second native process traced the cause:
+`SaveData.optionsFor` returned6; `save.created` then ran a callback that
+synchronized the still-zero pipeline before `Game:applyOptions`. The later
+`game.ready` callback persisted zero. The original SAVE/options inputs stayed
+unchanged. This is an engine boot-order finding, independent of the earlier
+bootstrap reinstallation error.
+
+The engine now restores GSC pipeline levels before its boot creation event,
+matching the ordering of the reference Game2 path. The later full options
+apply and all existing callbacks remain. The independent ordering fixture
+invokes real `Game:load`, the event bus and pipeline operations; only ROM,
+input and drawing initialization are replaced. Source `9e13ff96` passed
+216 checks across Gold, Silver, Crystal, Red, Yellow and Emerald, including
+explicit OFF, restored camera levels, callback synchronization, native internal
+drivers, and unchanged non-GSC ordering. Existing new-game/lifecycle/hotkey
+suites passed 68, 31 and 23 checks. The exact new fixture against old combined
+source `a07ad019` failed 39 assertions (177/216), exposing the native boot
+ordering rather than an incomplete fixture.
+
+The subsequent actual native Metal process on `9e13ff96` completed normal
+CONTINUE and exited0. Route29 (51,13), Cyndaquil level5/HP15/EXP151,
+TACKLE32/LEER30 PP and display level6 matched the earned SAVE exactly before
+any camera input. Ordinary input then reached Third Person and returned to
+First Person. All601 installed mod files remained byte-identical; original
+archives, ROM, old checkpoint, earned SAVE and input options were unchanged.
+The process's functional checks passed. Its combined visual receipt remains
+**failed**: six advancing OS captures show upright cameras but dense close
+tree/grass geometry with dark terrain, obscuring much of the First Person
+view. Night colours, terrain semantics and camera placement require reference
+comparison before attribution. This finding is not silently accepted as
+complete playability. The earlier SAVE underlay and Rattata terrain case also
+remain open.
+
+Another installed source-preserving QA sweep reclaimed 3975.7 MiB of idle test
+copies. Actual available storage rose from 26.9 to 31.6 GiB. The 20-GiB reserve,
+original data and active-reader protections remain unchanged. A previously
+archived runtime is restored through `qa_restore_copy` and hash-verified before
+reuse; no player instance or protected Gen1 checkout is used.
