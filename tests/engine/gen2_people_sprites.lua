@@ -60,6 +60,8 @@ for _,version in ipairs{'gold','silver','crystal'}do
  T.eq(actor:setSpriteDef(nil),false,'absent definition refused')
  sheet.image='updated-cart.png';actor:refreshSprite(data)
  T.eq(actor.spriteDef,sheet,'native variablesprite path repaints actual resolved sheet');T.eq(actor.sprite.def.image,'updated-cart.png','in-place changed asset reaches renderer')
+ local plain={id='plain',def={sprite='PROBE'}}
+ NPC.refreshSprite(plain,data);T.eq(plain.spriteDef,sheet,'existing native refresh supports direct class calls on public actor tables')
  local icon=world:breedmonSpriteDef('CYNDAQUIL')
  T.eq(icon.image,'native-icon.png','day-care base comes from native imported icon registry')
  T.eq(icon.species,'CYNDAQUIL','day-care definition identifies deposited species')
