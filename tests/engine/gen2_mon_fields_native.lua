@@ -21,7 +21,7 @@ for _,key in ipairs({'spatk','spdef'})do
   for _,value in ipairs({0,256,1.5,'91'})do
     local accepted=Schemas.check(Schemas.REGISTRIES.pokemon,'pokemon','FIXMON_A',
       {baseStats={[key]=value}},'patch')
-    T.eq(accepted,false,'invalid native split-stat patch rejected')
+    T.check(not accepted,'invalid native split-stat patch rejected')
   end
 end
 if not ok then

@@ -126,6 +126,34 @@ function Fields.bind(data, mon)
   return mon,attached
 end
 
+-- Semantic world reconstruction restores raw saved records after map
+-- entry. Bind only real native Pokemon slots; do not walk arbitrary modData,
+-- repair progress, roll identity, calculate stats, emit events or write files.
+function Fields.bindSave(data, save)
+  if not require('src.core.GameVersion').isGen2() or type(save)~='table' then return save end
+  local function mon(value)
+    if type(value)=='table' and data and data.pokemon and data.pokemon[value.species] then
+      Fields.bind(data,value)
+    end
+  end
+  for _,value in pairs(save.party or {})do mon(value)end
+  for _,box in pairs(save.boxes or {})do
+    if type(box)=='table' then for _,value in pairs(box.mons or box)do mon(value)end end
+  end
+  local daycare=save.daycare
+  if type(daycare)=='table' then
+    mon(daycare.mon)
+    local breed=daycare.breed
+    if type(breed)=='table' then
+      for _,index in ipairs{1,2}do
+        local entry=breed[index];if type(entry)=='table' then mon(entry.mon)end
+      end
+      mon(breed.egg)
+    end
+  end
+  return save
+end
+
 function Fields.publish(data)
   if not require('src.core.GameVersion').isGen2() then return false end
   for _,def in pairs(data and data.pokemon or {})do
