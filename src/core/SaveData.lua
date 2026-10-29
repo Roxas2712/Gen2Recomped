@@ -1997,6 +1997,9 @@ local function scrubKnownMon(mon, data)
   -- so the derived stats use a sane level.  A save that already has stats is
   -- untouched.
   Stats.ensure(data.pokemon and data.pokemon[mon.species], mon)
+  if require('src.core.GameVersion').isGen2() then
+    require('src.pokemon.Gen2MonFields').bind(data,mon)
+  end
   local moves = mon.moves
   if type(moves) ~= "table" then return end
   local hadMoves = #moves > 0

@@ -1406,6 +1406,7 @@ function Loader:load(data)
   -- wraps and flags the previous load put on engine tables come off first.
   ModSeams.unwindAll()
   self.baseData = data
+  require('src.pokemon.Gen2MonFields').publish(data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
   for _, registry in pairs(self.content) do
@@ -1641,6 +1642,9 @@ function Loader:load(data)
       stampAudioOwners(data, name, registry)
     end
   end
+  -- Native registry folds replace their tables. Reapply source stat views
+  -- after the real older writer, before exposing the completed dataset.
+  require('src.pokemon.Gen2MonFields').publish(data)
   -- dangling f.id references are attributed to the id's last writer;
   -- api 1 mods keep the warning-only compat path
   if data then

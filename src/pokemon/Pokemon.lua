@@ -242,6 +242,9 @@ function Pokemon.new(data, species, level, rng, form)
   -- nil and this returns immediately, leaving the cartridge's own 1/8192
   -- exactly as it was.
   Pokemon.rollShiny(data, nil, mon, rng)
+  if require('src.core.GameVersion').isGen2() then
+    require('src.pokemon.Gen2MonFields').bind(data,mon)
+  end
   return mon
 end
 

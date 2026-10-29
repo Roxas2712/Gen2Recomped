@@ -978,6 +978,7 @@ end
 -- ---------------------------------------------------------------------
 
 local function makeBattler(data, mon, isPlayer, save)
+  if GameVersion.isGen2() then require('src.pokemon.Gen2MonFields').bind(data,mon) end
   local def = require('src.pokemon.Gen4Forms').definition(data,mon)
   local badgeBoosts = data.constants and data.constants.badgeBoosts
   local badges = nil
