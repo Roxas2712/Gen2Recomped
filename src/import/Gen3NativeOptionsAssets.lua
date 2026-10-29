@@ -55,7 +55,7 @@ end
 function M.extract(x)
  local version=x.version;if not versions[version]then return end
  x:beginStage('Original edition options')
- local load=require('compat.gen1-rs.Loader').new(version)
+ local load=require('compat.gen1-rs.Loader').new(version,{['src.core.GameVersion']=require('src.core.GameVersion'),__package={loaded={}}})
  local IR=load('src.core.game3.scripting.text_ir');local S,labels
  if version=='emerald'then S=load('src.import.gba.syms').of(version)
  else labels=require('src.import.gba.text_labels.'..version)end

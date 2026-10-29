@@ -63,6 +63,17 @@ local write=Fs.write;Fs.write=function()return true end
 local ok,why=pcall(Assets.extract,x);Loader.new=oldNew;Fs.write=write
 T.eq(ok,true,why or'original decoder reader interface is complete')
 T.eq(Assets.valid(x._constants.gen3NativeOptions,'emerald'),true,'extracted own-edition record passes admission')
+-- Load the actual relocated FRLG dependency graph, not a mocked loader.
+-- Its versions_game module needs the host's explicitly isolated GameVersion.
+local fsLoad=love.filesystem.load;love.filesystem.load=function(path)return loadfile(path)end
+for _,version in ipairs{'firered','leafgreen'}do
+ local bytes;Fs.write=function(path,raw)if path==Assets.KEYPAD then bytes=raw end;return true end
+ local cart={version=version,_constants={},beginStage=function()end,rom={u8=function()return 255 end}}
+ local good,problem=pcall(Assets.extract,cart)
+ T.eq(good,true,problem or'own FRLG keypad extractor dependency graph loads')
+ T.eq(type(bytes)=='string'and#bytes,128*32*4,'own native keypad sheet reaches cache writer')
+end
+Fs.write=write;love.filesystem.load=fsLoad
 local Rows=require('src.ui.Gen3OptionRows');local host={};local step,activate=0,0;local page
 local owner={game=host,rows={{label='OWN STEP',engine={step=function(g,d)T.eq(g,host);step=step+d;return true end}},
  {label='OWN ACTION',engine={activate=function(g)T.eq(g,host);activate=activate+1 end}}},valueText=function()return'VALUE'end}
