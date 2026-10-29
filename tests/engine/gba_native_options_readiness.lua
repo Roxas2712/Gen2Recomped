@@ -5,7 +5,7 @@ local Fs=require('src.import.CacheFs');local Writer=require('src.import.LuaWrite
 local V=require('src.core.GameVersion');local old=V.get();local read,exists=Fs.read,Fs.exists
 for _,version in ipairs{'emerald','firered','leafgreen'}do
  V.set(version)
- local spec={format=1,version=version,textIR={},frameCount=version=='emerald'and 20 or 10}
+ local spec={format=2,version=version,textIR={},resources=Assets.resources(version),frameCount=version=='emerald'and 20 or 10}
  for _,name in ipairs(Assets.labels(version))do spec.textIR[name]={{t='text',s='OWNED '..name}}end
  if version=='emerald'then spec.manifest=Assets.MANIFEST;spec.arrow={png='data/generated/gba/native_options/arrows.png',w=16,h=16}end
  local manifest={format=1,game=version,option={textPalette={},bgColor=0,windows={
@@ -16,6 +16,12 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
  Fs.exists=function()return true end
  T.eq(Assets.valid(spec,version),true,'own complete option vocabulary admitted: '..version)
  T.eq(#Assets.missing(version),0,'complete cache is ready')
+ for _,path in ipairs(Assets.resources(version))do
+  Fs.exists=function(p)return p~=path end
+  T.eq(Assets.missing(version)[1],path,'native keypad/small-font resource is required: '..path)
+ end
+ Fs.exists=function()return true end
+ spec.format=1;T.eq(Assets.valid(spec,version),false,'old word-fallback cache is rejected');spec.format=2
  T.eq(require('src.ui.Gen3NativeOptions').record(game),spec,'host selects own native options')
  for _,key in ipairs(Assets.labels(version))do
   local value=spec.textIR[key];spec.textIR[key]=nil
@@ -39,18 +45,22 @@ local x={version='emerald',_constants={},beginStage=function()end,
  rom={data=string.rep('\255',16),size=16,u8=function()return 255 end,
   u16=function(_,at)T.eq(at,2);return 0x1234 end,u32=function(_,at)T.eq(at,4);return 0x12345678 end}}
 Loader.new=function()return function(name)
- if name=='src.import.gba.syms'then return{of=function()return{off=function()return 0 end}end}end
+ if name=='src.import.gba.syms'then return{of=function()return{off=function()return 0 end,size=function()return 2048 end,count=function()return 512 end}end}end
  if name=='src.core.game3.scripting.text_ir'then return{decode=function()return{{t='text',s='OWNED'}}end}end
  if name=='src.import.gba.rse.menus_extract'then return{run=function(rom)
   T.eq(rom:get(0),255);T.eq(rom:u16(2),0x1234);T.eq(rom:u32(4),0x12345678)
   T.eq(rom:readString(0,3),string.rep('\255',3));return true
  end}end
+ if name=='src.import.gba.rse.text_chrome_extract'then return{
+  extractLatin=function(_,face)T.eq(face,'small');return{width=256,height=512,fgRgba='',shRgba='',widths={}}end,
+  extractKeypadIcons=function()return{width=128,height=32,rgba=''}end}end
  if name=='src.import.gba.rse.boot_gfx'then return{context=function()return{
   lz=function()end,pal=function()end,strip=function()return{png='data/generated/gba/native_options/arrows.png',w=16,h=16}end}
  end}end
  error('Unexpected extractor dependency '..name)
 end end
-local ok,why=pcall(Assets.extract,x);Loader.new=oldNew
+local write=Fs.write;Fs.write=function()return true end
+local ok,why=pcall(Assets.extract,x);Loader.new=oldNew;Fs.write=write
 T.eq(ok,true,why or'original decoder reader interface is complete')
 T.eq(Assets.valid(x._constants.gen3NativeOptions,'emerald'),true,'extracted own-edition record passes admission')
 local Rows=require('src.ui.Gen3OptionRows');local host={};local step,activate=0,0;local page

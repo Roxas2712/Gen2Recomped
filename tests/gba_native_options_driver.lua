@@ -49,6 +49,9 @@ return function(game)
   local function open()
     local screen=UI.new(game,{onCancel=function()callback=callback+1 end});game.stack:push(screen)
     assert(screen.rsNative and screen.rsNative.record.version==version,'Own edition did not select original options')
+    local font=screen.rsNative.load('src.ui.game3.frlg_font')
+    assert(font.hasKeypadIcons(),'Own native keypad sheet is missing; word fallback changes control geometry')
+    if version=='emerald'then assert(font.face({small=true}),'Own Emerald FONT_SMALL is missing')end
     U.wait(40);assert(screen.rsNative.scene.isOpen())
     return screen,screen.rsNative.scene
   end
