@@ -861,6 +861,7 @@ function Gen3BagMenu:toss(id)
     self.rsView=self.rsView or require('src.ui.Gen3RsBagView').new(self)
     return self.rsView:beginToss(id)
   end
+  if require('src.ui.Gen3BagToss').open(self,id)then return end
   local def = game.data.items and game.data.items[id]
   local name = (def and def.name) or id
   local QuantityBox = require("src.ui.QuantityBox")

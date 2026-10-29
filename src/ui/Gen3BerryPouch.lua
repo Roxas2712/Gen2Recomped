@@ -158,6 +158,7 @@ end
 -- (Gen3BagMenu:toss); a berry tosses the same way a potion does.
 function Gen3BerryPouch:toss(id)
   local game = self.game
+  if require('src.ui.Gen3BagToss').open(self,id,true)then return end
   local def = game.data.items and game.data.items[id]
   local name = (def and def.name) or id
   local QuantityBox = require("src.ui.QuantityBox")
