@@ -84,6 +84,19 @@ uses the native imported-cartridge runtime.
 The local evidence bundle records the accepted measurement and qualification
 intervals; rejected attempts are retained separately.
 
+### CI follow-up
+
+At revision `60ded007a66591e880196e77212203c39841b32c`, the full
+[ROM-free CI](https://github.com/Roxas2712/Gen2Recomped/actions/runs/40909304330)
+passed 981 engine suites, four modkit suites and all remaining tiers. The
+[native pixel/PCM CI](https://github.com/Roxas2712/Gen2Recomped/actions/runs/40909305551)
+also passed all thirteen focused groups, including 366 PCM checks.
+
+The sole unexecuted check was macOS HTTP transport: GitHub cancelled its
+arm64 job before assigning any runner, and its retry also remained queued.
+That workflow now uses the repository's existing `macos-15-intel` pool for
+macOS transport coverage. The application code is unchanged by this CI fix.
+
 
 ## Reproduction
 

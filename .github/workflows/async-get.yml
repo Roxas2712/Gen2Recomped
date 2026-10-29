@@ -9,7 +9,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Use the pinned Intel pool also used by native runtime qualification.
+        # The latest arm64 pool can cancel jobs before assigning a runner.
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 5
     steps:
