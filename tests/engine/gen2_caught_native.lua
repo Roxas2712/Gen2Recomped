@@ -100,6 +100,13 @@ for _,version in ipairs{'gold','silver','crystal','red','emerald','firered','pri
    mon.caughtLocation=0;T.eq(movie:playerGenderMark(mon),' ','unknown source landmark suppresses OT mark')
    T.eq(movie:playerGenderMark({caughtData=147}),'♀','legacy trade record remains readable')
    if version=='crystal'then
+    for _,clock in ipairs{{5,1},{11,2},{21,3}}do
+     local timed=game(1);timed.overworld=nil
+     require('src.core.Gen2Clock').setTime(timed.save,clock[1],0)
+     local b=Screen.newWild(timed,'FIXMON_B',7)
+     b.queue={};b.nextInsert=0;b:storeCaughtMon()
+     fields(timed.save.party[2],{clock[2],7,47,'girl'},'arrival without world reads actual saved RTC')
+    end
     -- Retire only real display/audio/input IO; execute the unchanged native
     -- trade constructor, roster/OT/held-item writes and party transfer.
     for _,dialog in ipairs{0,3}do
