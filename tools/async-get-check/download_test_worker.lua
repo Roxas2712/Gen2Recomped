@@ -6,7 +6,16 @@ require("love.timer")
 require("love.system")
 local publish = require("src.net.DownloadPublish")
 package.loaded["src.net.DownloadPublish"] = function(source, target)
-  if target:sub(-18) == "/delay-publish.bin" then love.timer.sleep(.25) end
+  if target:sub(-18) == "/delay-publish.bin" then
+    -- A fixed sleep can finish while a hosted runner deschedules main. Hold
+    -- this real publication boundary until the caller has observed it.
+    local release = love.thread.getChannel("download-qa-publish-release")
+    local deadline = love.timer.getTime() + 5
+    while not release:peek() do
+      assert(love.timer.getTime() < deadline, "main did not acknowledge publication")
+      love.timer.sleep(.001)
+    end
+  end
   return publish(source, target)
 end
 -- Hold the bounded-queue fixture before the real worker reads cancellation.
