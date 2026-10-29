@@ -4,13 +4,14 @@
 -- seed, low nibble, then high/low pairs; STRB wraps rather than saturates.
 local C = {}
 local delta = {[0]=0,1,4,9,16,25,36,49,-64,-49,-36,-25,-16,-9,-4,-1}
-function C.decode(image, offset, size)
+function C.decode(image, offset, size, cancelled)
   if type(image)~='string' or type(offset)~='number' or offset<0 or offset%1~=0
      or type(size)~='number' or size<1 or size%1~=0 or size>4*1024*1024 then return nil,'invalid sample range' end
   local blocks=math.ceil(size/64)
   if offset+blocks*33>#image then return nil,'truncated compressed sample' end
   local out,remaining={},size
   for block=0,blocks-1 do
+    if cancelled and block%16==0 and cancelled()then return nil,'cancelled' end
     local p=offset+block*33+1
     local acc=image:byte(p);local row={string.char(acc)}
     local function add(nibble)
@@ -45,18 +46,19 @@ function C.describe(image,base,cries,index)
   if rate<=0 or rate>88200 then return nil,true end
   return {wave=wave,rate=rate,size=size,reverse=kind==0x30},true
 end
-function C.render(image,base,cries,index,options)
+function C.render(image,base,cries,index,options,cancelled)
+  if cancelled and cancelled()then return nil,true end
   local info,handled=C.describe(image,base,cries,index)
   if not info then return nil,handled end
   options=options or {}
   local wave,rate,size=info.wave,info.rate,info.size
-  local pcm=C.decode(image,wave+16,size)
+  local pcm=C.decode(image,wave+16,size,cancelled)
   if not pcm then return nil,true end
   local Voice=C.voice or require('src.core.Gen3CryVoice')
   local params=Voice.params(options.edition,options)
   local renderOptions={};for k,v in pairs(options)do renderOptions[k]=v end
   renderOptions.reverse=info.reverse
-  local result,info=Voice.render(pcm,rate,params,renderOptions)
+  local result,info=Voice.render(pcm,rate,params,renderOptions,cancelled)
   return result,true,info
 end
 return C

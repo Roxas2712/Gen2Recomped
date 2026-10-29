@@ -51,13 +51,15 @@ local function put(def,sd)
 end
 -- Same sequencer and tail threshold as native renderEffect, with checkpoints
 -- in BOTH synthesis and SoundData upload. No RNG, clocks or VM are advanced.
-function P.render(data,def,options)
+function P.render(data,def,options,cancelled)
+ if cancelled and cancelled()then return nil end
  options=options or {};local ok,engine=pcall(synth.newEngine,data,def,{allowLoops=false})
  if not(ok and engine)then return nil end
  local cap=math.floor(44100*math.min(8,options.seconds or 8))
  local lease=options.scratch or {};lease.blocks=lease.blocks or {}
  local n,audible=0,0;local checkpoint=options.checkpoint
  while n<cap do
+  if cancelled and n%1024==0 and cancelled()then releaseScratch(lease);return nil end
   local l,r=engine:sampleStereo();n=n+1
   local offset=(n-1)%chunkFrames;local block=chunk(lease,math.floor((n-1)/chunkFrames)+1)
   block[offset*2],block[offset*2+1]=l,r
@@ -68,6 +70,10 @@ function P.render(data,def,options)
  local length=math.min(n,audible+math.floor(44100*.05));if length<64 then releaseScratch(lease);return nil end
  local sd=love.sound.newSoundData(length,44100,16,2)
  for i=1,length do
+  if cancelled and (i-1)%1024==0 and cancelled()then
+   if sd.release then sd:release()end
+   releaseScratch(lease);return nil
+  end
   local block=lease.blocks[math.floor((i-1)/chunkFrames)+1];local offset=((i-1)%chunkFrames)*2
   sd:setSample(i-1,1,block[offset]);sd:setSample(i-1,2,block[offset+1])
   if checkpoint and i%128==0 then checkpoint()end
@@ -125,7 +131,10 @@ function P.install(M4A)
  if M4A.effectPrep then return M4A.effectPrep end
  synth=M4A;local invalidate=M4A.invalidate
  M4A.invalidate=function(...)P.reset();return invalidate(...)end
- M4A.renderEffect=function(data,def,options)
+ M4A.renderEffect=function(data,def,options,cancelled)
+  -- Cancellable jobs own their output; abandoning one must not release a
+  -- shared warm-cache buffer or publish a partial render.
+  if cancelled then return P.render(data,def,options,cancelled)end
   -- Non-default renders retain their own options and never alias a warm entry.
   if options and next(options)~=nil then return P.render(data,def,options)end
   if not bind(data)then return P.render(data,def,options)end

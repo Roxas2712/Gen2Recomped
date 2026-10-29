@@ -974,8 +974,9 @@ function M4A.crySupports(data,index)
   return handled
 end
 
-function M4A.renderCry(data, index, options)
+function M4A.renderCry(data, index, options, cancelled)
   options = options or {}
+  if cancelled and cancelled() then return nil end
   local audio = (data and data.audio) or {}
   local gen3 = audio.gen3 or {}
   local cries = audio.gen3Cries or {}
@@ -983,7 +984,7 @@ function M4A.renderCry(data, index, options)
   -- Retail cries are GFDPCM, not signed PCM. Keep the existing gain/Source
   -- contract; decode their own blocks before resampling, never ROM neighbours.
   local decoded, handled = require("src.core.Gen3CryPCM").render(
-    loadImage(audio), gen3.base or 0, cries, index, options)
+    loadImage(audio), gen3.base or 0, cries, index, options, cancelled)
   if handled then return decoded end
   local engine = setmetatable({
     image = loadImage(audio),
@@ -1020,6 +1021,10 @@ function M4A.renderCry(data, index, options)
   local gain = (options.volume or 1) * CRY_GAIN
   local frame, left = 0, 0
   for i = 0, samples - 1 do
+    if cancelled and i % 1024 == 0 and cancelled() then
+      if result.release then result:release() end
+      return nil
+    end
     if frame <= 0 then
       voice:stepEnvelope()
       frame = SAMPLES_PER_FRAME
@@ -1055,14 +1060,16 @@ end
 
 local EFFECT_CAP = 8            -- seconds; the longest jingle is well under
 
-function M4A.renderEffect(data, def, options)
+function M4A.renderEffect(data, def, options, cancelled)
   options = options or {}
+  if cancelled and cancelled() then return nil end
   local ok, engine = pcall(M4A.newEngine, data, def, { allowLoops = false })
   if not (ok and engine) then return nil end
   local cap = math.floor(SAMPLE_RATE * math.min(EFFECT_CAP,
                                                 options.seconds or EFFECT_CAP))
   local left, right, n, audible = {}, {}, 0, 0
   while n < cap do
+    if cancelled and n % 1024 == 0 and cancelled() then return nil end
     local l, r = engine:sampleStereo()
     n = n + 1
     left[n], right[n] = l, r
