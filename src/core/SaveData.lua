@@ -2312,6 +2312,9 @@ function SaveData.validate(save, data)
   -- Gen3 stores the induction COUNT here (including zero), not rosters.
   -- Keep it numeric: Champion/Mystery Gift code reads and increments it.
   local rosters = type(save.hallOfFame) == "table" and save.hallOfFame or {}
+  if GameVersion.isGen3() then
+    rosters=type(save.gen3HallOfFameTeams)=='table'and save.gen3HallOfFameTeams or{}
+  end
   for _, entry in ipairs(rosters) do
     if type(entry) == "table" then
       for i = 1, #entry do
