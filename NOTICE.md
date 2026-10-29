@@ -70,3 +70,13 @@ the same preserved GPLv3/Section7 terms. The copied studio/widget/cursor tests
 retain their provenance headers. The native launcher entry and vector artwork
 are integration contributions by Roxas2712; excluded Gen1 launcher files and
 artwork are not included.
+
+## Gen2 evolution presentation compatibility
+
+`src/compat/gen2/EvolutionAnim.lua`, the animation schedule additions in
+`src/compat/gen2/Evolution.lua`, and the path-first picture helper in
+`src/pokemon/Sprites.lua` are adapted from Gen1Recomp revision
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`. Copyright (C) 2026 BOIS CLUB
+GAMES, LLC. Their GPLv3 and Section 7 terms are retained in
+`compat/gen1-gsc/LICENSE.MD`; source hashes and integration changes are in
+`compat/gen1-gsc/provenance.json`. Existing rights remain effective.
