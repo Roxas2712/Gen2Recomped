@@ -1199,6 +1199,10 @@ function Game:frameFit(w, h)
     local scale = surfaceW == 160 and surfaceH == 144 and Renderer:fitScale()
       or fit.scale(pw, ph, 160, 144)
     local x, y = fit.origin(pw, ph, 160, 144, scale)
+    if not Renderer.splitViewport then
+      y = y - require('src.core.ScreenPosition').pixelLift(ww, wh, ph,
+        144 * scale, wh > 0 and ph / wh or dpi)
+    end
     return scale, x, y, dpi, pw, ph
   end
   local chrome = require('src.ui.Gen2Chrome')
@@ -2339,6 +2343,7 @@ function Game:applyOptions(opts)
   -- after VideoMode: a faithful-resolution lock is an exact window size, so
   -- it has to be the last word on the window (it drops fullscreen to hold)
   require("src.core.FaithfulRes").applyOptions(opts)
+  require("src.core.ScreenPosition").applyOptions(opts)
   -- normalizes a nil/garbage cap to the 60 default, so old saves with no
   -- fpsCap key pace at the standard rate (issue #88)
   require("src.core.FrameCap").applyOptions(opts)

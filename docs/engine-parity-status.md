@@ -15,8 +15,8 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `f610ab751b92dddbded25db4681f8b0fdc8b7ab9`,
-including the qualified native battle batch PR349, GBA evolution PR344 and
+The fetched fork main is `836125c17952e9535f05db7d9a8682bd16438c8d`,
+including native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
 the earlier native RNG PR336. PR349's exact composed tree passes942/942
 engine suites,4/4 SDK suites and every available official ROM-free tier;
 all77 exact-head CI checks succeeded or were skipped before its strict
@@ -48,13 +48,32 @@ checkpoint observations have 57. The
 has 691 plain-Lua checks without LÖVE, 972 checks through actual wild
 constructors/switches across 18 editions, and 270 independently matched
 original-versus-extracted native data/art-selector cases.
-Native Game2 frame/viewport queries are separate draft PR350. Its initial
+Native Game2 frame/viewport queries are merged PR350. Its initial
 real Metal check identified a drawable-pixel/DPI mismatch missed by the
 logical-input tests. The correction passes4454 expanded query checks plus
-the existing viewport/window/chrome regressions; fresh GPU and complete
-tree acceptance remain open. The corresponding coherent older-host offers
+the existing viewport/window/chrome regressions. A fresh owned Metal run
+with unchanged VASC confirms the actual drawable query agrees with native
+composition, after real checkpoint CONTINUE, a connected walk and a natural
+encounter. Four inspected OS images cover both selected field camera flags;
+both select the same authored battle-stage view. All27336 mod files/copies,
+ROM and earned source checkpoint retain their hashes. Exact head `7da7b119`
+passes943/943 engine suites,4/4 SDK suites and every available official tier;
+all76 exact-head CI checks succeed or are skipped. The actual main merge has
+the identical qualified tree. This does not accept full visual parity:
+bottom command artwork is partly clipped in both the existing Gen1 reference
+and fresh fork images, whose logical hit layouts agree but DPI/lighting differ.
+The corresponding coherent older-host offers
 are upstream PR396 (battle foundations) and PR397 (frame queries with the
 already offered viewport/chrome prerequisites). No upstream merge occurs.
+
+[Native screen positioning](native-screen-position.md) is separate draft
+PR351 on the new main: CENTER/UPPER/TOP, saved native options, safe top insets,
+skin/split ownership and enough world coverage below a raised camera. The
+selected actual fitting/input/save/boot/final-blit probe passes1151 checks.
+Upstream PR398 independently passes1031 position,4454 frame-query and116
+chrome checks through its actual older compositor and flat options menu.
+Complete current-tree and actual GPU/release qualification of this new
+position feature remain open; PR350's943-suite receipt does not qualify it.
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.
 
