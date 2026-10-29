@@ -35,9 +35,11 @@ function T.add(name,seconds,ended)
  end
  local row=current.stages[name]
  if not row then row={calls=0,seconds=0,maxSeconds=0};current.stages[name]=row end
+ local worst=row.calls==0 or seconds>row.maxSeconds
+ if worst or #current.events<limits.events then ended=finite(ended) and ended or clock() end
+ if worst then row.maxStart=ended-started-seconds;row.maxEnd=ended-started end
  row.calls=row.calls+1;row.seconds=row.seconds+seconds;row.maxSeconds=math.max(row.maxSeconds,seconds)
  if #current.events<limits.events then
-  ended=finite(ended) and ended or clock()
   current.events[#current.events+1]={name=name,start=ended-started-seconds,seconds=seconds}
  else current.droppedEvents=current.droppedEvents+1 end
 end

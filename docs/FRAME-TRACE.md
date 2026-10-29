@@ -16,7 +16,8 @@ not accepted FPS measurements.
 
 Each frame records its sequence, relative start, duration, completion status,
 window focus and named sections. Each section retains its call count, total
-and largest duration. Up to 128 individual events per frame include start
+and largest duration, including the start/end of that largest call even when
+the individual-event limit is full. Up to 128 individual events per frame include start
 times and durations; overflow remains counted in the stage summaries. The
 recorder bounds distinct section names to 256 and reports all overflow.
 Unfocused or incomplete frames are retained and marked, not silently dropped.

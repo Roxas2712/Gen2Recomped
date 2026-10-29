@@ -13,6 +13,8 @@ F.beginFrame(true);local outer=F.section('outer');t=.001;local inner=F.section('
 F.add('extra',.002);t=.016;F.endFrame(true)
 local s=F.snapshot();H.eq(#s.frames,1);H.eq(s.frames[1].stages.inner.calls,1,'closures close once')
 H.eq(s.frames[1].stages.outer.seconds,.010);H.eq(s.frames[1].droppedEvents,1)
+H.check(math.abs(s.frames[1].stages.extra.maxStart-.008)<1e-12,'overflow preserves worst span timestamp')
+H.eq(s.frames[1].stages.extra.maxEnd,.010)
 H.eq(s.frames[1].context,'qa-map rain third');H.eq(s.frames[1].focused,true)
 s.frames[1].stages.outer.seconds=99;H.eq(F.snapshot().frames[1].stages.outer.seconds,.010,'snapshot ownership')
 F.beginFrame(false);local abandoned=F.section('stale');t=.020;F.beginFrame(true);abandoned()
