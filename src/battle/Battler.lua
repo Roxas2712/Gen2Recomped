@@ -46,6 +46,7 @@ function Battler.new(data, mon, isPlayer, save, battle)
     curTypes = def.types,
     curMoves = mon.moves,
   }
+  if require('src.core.GameVersion').isGen2() then require('src.pokemon.Stats').trackBattler(battler)end
   return Gen2.bind(battler, battle)
 end
 

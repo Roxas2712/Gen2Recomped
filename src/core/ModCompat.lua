@@ -73,7 +73,7 @@ ModCompat.ALIASES = {
   ["src.battle.gen2.Catching"] = "src.battle.Catching",
   ["src.battle.gen2.Damage"] = "src.battle.Damage",
   ["src.battle.gen2.Effects"] = "src.battle.MoveEffects",
-  ["src.battle.gen2.Mon"] = "src.pokemon.Pokemon",
+  ["src.battle.gen2.Mon"] = "src.compat.gen2.Mon",
   ["src.ui.gen2.BattleState"] = "src.battle.BattleState",
   ["src.ui.gen2.Chrome"] = "src.ui.Gen2Chrome",
 
