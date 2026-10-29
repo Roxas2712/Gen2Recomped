@@ -12,6 +12,7 @@ local Tilt = require("src.render.Tilt")
 local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
 local PixelCanvas = require("src.render.PixelCanvas")
+local PixelFit = require("src.render.PixelFit")
 local Runtime = require("src.mods.Runtime")
 local GbcColorCorrection = require("src.render.GbcColorCorrection")
 local Output = require("src.render.Output")
@@ -170,9 +171,7 @@ end
 -- Integer framebuffer pixels per GB pixel that fit the window.  Zoom /
 -- GBCFX / callers treat this as the crisp scale; endFrame converts to LOVE
 -- units via / dpiX and / dpiY when drawing.
-local function fitSurfaceScale(pw, ph, w, h)
-  return math.max(1, math.floor(math.min(pw / w, ph / h)))
-end
+local fitSurfaceScale = PixelFit.scale
 
 function Renderer:fitScale()
   local _, _, pw, ph = displayMetrics()
@@ -1029,8 +1028,8 @@ local function frameRects(self, r, windowW, windowH, surfaceW, surfaceH)
   local Sx, Sy = Sp / dpiX, Sp / dpiY
   local vpw, vph = uiw * Sx, uih * Sy
   -- Snap the letterbox origin to a framebuffer pixel, then convert to units.
-  local ox = math.floor((pw - uiw * Sp) / 2) / dpiX
-  local oy = math.floor((ph - uih * Sp) / 2) / dpiY
+  local pixelX, pixelY = PixelFit.origin(pw, ph, uiw, uih, Sp)
+  local ox, oy = pixelX / dpiX, pixelY / dpiY
   -- The UI has its own scale: it steps down as the survey zoom goes out (see
   -- uiScale), so it can be smaller than the world letterbox.  Un-zoomed these
   -- are identical to Sp/ox/oy and every rect below is what it always was.
@@ -1046,8 +1045,8 @@ local function frameRects(self, r, windowW, windowH, surfaceW, surfaceH)
   end
   local Ux, Uy = Up / dpiX, Up / dpiY
   local uvpw, uvph = uiw * Ux, uih * Uy
-  local uox = math.floor((pw - uiw * Up) / 2) / dpiX
-  local uoy = math.floor((ph - uih * Up) / 2) / dpiY
+  local uiPixelX, uiPixelY = PixelFit.origin(pw, ph, uiw, uih, Up)
+  local uox, uoy = uiPixelX / dpiX, uiPixelY / dpiY
   r = r or {}
   r.ww,r.wh,r.pw,r.ph,r.dpiX,r.dpiY = ww,wh,pw,ph,dpiX,dpiY
   r.vx,r.vy,r.cut,r.vux,r.vuy,r.vuw,r.vuh = 0,0,0,0,0,ww,wh
