@@ -2,16 +2,14 @@
 """Qualify native scenes and measure isolated, freshly imported games."""
 import argparse
 import hashlib
-import io
 import json
 import os
 from pathlib import Path
 import shutil
 import sys
-import tarfile
 import time
 
-from qa_storage import qa_source, qa_cache, qa_copy, qa_profile, qa_run
+from qa_storage import qa_source, qa_cache, qa_copy, qa_profile, qa_run, qa_extract_archive
 from check_full_game_performance import BOOTSTRAP
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -41,10 +39,25 @@ def main():
     parser.add_argument("--seconds", type=float, default=60)
     parser.add_argument("--backend", choices=("metal", "opengl"), default="metal")
     parser.add_argument("--fps-cap", type=int, choices=(30,60,120,160), default=160)
+    parser.add_argument("--atlas-bridge", action="store_true", help="exercise the production Gen-3 source field/atlas presentation")
+    parser.add_argument("--hidden", action="store_true", help="Use an invisible native window for matched unfocused measurements")
+    parser.add_argument("--stable-focus", action="store_true", help="Reject measurements whose actual native focus changes")
+    parser.add_argument("--unfocused-sdl3", type=Path, help="SDL3 library for a real non-focusable show/hide transition; requires --hidden --stable-focus")
+    parser.add_argument("--compact-host", action="store_true", help="Omit unused platform distributions, mods and documentation from the source-only atlas host")
+    parser.add_argument("--perf", help="Native POKEPORT_PERF overrides, e.g. atlasWorker=0")
     parser.add_argument("--variant", action="append", choices=("default", "idle-off", "idle-on", "voxel-idle-off", "voxel-idle-on", "voxel-warm-disk", "adaptive"))
     for version in ("red", "gold", "emerald", "platinum"):
         parser.add_argument("--" + version, type=Path)
     args = parser.parse_args()
+    if args.compact_host and (not args.atlas_bridge or any(SCENES[name].get("voxel") for name in args.scene)):
+        parser.error("--compact-host requires a source-only --atlas-bridge scene without voxel mods")
+    if args.unfocused_sdl3 and not (args.measure and args.hidden and args.stable_focus):
+        parser.error("--unfocused-sdl3 requires --measure --hidden --stable-focus")
+    if args.unfocused_sdl3:
+        qa_source(args.unfocused_sdl3.resolve())
+        assert args.unfocused_sdl3.is_file(), "SDL3 library is missing"
+    if args.atlas_bridge and any(not name.startswith("emerald-") for name in args.scene):
+        parser.error("--atlas-bridge requires Gen-3 scenes")
     if args.seconds < 60:
         parser.error("measurement intervals must be at least 60 real seconds")
     if args.variant and not args.measure:
@@ -110,15 +123,37 @@ def main():
     assert diff.returncode in (0,1), "runtime comparison failed"
     assert not qa_run(["git", "status", "--porcelain"], cwd=ROOT, capture_output=True,
                       text=True, check=True).stdout.strip(), "Commit the candidate first"
-    archive = qa_run(["git", "archive", head], cwd=ROOT, capture_output=True, check=True).stdout
-    with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
-        for member in tar.getmembers():
-            assert not member.name.startswith("/") and ".." not in Path(member.name).parts
-            assert not member.issym() and not member.islnk()
-        tar.extractall(source)
+    git_dir = Path(qa_run(["git", "rev-parse", "--absolute-git-dir"], cwd=ROOT,
+                          capture_output=True, text=True, check=True).stdout.strip())
+    export_tree = head
+    export_omitted = []
+    if args.compact_host:
+        # Reuse the exact source subtrees; only the private host's root tree
+        # omits inputs that this no-mod atlas scene never uses. No staging
+        # archive, mutable checkout or alternate runtime is introduced.
+        omitted = {"mobile", "ports", "docs", "mods", "Gen2Recomped.exe", ".github"}
+        rows = qa_run(["git", "-c", "gc.auto=0", "ls-tree", "-z", head], cwd=ROOT,
+                      capture_output=True, check=True).stdout.split(b"\0")
+        kept = []
+        for row in rows:
+            if not row:
+                continue
+            name = row.split(b"\t", 1)[1].decode()
+            if name in omitted:
+                export_omitted.append(name)
+            else:
+                kept.append(row + b"\0")
+        export_tree = qa_run(["git", "-c", "gc.auto=0", "mktree", "-z"], cwd=ROOT,
+                             input=b"".join(kept), capture_output=True, check=True).stdout.decode().strip()
+    qa_extract_archive(git_dir, export_tree, source)
+    if args.hidden:
+        conf = source / 'conf.lua'
+        conf.write_text(conf.read_text() + '\nlocal configure=love.conf\nfunction love.conf(t)configure(t);t.window.visible=false end\n')
     engine = source / "main.lua"
     engine_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
     adaptations = []
+    if export_omitted:
+        adaptations.append("Omit unused private-host root entries: " + ", ".join(export_omitted))
     if args.measure:
         code = engine.read_text()
         pacing = '  if os.getenv("POKEPORT_DRIVER") then return false end'
@@ -131,8 +166,8 @@ def main():
         assert block.count(update) == 1
         code = code[:begin] + block.replace(update, '      PlatformHooks.update(Game, dt)') + code[end:]
         engine.write_text(code)
-        adaptations = ["Enable existing native pacing in the owned driver host",
-                       "Use the interactive PlatformHooks.update and real dt after each driver observation"]
+        adaptations += ["Enable existing native pacing in the owned driver host",
+                        "Use the interactive PlatformHooks.update and real dt after each driver observation"]
     patched_hash = hashlib.sha256(engine.read_bytes()).hexdigest()
     instrumented = {}
     if args.measure:
@@ -157,6 +192,23 @@ def main():
             'BaselineSections.call("  gen4: live pass", self.livePass, self, ',3)])
         instrument("src/core/Music.lua",[('require("src.audio.NitroAudio").update()',
             'BaselineSections.call("  audio: Nitro update", require("src.audio.NitroAudio").update)',1)])
+        if args.atlas_bridge:
+            instrument("src/compat/gen1/AtlasRuntime.lua",[],('return M', '''
+local create=M.new
+function M.new(api)
+  local runtime=create(api)
+  for _,name in ipairs({'prefetch','step'})do
+    local original=runtime[name]
+    local label='  atlas: '..name
+    runtime[name]=function(...)return BaselineSections.call(label,original,...)end
+  end
+  return runtime
+end
+return M'''))
+            instrument("src/core/BuildWorker.lua",[],('return BuildWorker', '''
+local poll=BuildWorker.poll
+function BuildWorker.poll(...)return BaselineSections.call('  atlas: pool delivery',poll,...)end
+return BuildWorker'''))
         if any(SCENES[name].get("voxel") for name in planned):
             for module,method,export in (("Structures","forMap","Structures"),("Gen3","prepare","Gen3"),
                                          ("TerrainAtlas","forMap","TerrainAtlas"),("VoxelDiskCache","load","Cache")):
@@ -193,6 +245,12 @@ end
     env.update(POKEPORT_NO_MODS="1", POKEPORT_NO_BOOT_REPORT="1",
                POKEPORT_NO_DISCORD="1", POKEPORT_NOTIFY_ONLY_UPDATES="1",
                POKEPORT_GRAPHICS_BACKEND=args.backend)
+    if args.perf:
+        env["POKEPORT_PERF"] = args.perf
+    if args.unfocused_sdl3:
+        env["PERF_BASELINE_UNFOCUSED_SDL3"] = str(args.unfocused_sdl3.resolve())
+        env["SDL_WINDOW_ACTIVATE_WHEN_SHOWN"] = "0"
+        adaptations.append("Use actual non-focusable SDL3 show/hide; verify unmodified native focus queries")
     token = str(time.time_ns())
     profiles = {}
     inputs = {}
@@ -209,6 +267,7 @@ end
     for version, rom in cartridges.items():
         identity = "oasc-gen2recomp-qa-perf-baseline-" + token + "-" + version
         profiles[version] = identity
+        qa_source(Path.home() / "Library/Application Support/LOVE" / identity)
         qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
         inputs[version] = hashlib.sha1(rom.read_bytes()).hexdigest()
         checkpoint()
@@ -221,13 +280,14 @@ end
         scene = SCENES[name]
         for variant in variants:
             spec = dict(scene, name=name, inventory=not args.measure, measure=args.measure,
-                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant,
+                        seconds=args.seconds, fpsCap=args.fps_cap, variant=variant, atlasBridge=args.atlas_bridge, stableFocus=args.stable_focus,
                         setupProbe=args.setup_probe or args.walk_probe, walkProbe=args.walk_probe)
             version = spec["version"]
             label = name + ("-" + variant if args.measure else "")
             identity = profiles[version]
             if args.measure:
                 identity += "-" + label
+                qa_source(Path.home() / "Library/Application Support/LOVE" / identity)
                 profile = qa_profile(Path.home() / "Library/Application Support/LOVE" / identity)
                 seed_identity=profiles[version]
                 if variant=="voxel-warm-disk":
@@ -263,9 +323,13 @@ end
               "originalEntrypointSha256": engine_hash, "hostEntrypointSha256": patched_hash,
               "testAdaptations": adaptations, "separateCaseProfiles": args.measure,
               "instrumentedFiles": instrumented,
+              "exportTree": export_tree, "exportOmitted": export_omitted,
               "hostSyntaxChecked": lua is not None,
               "hardware": hardware,
               "benchmarkControls": {"fpsCap": args.fps_cap, "seconds": args.seconds,
+                                    "performanceOverrides": args.perf, "atlasBridge": args.atlas_bridge,
+                                    "hiddenWindow": args.hidden, "stableNativeFocus": args.stable_focus,
+                                    "unfocusedNativeWindow": bool(args.unfocused_sdl3),
                                     "nativePacing": args.measure, "vsync": 0 if args.measure else None,
                                     "backgroundCapDisabled": args.measure, "randomSeed": 12345},
               "romSha1": inputs, "results": results}
