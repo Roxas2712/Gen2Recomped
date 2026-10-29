@@ -416,7 +416,10 @@ R.pokemon = {
     types = f.list(f.id("type_chart")),
     baseStats = f.rec{ hp = f.int(1, 255), attack = f.int(1, 255),
                        defense = f.int(1, 255), speed = f.int(1, 255),
-                       special = f.int(1, 255) },
+                       special = f.int(1, 255),
+                       -- Native GSC/GBA split stats are valid registry fields.
+                       spatk = f.opt(f.int(1, 255)),
+                       spdef = f.opt(f.int(1, 255)) },
     catchRate = f.int(0, 255), baseExp = f.int(0, 255),
     level1Moves = f.list(f.id("moves")),
     growthRate = f.id("growth_rates"),
