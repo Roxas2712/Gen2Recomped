@@ -11,6 +11,7 @@ local Tilt = require("src.render.Tilt")
 local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
 local PixelCanvas = require("src.render.PixelCanvas")
+local PixelFit = require("src.render.PixelFit")
 local Runtime = require("src.mods.Runtime")
 local Output = require("src.render.Output")
 local GameViewport = require("src.render.GameViewport")
@@ -150,7 +151,7 @@ end
 function Renderer:fitScale()
   local _, _, pw, ph = displayMetrics()
   local w, h = self:uiSize()
-  return math.max(1, math.floor(math.min(pw / w, ph / h)))
+  return PixelFit.scale(pw, ph, w, h)
 end
 
 -- Integer framebuffer pixels per GB pixel for the UI pass.
@@ -839,8 +840,8 @@ function Renderer:endFrame(zones, worldZones)
   local uiw, uih = self:uiSize()
   local vpw, vph = uiw * Sx, uih * Sy
   -- Snap the letterbox origin to a framebuffer pixel, then convert to units.
-  local ox = math.floor((pw - uiw * Sp) / 2) / dpiX
-  local oy = math.floor((ph - uih * Sp) / 2) / dpiY
+  local pixelX, pixelY = PixelFit.origin(pw, ph, uiw, uih, Sp)
+  local ox, oy = pixelX / dpiX, pixelY / dpiY
   -- The UI has its own scale: it steps down as the survey zoom goes out (see
   -- uiScale), so it can be smaller than the world letterbox.  Un-zoomed these
   -- are identical to Sp/ox/oy and every rect below is what it always was.
@@ -856,8 +857,8 @@ function Renderer:endFrame(zones, worldZones)
   end
   local Ux, Uy = Up / dpiX, Up / dpiY
   local uvpw, uvph = uiw * Ux, uih * Uy
-  local uox = math.floor((pw - uiw * Up) / 2) / dpiX
-  local uoy = math.floor((ph - uih * Up) / 2) / dpiY
+  local uiPixelX, uiPixelY = PixelFit.origin(pw, ph, uiw, uih, Up)
+  local uox, uoy = uiPixelX / dpiX, uiPixelY / dpiY
   self.uiPresentation = {x=uox,y=uoy,w=uvpw,h=uvph,scaleX=Ux,scaleY=Uy}
   local GBCFX = gbcFX()
   -- Forced mono/Classic modes still need a whole-screen zone when a state
