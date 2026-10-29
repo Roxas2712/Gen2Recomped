@@ -745,7 +745,6 @@ function NPC:setSpriteDef(spriteDef, force)
   -- the actual renderer describing different pictures.
   local sprite = SpriteRenderer.new(spriteDef, self.id)
   self.spriteDef, self.sprite = spriteDef, sprite
-  self.big = sprite.big or (self.def and self.def.big) or false
   return true
 end
 

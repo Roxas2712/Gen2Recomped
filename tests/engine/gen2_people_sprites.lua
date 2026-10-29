@@ -48,10 +48,11 @@ for _,version in ipairs{'gold','silver','crystal'}do
  T.eq(actor.cellX,7,'current cell retained');T.eq(actor.px,115,'fractional walk pixels retained');T.eq(actor.progress,.25,'walk progress retained');T.eq(actor.moving,true,'active movement retained');T.eq(actor.frozen,true,'script freeze retained')
  T.eq(world.scriptMoves,moves,'actual script queue retained');T.eq(world.talkNpc,actor,'talk owner remains native actor')
  T.eq(world.entities[1],world.player,'native player stays first');T.eq(world.entities[2],actor,'actual NPC draws in native entity list');T.eq(world.entities[3],guest,'follower draws once');T.eq(world.entities[4],extra,'non-map entity retained');T.eq(#world.entities,4,'no duplicated actor');T.eq(neighbors,1,'explicit refresh rebuilds resident ghost presentation once')
+ actor.big=true -- native object footprint is independent of repainting
  local replacement={id='NEW',image='replacement.png',frames=6,walker=true}
  T.eq(actor:setSpriteDef(replacement),true,'source-style setter reaches actual native actor')
  T.eq(actor.sprite.def,replacement,'new definition reaches real renderer construction');T.eq(actor.spriteDef,replacement,'public renderer definition agrees')
- T.eq(actor.cellX,7,'appearance change never relocates actor');T.eq(actor.moving,true,'appearance change never cancels movement');T.eq(actor.frozen,true,'appearance change never unfreezes script')
+ T.eq(actor.big,true,'appearance change retains native object footprint');T.eq(actor.cellX,7,'appearance change never relocates actor');T.eq(actor.moving,true,'appearance change never cancels movement');T.eq(actor.frozen,true,'appearance change never unfreezes script')
  local before=made;T.eq(actor:setSpriteDef(replacement),false,'same definition is ordinary source no-op');T.eq(made,before,'no redundant renderer for same definition')
  local held=actor.sprite
  T.eq(pcall(actor.setSpriteDef,actor,{image='bad',fail=true}),false,'native asset failure remains visible')
