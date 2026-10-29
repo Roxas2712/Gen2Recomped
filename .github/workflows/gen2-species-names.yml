@@ -18,3 +18,5 @@ jobs:
           luajit tests/engine/gen2_species_gameplay.lua
           luajit tests/engine/gen2_appearance_identity.lua
           luajit tests/engine/gen2_appearance_transactions.lua
+      - name: Native and source nest searches share actual regional owners
+        run: luajit tests/engine/gen2_nests.lua

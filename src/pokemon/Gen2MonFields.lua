@@ -35,6 +35,8 @@ local function getter(kind, object, key, previous, data)
   elseif key=='maxHp' then
     local stats=rawget(object,'stats')
     return type(stats)=='table' and stats.hp or nil
+  elseif key=='experience' then
+    return rawget(object,'exp')
   elseif key=='name' or key=='types' then
     local def=data and data.pokemon and data.pokemon[object.species]
     if def then return key=='name' and (def.name or object.species) or def.types end
@@ -65,6 +67,8 @@ local function metatableFor(kind, previous, data)
       return write(oldWrite,object,statNames[key],value)
     elseif kind=='mon' and key=='maxHp' and type(rawget(object,'stats'))=='table' then
       object.stats.hp=value;return
+    elseif kind=='mon' and key=='experience' then
+      return write(oldWrite,object,'exp',value)
     end
     return write(oldWrite,object,key,value)
   end
@@ -118,6 +122,21 @@ function Fields.stats(stats)
   return stats
 end
 
+-- A source writeStats call may supply a literal split-stat table. Adopt the
+-- two names into native storage on that same table; protected custom owners
+-- remain opaque, as at the ordinary field-view boundary.
+function Fields.adoptStats(stats)
+  if not attach(stats,'stats')then return stats end
+  for source,native in pairs(statNames)do
+    local value=rawget(stats,source)
+    if value~=nil then rawset(stats,native,value);rawset(stats,source,nil)end
+  end
+  if rawget(stats,'special')==nil and rawget(stats,'spatk')~=nil then
+    rawset(stats,'special',rawget(stats,'spatk'))
+  end
+  return stats
+end
+
 function Fields.bind(data, mon)
   if type(mon)~='table' then return mon,false end
   local attached=attach(mon,'mon',data)
@@ -136,21 +155,7 @@ function Fields.bindSave(data, save)
       Fields.bind(data,value)
     end
   end
-  for _,value in pairs(save.party or {})do mon(value)end
-  for _,box in pairs(save.boxes or {})do
-    if type(box)=='table' then for _,value in pairs(box.mons or box)do mon(value)end end
-  end
-  local daycare=save.daycare
-  if type(daycare)=='table' then
-    mon(daycare.mon)
-    local breed=daycare.breed
-    if type(breed)=='table' then
-      for _,index in ipairs{1,2}do
-        local entry=breed[index];if type(entry)=='table' then mon(entry.mon)end
-      end
-      mon(breed.egg)
-    end
-  end
+  require('src.pokemon.SavePokemon').each(save,mon)
   return save
 end
 

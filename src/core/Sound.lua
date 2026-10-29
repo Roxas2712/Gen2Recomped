@@ -21,6 +21,7 @@ local effectCapture
 local warmed, pending = {}, {}
 local warmBytes, warmAudio, warmCursor, warmKind = 0, nil, nil, "sfx"
 local WARM_LIMIT = 16 * 1024 * 1024
+local priorityQueue, priorityKeys, pendingKeys = {}, {}, {}
 local ChipAudio
 local function chipAudio()
   if not ChipAudio then
@@ -99,6 +100,7 @@ local function resetWarm()
     forgetWarm(key, true)
   end
   pending = {}
+  priorityQueue, priorityKeys, pendingKeys = {}, {}, {}
   warmAudio, warmCursor, warmKind = nil, nil, "sfx"
   if ChipAudio then
     ChipAudio.cancelEffects()
@@ -913,6 +915,94 @@ local function resolveCry(data, def, depth)
   }
 end
 
+-- Gen1Recomp #2872's demand hints, scheduled through the existing P6 worker.
+-- Hints resolve current definitions at dispatch; they never synthesize or play.
+local function hint(data, key, kind, name, pitch, tempo)
+  if Performance.audioPriorityPrewarm==false or Performance.audioWorkerOptimization==false
+    or sessionSuspended or not(data and data.audio)then return false end
+  if warmAudio~=data.audio then resetWarm();warmAudio=data.audio end
+  if cache[key]~=nil or priorityKeys[key]or pendingKeys[key]or #priorityQueue>=64 then return false end
+  local job={key=key,kind=kind,name=name,pitch=pitch,tempo=tempo}
+  priorityKeys[key]=true;priorityQueue[#priorityQueue+1]=job
+  return true
+end
+function Sound.prewarmSfx(data,name)
+  return type(name)=='string'and hint(data,name,'sfx',name)or false
+end
+function Sound.prewarmCry(data,species)
+  return species~=nil and hint(data,'cry:'..tostring(species),'cry',species)or false
+end
+function Sound.prewarmMove(data,anim)
+  if not(anim and anim.sound and data and data.audio)then return false end
+  local sfx=data.audio.sfx or {};local name=anim.sound
+  local pitch,tempo=anim.pitch or 0,anim.tempo or 0x80
+  if isChipDef(sfx[name])then
+    return hint(data,('%s@%02x%02x'):format(name,pitch,tempo),'sfx',name,pitch,tempo)
+  end
+  return false
+end
+function Sound.prewarmParty(data,party)
+  for _,mon in ipairs(party or {})do
+    if type(mon)=='table'and mon.species then Sound.prewarmCry(data,mon.species)end
+  end
+end
+function Sound.prewarmCommon(data,party)
+  for _,name in ipairs({'Press_AB','Cursor','Denied','Go_Inside','Exit_Building',
+    'Withdraw_Deposit','Ball_Toss','Ball_Poof','Faint_Fall','Faint_Thud','Run','Caught_Mon'})do
+    Sound.prewarmSfx(data,name)
+  end
+  Sound.prewarmParty(data,party)
+end
+function Sound.prewarmAnimation(data,move)
+  local anims=data and data.battle_anims
+  if not(anims and anims.scripts and(data.audio or {}).sfx)then return end
+  local key=anims.moves and anims.moves[move]or anims.moveAnims and anims.moveAnims[move]
+    or anims.ids and anims.ids[move]or anims.misc and anims.misc[move]
+  local script=key and anims.scripts[key]
+  local visited,budget={},1024
+  local function visit(value)
+    if type(value)~='table'or getmetatable(value)~=nil or visited[value]or budget<=0 then return end
+    visited[value]=true
+    for _,inst in ipairs(value.code or value)do
+      budget=budget-1;if budget<0 then break end
+      local op=type(inst)=='table'and(inst.op or inst[1])
+      if op=='sound'then
+        local id=inst.args and inst.args[3]or inst[4]
+        local audio=data.audio
+        local name=audio.sfxIndex and(audio.sfxIndex[tostring(id)]or audio.sfxIndex[id])
+          or type(id)=='number'and audio.sfxOrder and audio.sfxOrder[id+1]
+        if name then Sound.prewarmSfx(data,name)end
+      elseif op=='call'or op=='jump'then
+        visit(anims.scripts[inst.target or inst.to or inst[2]])
+      end
+    end
+  end
+  visit(script)
+end
+function Sound.prewarmBattle(battle)
+  local data=battle.data
+  if Performance.audioPriorityPrewarm==false or not(data and data.audio)then return end
+  for _,b in ipairs({battle.player or false,battle.enemy or false})do
+    local mon=b and b.mon
+    if mon then
+      Sound.prewarmCry(data,mon.species)
+      for _,move in ipairs(mon.moves or {})do
+        local id=type(move)=='table'and move.id or move
+        local def=data.moves and data.moves[id]
+        if def then Sound.prewarmMove(data,def.anim)end
+        Sound.prewarmAnimation(data,id)
+      end
+    end
+  end
+  Sound.prewarmParty(data,battle.enemyParty)
+  Sound.prewarmParty(data,battle:playerPartyView())
+  Sound.prewarmAnimation(data,'sendOutMon')
+  for _,name in ipairs({'Ball_Toss','Ball_Poof','Faint_Fall','Faint_Thud','Run','Caught_Mon',
+    'Super_Effective','Not_Very_Effective','Damage'})do
+    Sound.prewarmSfx(data,name)
+  end
+end
+
 -- Poll and schedule one bounded job per frame. No prewarm operation plays a
 -- Source, ducks music, or emits sound.played. A changed def/mix is rechecked
 -- on first use, including in-place edits and derived cry chains.
@@ -940,6 +1030,7 @@ function Sound.update(data)
   while row do
     local job = pending[row.id]
     pending[row.id] = nil
+    if job then pendingKeys[job.key]=nil end
     if job and row.sd and cache[job.key] == nil and warmBytes + row.sd:getSize() <= WARM_LIMIT then
       local ok, source = pcall(love.audio.newSource, row.sd, "static")
       if ok and source then
@@ -955,9 +1046,34 @@ function Sound.update(data)
   for _ in pairs(pending) do
     count = count + 1
   end
-  if count >= 2 or warmBytes >= WARM_LIMIT or warmKind == "done" then
+  if Performance.audioPriorityPrewarm==false then priorityQueue,priorityKeys={},{}end
+  if count >= 2 then
     return
   end
+  -- Leave room for imminent effects; background registry scans cannot fill it.
+  if #priorityQueue>0 then
+    for _=1,8 do
+      local job=table.remove(priorityQueue,1)
+      if not job then break end
+      priorityKeys[job.key]=nil
+      local defs=audio[job.kind=='cry'and'cries'or'sfx']or {}
+      local def=defs[job.name]
+      if job.kind=='cry'then def=resolveCry(data,def,0)end
+      if cache[job.key]==nil and type(def)=='table'and(job.kind=='cry'or isChipDef(def))then
+        local spec=chip.effectSpec(data,job.kind,def,job.pitch,job.tempo)
+        local plain,frozen=pcall(copy,spec)
+        if spec and plain and warmBytes<WARM_LIMIT then
+          local id=chip.requestEffect(frozen)
+          if id then
+            pending[id]={key=job.key,spec=frozen};pendingKeys[job.key]=true
+            return
+          end
+        end
+      end
+    end
+  end
+  local backgroundLimit=Performance.audioPriorityPrewarm~=false and WARM_LIMIT-4*1024*1024 or WARM_LIMIT
+  if warmBytes>=backgroundLimit or warmKind=='done'then return end
   -- Skip a handful of unsupported/file/already-cached definitions without
   -- walking an unbounded registry during a frame.
   for _ = 1, 8 do
@@ -980,7 +1096,7 @@ function Sound.update(data)
       local key = kind == "cry" and "cry:" .. tostring(name) or tostring(name)
       local resolved = kind == "cry" and resolveCry(data, def, 0) or def
       if
-        cache[key] == nil
+        cache[key] == nil and not pendingKeys[key] and not priorityKeys[key]
         and type(resolved) == "table"
         and (kind == "cry" or isChipDef(resolved) or resolved.m4a)
       then
@@ -991,6 +1107,7 @@ function Sound.update(data)
             local id = chip.requestEffect(frozen)
             if id then
               pending[id] = { key = key, spec = frozen }
+              pendingKeys[key]=true
             else
               -- No worker/capability: playback retains its logged cold path.
               warmKind = "done"

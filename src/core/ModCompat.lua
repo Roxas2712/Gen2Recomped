@@ -78,6 +78,8 @@ ModCompat.ALIASES = {
   ["src.core.gen2.Save"] = "src.core.SaveData",
   ["src.core.gen2.HallOfFame"] = "src.compat.gen2.HallOfFame",
   ["src.core.gen2.Phone"] = "src.compat.gen2.Phone",
+  -- Source landmark records use screen coordinates, native ones OAM bytes.
+  ["src.core.gen2.Nests"] = "src.compat.gen2.Nests",
   ["src.core.gen2.Evolution"] = "src.compat.gen2.Evolution",
   ["src.battle.gen2.Encounter"] = "src.compat.gen2.Encounter",
 
@@ -91,6 +93,7 @@ ModCompat.ALIASES = {
   ["src.battle.gen2.Mon"] = "src.compat.gen2.Mon",
   ["src.ui.gen2.BattleState"] = "src.battle.BattleState",
   ["src.ui.gen2.Chrome"] = "src.ui.Gen2Chrome",
+  ["src.ui.gen2.ForgetMoveList"] = "src.ui.Gen2ForgetMoveList",
 
   -- menus.  The Gold port names two of these differently rather than
   -- namespacing them, so both spellings land on the one implementation.
