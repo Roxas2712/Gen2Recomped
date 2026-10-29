@@ -112,9 +112,14 @@ function love.load()
   local before=M.status().queued
   P.buildWorkers=false
   check(not Assets.prefetchImage(path)and M.status().queued==before,'unavailable pool retains synchronous fallback')
-  W.shutdown();for _,t in ipairs(threads)do t:wait();assert(not t:getError())end
+  -- Exercise the shipping quit owner, not a test-only direct pool shutdown.
+  require('src.core.SessionLifecycle').endProcess()
+  check(W.running()==0 and W.pending()==0,'native process exit retires the actual pool')
+  check(M.status().bytes==0,'native process exit releases prefetched CPU pixels')
+  for _,t in ipairs(threads)do t:wait();assert(not t:getError())end
   print('GB_PREFETCH_RESULT '..require('src.link.Json').encode({passed=true,checks=checks,
     actualThreads=true,lowWorkers=1,atlasPixelsEqual=true,paletteMutation=true,
-    overrides=true,privateEditionPaths=true,customReaders=true,renderer=love.graphics.getRendererInfo()}))
+    overrides=true,privateEditionPaths=true,customReaders=true,processExit=true,
+    renderer=love.graphics.getRendererInfo()}))
   love.event.quit(0)
 end

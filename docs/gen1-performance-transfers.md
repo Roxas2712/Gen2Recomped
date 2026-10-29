@@ -35,6 +35,10 @@ the original synchronous paths. Normal asset invalidation/session retirement
 cancels pending work and releases ready pixels. File edits follow the existing
 asset invalidation contract.
 
+The accepted native process-exit owner also shuts down the shared BuildWorker
+pool. Mounted-game retirement only cancels its owned hints, so another
+cartridge can continue using the pool in the same process.
+
 ## Audio priorities
 
 The existing P6 chip worker first handles bounded hints for common effects,
