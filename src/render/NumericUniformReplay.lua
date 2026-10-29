@@ -16,9 +16,12 @@ local function numeric(value,depth)
 end
 function N.numericBank(bank)
  for _,row in ipairs(bank)do
+  if row.numeric==false then return false end
+  if row.numeric~=true then
   for i=1,row.n do
    local v=row[i]
    if not(i==1 and type(v)=='string'and(v=='row'or v=='column'))and not numeric(v,0)then return false end
+  end
   end
  end
  return true

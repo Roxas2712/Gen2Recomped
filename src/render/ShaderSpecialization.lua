@@ -65,6 +65,7 @@ local function snapshot(value,budget,depth)
  if kind=='number'or kind=='boolean'then return value end
  if kind=='string'and(value=='row'or value=='column')then return value end
  if kind=='userdata'and value.typeOf and value:typeOf('Texture')then
+  budget.numeric=false
   return{resource=setmetatable({value},{__mode='v'})}
  end
  if kind~='table'or depth>=4 or getmetatable(value)~=nil then error('unsupported uniform value')end
@@ -89,8 +90,9 @@ local function remember(record,method,args)
  if record.disabled then return end
  local name=args[1]
  if type(name)~='string'or not name:match('^[%a_][%w_]*$')or args.n<2 or args.n>limits.arguments+2 then disable(record);return end
- local budget={n=0};local row={method=method,n=args.n-1}
+ local budget={n=0,numeric=true};local row={method=method,n=args.n-1}
  for i=2,args.n do row[i-1]=snapshot(args[i],budget,0)end
+ row.numeric=budget.numeric
  if budget.n>limits.leaves then error('uniform snapshot cap')end
  local first=type(args[2])=='string'and 3 or 2
  row.coverage=args.n-first+1;row.leaves=budget.n
@@ -130,7 +132,7 @@ local function remember(record,method,args)
   if deferred and variant.shader~=current then
    Numeric.queue(variant,name);stats.deferredNumericUpdates=stats.deferredNumericUpdates+1
   else
-   Numeric.clear(variant,name)
+   if variant.numericPending then Numeric.clear(variant,name)end
    if record.hook.hasUniform(variant.shader,name)then record.hook[method](variant.shader,name,unpack(args,2,args.n))end
   end
  end end
