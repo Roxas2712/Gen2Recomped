@@ -507,7 +507,8 @@ end
 local function fillLine(text, name, qty)
   return (tostring(text or "")
     :gsub("{STR_VAR1}", "{VAR1}"):gsub("{STR_VAR2}", "{VAR2}")
-    :gsub("{VAR2}", tostring(qty or 1)):gsub("{VAR1}", name))
+    :gsub("{VAR2}", function() return tostring(qty or 1) end)
+    :gsub("{VAR1}", function() return name end))
 end
 
 -- IS THIS ONE OF THE ITEMS THE PC REFUSES?
