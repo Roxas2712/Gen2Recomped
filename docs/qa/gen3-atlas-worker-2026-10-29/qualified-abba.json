@@ -1,0 +1,655 @@
+{
+  "results": [
+    {
+      "label": "off-a",
+      "worker": 0,
+      "atlasMainThreadMs": 86.33191666643114,
+      "atlasSections": {
+        "  atlas: prefetch": {
+          "avgMsPerFrame": 1.6683149666676316e-05,
+          "maxMsPerFrame": 0.05149999999787269,
+          "observedFrames": 5
+        },
+        "  atlas: step": {
+          "avgMsPerFrame": 0.009763209946310926,
+          "maxMsPerFrame": 7.271458333327985,
+          "observedFrames": 25
+        },
+        "  atlas: pool delivery": {
+          "avgMsPerFrame": 0.0024173259865924944,
+          "maxMsPerFrame": 0.28754166666544734,
+          "observedFrames": 7078
+        }
+      },
+      "frame": {
+        "avgMs": 8.477010867005747,
+        "maxMs": 156.07874999999893
+      },
+      "walks": [
+        {
+          "steps": 33,
+          "actual": "MAP_G00_N10",
+          "landing": {
+            "x": 11,
+            "y": 20
+          },
+          "windowFrames": 2,
+          "fromSeconds": 8.861104041666668,
+          "toSeconds": 9.025720958333334,
+          "maxFrameMs": 156.07874999999893,
+          "source": "MAP_G00_N16",
+          "target": "MAP_G00_N10",
+          "pathCells": 33,
+          "crossed": true,
+          "preflightWaitFrames": 0
+        },
+        {
+          "steps": 20,
+          "actual": "MAP_G00_N18",
+          "landing": {
+            "x": 10,
+            "y": 22
+          },
+          "windowFrames": 2,
+          "fromSeconds": 14.596185333333334,
+          "toSeconds": 14.71493804166667,
+          "maxFrameMs": 109.89208333333522,
+          "source": "MAP_G00_N10",
+          "target": "MAP_G00_N18",
+          "pathCells": 20,
+          "crossed": true,
+          "preflightWaitFrames": 0
+        }
+      ],
+      "workerBefore": {
+        "failed": 0,
+        "cancelled": 0,
+        "published": 0,
+        "submitted": 0
+      },
+      "workerAfter": {
+        "failed": 0,
+        "cancelled": 0,
+        "published": 0,
+        "submitted": 0
+      },
+      "cacheAfter": {
+        "native": 2,
+        "worker": 0
+      },
+      "nativeFocus": false,
+      "report_sha256": "52cb16bd664e2be62d9aa20b1a89ed6c31ebec515a5d80161da689acd93b7312",
+      "source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+      "reference_main": "dc691d6269e85cb7957d106f4de5e3e52fc04ff0",
+      "source_stable": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "pixels": [
+        2048,
+        1536
+      ],
+      "gpu": {
+        "device": "Apple M2",
+        "vendor": "",
+        "renderer": "Metal",
+        "api": "2.1"
+      },
+      "runtime": [
+        12,
+        0,
+        0
+      ],
+      "loaded_mods": [],
+      "focus_stable": true,
+      "focus_trace": [
+        {
+          "focused": false,
+          "seconds": 0,
+          "tier": "high"
+        }
+      ],
+      "pacing": {
+        "backgroundPacing": false,
+        "vsync": 0,
+        "fpsCap": 160
+      },
+      "native_window": {
+        "method": "SDL3 non-focusable native show/hide",
+        "queryOverridden": false
+      },
+      "seconds": 60.00028291666667,
+      "frames": 7078,
+      "export_tree": "7b3d74815a8fa07a9d65c40d9421750b9a716b24",
+      "export_omitted": [
+        ".github",
+        "Gen2Recomped.exe",
+        "docs",
+        "mobile",
+        "mods",
+        "ports"
+      ],
+      "host_syntax_checked": true,
+      "instrumented_files": {
+        "src/render/TileRenderer.lua": {
+          "originalSha256": "1f1ac1f24685ccc357360626d23737ef10aff03d231abea69dc81c41a4e24fb1",
+          "hostSha256": "3a93d45e9ef14136dac424b670dcb6754f91e325efea9c41688844ffcb890060"
+        },
+        "src/render/Gen4Ground.lua": {
+          "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+          "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+        },
+        "src/core/Music.lua": {
+          "originalSha256": "476d9b2aa0cdf298b8012b156de7794dfe5e312abd51202bbd4faf0726cfcdc4",
+          "hostSha256": "c745a9aaaf67f0757d5070b4d3fd6e124e0ec47dbcaffff773d89185dcd5f132"
+        },
+        "src/compat/gen1/AtlasRuntime.lua": {
+          "originalSha256": "54a1a9fb6e275ab1f7b141f280e8d4a9acaebd2e21d5bd1314883951b6a16359",
+          "hostSha256": "ba2310001df1322967356e4f045a78a50e3969dfdf5cbd6496163cbd81cb76e3"
+        },
+        "src/core/BuildWorker.lua": {
+          "originalSha256": "a1d102facbfa1ebcf541fac3b3ac45e82a64e5f41826d5090828d3d15492291e",
+          "hostSha256": "555cf575d25b86697d37e200af2fa9d3d3243d97aa3e758f554065d70b88965f"
+        }
+      },
+      "original_entrypoint_sha256": "5e4e9aaf05e7d5d02a4d1de87c24474dbb4958f191c00803e0b88d658367f507",
+      "host_entrypoint_sha256": "e1a85066db125819f58c87885a4889f419e19d1352858dfdb58d6b074a6a497b"
+    },
+    {
+      "label": "on-a",
+      "worker": 1,
+      "atlasMainThreadMs": 37.69312499929356,
+      "atlasSections": {
+        "  atlas: prefetch": {
+          "avgMsPerFrame": 0.00016933616820222214,
+          "maxMsPerFrame": 1.0628750000023501,
+          "observedFrames": 5
+        },
+        "  atlas: step": {
+          "avgMsPerFrame": 0.0002955232695489553,
+          "maxMsPerFrame": 1.5028333333333421,
+          "observedFrames": 3
+        },
+        "  atlas: pool delivery": {
+          "avgMsPerFrame": 0.004877893928555493,
+          "maxMsPerFrame": 11.414125000001718,
+          "observedFrames": 7055
+        }
+      },
+      "frame": {
+        "maxMs": 130.65262500000154,
+        "avgMs": 8.504852634065678
+      },
+      "walks": [
+        {
+          "actual": "MAP_G00_N10",
+          "source": "MAP_G00_N16",
+          "landing": {
+            "x": 11,
+            "y": 20
+          },
+          "windowFrames": 2,
+          "fromSeconds": 8.853504166666667,
+          "steps": 33,
+          "toSeconds": 8.99272470833333,
+          "maxFrameMs": 130.65262500000154,
+          "pathCells": 33,
+          "crossed": true,
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N10"
+        },
+        {
+          "actual": "MAP_G00_N18",
+          "source": "MAP_G00_N10",
+          "landing": {
+            "x": 10,
+            "y": 22
+          },
+          "windowFrames": 2,
+          "fromSeconds": 14.565714,
+          "steps": 20,
+          "toSeconds": 14.697879916666668,
+          "maxFrameMs": 125.12645833333025,
+          "pathCells": 20,
+          "crossed": true,
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N18"
+        }
+      ],
+      "workerBefore": {
+        "published": 0,
+        "failed": 0,
+        "submitted": 1,
+        "cancelled": 1
+      },
+      "workerAfter": {
+        "published": 1,
+        "failed": 0,
+        "submitted": 2,
+        "cancelled": 1
+      },
+      "cacheAfter": {
+        "native": 1,
+        "worker": 1
+      },
+      "nativeFocus": false,
+      "report_sha256": "aea79b55b969381c150271a83bc8f1cae956f8f958f55a14b914c1e714021cb0",
+      "source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+      "reference_main": "dc691d6269e85cb7957d106f4de5e3e52fc04ff0",
+      "source_stable": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "pixels": [
+        2048,
+        1536
+      ],
+      "gpu": {
+        "api": "2.1",
+        "vendor": "",
+        "renderer": "Metal",
+        "device": "Apple M2"
+      },
+      "runtime": [
+        12,
+        0,
+        0
+      ],
+      "loaded_mods": [],
+      "focus_stable": true,
+      "focus_trace": [
+        {
+          "tier": "high",
+          "seconds": 0,
+          "focused": false
+        }
+      ],
+      "pacing": {
+        "fpsCap": 160,
+        "backgroundPacing": false,
+        "vsync": 0
+      },
+      "native_window": {
+        "queryOverridden": false,
+        "method": "SDL3 non-focusable native show/hide"
+      },
+      "seconds": 60.00173533333334,
+      "frames": 7055,
+      "export_tree": "7b3d74815a8fa07a9d65c40d9421750b9a716b24",
+      "export_omitted": [
+        ".github",
+        "Gen2Recomped.exe",
+        "docs",
+        "mobile",
+        "mods",
+        "ports"
+      ],
+      "host_syntax_checked": true,
+      "instrumented_files": {
+        "src/render/TileRenderer.lua": {
+          "originalSha256": "1f1ac1f24685ccc357360626d23737ef10aff03d231abea69dc81c41a4e24fb1",
+          "hostSha256": "3a93d45e9ef14136dac424b670dcb6754f91e325efea9c41688844ffcb890060"
+        },
+        "src/render/Gen4Ground.lua": {
+          "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+          "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+        },
+        "src/core/Music.lua": {
+          "originalSha256": "476d9b2aa0cdf298b8012b156de7794dfe5e312abd51202bbd4faf0726cfcdc4",
+          "hostSha256": "c745a9aaaf67f0757d5070b4d3fd6e124e0ec47dbcaffff773d89185dcd5f132"
+        },
+        "src/compat/gen1/AtlasRuntime.lua": {
+          "originalSha256": "54a1a9fb6e275ab1f7b141f280e8d4a9acaebd2e21d5bd1314883951b6a16359",
+          "hostSha256": "ba2310001df1322967356e4f045a78a50e3969dfdf5cbd6496163cbd81cb76e3"
+        },
+        "src/core/BuildWorker.lua": {
+          "originalSha256": "a1d102facbfa1ebcf541fac3b3ac45e82a64e5f41826d5090828d3d15492291e",
+          "hostSha256": "555cf575d25b86697d37e200af2fa9d3d3243d97aa3e758f554065d70b88965f"
+        }
+      },
+      "original_entrypoint_sha256": "5e4e9aaf05e7d5d02a4d1de87c24474dbb4958f191c00803e0b88d658367f507",
+      "host_entrypoint_sha256": "e1a85066db125819f58c87885a4889f419e19d1352858dfdb58d6b074a6a497b"
+    },
+    {
+      "label": "on-b",
+      "worker": 1,
+      "atlasMainThreadMs": 28.274208333172623,
+      "atlasSections": {
+        "  atlas: prefetch": {
+          "avgMsPerFrame": 0.00018128541076509855,
+          "maxMsPerFrame": 1.181083333335664,
+          "observedFrames": 5
+        },
+        "  atlas: step": {
+          "avgMsPerFrame": 0.00029305358829118377,
+          "maxMsPerFrame": 1.328083333334007,
+          "observedFrames": 3
+        },
+        "  atlas: pool delivery": {
+          "avgMsPerFrame": 0.003530506373914344,
+          "maxMsPerFrame": 8.401041666669329,
+          "observedFrames": 7060
+        }
+      },
+      "frame": {
+        "maxMs": 123.4622500000011,
+        "avgMs": 8.49905521128423
+      },
+      "walks": [
+        {
+          "source": "MAP_G00_N16",
+          "pathCells": 33,
+          "maxFrameMs": 123.4622500000011,
+          "crossed": true,
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N10",
+          "windowFrames": 2,
+          "fromSeconds": 8.862218333333335,
+          "toSeconds": 8.99383075,
+          "actual": "MAP_G00_N10",
+          "landing": {
+            "x": 11,
+            "y": 20
+          },
+          "steps": 33
+        },
+        {
+          "source": "MAP_G00_N10",
+          "pathCells": 20,
+          "maxFrameMs": 120.79633333333462,
+          "crossed": true,
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N18",
+          "windowFrames": 2,
+          "fromSeconds": 14.566802083333336,
+          "toSeconds": 14.696797000000004,
+          "actual": "MAP_G00_N18",
+          "landing": {
+            "x": 10,
+            "y": 22
+          },
+          "steps": 20
+        }
+      ],
+      "workerBefore": {
+        "published": 0,
+        "submitted": 1,
+        "cancelled": 1,
+        "failed": 0
+      },
+      "workerAfter": {
+        "published": 1,
+        "submitted": 2,
+        "cancelled": 1,
+        "failed": 0
+      },
+      "cacheAfter": {
+        "native": 1,
+        "worker": 1
+      },
+      "nativeFocus": false,
+      "report_sha256": "4ae7a09bb007cb4985210b524e8986550434b08f951c83b8ef5588863639fa0b",
+      "source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+      "reference_main": "dc691d6269e85cb7957d106f4de5e3e52fc04ff0",
+      "source_stable": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "pixels": [
+        2048,
+        1536
+      ],
+      "gpu": {
+        "device": "Apple M2",
+        "vendor": "",
+        "renderer": "Metal",
+        "api": "2.1"
+      },
+      "runtime": [
+        12,
+        0,
+        0
+      ],
+      "loaded_mods": [],
+      "focus_stable": true,
+      "focus_trace": [
+        {
+          "tier": "high",
+          "seconds": 0,
+          "focused": false
+        }
+      ],
+      "pacing": {
+        "fpsCap": 160,
+        "vsync": 0,
+        "backgroundPacing": false
+      },
+      "native_window": {
+        "method": "SDL3 non-focusable native show/hide",
+        "queryOverridden": false
+      },
+      "seconds": 60.003329791666665,
+      "frames": 7060,
+      "export_tree": "7b3d74815a8fa07a9d65c40d9421750b9a716b24",
+      "export_omitted": [
+        ".github",
+        "Gen2Recomped.exe",
+        "docs",
+        "mobile",
+        "mods",
+        "ports"
+      ],
+      "host_syntax_checked": true,
+      "instrumented_files": {
+        "src/render/TileRenderer.lua": {
+          "originalSha256": "1f1ac1f24685ccc357360626d23737ef10aff03d231abea69dc81c41a4e24fb1",
+          "hostSha256": "3a93d45e9ef14136dac424b670dcb6754f91e325efea9c41688844ffcb890060"
+        },
+        "src/render/Gen4Ground.lua": {
+          "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+          "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+        },
+        "src/core/Music.lua": {
+          "originalSha256": "476d9b2aa0cdf298b8012b156de7794dfe5e312abd51202bbd4faf0726cfcdc4",
+          "hostSha256": "c745a9aaaf67f0757d5070b4d3fd6e124e0ec47dbcaffff773d89185dcd5f132"
+        },
+        "src/compat/gen1/AtlasRuntime.lua": {
+          "originalSha256": "54a1a9fb6e275ab1f7b141f280e8d4a9acaebd2e21d5bd1314883951b6a16359",
+          "hostSha256": "ba2310001df1322967356e4f045a78a50e3969dfdf5cbd6496163cbd81cb76e3"
+        },
+        "src/core/BuildWorker.lua": {
+          "originalSha256": "a1d102facbfa1ebcf541fac3b3ac45e82a64e5f41826d5090828d3d15492291e",
+          "hostSha256": "555cf575d25b86697d37e200af2fa9d3d3243d97aa3e758f554065d70b88965f"
+        }
+      },
+      "original_entrypoint_sha256": "5e4e9aaf05e7d5d02a4d1de87c24474dbb4958f191c00803e0b88d658367f507",
+      "host_entrypoint_sha256": "e1a85066db125819f58c87885a4889f419e19d1352858dfdb58d6b074a6a497b"
+    },
+    {
+      "label": "off-b",
+      "worker": 0,
+      "atlasMainThreadMs": 95.25612499922964,
+      "atlasSections": {
+        "  atlas: prefetch": {
+          "avgMsPerFrame": 1.8900221939493197e-05,
+          "maxMsPerFrame": 0.06404166666840183,
+          "observedFrames": 5
+        },
+        "  atlas: step": {
+          "avgMsPerFrame": 0.010415899324734286,
+          "maxMsPerFrame": 6.616208333333873,
+          "observedFrames": 26
+        },
+        "  atlas: pool delivery": {
+          "avgMsPerFrame": 0.0030594808045416406,
+          "maxMsPerFrame": 0.27829166666748506,
+          "observedFrames": 7059
+        }
+      },
+      "frame": {
+        "maxMs": 138.82316666666483,
+        "avgMs": 8.500198381498796
+      },
+      "walks": [
+        {
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N10",
+          "landing": {
+            "y": 20,
+            "x": 11
+          },
+          "actual": "MAP_G00_N10",
+          "source": "MAP_G00_N16",
+          "maxFrameMs": 134.64324999999988,
+          "windowFrames": 2,
+          "fromSeconds": 8.858826958333335,
+          "toSeconds": 9.001489291666665,
+          "steps": 33,
+          "pathCells": 33,
+          "crossed": true
+        },
+        {
+          "preflightWaitFrames": 0,
+          "target": "MAP_G00_N18",
+          "landing": {
+            "y": 22,
+            "x": 10
+          },
+          "actual": "MAP_G00_N18",
+          "source": "MAP_G00_N10",
+          "maxFrameMs": 138.82316666666483,
+          "windowFrames": 1,
+          "fromSeconds": 14.577449583333337,
+          "toSeconds": 14.716205041666672,
+          "steps": 20,
+          "pathCells": 20,
+          "crossed": true
+        }
+      ],
+      "workerBefore": {
+        "submitted": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "published": 0
+      },
+      "workerAfter": {
+        "submitted": 0,
+        "failed": 0,
+        "cancelled": 0,
+        "published": 0
+      },
+      "cacheAfter": {
+        "native": 2,
+        "worker": 0
+      },
+      "nativeFocus": false,
+      "report_sha256": "25e9234e0d5f51b4c19602ca847bc2f0baf89f740fdf574739caf897d179ba7e",
+      "source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+      "reference_main": "dc691d6269e85cb7957d106f4de5e3e52fc04ff0",
+      "source_stable": true,
+      "viewport": [
+        1024,
+        768
+      ],
+      "pixels": [
+        2048,
+        1536
+      ],
+      "gpu": {
+        "device": "Apple M2",
+        "vendor": "",
+        "renderer": "Metal",
+        "api": "2.1"
+      },
+      "runtime": [
+        12,
+        0,
+        0
+      ],
+      "loaded_mods": [],
+      "focus_stable": true,
+      "focus_trace": [
+        {
+          "focused": false,
+          "tier": "high",
+          "seconds": 0
+        }
+      ],
+      "pacing": {
+        "fpsCap": 160,
+        "backgroundPacing": false,
+        "vsync": 0
+      },
+      "native_window": {
+        "method": "SDL3 non-focusable native show/hide",
+        "queryOverridden": false
+      },
+      "seconds": 60.002900375,
+      "frames": 7059,
+      "export_tree": "7b3d74815a8fa07a9d65c40d9421750b9a716b24",
+      "export_omitted": [
+        ".github",
+        "Gen2Recomped.exe",
+        "docs",
+        "mobile",
+        "mods",
+        "ports"
+      ],
+      "host_syntax_checked": true,
+      "instrumented_files": {
+        "src/render/TileRenderer.lua": {
+          "originalSha256": "1f1ac1f24685ccc357360626d23737ef10aff03d231abea69dc81c41a4e24fb1",
+          "hostSha256": "3a93d45e9ef14136dac424b670dcb6754f91e325efea9c41688844ffcb890060"
+        },
+        "src/render/Gen4Ground.lua": {
+          "originalSha256": "9e51a7da0d1f96bc915828281b44a1cd197f86fb5a56ddce9c49613cf236f51f",
+          "hostSha256": "76ad5c9b4a2e4acd2c6f479e5b6941a4f679c8c0e8cb133c2f3bbd2528e0d864"
+        },
+        "src/core/Music.lua": {
+          "originalSha256": "476d9b2aa0cdf298b8012b156de7794dfe5e312abd51202bbd4faf0726cfcdc4",
+          "hostSha256": "c745a9aaaf67f0757d5070b4d3fd6e124e0ec47dbcaffff773d89185dcd5f132"
+        },
+        "src/compat/gen1/AtlasRuntime.lua": {
+          "originalSha256": "54a1a9fb6e275ab1f7b141f280e8d4a9acaebd2e21d5bd1314883951b6a16359",
+          "hostSha256": "ba2310001df1322967356e4f045a78a50e3969dfdf5cbd6496163cbd81cb76e3"
+        },
+        "src/core/BuildWorker.lua": {
+          "originalSha256": "a1d102facbfa1ebcf541fac3b3ac45e82a64e5f41826d5090828d3d15492291e",
+          "hostSha256": "555cf575d25b86697d37e200af2fa9d3d3243d97aa3e758f554065d70b88965f"
+        }
+      },
+      "original_entrypoint_sha256": "5e4e9aaf05e7d5d02a4d1de87c24474dbb4958f191c00803e0b88d658367f507",
+      "host_entrypoint_sha256": "e1a85066db125819f58c87885a4889f419e19d1352858dfdb58d6b074a6a497b"
+    }
+  ],
+  "complete": true,
+  "accepted": true,
+  "reasons": [],
+  "paired_ratios": [
+    {
+      "main": 0.4366070678696047,
+      "frame": 1.0032843849673825
+    },
+    {
+      "main": 0.29682299519743516,
+      "frame": 0.9998655125253247
+    }
+  ],
+  "seam_mean_ratios": [
+    0.8740820268160087,
+    0.9887724683816727
+  ],
+  "gate": {
+    "registered_source": "3b06b0bf80461fe3042f541b44fa7be2c1a5983d",
+    "design": "ABBA, 4 fresh identical native Emerald cases, 60 real seconds each",
+    "required_focus": false,
+    "main_thread_budget_max_ratio": 0.8,
+    "frame_mean_max_ratio_per_pair": 1.05,
+    "seam_mean_max_ratio": 1.1,
+    "claims": "Bounded atlas preparation main-thread time; no complete-game FPS or energy claim."
+  },
+  "scope": "Actual same-source native Emerald ABBA; matched real unfocused windows, HIGH/cap160/vsync0/background cap off; atlas main-thread prefetch+stream+pool delivery sections are non-overlapping. No general FPS claim."
+}
