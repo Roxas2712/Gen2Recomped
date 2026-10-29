@@ -84,10 +84,14 @@ function M.id(data,index)
  local row=M.record(data,index)
  return row and (row.landmarkId or row.id) or M.dataOrder(data)[index+1]
 end
-function M.region(data,index)
+function M.region(data,index,kanto,ship)
  if type(index)~='number' or index%1~=0 or index<=0 or index>255 then return nil end
- local ship=M.index(data,'LANDMARK_FAST_SHIP')
+ -- A search may resolve its two boundaries once, without a global cache
+ -- that would outlive a mod's imported-record replacement.
+ if kanto==nil then
+  kanto=M.kantoStart(data);ship=M.index(data,'LANDMARK_FAST_SHIP')
+ end
  if ship and index>=ship then return nil end
- return index<M.kantoStart(data) and 'johto' or 'kanto'
+ return index<kanto and 'johto' or 'kanto'
 end
 return M

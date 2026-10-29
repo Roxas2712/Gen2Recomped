@@ -12,12 +12,13 @@ function N.landmark(data,index)return Landmarks.record(data,index)end
 function N.find(data,species,region,save)
  if type(data)~='table' or species==nil then return{}end
  local wanted=Species.registryId(data.pokemon,species)
+ local kanto,ship=Landmarks.kantoStart(data),Landmarks.index(data,'LANDMARK_FAST_SHIP')
  local out,seen={},{}
  local function add(mapId,roaming)
   local id=Maps.runtimeId(data,mapId)
   local def=data.maps and data.maps[id]
   local index=def and tonumber(def.landmark)
-  local where=Landmarks.region(data,index)
+  local where=Landmarks.region(data,index,kanto,ship)
   if not where or seen[index] or region and where~=region or roaming and where~='johto' then return end
   seen[index]=true;out[#out+1]=index
  end
