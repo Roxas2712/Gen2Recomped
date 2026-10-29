@@ -4,7 +4,10 @@ local Sound=require('src.core.Sound');local Chip=require('src.core.ChipAudio')
 local P=require('src.core.Performance')
 local requests,replies,plays,builds={}, {},0,0
 local oldRequest,oldPoll,oldCancel=Chip.requestEffect,Chip.pollEffect,Chip.cancelEffects
-Chip.requestEffect=function(spec)requests[#requests+1]=spec;return #requests end
+local oldPrioritize=Chip.prioritizeEffects
+local promotions,priorityFlags={},{}
+Chip.prioritizeEffects=function(id)promotions[#promotions+1]=id or 'new'end
+Chip.requestEffect=function(spec,priority)requests[#requests+1]=spec;priorityFlags[#requests]=priority;return #requests end
 Chip.pollEffect=function()return table.remove(replies,1)end
 Chip.cancelEffects=function()replies={}end
 local oldAudio=love.audio
@@ -21,6 +24,7 @@ T.eq(Sound.prewarmCry(data,'LEAD'),true)
 T.eq(Sound.prewarmCry(data,'LEAD'),false,'duplicate hints share one job')
 Sound.update(data)
 T.eq(requests[1].header.address,21,'imminent cry precedes the entire SFX registry')
+T.eq(priorityFlags[1],true,'priority metadata reaches the worker transport')
 T.eq(plays,0);T.eq(builds,0,'queueing and dispatch create no Sources')
 T.eq(Sound.prewarmCry(data,'LEAD'),false,'in-flight hints cannot queue a duplicate')
 replies[1]={id=1,sd={getSize=function()return 128 end}}
@@ -59,6 +63,20 @@ local other={audio={sfx={},cries={OTHER={header={address=45},length=128}}}}
 Sound.prewarmCry(data,'LEAD');Sound.prewarmCry(other,'OTHER');requests={};Sound.update(other)
 T.eq(requests[1].header.address,45,'dataset switch retires previous hints')
 Sound.invalidate();requests={}
+promotions={}
+Sound.update(data)
+local name
+for key,def in pairs(data.audio.sfx)do if def.address==requests[1].header.address then name=key end end
+T.check(name~=nil,'registry submitted a native SFX')
+T.eq(Sound.prewarmSfx(data,name),false,'already pending work is promoted without duplicating it')
+T.eq(promotions[1],1,'the running registry request becomes urgent by its native job ID')
+T.eq(#requests,1,'promotion cannot enqueue a duplicate render')
+Sound.prewarmSfx(data,name);T.eq(#promotions,1,'repeated hints retain one in-flight promotion')
+replies[1]={id=1,cancelled=true};Sound.update(data)
+T.eq(requests[2].header.address,requests[1].header.address,
+  'a background request cancelled just before promotion retains its demand hint')
+T.eq(priorityFlags[2],true,'racing cancelled promotion is retried as urgent work')
+Sound.invalidate();requests={}
 data.audio.sfxIndex={['7']='HIT'}
 data.battle_anims={generation=2,moves={TACKLE='native'},scripts={native={code={
   {op='call',target='sub'},{op='sound',args={0,1,7}}}},sub={code={{op='jump',target='sub'}}}}}
@@ -66,5 +84,6 @@ Sound.prewarmAnimation(data,'TACKLE');Sound.update(data)
 T.eq(requests[1].header.address,99,'native GSC animation IDs use the imported SFX index')
 T.eq(plays,1,'animation scanning never executes its command VM')
 Sound.invalidate();Chip.requestEffect,Chip.pollEffect,Chip.cancelEffects=oldRequest,oldPoll,oldCancel
+Chip.prioritizeEffects=oldPrioritize
 love.audio=oldAudio
 T.finish('Prioritized native audio: ordering, keys, silence, bounds and retirement')
