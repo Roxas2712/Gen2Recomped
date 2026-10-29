@@ -65,6 +65,18 @@ The real PCM qualification exercises several invalidations before first startup
 and requires the initial priority cry and registry effect to arrive and match
 native synthesis.
 
+Chip synthesis checks an out-of-band generation/priority signal every 1024
+samples, so a discarded registry effect cannot hold the shared worker through
+its entire five-second rendering cap. New demand abandons older background
+work; a matching in-flight request is promoted by ID instead of duplicated.
+Urgent work remains protected, and completed/cancelled promotions are retired.
+If cancellation won the race just before promotion reached the worker, the
+current demand hint is retried as urgent work instead of being lost.
+The ordinary synchronous renderer has no cancellation callback and retains its
+PCM path. Native PCM tests check an interrupted long program, unchanged live
+PCM and an actual worker gated while a higher-priority cry arrives. M4A rendering
+keeps its current non-cooperative synthesis; queued stale jobs are still rejected.
+
 ## Ruby/Sapphire battle paint
 
 Healthbox colors and read-only row options are cached by the five relevant

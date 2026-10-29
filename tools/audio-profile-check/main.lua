@@ -27,9 +27,27 @@ local function qualifyEffects()
   local newThread = love.thread.newThread
   love.thread.newThread = function(path)
     assert(path == "src/core/chip_worker.lua", "unexpected worker")
-    local boot = ('local root=%q; package.path=root.."/?.lua;"..package.path; require("love.filesystem"); love.filesystem.load=function(path)return loadfile(root.."/"..path)end; assert(loadfile(root.."/src/core/chip_worker.lua"))()'):format(
-      root
-    )
+    local boot = ('local root=%q\n'):format(root)..[=[
+package.path=root..'/?.lua;'..package.path
+require('love.filesystem');require('love.thread');require('love.timer')
+love.filesystem.load=function(path)
+ local chunk=assert(loadfile(root..'/'..path))
+ if path=='src/core/ChipSynth.lua'then return function()
+  local synth=chunk();local render=synth.renderEffectData
+  synth.renderEffectData=function(data,header,options,cancelled)
+   if header._qaBarrier then
+    love.thread.getChannel('qa:fx:started'):push(true)
+    local gate=love.thread.getChannel('qa:fx:gate');local deadline=love.timer.getTime()+5
+    while not gate:pop()do assert(love.timer.getTime()<deadline,'QA effect gate timed out');love.timer.sleep(.001)end
+   end
+   return render(data,header,options,cancelled)
+  end
+  return synth
+ end end
+ return chunk
+end
+assert(loadfile(root..'/src/core/chip_worker.lua'))()
+]=]
     return newThread(love.filesystem.newFileData(boot, "audio_qa_worker.lua"))
   end
   local Synth = require("src.core.ChipSynth")
@@ -154,6 +172,32 @@ local function qualifyEffects()
   before=builds;Sound.playMove(data,move)
   assert(builds==before and variant.plays==1,'real native move did not consume its exact variant cache key')
   checks=checks+2
+  -- The synthesis loop must yield while still rendering, not only before
+  -- construction or after a completed buffer has occupied the worker.
+  local calls=0
+  local long=Asm.song({tempo=0x100,channels={{hw=1,program={
+    {duty=2},{notetype={speed=1,volume=12,fade=0}},{octave=4},{note='C',len=64}}}}})
+  assert(Synth.renderEffectData(data,long,{},function()calls=calls+1;return calls==3 end)==nil and calls==3,
+    'long chip synthesis did not cooperatively abandon cancelled work')
+  local ordinary=Synth.renderEffectData(data,beep,{})
+  assert(Synth.renderEffectData(data,beep,{},function()return false end):getString()==ordinary:getString(),
+    'cancellation checkpoints changed live PCM')
+  Sound.invalidate();beep._qaBarrier=true
+  local polled,abandoned=Chip.pollEffect,false
+  Chip.pollEffect=function()
+    local row=polled();if row and row.cancelled then abandoned=true end;return row
+  end
+  Sound.update(data)
+  local started=love.thread.getChannel('qa:fx:started');local deadline=love.timer.getTime()+5
+  while not started:pop()do assert(love.timer.getTime()<deadline,'background effect did not start');love.timer.sleep(.001)end
+  beep._qaBarrier=nil;before=builds
+  assert(Sound.prewarmCry(data,'MON'),'new cry must outrank running registry work')
+  love.thread.getChannel('qa:fx:gate'):push(true);wait(before+1)
+  local ready=builds;local urgent=assert(Sound.playCry(data,'MON',{noDuck=true}))
+  assert(abandoned and builds==ready,'priority cry was blocked by cancelled registry work')
+  assert(urgent.sd:getString()==expectedPriorityCry:getString(),'abandoned registry work changed the subsequent cry PCM')
+  Chip.pollEffect=polled
+  checks=checks+4
   Sound.invalidate()
   Chip.cancelEffects()
   wait(before + 2)

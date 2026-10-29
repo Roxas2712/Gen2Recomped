@@ -158,8 +158,16 @@ end
 -- ---------------------------------------------------------------------------
 
 local worker, cmdCh, outCh
-, fxCh
+, fxCh, fxControl
 local fxGeneration, fxSerial, fxPending = 1, 0, 0
+local fxPriority=0
+local fxPromoted={}
+local function publishFxControl()
+  if fxControl then
+    fxControl:clear()
+    fxControl:push({generation=fxGeneration,priority=fxPriority,promoted=fxPromoted})
+  end
+end
 local workerPerformance
 local workerReady -- nil = untried, true = running, false = unavailable
 
@@ -184,6 +192,8 @@ local function ensureWorker()
   cmdCh = love.thread.getChannel("chipaudio_cmd")
   outCh = love.thread.getChannel("chipaudio_out")
   fxCh = love.thread.getChannel("chipaudio_fx")
+  fxControl=love.thread.getChannel('chipaudio_fx_control')
+  publishFxControl()
   -- Invalidations may precede lazy startup. The fresh worker must learn the
   -- current generation before its first effect, or it silently drops that
   -- entire generation while the main state waits for replies that never come.
@@ -297,7 +307,12 @@ function ChipAudio.effectSpec(data, kind, def, pitch, tempo)
   end
   return request
 end
-function ChipAudio.requestEffect(spec)
+function ChipAudio.prioritizeEffects(id)
+  if id then fxPromoted[id]=true end
+  fxPriority=fxPriority+1
+  publishFxControl()
+end
+function ChipAudio.requestEffect(spec, priority)
   if Performance.audioWorkerOptimization == false or sessionSuspended or fxPending >= 2 or not ensureWorker() then
     return nil
   end
@@ -310,7 +325,8 @@ function ChipAudio.requestEffect(spec)
   local ok = pcall(
     cmdCh.push,
     cmdCh,
-    { cmd = "fx", generation = fxGeneration, id = id, spec = spec, audioWorkerOptimization = true }
+    { cmd = "fx", generation = fxGeneration, id = id, spec = spec,
+      priority=priority==true,priorityEpoch=fxPriority,audioWorkerOptimization = true }
   )
   if not ok then
     return nil
@@ -328,12 +344,15 @@ function ChipAudio.pollEffect()
   end
   if row then
     fxPending = math.max(0, fxPending - 1)
+    if fxPromoted[row.id]then fxPromoted[row.id]=nil;publishFxControl()end
   end
   return row
 end
 function ChipAudio.cancelEffects()
   fxGeneration = fxGeneration + 1
   fxPending = 0
+  fxPromoted={}
+  publishFxControl()
   if fxCh then
     fxCh:clear()
   end
@@ -755,7 +774,7 @@ function ChipAudio.shutdown()
   ChipAudio.stopMusic()
   if workerReady and cmdCh then cmdCh:push({ cmd = "quit" }) end
   if worker then pcall(function() worker:wait() end) end
-  worker, cmdCh, outCh , fxCh = nil, nil, nil, nil
+  worker, cmdCh, outCh , fxCh, fxControl = nil, nil, nil, nil, nil
   workerReady = false
 end
 
