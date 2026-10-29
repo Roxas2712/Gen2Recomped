@@ -1,0 +1,15 @@
+name: Plain dialogue compatibility
+on:
+  push:
+    paths: ['src/render/TextBox.lua', 'src/core/Gen2CommonText.lua', 'tests/engine/textbox_plain_view.lua', '.github/workflows/textbox-plain-view.yml']
+  pull_request:
+    paths: ['src/render/TextBox.lua', 'src/core/Gen2CommonText.lua', 'tests/engine/textbox_plain_view.lua', '.github/workflows/textbox-plain-view.yml']
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update -qq && sudo apt-get install -y luajit
+      - run: luajit tests/engine/textbox_plain_view.lua
