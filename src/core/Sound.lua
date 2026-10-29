@@ -921,9 +921,24 @@ local function hint(data, key, kind, name, pitch, tempo)
   if Performance.audioPriorityPrewarm==false or Performance.audioWorkerOptimization==false
     or sessionSuspended or not(data and data.audio)then return false end
   if warmAudio~=data.audio then resetWarm();warmAudio=data.audio end
-  if cache[key]~=nil or priorityKeys[key]or pendingKeys[key]or #priorityQueue>=64 then return false end
+  if cache[key]~=nil or priorityKeys[key]then return false end
+  local chip=ChipAudio or package.loaded['src.core.ChipAudio']
+  if pendingKeys[key]then
+    for id,job in pairs(pending)do
+      if job.key==key and not job.priority then
+        job.priority=true
+        job.hint={key=key,kind=kind,name=name,pitch=pitch,tempo=tempo}
+        if type(chip)=='table'and chip.prioritizeEffects then chip.prioritizeEffects(id)end
+      end
+    end
+    return false
+  end
+  if #priorityQueue>=64 then return false end
   local job={key=key,kind=kind,name=name,pitch=pitch,tempo=tempo}
   priorityKeys[key]=true;priorityQueue[#priorityQueue+1]=job
+  -- A registry render may already occupy the shared worker. Announce demand
+  -- outside its command FIFO so that obsolete background work can yield.
+  if type(chip)=='table'and chip.prioritizeEffects then chip.prioritizeEffects()end
   return true
 end
 function Sound.prewarmSfx(data,name)
@@ -1031,6 +1046,13 @@ function Sound.update(data)
     local job = pending[row.id]
     pending[row.id] = nil
     if job then pendingKeys[job.key]=nil end
+    -- The worker may have abandoned a background request just before the
+    -- main state promoted it. Preserve that demand rather than lose the hint.
+    if job and row.cancelled and job.priority and job.hint and cache[job.key]==nil
+      and not priorityKeys[job.key]and #priorityQueue<64 then
+      priorityKeys[job.key]=true;table.insert(priorityQueue,1,job.hint)
+      if chip.prioritizeEffects then chip.prioritizeEffects()end
+    end
     if job and row.sd and cache[job.key] == nil and warmBytes + row.sd:getSize() <= WARM_LIMIT then
       local ok, source = pcall(love.audio.newSource, row.sd, "static")
       if ok and source then
@@ -1063,9 +1085,9 @@ function Sound.update(data)
         local spec=chip.effectSpec(data,job.kind,def,job.pitch,job.tempo)
         local plain,frozen=pcall(copy,spec)
         if spec and plain and warmBytes<WARM_LIMIT then
-          local id=chip.requestEffect(frozen)
+          local id=chip.requestEffect(frozen,true)
           if id then
-            pending[id]={key=job.key,spec=frozen};pendingKeys[job.key]=true
+            pending[id]={key=job.key,spec=frozen,priority=true,hint=job};pendingKeys[job.key]=true
             return
           end
         end

@@ -71,9 +71,19 @@ local cmdCh = love.thread.getChannel("chipaudio_cmd")
 local outCh = love.thread.getChannel("chipaudio_out")
 
 local fxCh = love.thread.getChannel("chipaudio_fx")
+local fxControl=love.thread.getChannel('chipaudio_fx_control')
 local fxJobs, fxGeneration = {}, 1
 local function renderFx(job)
   local spec = job.spec
+  local function cancelled()
+    local current=fxControl:peek()
+    return current and(current.generation~=job.generation or
+      not job.priority and not(current.promoted and current.promoted[job.id])
+        and current.priority>(job.priorityEpoch or 0))or false
+  end
+  if cancelled()then
+    fxCh:push({generation=job.generation,id=job.id,cancelled=true});return
+  end
   local perf=require("src.core.Performance")
   local priorOptimization=perf.audioWorkerOptimization
   local volumes, pitches, stereo = ChipSynth.getChannelVolumes(), ChipSynth.getChannelPitches(), ChipSynth.getStereo()
@@ -84,7 +94,7 @@ local function renderFx(job)
   local ok, sd = pcall(function()
     local input = { audio = spec.audio }
     if spec.kind == "chip" then
-      return ChipSynth.renderEffectData(input, spec.header, spec.options)
+      return ChipSynth.renderEffectData(input, spec.header, spec.options,cancelled)
     elseif spec.kind == "m4a" then
       return synthFor("m4a").renderEffect(input, spec.header)
     elseif spec.kind == "cry" then
@@ -96,7 +106,10 @@ local function renderFx(job)
   ChipSynth.setChannelVolumes(volumes)
   ChipSynth.setChannelPitches(pitches)
   ChipSynth.setStereo(stereo)
-  fxCh:push({ generation = job.generation, id = job.id, sd = ok and sd or nil, error = not ok and tostring(sd) or nil })
+  local abandoned=cancelled()
+  if abandoned and ok and sd then sd:release();sd=nil end
+  fxCh:push({ generation = job.generation, id = job.id, sd = ok and sd or nil,
+    cancelled=abandoned,error = not ok and tostring(sd) or nil })
 end
 
 local BUF = ChipSynth.MUSIC_BUFFER_SAMPLES
