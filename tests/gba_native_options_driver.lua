@@ -19,7 +19,7 @@ return function(game)
   end
   local function shot(name)
     local top=game.stack:top();local native=top.rsNative
-    if native and version=='emerald'then
+    if native and version=='emerald'and getmetatable(top)==UI then
       local pages=native.scene._st.pages
       assert(pages and pages[1].title==native.load('src.core.game3.rom_text').plain('gText_Option'),
         'Original option title changed across a host callback')
@@ -27,7 +27,16 @@ return function(game)
     local before=Save.encode(game.save);local rng=love.math.getRandomState()
     assert(require('src.render.GraphicsScope').call(game.stack:top().draw,game.stack:top()))
     assert(before==Save.encode(game.save)and rng==love.math.getRandomState(),'Option draw changed save/RNG')
-    assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name;persist()
+    assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name
+    if native and version=='emerald'and getmetatable(top)==UI then
+      local image=native.canvas:newImageData();local ink=0
+      for y=9,24 do for x=24,95 do local r,g,b=image:getPixel(x,y)
+        if r>.4 and r>g+.1 and b<.5 then ink=ink+1 end
+      end end
+      image:release();report.titleInkPixels=report.titleInkPixels or{};report.titleInkPixels[name]=ink
+      persist();assert(ink>10,'Original Emerald option title lost its rendered pixels')
+    end
+    persist()
   end
   local options=game.save.options
   options.textSpeed=3;options.battleAnim=true;options.battleStyle='shift';options.stereo=false
