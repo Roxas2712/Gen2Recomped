@@ -18,6 +18,14 @@ local RsPlaceholders = require('src.core.Gen3RsTextPlaceholders')
 local TextBox = {}
 TextBox.__index = TextBox
 
+-- A plain view for message consumers, independent of the printer and font.
+-- Keep visible placeholders intact: resolving names still belongs to substitute.
+function TextBox.strip(text)
+  local body = text == nil and "" or tostring(text)
+  body = require("src.core.Gen2CommonText").plain(body)
+  return (body:gsub("%s+", " "):match("^%s*(.-)%s*$"))
+end
+
 -- theme-free fallbacks; geometry resolves against Theme.textBox at
 -- construction time, so an unthemed boot stays byte-identical
 local BOX_TX, BOX_TY, BOX_TW, BOX_TH = 0, 12, 20, 6

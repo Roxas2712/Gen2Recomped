@@ -114,7 +114,9 @@ jobs:
           retention-days: 14
   components:
     needs: qualify
-    runs-on: macos-15
+    # Packaging only: lipo combines the two already-qualified slices. Keep ARM
+    # execution in qualify; this step can use the less congested Intel pool.
+    runs-on: macos-15-intel
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
