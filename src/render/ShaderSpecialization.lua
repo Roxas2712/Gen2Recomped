@@ -6,7 +6,7 @@ local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
 local S={}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredVariantDraws=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -190,7 +190,9 @@ local function construct(record,key,constants,depth)
    end
   end
  end)
- compiling=false;stats.compileSeconds=stats.compileSeconds+love.timer.getTime()-started
+ local elapsed=love.timer.getTime()-started
+ compiling=false;stats.compileSeconds=stats.compileSeconds+elapsed
+ stats.lastCompileKey,stats.lastCompileSeconds=key,elapsed
  record.count=record.count+1
  if not ok then
   if shader then record.hook.release(shader)end
@@ -223,6 +225,10 @@ local function choose(record)
  local key=record.key..(record.depthAdapter and(depth and';@native-depth'or';@native-color')or'')
  local variant=record.variants[key]
  if variant==nil then
+  -- Existing programs stay usable. A consumer may close its loading window
+  -- without accepting a synchronous compiler stall on a newly observed key.
+  -- The original native program already holds every successful uniform write.
+  if (record.compilationPauses or 0)>0 then stats.deferredVariantDraws=stats.deferredVariantDraws+1;return end
   if record.retryKey==key and record.retryRevision==record.bankRevision then return end
   local ok,value=pcall(construct,record,key,record.constants,depth)
   if ok then variant=value else stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(value):sub(1,160)end
@@ -290,6 +296,19 @@ function S.install()
  end
  if raw.present then g.present=function(...)sweep();return raw.present(...)end end
  return true
+end
+-- A lease affects only this admitted source. Independent consumers can pause
+-- compilation without overwriting each other's policy or cached programs.
+function S.pauseCompilation(shader)
+ local record=originals[shader]
+ if not record or record.disabled or record.retired then return nil end
+ record.compilationPauses=(record.compilationPauses or 0)+1
+ local held=true
+ return function()
+  if not held then return false end
+  held=false;record.compilationPauses=record.compilationPauses-1
+  return true
+ end
 end
 function S.status()
  local out={installed=installed,sourceBytes=sourceBytes}
