@@ -2,6 +2,7 @@
 -- conversion, simulation, graphics allocation or independent clock lives here.
 local Tiles=require('src.render.Gen3Tiles')
 local PaletteCache=require('src.compat.gen1.AtlasPaletteCache')
+local PixelBuffers=require('src.compat.gen1.AtlasPixelBuffers')
 local M={COLS=16}
 local coreStates=setmetatable({}, {__mode='k'})
 local floor,concat=math.floor,table.concat
@@ -53,6 +54,7 @@ local function build(pair,layout,checkpoint,prepared)
   local self={decoder=decoder,mids={},midToSlot={},indexed={},under={},over={},paletteOverrides={},revision=0,checkpoint=checkpoint,
     background='\0\0\0\255',paletteUsers={},slotPalettes={},indexRevision=0}
   local usedTiles
+  local pixelBuffers
   if prepared then
     usedTiles=prepared.usedTiles
     for key,value in pairs(prepared.fields)do self[key]=value end
@@ -171,6 +173,11 @@ local function build(pair,layout,checkpoint,prepared)
     local changed=decoder:setAnimationTicks(ticks)
     decoder:setPaletteTicks(ticks)
     local lut,bgr,key,palettes=paletteLut()
+    local packed=self.packedProjection==true and self.checkpoint==nil and PixelBuffers.compatible(decoder,Tiles)
+    if packed then
+      pixelBuffers=pixelBuffers or PixelBuffers.new()
+      packed=pixelBuffers and pixelBuffers:palette(lut)
+    end
     local dirty,indexDirty={},{}
     if self.paletteKey==nil then for slot=0,#self.mids-1 do dirty[slot]=true;indexDirty[slot]=true end
     else
@@ -180,19 +187,28 @@ local function build(pair,layout,checkpoint,prepared)
     local underDirty,overDirty={},{}
     for slot in pairs(dirty)do
       local prior=self.indexed[slot];local u,o
-      if indexDirty[slot]then u,o=indexed(self.mids[slot+1])else u,o=prior[1],prior[2]end
+      if indexDirty[slot]then
+        if packed then u,o=pixelBuffers:indexed(decoder,self.mids[slot+1])end
+        if not u then packed=false;u,o=indexed(self.mids[slot+1])end
+      else u,o=prior[1],prior[2]end
       if not prior or prior[1]~=u or prior[2]~=o then
         self.indexed[slot]={u,o};self.indexRevision=self.indexRevision+1
         for palette in pairs(self.slotPalettes[slot]or{})do self.paletteUsers[palette][slot]=nil end
-        local used={}
-        for plane,indices in ipairs({u,o})do for i=1,256 do
+        local used=packed and pixelBuffers:used(u,o)
+        if not used then packed=false;used={}end
+        if not packed then for plane,indices in ipairs({u,o})do for i=1,256 do
           local index=indices:byte(i)
           if plane==1 or index~=0 then used[floor(index/16)]=true end
-        end end
+        end end end
         self.slotPalettes[slot]=used
         for palette in pairs(used)do self.paletteUsers[palette]=self.paletteUsers[palette]or{};self.paletteUsers[palette][slot]=true end
       end
-      local under,over=rgba(u,lut,false),rgba(o,lut,true)
+      local under,over
+      if packed then
+        under,over=pixelBuffers:rgba(u,false),pixelBuffers:rgba(o,true)
+        if under and over then self.packedProjectionCells=(self.packedProjectionCells or 0)+1 else packed=false end
+      end
+      if not packed then under,over=rgba(u,lut,false),rgba(o,lut,true)end
       if self.under[slot]~=under then self.under[slot]=under;underDirty[slot]=true end
       if self.over[slot]~=over then self.over[slot]=over;overDirty[slot]=true end
       if self.checkpoint and slot%16==15 then self.checkpoint('pixels')end
@@ -271,7 +287,7 @@ end
 local nativeNew,nativeFromCore=M.new,M.fromCore
 function M._workerCompatible()
   if getmetatable(M)~=nil or M.new~=nativeNew or M.fromCore~=nativeFromCore or M.COLS~=16 then return false end
-  for _,module in ipairs({Tiles,PaletteCache,require('src.render.Gen3PaletteCycles'),require('src.render.Gen3PaletteSamples')})do
+  for _,module in ipairs({Tiles,PaletteCache,PixelBuffers,require('src.render.Gen3PaletteCycles'),require('src.render.Gen3PaletteSamples')})do
     local guard=type(module)=='table' and rawget(module,'_workerCompatible')
     if type(guard)~='function' or not guard()then return false end
   end
