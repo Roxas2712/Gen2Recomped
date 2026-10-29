@@ -1692,6 +1692,13 @@ function TileRenderer.new(map, data)
     end
   end
 
+  -- The public image slot may be borrowed by another presentation. Keep the
+  -- native atlas and its ownership independent of that replaceable slot.
+  self.nativeAtlasImage = self.image
+  self.nativeAtlasTrueColor = self.trueColor
+  self.nativeGbcAtlas = self.gbcAtlas
+  self.nativeGbcAtlasKey = self.gbcAtlasKey
+
   -- the 8x8 atlas quads, which only a sheet-backed tileset has
   --
   -- `perRow` IS DECLARED HERE, not inside the `if`, because buildAnim below
@@ -2011,7 +2018,27 @@ local function getKeyedTile(self, tile)
   return img or nil
 end
 
+local function imageDimensions(image)
+  return image:getDimensions()
+end
+
+-- A presentation can dispose of its borrowed atlas when it hands the map
+-- back. The native renderer still owns a usable atlas in that case. Avoid
+-- touching live replacements, or probing the ordinary native draw path.
+function TileRenderer:restoreNativeAtlas()
+  local native = self.nativeAtlasImage
+  if not native or self.image == native or not self.image then return end
+  if pcall(imageDimensions, self.image) then return end
+  self.image = native
+  self.trueColor = self.nativeAtlasTrueColor
+  self.gbcAtlas = self.nativeGbcAtlas
+  self.gbcAtlasKey = self.nativeGbcAtlasKey
+  if self.winBatch then self.winBatch:setTexture(native) end
+  self.win = nil
+end
+
 function TileRenderer:drawCellBottomRaw(cx, cy, camX, camY)
+  self:restoreNativeAtlas()
   local ty = cy * 2 + 1
   for i = 0, 1 do
     local tx = cx * 2 + i
@@ -2044,6 +2071,7 @@ end
 -- grass patch that hides their feet must replay over them, colorized
 -- with the map's palette and color-0 keyed)
 function TileRenderer:markCellBottomRedraw(cx, cy, camX, camY, colors)
+  self:restoreNativeAtlas()
   local ty = cy * 2 + 1
   for i = 0, 1 do
     local tx = cx * 2 + i
@@ -2102,6 +2130,7 @@ function TileRenderer:setWin(tx0, ty0, tx1, ty1)
 end
 
 function TileRenderer:ensureWindow(camX, camY, vw, vh)
+  self:restoreNativeAtlas()
   local closeWindow = FrameProfile.section("    tiles: ensureWindow")
   self:syncGen3Palettes()
   local W, H = self.bodyTilesW, self.bodyTilesH
@@ -2567,14 +2596,18 @@ function TileRenderer:release()
     self.gbcKeyed = nil
     self.gbcCtx = nil
   end
-  if self.gbcAtlas and self.image then
-    local key = self.gbcAtlasKey or (self.map.tileset.image .. gbcKeyFor(self.map.id))
-    if gbcAtlasCache[key] == self.image then gbcAtlasCache[key] = nil end
-    self.gbcAtlasKey = nil
-    safeRelease(self.image)
-    self.image = nil
-    self.gbcAtlas = nil
+  if self.nativeGbcAtlas and self.nativeAtlasImage then
+    local image = self.nativeAtlasImage
+    local key = self.nativeGbcAtlasKey
+    if gbcAtlasCache[key] == image then gbcAtlasCache[key] = nil end
+    safeRelease(image)
+    if self.image == image then self.image = nil end
   end
+  self.nativeAtlasImage = nil
+  self.nativeGbcAtlas = nil
+  self.nativeGbcAtlasKey = nil
+  self.gbcAtlasKey = nil
+  self.gbcAtlas = nil
   self.anims = nil
 end
 
