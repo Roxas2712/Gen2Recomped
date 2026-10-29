@@ -27,10 +27,15 @@ The report contains per-frame intervals and observer fields, VM-state sample
 counts, self locations including source lines, inclusive functions, call
 stacks and the 30 slowest observed frames. Recursive functions count once
 per inclusive sample. Captures are bounded to 600 frames, 4,096 keys per
-category, 32 inclusive stack levels and 2,048 bytes per key. Overflow sample
+category, 16 stack levels and 2,048 bytes per key. Overflow sample
 counts remain visible. Observer and driver errors stop the sampler before
 propagating the original failure. The caller must own the profiler for the
-duration of the capture.
+duration of the capture. Sampling defaults to 5 ms function sampling, with
+source lines read from available stack metadata. `intervalMs` accepts 5–100 ms.
+Capture stops after 15 seconds by default (`seconds` accepts 1–30), preserving
+completed frames. A native profiler fault can prevent the callback returning;
+the external QA process must also have a hard timeout. Validate the native
+profiler independently before attaching it to a complete scene.
 
 No GPU fences, readbacks, collections, JIT configuration, rendering changes
 or disk writes are introduced by the recorder. Sampling and observers still
