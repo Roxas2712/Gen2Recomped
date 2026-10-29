@@ -4,7 +4,7 @@
 -- remains the fallback for unsupported source, values or resource lifetimes.
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
-local S={}
+local S={recycleSnapshots=true}
 local installed=false
 local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
@@ -51,22 +51,26 @@ local function sweep()
   if record.disabled or not liveAlias(record)then retire(record);table.remove(records,i)end
  end
 end
-local function snapshot(value,budget,depth)
+local function snapshot(value,budget,depth,previous)
  budget.n=budget.n+1
  if budget.n>limits.leaves then error('uniform snapshot cap')end
  local kind=type(value)
  if kind=='number'or kind=='boolean'then return value end
  if kind=='string'and(value=='row'or value=='column')then return value end
  if kind=='userdata'and value.typeOf and value:typeOf('Texture')then
+  if type(previous)=='table'and previous.resource then previous.resource[1]=value;return previous end
   return{resource=setmetatable({value},{__mode='v'})}
  end
  if kind~='table'or depth>=4 or getmetatable(value)~=nil then error('unsupported uniform value')end
- local out={};local size=0
+ local out=type(previous)=='table'and not previous.resource and previous or{};local size,count=0,0
  for key,item in next,value do
   if type(key)~='number'or key<1 or key%1~=0 or key>256 then error('unsupported uniform table')end
-  size=math.max(size,key);out[key]=snapshot(item,budget,depth+1)
+  size=math.max(size,key);count=count+1;out[key]=snapshot(item,budget,depth+1,out[key])
  end
- for i=1,size do if out[i]==nil then error('sparse uniform table')end end
+ -- Count the input, not the reused destination: old slots must never conceal
+ -- holes in a newly supplied vector. Drop every old tail/reference on shrink.
+ if count~=size then error('sparse uniform table')end
+ for i=#out,size+1,-1 do out[i]=nil end
  return out
 end
 local function restore(value)
@@ -82,8 +86,14 @@ local function remember(record,method,args)
  if record.disabled then return end
  local name=args[1]
  if type(name)~='string'or not name:match('^[%a_][%w_]*$')or args.n<2 or args.n>limits.arguments+2 then disable(record);return end
- local budget={n=0};local row={method=method,n=args.n-1}
- for i=2,args.n do row[i-1]=snapshot(args[i],budget,0)end
+ -- Only detached, overwritten rows are eligible. In particular, a longer
+ -- array prefix still needed for replay can never become scratch storage.
+ -- Lease before copying so nested sends cannot borrow the same destination.
+ local row=S.recycleSnapshots and record.snapshotSpare or nil;record.snapshotSpare=nil
+ row=row or{};local oldCount=row.n or 0;row.method=method;row.n=args.n-1
+ local budget={n=0}
+ for i=2,args.n do row[i-1]=snapshot(args[i],budget,0,row[i-1])end
+ for i=oldCount,row.n+1,-1 do row[i]=nil end
  if budget.n>limits.leaves then error('uniform snapshot cap')end
  local first=type(args[2])=='string'and 3 or 2
  row.coverage=args.n-first+1;row.leaves=budget.n
@@ -96,7 +106,12 @@ local function remember(record,method,args)
  -- the older longer prefixes needed to reconstruct the untouched tail. This
  -- also preserves per-send row/column matrix layout without reinterpretation.
  for i=#bank,1,-1 do
-  if bank[i].coverage<=row.coverage then record.leaves=record.leaves-bank[i].leaves;table.remove(bank,i)end
+  if bank[i].coverage<=row.coverage then
+   local removed=table.remove(bank,i);record.leaves=record.leaves-removed.leaves
+   -- One spare per source, bounded by the existing per-row snapshot cap.
+   -- No caller tables or strong texture references enter this spare.
+   if S.recycleSnapshots then record.snapshotSpare=removed end
+  end
  end
  record.leaves=record.leaves+row.leaves
  if record.leaves>limits.leaves then error('uniform bank cap')end
