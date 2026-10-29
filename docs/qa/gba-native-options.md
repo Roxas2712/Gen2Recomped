@@ -19,3 +19,10 @@ Native acceptance: `tests/gba_native_options_driver.lua` in isolated Emerald,
 FireRed and LeafGreen identities. Prepared fixtures exercise all six cartridge
 enums, each frame, engine step/activation callbacks, scrolling, CANCEL, reopening
 and the actual main-menu return. These fixtures are not complete story runs.
+
+Control hints also require the selected cartridge's 128×32 keypad sheet.
+The font's word fallback changes native control geometry and can collide with
+Hall PC captions. Extraction and readiness now require that sheet for E/FRLG;
+Emerald's private font context also receives its own FONT_SMALL masks and
+widths. The original reference files remain byte-exact. The native options
+fixture explicitly checks the icons and Emerald small face before capture.
