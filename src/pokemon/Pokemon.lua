@@ -5,9 +5,6 @@ local Stats = require("src.pokemon.Stats")
 local Gen2PP = require("src.pokemon.Gen2PP")
 
 local Pokemon = {}
--- Source constructor options are an explicit boundary. Native callers keep
--- their RNG signature, validated/copied genes and existing birth policies.
-local sourceGen2Birth = {}
 
 -- Starting moves: level-1 moves plus learnset entries at or below the level,
 -- keeping the most recent four (engine/pokemon/learn_move.asm behavior).
@@ -180,8 +177,10 @@ function Pokemon.applySeed(data, mon, seed)
   return true
 end
 
-function Pokemon.new(data, species, level, rng, form, opts, birth)
-  local source = type(birth)=='table' and birth.token == sourceGen2Birth and birth.api or nil
+-- Both public entry points use this real native builder. Keep source options
+-- outside the native public signature: an existing six-argument native mod
+-- wrapper must not silently discard a private seventh birth argument.
+local function createPokemon(data, species, level, rng, form, opts, source)
   species = require("src.core.Gen2SpeciesNames").registryId(data.pokemon, species)
   local generation = require("src.core.GameVersion").generation()
   local nativeForm=(data.constants or {}).gen==4 and (form or 0) or nil
@@ -310,6 +309,10 @@ function Pokemon.new(data, species, level, rng, form, opts, birth)
   return mon
 end
 
+function Pokemon.new(data,species,level,rng,form,opts)
+  return createPokemon(data,species,level,rng,form,opts)
+end
+
 -- Build the source-shaped individual through the actual native birth owner;
 -- the source table is also the dispatch authority for mod-wrapped helpers.
 function Pokemon.fromGen2Source(data, species, level, opts, api)
@@ -318,8 +321,7 @@ function Pokemon.fromGen2Source(data, species, level, opts, api)
   species = require('src.core.Gen2SpeciesNames').registryId(data.pokemon, species)
   if not data.pokemon[species] then return nil end
   level = math.max(1, math.min(100, level or 5))
-  return Pokemon.new(data, species, level, nil, nil, opts or {},
-    {token=sourceGen2Birth,api=assert(api)})
+  return createPokemon(data, species, level, nil, nil, opts or {}, assert(api))
 end
 
 function Pokemon.displayName(mon)

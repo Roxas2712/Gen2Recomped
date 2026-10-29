@@ -121,10 +121,16 @@ local sourceSlots={};Mon.eachSaveMon(save,function(value)sourceSlots[value]=true
 T.eq(sourceSlots[list[2]],nil,'source array iteration retains its first-hole boundary')
 T.eq(sourceSlots[list[9]],true,'source observer can reach actual native breeding slot')
 -- Both unmodified consumer namespaces load and construct side by side.
+local nativeConstructor=Native.new
 local loaded=T.sdk.loadMods({'mods/native_birth','mods/source_birth'},{data=data,fs=T.sdk.memfs({
  ['mods/native_birth/manifest.json']='{"id":"native_birth","name":"Native birth","version":"1.0.0","api":2,"entry":"main.lua"}',
  ['mods/native_birth/main.lua']=[[
    local mod=...;local P=require('src.pokemon.Pokemon')
+   local create=P.new;mod.exports.calls=0
+   P.new=function(data,species,level,rng,form,opts)
+     mod.exports.calls=mod.exports.calls+1
+     return create(data,species,level,rng,form,opts)
+   end
    mod.exports.birth=function(data,rng)return P.new(data,'FIXMON_A',5,rng)end
  ]],
  ['mods/source_birth/manifest.json']='{"id":"source_birth","name":"Source birth","version":"1.0.0","api":2,"entry":"main.lua"}',
@@ -139,6 +145,9 @@ local n=loaded.loader.exports.native_birth.birth(data,function(lo,hi)
  nativeDraws=nativeDraws+1;T.eq(lo,0);T.eq(hi,15);return 3 end)
 local s=loaded.loader.exports.source_birth.birth(data,{dvs=genes,nickname='SOURCE',hp=0})
 T.eq(nativeDraws,4,'native mod keeps its two-bound four-draw RNG contract')
+T.eq(loaded.loader.exports.native_birth.calls,1,'native six-argument wrapper retains its own entry boundary')
 T.eq(n.hp,n.stats.hp);T.eq(s.hp,0);T.eq(s.nickname,'SOURCE');T.eq(s.dvs,genes)
-loaded.release();Version.set(previous)
+require('src.mods.Loader').teardown();loaded.release()
+T.eq(Native.new,nativeConstructor,'real loader teardown restores the native constructor wrapper')
+Version.set(previous)
 T.finish('source GSC birth contracts and unchanged native-mod entry path')

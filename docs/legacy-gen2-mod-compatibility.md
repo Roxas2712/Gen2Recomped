@@ -22,6 +22,9 @@ remain the caller's objects. Both constructors create the actual native
 Pokemon; `experience` and `maxHp` remain live views of native storage rather
 than a second saved balance. The older function-RNG overload of the compatibility
 constructor also remains available.
+The two public constructors call a shared private builder independently. A
+native mod wrapping the existing six-argument constructor does not need to
+forward hidden source options or change its wrapper to keep both paths usable.
 
 The source helpers `displayName`, `eachSaveMon`, `syncSaveIdentity`,
 `evolutionAtLevel` and `wildItem` are additive. The held-item helper implements
