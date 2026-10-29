@@ -8,25 +8,23 @@ separate instance of this fork, not the protected Gen1 installation.
 
 ## Current committed source and CI
 
-Integration `c5334e8b43c5890c3aff1037b4d321a5a57d817f` incorporates main
-`c45b43cd843bb18feccd19b3f550ce78168071c0`. Full
-[CI40937440333](https://github.com/Roxas2712/Gen2Recomped/actions/runs/40937440333)
-passed **993/993 engine suites, 4/4 SDK suites and all available ROM-free tiers**.
-[Focused40937443265](https://github.com/Roxas2712/Gen2Recomped/actions/runs/40937443265)
-independently passed, including216/216 restored-pipeline boot-order checks.
-The actual hosted checkout `1b59e149d58ea2cf044e3ed84b63af3c81570133` has tree
-`7f6b06cca4eac6daf59d6f1f0f2ed9882a1c34fa`, exactly matching this committed source.
+Integration `4dc9ebec838c39b693bb3e7e377828e98444ef10` incorporates main
+`0bfdf7f97b70cd64b8c9d12a1ea12faf74e213a8`. Full
+[CI40950238584](https://github.com/Roxas2712/Gen2Recomped/actions/runs/40950238584)
+passed **995/995 engine suites,4/4 SDK suites and all available ROM-free tiers**.
+The actual hosted checkout `4f43bba033561b469411233430629bda27f022ef` has tree
+`92e14002508718259275b58c9860be7c13b082d0`, exactly matching that source.
+Focused queue/screen40950238599 also succeeded. These results do not qualify
+the subsequent shader correction30b9f527, whose local proofs are recorded below.
 
-These jobs belong to public `Roxas2712/Gen2Recomped`, use standard
-`ubuntu-latest` runners and do not qualify desktop pixels or every mod.
-The iOS job was skipped. Following the explicit budget instruction, no extra
-CI dispatch, private CI, larger runner or budget/payment change was made.
-Historical992/4 results on1b9c30fa and68961bdc remain separate evidence.
+Earlier c5334e8b/mainc45b43cd passed993/4 on exact hosted tree
+`7f6b06cca4eac6daf59d6f1f0f2ed9882a1c34fa`; its focused run passed216 boot-order
+assertions. Historical992/4 results remain separate evidence.
 
-New public main `0bfdf7f9` was subsequently fetched and reviewed: GBA save-result
-handling and main-thread HTTP-poll checks, seven files. It is locally merged in
-`0d330088`; that unpushed descendant is not qualified by the c533 CI receipts.
-No new CI was dispatched for source-only preparation.
+CI runs belong to public `Roxas2712/Gen2Recomped`, using standard hosted runners;
+the iOS job was skipped. Following the explicit budget instruction, no private
+CI, larger runner, budget/payment change or manual extra dispatch/retry was made.
+Current code/evidence changes are batched for the existing public PR.
 
 ## Published packages and actual native scope
 
@@ -40,10 +38,10 @@ alone is not treated as gameplay acceptance.
 | --- | --- | --- |
 | Battle Art Voxel Fork1.11.2,534files | Yellow ordinary story, staged rival combat, native move UI, normal win/SAVE and fresh CONTINUE | Completed fresh First/Third-camera review and remaining visual/reference attribution |
 | Battle Art Gen2 2.1.4,178files | Crystal field/palettes, companion walking, cameras, NewBark→Route29, natural combat, green HP, win/EXP/SAVE and fresh CONTINUE | Outdoor camera/terrain and SAVE-underlay visual attribution |
-| Legendary TEST134 host1.11.0,1904files | Separate Yellow installation, exact earned CONTINUE, First6/Third7 and detailed Oak lab/3D NPC rendering | Complete separate field/interior and battle scopes; diagnose actual pointer gate before orbit/return acceptance |
+| Legendary TEST134 host1.11.0,1904files | Separate Yellow installation, exact earned CONTINUE, First6/Third7 and detailed Oak lab/3D NPC rendering | Complete separate field/interior and final-return scopes; water appearance/reference attribution |
 | Legendary Interiors0.20.0,84files | Installed unchanged alongside both hosts; furnished-room observations | Home geometry/window observed; exact submitted-home-mesh attribution prepared separately |
 | TRUE3DNPCs1.1.6-test16,717files | Upright textured Mom/Oak/rival; ordinary NPC interaction;64 actual native graphics draws through the unchanged exported visible provider | Other NPC/model/map combinations |
-| Legendary FreeOrbit0.1.0-test4,12files | Actual native battle touch drag changes orbit0→0.075 with upright move panels | Alternative Legendary-host battle continuation and other layouts |
+| Legendary FreeOrbit0.1.0-test4,12files | Actual native battle touch drag changes orbit0→0.075 with upright move panels | Final post-win field-window scope and other layouts; default pinned-back camera gate is source-attributed |
 | Better Battle UI0.2.1,3files | Standalone natural Rattata combat:15/15HP, NRM, C:46, STAB, native moves and win/EXP222→246 | Authored extra-panel overlap reference attribution; optional DRAMATIC_SHAPE integration |
 | Gen1Follower1.8.0,423files | Current Yellow scoped run passes normal CONTINUE, native off/on, same-actor walking and actual Pikachu emotion; Crystal walking with voxel host also proved | Additional species/host/map combinations and Crystal talk |
 
@@ -161,11 +159,50 @@ Route1. After19 ordinary grass targets it naturally encountered Pidgey level2,
 THUNDERSHOCK/GROWL/TAIL WHIP/ELECTRIC30/30 over actual staged figures and green
 HP21/21. Native touch drag then failed the orbit-change assertion; child exit1
 and failed complete receipt remain intact. Published FreeOrbit deliberately
-honors `steerable`, pinned-back-sprite, still/VR and pose gates. Read-only live
-gate diagnostics are prepared before assigning an engine cause. Ordinary
-OPTIONS→BACK PLACEMENT→WORLD input is also prepared; no direct setting or
-camera-state setter is used. Dark transparent HUD labels/blue ambient light
+honors `steerable`, pinned-back-sprite, still/VR and pose gates. The following actual live diagnostic proved the input reached the hook with a
+ready native shot, but `backPinned=true`, `steerable=false` and `battleLive=false`.
+This is the published placement gate, not a missing native pointer seam.
+Ordinary OPTIONS→BATTLE SCENE→BACK PLACEMENT→WORLD input lifted it:
+`backPinned=false`, `steerable=true`, and actual drag changed orbit0→0.075.
+Eight OS frames covered the WORLD row, commands, moves and rotated scene.
+Normal combat won and awarded EXP222→237. Final post-win OS capture failed at
+the240-second bound/CUA screenshot error; its complete raw receipt stays failed.
+An earlier private OPTIONS selector assumed a flat visible list; only private
+navigation was corrected to follow published category members through native
+Down/A. No mod setting/camera setter or published source edit was used. Dark transparent HUD labels/blue ambient light
 remain visual/reference findings, not a full parity pass.
+
+## Actual water compiler gap and correction
+
+The unchanged Legendary Water.shader failed in native Metal runs with the
+LÖVE12 effect-parameter precision error and its authored “lakes draw flat”
+fallback. Unlike the previously handled shader, its `vec4 effect` return uses
+the stage default while its three numeric parameters explicitly use mediump.
+The engine admission parser had required an explicit return qualifier too.
+
+Engine30b9f527 forwards this additional literal signature while retaining the
+producer's return spelling, numeric parameter qualifiers, body and discard.
+Unknown declaration/macro words, sampler precision overrides, custom entries
+and explicit native compile contracts retain their existing exclusions.
+Five focused CPU suites pass318 checks, including77 entry assertions. The exact
+new entry fixture fails10 checks on preceding4dc9ebec.
+
+Actual LÖVE12 Metal and OpenGL each pass384 asymmetric texture/discard pixel
+checks across lowp/mediump/highp and explicit/stage-default returns, with both
+desktop and ES validation. The raw Metal compiler rejects lowp/mediump cases;
+the engine adapter compiles and preserves their actual pixels. A separate
+normal-CONTINUE native game probe then compiled the actual unchanged published
+Water.shader in all four grid/full/sky variants and validated desktop/ES.
+Native child exit0/functional=true, zero water compiler warnings, all2,717
+installed members and original inputs unchanged. The raw overall receipt is
+false because this deliberately compiler-only case had no OS visual reviews;
+it is not a water/reflection screenshot or complete mod acceptance claim.
+
+The first private GPU runner attempt lacked its already archived own runtime;
+the preserving restore helper recovered it with its exact library hash. A
+preflight then lacked a committed tools directory required by an existing
+fixture. Only the private frozen-host contents were corrected; tests and failed
+receipts were retained. The final committed-source CPU/GPU receipt passed.
 
 ## Remaining findings and gates
 
