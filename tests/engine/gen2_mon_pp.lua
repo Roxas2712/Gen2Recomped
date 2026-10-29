@@ -84,12 +84,13 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
    return m
   end
   save.party={wounded()};save.boxes[1][7]=wounded()
-  save.daycare={mon=wounded(),breed={man=wounded(),lady=wounded(),egg=wounded()}}
+  save.daycare={mon=wounded(),breed={{mon=wounded()},{mon=wounded()},egg=wounded()}}
   local decoded=assert(Save.decode(Save.encode(save)))
   local party=decoded.party[1]
   Save.validate(decoded,data)
   T.eq(decoded.party[1],party,'actual save validation retains original native Pokemon')
-  for _,m in ipairs({decoded.party[1],decoded.boxes[1][7],decoded.daycare.mon})do
+  for _,m in ipairs({decoded.party[1],decoded.boxes[1][7],decoded.daycare.mon,
+    decoded.daycare.breed[1].mon,decoded.daycare.breed[2].mon,decoded.daycare.breed.egg})do
    T.eq(m.moves[1].pp,61,'actual restore boundary repairs overfull party/box/daycare PP')
    T.eq(m.moves[1].ppUps,3,'actual restore boundary infers saved native bonus')
    T.eq(m.moves[1].maxPp,61,'actual restore boundary publishes native maximum')
