@@ -4,7 +4,7 @@ return function(mod,entry,own)
  local info=assert(mod.imports:info(entry.sourceId or entry.id),'Missing language ROM')
  local profile=own(entry.profile)
  assert(profile.sha1==info.sha1 and profile.md5==info.md5 and profile.size==info.size,'ROM/profile mismatch')
- local function hash(bytes)return love.data.encode('string','hex',love.data.hash('string','sha256',bytes))end
+ local function hash(bytes)return love.data.encode('string','hex',love.data.hash('sha256',bytes))end
  local paths={'@host/compile.lua','@host/lz3.lua','@host/asian_font.lua','@host/pc_labels.lua','gb/compile.lua',entry.profile,entry.root..'assets.lua','compiler.lua','cache_codec.lua'}
  for _,name in ipairs(profile.catalogs)do paths[#paths+1]=entry.root..name end
  table.sort(paths)

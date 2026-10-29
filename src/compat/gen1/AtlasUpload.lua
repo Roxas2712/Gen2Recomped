@@ -9,11 +9,14 @@ function M.image(data)
 end
 function M.patch(data,cols,slot,rgba,portable)
   local x,y=(slot%cols)*16,math.floor(slot/cols)*16
-  if not portable and ffiOK and data.getFFIPointer and data:getFormat()=='rgba8' then
+  if not portable and ffiOK and type(rgba)=='string' and #rgba==1024 and data.getFFIPointer and data:getFormat()=='rgba8' then
     local pointer=ffi.cast('uint8_t*',data:getFFIPointer())
     if pointer~=nil then
       local width=data:getWidth()
-      for row=0,15 do ffi.copy(pointer+((y+row)*width+x)*4,rgba:sub(row*64+1,row*64+64),64)end
+      -- rgba stays owned by this call. Read its immutable bytes directly;
+      -- slicing sixteen temporary strings did not change the copied pixels.
+      local source=ffi.cast('const uint8_t*',rgba)
+      for row=0,15 do ffi.copy(pointer+((y+row)*width+x)*4,source+row*64,64)end
       return
     end
   end
