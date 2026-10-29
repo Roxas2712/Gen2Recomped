@@ -11,6 +11,7 @@ on:
       - 'src/mods/Loader.lua'
       - 'tests/engine/gen2_people_sprites.lua'
       - 'tests/engine/gen2_world_palettes.lua'
+      - 'tests/engine/gen2_atlas_consumer.lua'
       - '.github/workflows/gen2-people-sprites.yml'
   workflow_dispatch:
 permissions:
@@ -26,6 +27,7 @@ jobs:
         run: |
           luajit tests/engine/gen2_people_sprites.lua
           luajit tests/engine/gen2_world_palettes.lua
+          luajit tests/engine/gen2_atlas_consumer.lua
           luajit tests/engine/api3_npc.lua
           luajit tests/engine/legacy_npc_controls.lua
           luajit tests/engine/gen2_alias_world_reads.lua

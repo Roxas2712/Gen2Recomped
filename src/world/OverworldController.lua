@@ -17360,7 +17360,9 @@ function OverworldState:atlasFor(mapDef)
   local tileset = map and map.tileset
   if not tileset then
     local data = Game and Game.data
-    local tilesets = data and data.tilesets
+    -- Title-screen mesh precaching supplies a data-only world with its own
+    -- tilesets and this method, before a live OverworldState is entered.
+    local tilesets = self.tilesets or (data and data.tilesets)
     tileset = tilesets and mapDef.tileset and tilesets[mapDef.tileset] or nil
   end
 
@@ -17377,7 +17379,8 @@ function OverworldState:atlasFor(mapDef)
   -- the half they walk behind.  So the Gen 3 answer carries a descriptor
   -- saying so (third return), and the view it hands back as the tileset
   -- states `atlasUnit = "cell"` rather than pretending to be a tile sheet.
-  local gen3 = self:gen3WorldFor(mapDef, map, tileset)
+  local descriptor = self.gen3WorldFor or OverworldState.gen3WorldFor
+  local gen3 = descriptor(self, mapDef, map, tileset)
   if gen3 then return gen3.bottom, gen3.tileset, gen3 end
 
   if not (tileset and tileset.image) then return nil end
