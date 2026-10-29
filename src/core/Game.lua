@@ -1831,7 +1831,10 @@ local function keypressedBody(self, key)
     self.stack:push(require("src.dev.Console").new(self))
     return
   end
-  if self:hotkey(key) then return end
+  -- Existing public callers can invoke Game.keypressed(session, key) on a
+  -- native session table without inheriting Game. Keep that class-call path
+  -- while allowing a session/mod's own display-key override to take priority.
+  if (self.hotkey or Game.hotkey)(self, key) then return end
   Input:keypressed(key)
 end
 

@@ -30,4 +30,16 @@ T.eq(Input:isDown('up'),false,'native release still works')
 local sceneKeys=0;stack:push({onKeyPressed=function(_,key)sceneKeys=sceneKeys+1;T.eq(key,'3','screen receives same key')end})
 game:keypressed('3');T.eq(sceneKeys,1,'direct screen keyboard ownership precedes display seam');T.eq(writes,1,'screen-owned key never changes display')
 stack:pop();Tilt.setLevel(0)
+local plain={stack=stack,overworld=world,save={options={}},writeOptions=function()end}
+T.eq(plain.hotkey,nil,'existing plain session has no inherited display method')
+Game.keypressed(plain,'up');T.eq(Input:isDown('up'),true,'direct public class call retains ordinary input')
+Game.keyreleased(plain,'up')
+local localClaims=0
+plain.hotkey=function(self,key)
+ T.eq(self,plain,'session-specific seam keeps actual receiver')
+ T.eq(key,'up','session-specific seam receives actual key');localClaims=localClaims+1;return true
+end
+Game.keypressed(plain,'up')
+T.eq(localClaims,1,'session-specific override retains precedence')
+T.eq(Input:isDown('up'),false,'session-specific claimed key does not leak to ordinary input')
 T.finish('native display hotkey and persistent-world gate')
