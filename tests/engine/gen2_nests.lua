@@ -69,6 +69,15 @@ for _,edition in ipairs{'gold','silver','crystal'}do
  T.eq(N.regionOf(79,d),'johto');T.eq(N.regionOf(80,d),'kanto');T.eq(N.regionOf(90,d),nil)
  T.eq(N.landmarkId(d,80),'LANDMARK_PALLET_TOWN')
 end
+-- A Gen1 mod may borrow Gen2-shaped map art. It keeps the preceding native
+-- search policy; source GSC rules are selected by cartridge, not art shape.
+V.set('red')
+local other=T.fixtures.fresh()
+other.field.townMap={johto='borrowed-johto.png',landmarks={[1]={name='BORROWED',x=8,y=16}}}
+other.maps={BORROWED={id='BORROWED',landmark=1}}
+other.encounters={BORROWED={fishing={slots={{species='FIXMON_A',level=5}}}}}
+local oldMap=TownMap.new({data=other,save=Save.newGame()},{nestSpecies='FIXMON_A'})
+T.eq(#oldMap.nests,1,'non-GSC native AREA policy remains selected even with borrowed map art')
 V.set('crystal')
 for _,value in ipairs{-1,0,256,1.5,'UNKNOWN'}do T.eq(N.regionOf(value),nil)end
 T.eq(N.landmark({},nil),nil);T.eq(N.landmarkId({},nil),nil)
