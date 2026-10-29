@@ -85,5 +85,25 @@ T.eq(M.draw(b,mon,100,100,true,font,{hp=44}),false,'custom status labels retain 
 mon.shownStatus=nil;font.draw=function()error('intentional healthbox font failure')end
 T.raises(function()M.draw(b,mon,100,100,true,font,{hp=44})end,'intentional healthbox font failure')
 T.eq(table.concat(scissor,','),'4,5,400,400','font errors restore the caller scissor')
+local Performance=require('src.core.Performance')
+local seen,trace={},{}
+font.draw=function(value,x0,y0,opts)
+  seen[#seen+1]=opts
+  trace[#trace+1]={value,x0,y0,opts.colors.fg[1],opts.colors.shadow[2]}
+end
+local function draw()
+  seen,trace={},{};M.draw(b,mon,100,100,true,font,{hp=44});return seen,trace
+end
+local on,expected=draw();local again=draw()
+T.eq(on[1],again[1],'unchanged native rows reuse their read-only text options')
+Performance.rsBattlePaintCache=false
+local off,control=draw()
+T.same(control,expected,'cache rollback preserves all glyphs, coordinates and colors')
+T.neq(off[1],on[1],'rollback uses fresh native row options')
+Performance.rsBattlePaintCache=true
+s.palette[2]=32767
+local edited,changed=draw()
+T.neq(edited[1],on[1],'in-place palette edits invalidate cached options')
+T.neq(changed[1][4],expected[1][4],'edited palette reaches the actual native painter')
 love.graphics,Images.image,Care.gender,Level.visible,Version.get=oldG,oldImage,oldGender,oldLevel,oldGet
 T.finish('RS native healthbox resources, all status variants and OAM anchors')

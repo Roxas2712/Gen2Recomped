@@ -24,4 +24,33 @@ T.eq(Assets.missing('ruby')[1],'<rs:native-battle-panel>','incomplete native pal
 bodies['data/generated/constants.lua']='error("untrusted cache")'
 T.eq(Assets.missing('ruby')[1],'<rs:native-battle-panel>','invalid constants cannot execute against the host')
 Fs.read,Fs.exists=read,exists;package.loaded['src.core.GameVersion']=oldV
+local P=require('src.core.Performance');local Frames=require('src.battle.Gen3BattleFrames')
+local oldPanel,oldFrames,oldHandles=Frames.panel,Frames.rsFrames,Panel.handles
+Frames.panel=function()end;Frames.rsFrames=function()end;Panel.handles=function()return true end
+local trace,options={},{}
+local panel=setmetatable({spec={switch='SWITCH',pp='PP'},menuColors={fg={1,1,1},shadow={},bg={}},
+  messageColors={fg={.5,.5,.5},shadow={},bg={}},chrome={promptArrow=function()end},
+  cursor={draw=function(x,y,w)trace[#trace+1]={'cursor',x,y,w}end},font={}},Panel)
+panel.font.draw=function(value,x,y,opts)
+  trace[#trace+1]={value,x,y,opts.colors.fg[1]};options[#options+1]=opts
+end
+panel.font.drawGlyph=function(code,x,y,opts)
+  trace[#trace+1]={code,x,y,opts.colors.fg[1]};options[#options+1]=opts;return 5
+end
+local b={data={constants={},moves={TACKLE={name='TACKLE',pp=35}}},phase='moveSelect',
+  player={name='TEST',curMoves={{id='TACKLE',pp=12}}},moveIndex=1,moveSwapIndex=1}
+local function draw(enabled)
+  P.rsBattlePaintCache=enabled;trace,options={},{};panel:draw(b);return trace,options
+end
+for _,phase in ipairs({'moveSelect','menu','messages','targetSelect'})do
+  b.phase=phase;b.current=true;b.shown={{65,66,67}};b.targetChoices={{name='ALLY',isPlayer=true}};b.targetIndex=1
+  local expected=draw(false);local actual=draw(true)
+  T.same(actual,expected,'native panel cache preserves '..phase..' draw commands')
+end
+b.phase='messages';local _,first=draw(true);local _,second=draw(true)
+T.eq(first[1],first[2],'a message reuses one glyph-paint record')
+T.eq(first[1],second[1],'message paint survives subsequent frames')
+b.phase='menu';b.rsWally={text=function(_,label)T.eq(label,'BattleText_WallyMenu');return'WALLY\nPROMPT'end}
+draw(true)
+Frames.panel,Frames.rsFrames,Panel.handles=oldPanel,oldFrames,oldHandles;P.rsBattlePaintCache=true
 T.finish('RS battle panels: edition isolation, palette and cache completeness')

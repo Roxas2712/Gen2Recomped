@@ -2326,6 +2326,7 @@ function Game:applyOptions(opts)
   local Sound = require("src.core.Sound")
   if Music.applyOptions then Music.applyOptions(opts, self.data or Data) end
   if Sound.applyOptions then Sound.applyOptions(opts) end
+  if Sound.prewarmCommon then pcall(Sound.prewarmCommon,self.data,self.save and self.save.party)end
   require('src.render.Font').setFrame(opts.frame or 1)
   -- EMERALD'S BUTTON MODE, which decides what L and R do.  Applied here
   -- rather than read at the input site so that a mode set on the OPTION
