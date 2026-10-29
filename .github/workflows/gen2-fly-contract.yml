@@ -21,3 +21,5 @@ jobs:
         run: luajit tests/engine/gen2_field_state_queries.lua
       - name: ROM-free town-map pixel import regression
         run: luajit tests/engine/gen2_town_map_pixels.lua
+      - name: Dedicated ROM nest icon and generated-cache contract
+        run: luajit tests/engine/gen2_town_map_nest.lua
