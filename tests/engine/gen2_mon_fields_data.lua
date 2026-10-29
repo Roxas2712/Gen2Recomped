@@ -83,6 +83,12 @@ local explicit={name='AUTHORED',maxHp=7,types={'CUSTOM'},stats={hp=8}}
 Fields.bind({pokemon={}},explicit)
 T.eq(explicit.name,'AUTHORED');T.eq(explicit.maxHp,7,'explicit authored stored fields retain precedence')
 T.eq(explicit.types[1],'CUSTOM')
+local unowned={species='QA_MON',stats={hp=3}}
+Fields.bind(nil,unowned)
+T.eq(unowned.name,nil,'unbound record has no guessed source species name')
+local rebound={species='QA_MON',stats={hp=4}}
+Fields.bind({pokemon={QA_MON={name='REAL OWNER'}}},rebound)
+T.eq(rebound.name,'REAL OWNER','a real-owner cache miss cannot select unowned metadata')
 
 -- LuaJIT weak-key/value semantics: metadata may retain its dataset, but no
 -- global weak-key/value cycle may keep an abandoned model/registry alive.

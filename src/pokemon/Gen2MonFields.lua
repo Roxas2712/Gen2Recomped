@@ -44,8 +44,11 @@ end
 local function metatableFor(kind, previous, data)
   local found
   if kind=='mon' then
-    if not previous then found=data and monPlain[data] or plain.mon end
-  else found=previous and cached[kind][previous] or plain[kind] end
+    if not previous then
+      if data then found=monPlain[data] else found=plain.mon end
+    end
+  elseif previous then found=cached[kind][previous]
+  else found=plain[kind] end
   if found then return found end
   local meta={}
   for key,value in pairs(previous or {})do meta[key]=value end
