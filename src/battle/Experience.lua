@@ -142,7 +142,7 @@ function Experience.apply(data, mon, defeatedDef, level, isTrainer,
     -- Source GiveExperiencePass resolves exp.gain first, then awards effort
     -- before the level/stat recalculation. Hook edits must be visible here.
     require('src.pokemon.Gen2Progression').nativeStatExp(mon,defeatedDef,numParticipants,
-      require('src.pokemon.Gen2Pokerus').doublesStatExp(mon),opts.halved)
+      require('src.pokemon.Gen2PokerusByte').doublesStatExp(mon),opts.halved)
   end
   return Experience.add(data, mon, gained)
 end
