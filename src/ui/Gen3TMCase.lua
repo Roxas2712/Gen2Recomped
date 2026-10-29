@@ -123,6 +123,7 @@ function Gen3TMCase.new(game, opts)
   local self = setmetatable({}, Gen3TMCase)
   self.game = game
   self.onCancel = opts.onCancel
+  self.sell = opts.sell and true or false
   self.script = opts.script
   self.noInput = opts.noInput and true or false
   self.scriptRows = opts.rows
@@ -157,6 +158,12 @@ end
 function Gen3TMCase:choose()
   local row = self:selected()
   if not row or row.close then return self:close() end
+  if self.sell then
+    if require('src.ui.Gen3BagSale').open(self,row)then return end
+    return require('src.ui.Gen3ShopMenu').sellItem(self.game,row.id,{max=row.qty,
+      refresh=function()self:rebuild()end,say=function(text)
+        self.game.stack:push(require('src.render.TextBox').new(self.game,text))end})
+  end
   local Gen3ItemMenu = require("src.ui.Gen3ItemMenu")
   self.game.stack:push(Gen3ItemMenu.new(self.game, {
     entries = { { label = "USE", kind = "use" },

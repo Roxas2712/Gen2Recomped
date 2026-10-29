@@ -12,9 +12,10 @@ local function replace(target,source)
   for k in pairs(target)do target[k]=nil end
   for k,v in pairs(source)do target[k]=v end
 end
-function M.new(game)
+function M.new(game,options)
   local self=setmetatable({game=game,byNumber={},byId={},token={}},M)
-  local version=game.data.constants.gen3RsBag.version
+  local version=options and options.version or game.data.constants.gen3RsBag.version
+  assert(version=='ruby'or version=='sapphire'or version=='emerald')
   self.session={version=version,bag=self.token,name=(game.save.player or{}).name}
   for id,d in pairs(game.data.items or{})do if integer(d.index)then
     assert(not self.byNumber[d.index],'Duplicate native PC item number')
@@ -24,7 +25,7 @@ function M.new(game)
     __package={loaded={}},['src.core.game3.items_data']={},['src.core.game3.bag']={},
     ['src.core.game3.profile']={forSession=function()return {bag=self.policy}end},
   })
-  self.policy=load('src.core.game3.profiles.rs.bag')
+  self.policy=options and options.pcLimits or load('src.core.game3.profiles.rs.bag')
   self.nativeStorage=load('src.core.game3.storage')
   -- Only the native PC item transaction is used; no Pokémon box defaults,
   -- heal effects or mutable reference session are projected into the host.
