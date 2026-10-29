@@ -1332,7 +1332,9 @@ local function markerFor(version)
   if version == "ruby" or version == "sapphire" then revision = "rs-edition-placeholders-v1:rs-native-hall-v1:rs-native-credits-v1:rs-item-menu-v4:rs-native-boot-v1:rs-native-bag-v1:rs-native-summary-v1:rs-native-party-v1:rs-native-map-v1:" end
   -- Keep original behavior IDs alongside the existing native normalization.
   -- Only GBA caches lack this additional source contract; saves are unchanged.
-  if GameVersion.isGen3(version) then revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:" end
+  if GameVersion.isGen3(version) then
+    revision = revision .. "source-metatile-attrs-v1:source-map-views-v1:gba-item-registrability-v1:"
+  end
   if version == "emerald" or version == "ruby" or version == "sapphire" then
     revision = revision .. "source-behavior-flags-v1:rusturf-two-rock-pair-v3:"
   end

@@ -6743,6 +6743,9 @@ function RomExtractorGen3:extractItems()
       -- cartridge saying "an HM is not yours to throw away" in the same field.
       importance = self.rom:u8(o + 24),
       keyItem = self.rom:u8(o + 24) ~= 0 or nil,
+      -- Separate from importance: a quest item can be protected from TOSS
+      -- without being eligible for the registered SELECT shortcut.
+      registrability = self.rom:u8(o + 25),
       -- the pocket enum is per game: FireRed numbers KEY ITEMS 2 and
       -- POKE BALLS 3 (the manifest's `pocketEnum`, 1-based names)
       pocket = (self.manifest.pocketEnum
@@ -32391,6 +32394,7 @@ function RomExtractorGen3:itemMenuActionsFireRed(constants, M)
   end
   constants.gen3ItemMenu = {
     labels = labels, kinds = kinds, columns = 1, cancel = 5, blank = 12,
+    register = 3, deselect = 11,
     pockets = {
       ITEM = rows[1], KEY_ITEM = rows[2], BALL = rows[3],
       -- the TM CASE and BERRY POUCH lists are their own screens' (tm_case.c,

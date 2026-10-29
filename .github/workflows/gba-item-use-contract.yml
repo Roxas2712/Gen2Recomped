@@ -23,6 +23,7 @@ jobs:
       - name: Check native GBA field flow and compatibility
         run: |
           luajit tests/engine/gba_field_item_use.lua
+          luajit tests/engine/gba_key_item_registration.lua
           luajit tests/engine/item_use_dispatch.lua
           luajit tests/engine/api3_compat.lua
           luajit tests/engine/unified_mod_callbacks.lua

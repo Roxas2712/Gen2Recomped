@@ -51,6 +51,6 @@ the existing pinned common bag algorithm and its notices remain intact.
   views. LeafGreen's six changed inventory-order views were inspected at
   original resolution; its berry view exactly matches its inspected prior.
 
-This is scoped inventory work. Full Emerald story acceptance and native
-SELECT reorder presentation remain separate open work. No ROMs, generated
+This is scoped inventory work. Full Emerald story acceptance and remaining
+native bag presentation/control acceptance remain separate open work. No ROMs, generated
 resources, saves or private captures are included.

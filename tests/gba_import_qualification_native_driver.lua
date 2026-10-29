@@ -10,6 +10,13 @@ return function(game)
  local ready=require('src.import.RomImporter').readyReport(version)
  assert(ready.ok,'Full selected-cartridge import is not ready: '..tostring(ready.why))
  assert(require('src.import.Gen3HallPcAssets').valid(game.data.constants.gen3HallPc,version))
+ local itemCount=0
+ for _,def in pairs(game.data.items)do
+  assert(type(def.registrability)=='number'and def.registrability>=0 and def.registrability<=255,
+    'Own item-table import is missing the registrability byte')
+  itemCount=itemCount+1
+ end
+ assert(itemCount>0)
  local frlg=version=='firered'or version=='leafgreen'
  if frlg then
   assert(game.data.constants.gen3FRLGTitle.cry==(version=='firered'and'CHARIZARD'or'VENUSAUR'))
@@ -25,7 +32,8 @@ return function(game)
  assert(Save.encode(game.save)==before and rng==love.math.getRandomState(),'Title draw changed save/RNG')
  local name='qualified-import-own-native-title';assert(U.shot(game,out..'/'..name..'.png'))
  local report={status='pass',edition=version,preparedFixture=true,continuousStory=false,
-  importQualification=true,completeReadyReport=true,ownNativeTitle=true,drawPreservesSaveRng=true,captures={name}}
+  importQualification=true,completeReadyReport=true,ownNativeTitle=true,drawPreservesSaveRng=true,
+  ownItemRegistrabilityCount=itemCount,captures={name}}
  local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()
  print('PASS_NATIVE_GBA_IMPORT_QUALIFICATION');love.event.quit(0)
 end
