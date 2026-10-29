@@ -797,9 +797,79 @@ local function gbcKeyFor(mapId)
   return "#gbc:" .. mapId .. PaletteFX.darkKey()
 end
 
+local gbPrefetch=require('src.render.GbAssetPrefetch')
+local nativeShadeRegion,nativeShadeAvailable=ShadeRecolour.region,ShadeRecolour.available
+-- Snapshot only the concrete native palette words, including borrowed tiles
+-- and aliases. A fresh signature at admission rejects edited palettes/maps.
+local function gbcPrefetchPlan(imagePath,tilesetId,mapId,perRow,data)
+  if ShadeRecolour.region~=nativeShadeRegion or ShadeRecolour.available~=nativeShadeAvailable then return end
+  local payload,signature,size=Assets.prefetchPayload(imagePath)
+  if not payload or payload.width%8~=0 or payload.height%8~=0
+    or perRow~=payload.width/8 then return end
+  local groups=PaletteFX.worldGroupColors(data,tilesetId,mapId,nil)
+  if not groups then return end
+  local ts=data.tilesets and data.tilesets[tilesetId]
+  local borrowed=ts and TileRenderer.borrowStart(ts)
+  local rows=ts and gen2PalColors(ts)
+  local total=payload.width*payload.height/64
+  local colors,aliases,stamp={},{},{signature,tostring(perRow)}
+  local function copy(row)
+    if not row then stamp[#stamp+1]='-';return false end
+    if type(row)~='table'or getmetatable(row)~=nil then error('Custom palette')end
+    local out={}
+    for i=1,4 do
+      local c=row[i];assert(type(c)=='table'and getmetatable(c)==nil,'Custom palette')
+      out[i]={}
+      for n=1,3 do local v=c[n]
+        assert(type(v)=='number'and v%1==0 and v>=0 and v<=255,'Custom palette')
+        out[i][n]=v;stamp[#stamp+1]=string.char(v)
+      end
+    end
+    return out
+  end
+  for t=0,total-1 do
+    local row
+    if borrowed and t>=borrowed and ts.palMap and rows then
+      row=TileRenderer.gen2TileColors(ts.palMap,rows,t)
+    end
+    if not row then local group=PaletteFX.worldGroupAt(tilesetId,mapId,t);row=group and groups[group+1]end
+    colors[t+1]=copy(row)
+  end
+  for _,al in ipairs(PaletteFX.TILE_ALIASES and PaletteFX.TILE_ALIASES[mapId]or {})do
+    if al.alias<total then
+      assert(al.alias>=0 and al.alias%1==0 and al.tile>=0 and al.tile<total and al.tile%1==0,'Custom alias')
+      stamp[#stamp+1]=al.tile..':'..al.alias
+      aliases[#aliases+1]={tile=al.tile,alias=al.alias,colors=copy(groups[al.group+1])}
+    end
+  end
+  payload.kind,payload.perRow,payload.colors,payload.aliases='bake',perRow,colors,aliases
+  return payload,table.concat(stamp,'|'),size
+end
+function TileRenderer.prefetchAtlas(data,mapId,front)
+  if require('src.core.Performance').gbAssetPrefetch==false or not PaletteFX.usesGbcPack()then return false end
+  local def=data.maps and data.maps[mapId];local ts=def and data.tilesets and data.tilesets[def.tileset]
+  if not(ts and type(ts.image)=='string'and ts.tilesPerRow)then return false end
+  local key=ts.image..gbcKeyFor(mapId)
+  if gbcAtlasCache[key]~=nil then return false end
+  return gbPrefetch.request('atlas:'..key,function()
+    if gbcAtlasCache[key]~=nil then return end
+    return gbcPrefetchPlan(ts.image,def.tileset,mapId,ts.tilesPerRow,data)
+  end,front)
+end
+
 local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
   local key = imagePath .. gbcKeyFor(mapId)
   if gbcAtlasCache[key] ~= nil then return gbcAtlasCache[key] or nil end
+  if gbPrefetch.has('atlas:'..key)then
+    local ok,payload,signature=pcall(gbcPrefetchPlan,imagePath,tilesetId,mapId,perRow,data)
+    local pixels=ok and payload and gbPrefetch.get('atlas:'..key,signature,true)
+    if pixels then
+      local uploaded,img=pcall(love.graphics.newImage,pixels)
+      if pixels.release then pixels:release()end
+      if uploaded then gbcAtlasCache[key]=img;FrameProfile.bake('tiles.gbc');return img end
+    end
+  end
+  gbPrefetch.forget('atlas:'..key)
   local img = false
   if love.image and love.image.newImageData then
     local groupColors = PaletteFX.worldGroupColors(data, tilesetId, mapId, nil)
@@ -2521,6 +2591,7 @@ end
 -- instances keep the batches they already built; MapLoader.invalidateAll
 -- is what drops those (14 §cache-invalidation contract).
 function TileRenderer.invalidate()
+  gbPrefetch.clear()
   paletteFrames:clear()
   imageCache = {}
   shiftVariants = {}

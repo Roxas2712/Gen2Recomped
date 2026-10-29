@@ -202,7 +202,10 @@ local function quitFrame(platform, answer, code, noCallback)
     Frames = { tick = function() record("tick") end },
     FrameProfile = { section = function() return function() end end },
     pacingEnabled = function() return false end,
-    os = { exit = function(value) record("exit"); exits[#exits + 1] = value end },
+    os = {
+      getenv = function() return nil end, -- deterministic, disabled automatic tracing
+      exit = function(value) record("exit"); exits[#exits + 1] = value end,
+    },
     love = {
       handlers = { quit = function() record("dispatch") end },
       update = function() record("update") end,

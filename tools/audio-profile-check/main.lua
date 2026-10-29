@@ -124,7 +124,13 @@ local function qualifyEffects()
     until builds >= count or love.timer.getTime() > deadline
     assert(builds >= count, "prewarm worker did not deliver its PCM")
   end
+  assert(Sound.prewarmCry(data,'MON'),'priority cry must queue before the registry scan')
   wait(2)
+  Performance.audioWorkerOptimization=false
+  local expectedPriorityCry=Synth.renderEffectData(data,beep,{frequencyOffset=0,cryLength=128})
+  Performance.audioWorkerOptimization=true
+  assert(effects[1].sd:getString()==expectedPriorityCry:getString(),'priority cry PCM/order differs from native synthesis')
+  checks=checks+1
   assert(played == 0 and effects[1].plays == 0 and effects[2].plays == 0, "prewarm played/emitted")
   Performance.audioWorkerOptimization = false
   local expected = Synth.renderEffectData(data, beep, { frequencyOffset = 0, frameTicks = 256 })
@@ -134,6 +140,17 @@ local function qualifyEffects()
   assert(builds == before and source.sd:getString() == expected:getString(), "prewarm did not reuse exact cached PCM")
   assert(played == 1 and source.plays == 1, "real sound event/play count changed")
   checks = checks + 4
+  local move={sound='beep',pitch=3,tempo=120}
+  before=builds
+  assert(Sound.prewarmMove(data,move));wait(before+1)
+  local variant=effects[#effects]
+  Performance.audioWorkerOptimization=false
+  local expectedVariant=Synth.renderEffectData(data,beep,{frequencyOffset=3,frameTicks=248})
+  Performance.audioWorkerOptimization=true
+  assert(variant.sd:getString()==expectedVariant:getString()and variant.plays==0,'priority move variant changed PCM or played early')
+  before=builds;Sound.playMove(data,move)
+  assert(builds==before and variant.plays==1,'real native move did not consume its exact variant cache key')
+  checks=checks+2
   Sound.invalidate()
   Chip.cancelEffects()
   wait(before + 2)

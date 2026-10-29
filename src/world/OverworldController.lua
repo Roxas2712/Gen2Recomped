@@ -2457,6 +2457,52 @@ function OverworldState:liveMaps()
   return LiveMaps.snapshot(self)
 end
 
+function OverworldState:prefetchAssets(root,front)
+  if checkpointQuiet or GameVersion.generation()>2
+    or require('src.core.Performance').gbAssetPrefetch==false then return end
+  local Workers=require('src.core.BuildWorker')
+  if not Workers.available()then return end
+  -- Queue the next ring, not maps already resident in the current view.
+  -- Hints never instantiate Maps/NPCs or advance scripts, clocks or RNG.
+  local ok,why=pcall(function()
+    local data=Game.data
+    if not(data and data.maps and data.tilesets)then return end
+    local list,seen={},{}
+    local function add(id)
+      if id and not seen[id]and #list<8 then seen[id]=true;list[#list+1]=id end
+    end
+    if front then add(root)else
+      seen[root]=true
+      for _,nb in ipairs(self.neighbors or {})do seen[nb.id]=true end
+    end
+    local roots=front and {{id=root}}or self.neighbors or {{id=root}}
+    for _,nb in ipairs(roots)do
+      for _,nextMap in ipairs(OverworldState.computeNeighbors(data.maps,nb.id,1,160,144))do add(nextMap.id)end
+    end
+    local Assets=require('src.render.Assets')
+    local Tiles=require('src.render.TileRenderer')
+    local count=0
+    for i,id in ipairs(list)do
+      local def=data.maps[id];local ts=def and data.tilesets[def.tileset]
+      if ts then
+        local urgent=front and i==1
+        if ts.image then Assets.prefetchImage(ts.image,urgent)end
+        for _,obj in ipairs(def.objects or {})do
+          if count>=16 then break end
+          local sprite=data.sprites and data.sprites[obj.sprite]
+          if sprite and type(sprite.image)=='string'then
+            Assets.prefetchImage(sprite.image,urgent);count=count+1
+          end
+        end
+        -- The destination bake is the final urgent insertion, ahead of its
+        -- decode hints, so a cast of NPC sheets cannot delay the atlas.
+        Tiles.prefetchAtlas(data,id,urgent)
+      end
+    end
+  end)
+  if not ok and not self.prefetchWarning then self.prefetchWarning=true;Logger.warn('GB asset hints: %s',tostring(why))end
+end
+
 function OverworldState:rebuildNeighbors()
   -- Source renderers inspect the same live map/tileset registries as the
   -- native loader. Missing fields made an already resident connected world
@@ -2486,6 +2532,7 @@ function OverworldState:rebuildNeighbors()
   -- bound resident memory: drop maps behind us that are neither current nor
   -- a drawn neighbor, releasing their window batch / border image / atlas
   MapLoader.trim(keep)
+  OverworldState.prefetchAssets(self,self.map.id,false)
   if not checkpointQuiet then LiveMaps.preparing(self) end
 
 
@@ -16211,6 +16258,7 @@ end
 -- OaksLabFollowedOakScript clears it and calls PlayDefaultMusic).
 function OverworldState:startWarpTo(mapId, x, y, facing, onDone, opts)
   mapId = MapIdentity.runtimeId(Game.data, mapId)
+  OverworldState.prefetchAssets(self,mapId,true)
   -- ANY transition off an outdoor map remembers the outdoor side, so
   -- scripted warps (the Oak walk-in) keep LAST_MAP exits working.
   -- CheckIfInOutsideMap (home/overworld.asm) treats PLATEAU (Route 23 /
