@@ -28681,6 +28681,7 @@ function RomExtractorGen3:extractSaveLayout()
       -- extracted and written to disk on every import; the record naming it
       -- was thrown away seconds later.
       local bagRecord = constants.gen3Bag or {}
+      bagRecord.version = self.version
       bagRecord.pockets = pockets
       bagRecord.pcItems = fields.bag.pcItemCount
       constants.gen3Bag = bagRecord

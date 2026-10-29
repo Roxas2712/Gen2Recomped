@@ -9,6 +9,22 @@ love.filesystem.load=function(path)return loadfile(path)end
 local Sound=require('src.core.Sound');local play=Sound.play;Sound.play=function()end
 for _,version in ipairs{'emerald','firered','leafgreen'}do
   V.set(version)
+  local Bag=require('src.inventory.Bag')
+  local data={constants={gen=3,gen3Bag={version=version,pockets={ITEM=30,BERRY=46}}},
+    items={POTION={pocket='ITEM'},ORAN_BERRY={pocket='BERRY'}}}
+  local save={inventory={},bagOrder={}}
+  local ordinary=version=='emerald'and 99 or 999
+  T.eq(Bag.stackLimit('POTION',data),ordinary,'ordinary stack limit follows the cartridge family')
+  T.eq(Bag.add(save,'POTION',ordinary,data),true)
+  T.eq(Bag.add(save,'ORAN_BERRY',999,data),true,'actual inventory admits three-digit berry stacks')
+  local full=S.encode(save)
+  T.eq(Bag.canAdd(save,'ORAN_BERRY',1,data),false,'space query rejects overflow')
+  T.eq(Bag.add(save,'ORAN_BERRY',1,data),false)
+  T.eq(Bag.add(save,'POTION',1,data),false)
+  T.eq(S.encode(save),full,'rejected additions preserve counts and acquisition order')
+  V.set('gold');T.eq(Bag.stackLimit('POTION',data),ordinary,'injected edition data does not borrow the active game');V.set(version)
+  Bag.remove(save,'ORAN_BERRY',3,data)
+  T.eq(assert(S.decode(S.encode(save))).inventory.ORAN_BERRY,996,'three-digit inventory survives removal and serialization')
   local load=Loader.new(version,{['src.core.GameVersion']=V,__package={loaded={}}})
   local IR=load('src.core.game3.scripting.text_ir')
   local symbols=version=='emerald'and load('src.import.gba.syms').of(version)
