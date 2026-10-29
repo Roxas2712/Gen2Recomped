@@ -251,6 +251,23 @@ local function choose(record)
  end
  return variant
 end
+local function diagnosticBank(record)
+ if record.selectionBankRevision==record.bankRevision then return record.selectionBank end
+ local function value(v)
+  if type(v)~='table'then return v end
+  if v.resource then return tostring(v.resource[1])end
+  local out={};for i=1,#v do out[i]=value(v[i])end;return out
+ end
+ local out={}
+ for name,bank in pairs(record.bank)do
+  local rows={};out[name]=rows
+  for _,row in ipairs(bank)do
+   local args={};for i=1,row.n do args[i]=value(row[i])end
+   rows[#rows+1]={method=row.method,values=args}
+  end
+ end
+ record.selectionBankRevision,record.selectionBank=record.bankRevision,out;return out
+end
 local function beforeDraw(method,object)
  if stats.sources==0 then return end
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
@@ -269,7 +286,12 @@ local function beforeDraw(method,object)
  local trace=S.selectionTrace
  if trace and #trace<1024 then
   local canvas=love.graphics.getCanvas and love.graphics.getCanvas()
-  if type(canvas)=='table'then canvas=canvas[1]end
+  for i=1,4 do if type(canvas)~='table'then break end;canvas=rawget(canvas,1)or rawget(canvas,'canvas')end
+  local scissor=love.graphics.getScissor and{love.graphics.getScissor()}or{}
+  local rect=S.selectionTraceRect
+  local include=not S.selectionTraceTarget or tostring(canvas)==S.selectionTraceTarget
+  if include and rect and #scissor==4 then include=scissor[1]<rect[1]+rect[3]and rect[1]<scissor[1]+scissor[3]and scissor[2]<rect[2]+rect[4]and rect[2]<scissor[2]+scissor[4]end
+  if not include then return end
   local first,count,texture
   if type(object)=='userdata'and object.typeOf and object:typeOf('Mesh')then
    first,count=object:getDrawRange();texture=object:getTexture()
@@ -279,7 +301,8 @@ local function beforeDraw(method,object)
   trace[#trace+1]={method=method,object=tostring(object),source=tostring(original(record)),
    program=tostring(variant and variant.shader or original(record)),key=record.key,
    target=tostring(canvas),first=first,count=count,texture=tostring(texture),depth=depth,writes=writes,blend=blend,alpha=alpha,
-   color=love.graphics.getColor and{love.graphics.getColor()}or nil,scissor=love.graphics.getScissor and{love.graphics.getScissor()}or nil}
+   color=love.graphics.getColor and{love.graphics.getColor()}or nil,scissor=scissor,
+   inputs=S.selectionTraceBank and diagnosticBank(record)or nil}
  end
 end
 local function admit(shader,source,second,third,n)

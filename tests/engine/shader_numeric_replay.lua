@@ -82,6 +82,10 @@ for i=1,1100 do g.draw()end
 T.eq(#S.selectionTrace,1024,'diagnostic selection trace is bounded')
 T.eq(S.selectionTrace[1].source,tostring(original),'trace retains no native alias')
 T.eq(S.selectionTrace[1].program,tostring(actual),'trace records actual selected program')
-S.selectionTrace=nil
+S.selectionTrace={};S.selectionTraceBank=true;g.draw()
+original:send('amount',6);g.draw()
+T.eq(S.selectionTrace[1].inputs.amount[1].values[1],5,'diagnostic bank detached from later writes')
+T.eq(S.selectionTrace[2].inputs.amount[1].values[1],6,'diagnostic bank reflects current source writes')
+S.selectionTraceBank=nil;S.selectionTrace=nil
 love,jit,os.getenv=savedLove,savedJit,savedEnv;package.loaded['src.render.LegacyShaderCompat']=savedLegacy;package.loaded['src.render.AlphaDepthCompat']=savedAlpha
 T.finish('deferred numeric shader banks, array tails, textures and foreign aliases')
