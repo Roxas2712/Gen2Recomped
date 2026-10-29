@@ -251,7 +251,7 @@ local function beforeDraw()
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
  if not record then return end
  local variant=choose(record)
- if variant then
+ if variant and(variant.numericPendingCount or 0)>0 then
   local ok,why=pcall(Numeric.apply,record,variant,stats)
   if not ok then
    stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(record);variant=nil

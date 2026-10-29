@@ -26,10 +26,11 @@ end
 function N.queue(variant,name)
  local pending=variant.numericPending
  if not pending then pending={};variant.numericPending=pending end
+ if not pending[name]then variant.numericPendingCount=(variant.numericPendingCount or 0)+1 end
  pending[name]=true
 end
 function N.clear(variant,name)
- if variant.numericPending then variant.numericPending[name]=nil end
+ if variant.numericPending and variant.numericPending[name]then variant.numericPending[name]=nil;variant.numericPendingCount=variant.numericPendingCount-1 end
 end
 function N.apply(record,variant,stats)
  local pending=variant.numericPending;if not pending then return end
@@ -45,7 +46,7 @@ function N.apply(record,variant,stats)
     if stats.variantUniformWrites then stats.variantUniformWrites=stats.variantUniformWrites+1 end
    end
   end
-  pending[name]=nil
+  N.clear(variant,name)
  end
 end
 return N
