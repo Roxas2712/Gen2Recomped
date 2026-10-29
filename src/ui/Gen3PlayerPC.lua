@@ -277,6 +277,8 @@ local function g3Withdraw(game, back)
           return giveFromPc(game, current, pc, id, resume)
         end
         askQuantity(game, id, pc[id] or 1, function(qty)
+          if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+            or qty<1 or qty>(pc[id]or 0)then return end
           local Bag = require("src.inventory.Bag")
           if not Bag.add(game.save, id, qty, game.data) then
             return say(game, Strings("You can't carry\nany more items."),
@@ -333,9 +335,12 @@ local function g3Toss(game, back)
           return say(game, Strings("That's too impor-\ntant to toss!"), resume)
         end
         askQuantity(game, id, pc[id] or 1, function(qty)
+          if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+            or qty<1 or qty>(pc[id]or 0)then return end
           say(game, Strings("Toss %s?", itemName(game, id)), function()
             game.stack:push(require("src.ui.ChoiceBox").new(game, function(yes)
               if not yes then return resume() end
+              if game.save.pcItems~=pc or qty>(pc[id]or 0)then return resume()end
               pc[id] = (pc[id] or 0) - qty
               if pc[id] <= 0 then pc[id] = nil end
               say(game, Strings("Threw away %s.", itemName(game, id)), resume)
