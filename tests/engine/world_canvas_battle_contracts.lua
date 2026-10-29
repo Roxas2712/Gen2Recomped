@@ -6,6 +6,7 @@ local T=require('tests.modkit')
 local M=require('src.render.WorldCanvasContracts')
 local R=require('src.render.Renderer')
 local V=require('src.core.GameVersion')
+local NativeGame=require('src.core.Game')
 local oldGame,oldVersion=package.loaded['src.core.Game'],V.get()
 local backend,major='Metal',12
 local oldRenderer,oldLove=love.graphics.getRendererInfo,love.getVersion
@@ -29,7 +30,8 @@ local loader={loaded={{manifest=manifest,path='mods/source'}},exports={},
 local def={drawWorld=function()end};local data={render_pipelines={voxel=def}}
 local battle={letterboxWhite=false};local foreign={}
 local canvas=love.graphics.newCanvas(800,720);local other=love.graphics.newCanvas(800,720)
-local game={data=data,save={options={}},mods=loader,stack={states={battle},visibleBase=function()return 1 end}}
+local game=setmetatable({data=data,save={options={}},mods=loader,
+ stack={states={battle},visibleBase=function()return 1 end}},{__index=NativeGame})
 local ready,surface,staged,returnedBattle=true,true,true,battle
 local held,shot=battle,{canvas=canvas}
 local scene={battle=function()return held end,shot=function()return shot end}
