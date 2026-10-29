@@ -271,7 +271,7 @@ end
 local nativeNew,nativeFromCore=M.new,M.fromCore
 function M._workerCompatible()
   if getmetatable(M)~=nil or M.new~=nativeNew or M.fromCore~=nativeFromCore or M.COLS~=16 then return false end
-  for _,module in ipairs({Tiles,require('src.render.Gen3PaletteCycles'),require('src.render.Gen3PaletteSamples')})do
+  for _,module in ipairs({Tiles,PaletteCache,require('src.render.Gen3PaletteCycles'),require('src.render.Gen3PaletteSamples')})do
     local guard=type(module)=='table' and rawget(module,'_workerCompatible')
     if type(guard)~='function' or not guard()then return false end
   end

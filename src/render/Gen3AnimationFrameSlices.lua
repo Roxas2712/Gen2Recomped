@@ -25,4 +25,12 @@ function M.trim(cache, count)
   end
 end
 
+local workerMethods={}
+for key,value in pairs(M)do workerMethods[key]=value end
+function M._workerCompatible()
+  if getmetatable(M)~=nil then return false end
+  for key,value in pairs(workerMethods)do if M[key]~=value then return false end end
+  for key in pairs(M)do if key~='_workerCompatible'and workerMethods[key]==nil then return false end end
+  return true
+end
 return M

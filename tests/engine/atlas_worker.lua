@@ -223,7 +223,22 @@ local customBuild=require(buildName)
 T.eq(customBuild.available(),false,'a replacement source module needs no private worker guard')
 T.eq(customBuild.prepare(fixture.pair,fixture.layout,function()end,function()end),nil,'replacement source module retains native admission')
 package.loaded[moduleName],package.loaded[buildName]=savedPixels,savedBuild
-P.buildWorkers=true;P.atlasWorker=false
+P.buildWorkers=true
+for _,spec in ipairs{{'src.compat.gen1.AtlasPaletteCache','read'},{'src.render.Gen3AnimationFrameSlices','get'}}do
+ local helper=require(spec[1]);local method=spec[2];local original=helper[method];local observed=0
+ helper[method]=function(...)observed=observed+1;return original(...)end
+ f=fresh()
+ local bank=f.game.data.map_tilesets.P
+ bank.animations={{tile=0,count=1,step=3,frames={bank.tiles:sub(1,32)}}}
+ before=nextId
+ Native.prefetch(f.pair)
+ T.eq(nextId,before,'foreign helper methods keep CPU work under their native owner')
+ T.check(Native.get(f.pair).image~=nil,'helper override retains immediate native construction')
+ T.check(observed>0,'the original main-thread consumer actually invokes the override')
+ T.eq(Build._cacheInfo(Native._pairs).worker,0,'foreign helper result cannot claim native worker provenance')
+ helper[method]=original;Native.release()
+end
+P.atlasWorker=false
 f=fresh();before=nextId;Native.prefetch(f.pair)
 T.eq(nextId,before,'atlas worker switch independently preserves fallback')
 T.check(Native.get(f.pair).image~=nil,'atlas OFF result remains usable')

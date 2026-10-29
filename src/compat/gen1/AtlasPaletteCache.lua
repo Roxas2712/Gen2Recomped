@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Reuse a static native palette projection only after comparing every RGB
 -- input by value. Caller-visible palette tables are never the cache's owner.
+local Tiles=require('src.render.Gen3Tiles')
 local C={};C.__index=C
 local function plain(value)return type(value)=='table'and getmetatable(value)==nil end
 local function copyRows(rows)
@@ -10,6 +11,10 @@ local function copyRows(rows)
 end
 local function inputs(self,expected,out)
  local decoder,layout=self.decoder,self.layout
+ local guard=rawget(Tiles,'_workerCompatible')
+ if not plain(layout)or getmetatable(decoder)~=Tiles
+  or rawget(decoder,'palette')~=nil or rawget(decoder,'paletteBank')~=nil
+  or type(guard)~='function'or not guard()then return false end
  local state=decoder.paletteState
  if not plain(state)or not state.complete or not plain(state.primary)or not plain(state.secondary)then return false end
  for _,bank in ipairs{decoder.primary,decoder.secondary}do
@@ -40,7 +45,7 @@ end
 local function eligible(overrides)return plain(overrides)and next(overrides)==nil end
 function C:read(overrides,rows)
  local d=self.decoder;local saved=self.saved
- if saved and eligible(overrides)and rows
+ if saved and eligible(overrides)and plain(rows)
   and saved.primaryBytes==d.primary.sourcePaletteBytes and saved.secondaryBytes==d.secondary.sourcePaletteBytes
   and saved.split==d.palettesInPrimary and saved.total==(self.layout.palettesTotal or 13)
   and inputs(self,saved.rgb)then
@@ -62,5 +67,14 @@ function C:remember(overrides,rows,lut,bgr,key)
  for i=0,255 do savedLut[i]=lut[i]end
  self.saved={rgb=rgb,primaryBytes=d.primary.sourcePaletteBytes,secondaryBytes=d.secondary.sourcePaletteBytes,
   split=d.palettesInPrimary,total=self.layout.palettesTotal or 13,rows=savedRows,lut=savedLut,bgr=copyRows(bgr),key=key}
+end
+-- The worker must use the same native helper methods as the main-thread owner.
+local workerMethods={}
+for key,value in pairs(C)do workerMethods[key]=value end
+function C._workerCompatible()
+ if getmetatable(C)~=nil then return false end
+ for key,value in pairs(workerMethods)do if C[key]~=value then return false end end
+ for key in pairs(C)do if key~='_workerCompatible'and workerMethods[key]==nil then return false end end
+ return true
 end
 return C

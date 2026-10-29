@@ -47,5 +47,21 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  setmetatable(rgb,nil)
  T.check(cache:read({},model.paletteRows)~=nil)
  T.eq(d.paletteState.ticks,0,'projection observation does not advance native time')
+ local rowReads=0
+ local foreignRows=setmetatable({},{__index=function(_,slot)rowReads=rowReads+1;return model.paletteRows[slot]end})
+ T.eq(cache:read({},foreignRows),nil,'foreign published row observers retain the projection path')
+ T.eq(rowReads,0,'cache admission does not invoke foreign row accessors')
+ local nativePalette=d.palette
+ d.palette=function(self,slot)
+  local row=nativePalette(self,slot)
+  if slot~=0 then return row end
+  local copy={};for i,color in ipairs(row)do copy[i]=color end
+  copy[2]={255,0,0};return copy
+ end
+ T.eq(cache:read({},model.paletteRows),nil,'instance palette override invalidates cached projection')
+ model:update(1)
+ T.eq(model.bgr[0][1],31,'actual model update observes the overridden red palette word')
+ d.palette=nil;model:update(2)
+ T.eq(model.bgr[0][1],held,'restoring the native accessor restores native projection')
 end
 T.finish('static native palette projection, mutable RGB/provenance and independent palette owners')

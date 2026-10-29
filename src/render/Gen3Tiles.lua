@@ -596,6 +596,8 @@ local workerMethods={}
 for key,value in pairs(Gen3Tiles)do workerMethods[key]=value end
 function Gen3Tiles._workerCompatible()
   if getmetatable(Gen3Tiles)~=nil then return false end
+  local guard=type(AnimationFrameSlices)=='table'and rawget(AnimationFrameSlices,'_workerCompatible')
+  if type(guard)~='function'or not guard()then return false end
   for key,value in pairs(workerMethods)do if Gen3Tiles[key]~=value then return false end end
   for key in pairs(Gen3Tiles)do if key~='_workerCompatible' and workerMethods[key]==nil then return false end end
   return true
