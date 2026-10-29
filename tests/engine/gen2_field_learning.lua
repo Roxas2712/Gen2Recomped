@@ -10,6 +10,7 @@ local Picker=require('src.ui.Gen2MoveDeleter')
 local Pokemon=require('src.pokemon.Pokemon')
 local Evolution=require('src.pokemon.Evolution')
 local originalTeach=Game.learnMoveOn
+local SourceMon=require('src.compat.gen2.Mon');local originalLearn=SourceMon.learnMove
 local function fixture(edition)
   Version.set(edition)
   local data=T.fixtures.fresh();data.constants.gen=2
@@ -25,7 +26,12 @@ local function fixture(edition)
     ['mods/field_learning/main.lua']=[[
       local mod=...;local G=require('src.core.Game2')
       mod.exports.Game=G;mod.exports.List=require('src.ui.gen2.ForgetMoveList')
-      mod.exports.events={};mod.exports.calls=0
+      mod.exports.events={};mod.exports.calls=0;mod.exports.learnCalls=0
+      local Mon=require('src.battle.gen2.Mon');local learn=Mon.learnMove
+      Mon.learnMove=function(...)
+        mod.exports.learnCalls=mod.exports.learnCalls+1
+        return learn(...)
+      end
       local teach=G.learnMoveOn
       G.learnMoveOn=function(self,mon,id,done)
         mod.exports.calls=mod.exports.calls+1
@@ -116,8 +122,10 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   Evolution.learnMoves(g,mon,{'FIX_SCRATCH','FIELD_FIVE'},function()finished=finished+1 end)
   close();T.eq(p.calls,before+2,'native sequential field learning uses the public entry twice')
   T.eq(finished,1);T.eq(#p.events,4,'native field path emits exactly once per write')
+  T.eq(p.learnCalls,p.calls,'native field teaching honors the public source Mon learner wrapper')
   require('src.mods.Loader').teardown();run.release()
   T.eq(Game.learnMoveOn,originalTeach,'loader teardown restores the native entry')
+  T.eq(SourceMon.learnMove,originalLearn,'loader teardown restores the source learner entry')
 end
 Version.set(previous);Input.pressed={};Input.state={}
 T.finish('native and source GSC field teaching, four-row UI, HM refusal, cancellation and shared events')

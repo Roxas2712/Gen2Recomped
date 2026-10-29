@@ -1,7 +1,6 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Field teaching uses the native stack, text boxes and four-row Gen2 picker.
 -- The source Game2 entry and native item/evolution paths share these writes.
-local Learnset=require('src.pokemon.Gen2Learnset')
 local TextBox=require('src.render.TextBox')
 local Screens=require('src.ui.Screens')
 local Strings=require('src.core.Strings')
@@ -22,7 +21,9 @@ function M.teach(game,mon,moveId,onDone)
   local name=require('src.pokemon.Pokemon').displayName(mon)
   local def=data.moves and data.moves[moveId]
   local moveName=def and def.name or moveId
-  local ok,reason,entry=Learnset.learn(mon,moveId,data)
+  -- Source wrappers remain authoritative here; the default source method
+  -- dispatches to the same native Gen2Learnset write/event owner.
+  local ok,reason,entry=require('src.compat.gen2.Mon').learnMove(mon,moveId,data)
   if ok then
     return say(Strings('%s learned\n%s!',name,moveName),function()done(true)end)
   end
