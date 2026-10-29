@@ -44,8 +44,9 @@ the existing pinned common bag algorithm and its notices remain intact.
   complete own-cartridge import/title with matching import-source fingerprints.
 - FireRed and LeafGreen each pass their seven-view native bag regression on
   the same production runtime, including cancel, result timing, last-item
-  removal, the 999-berry boundary and actual disk save/load. Final public CI
-  remains pending.
+  removal, the 999-berry boundary and actual disk save/load. The pull request
+  records final public CI and subsequent acceptance after integrating public
+  main, separately from this original `6cf8b100` native evidence.
   FireRed's seven original full RGBA frames exactly match its inspected prior
   views. LeafGreen's six changed inventory-order views were inspected at
   original resolution; its berry view exactly matches its inspected prior.
