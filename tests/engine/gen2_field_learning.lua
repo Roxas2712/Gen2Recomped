@@ -71,12 +71,14 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   local g,mon,p,run,tick,choose,picker,close,fill=fixture(edition)
   local answers={}
   mon.moves={{id='FIX_TACKLE',pp=1}}
-  g:learnMoveOn(mon,'FIELD_FIVE',function(value)answers[#answers+1]=value end)
+  local result=g:learnMoveOn(mon,'FIELD_FIVE',function(value)answers[#answers+1]=value;return 'callback-private-value'end)
+  T.eq(result,nil,'source free-slot entry has no return value')
   T.eq(mon.moves[2].id,'FIELD_FIVE');T.eq(mon.moves[2].maxPp,7)
   T.eq(#p.events,1);T.eq(p.events[1].mon,mon)
   T.eq(#answers,0,'completion waits for the actual learned message')
   close();T.same(answers,{true})
-  g:learnMoveOn(mon,'FIELD_FIVE',function(value)answers[#answers+1]=value end)
+  result=g:learnMoveOn(mon,'FIELD_FIVE',function(value)answers[#answers+1]=value;return 'callback-private-value'end)
+  T.eq(result,nil,'source known-move entry does not leak a callback return')
   T.same(answers,{true,false},'known move returns false without opening a menu')
   T.eq(#p.events,1);close()
 

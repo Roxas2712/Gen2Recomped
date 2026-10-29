@@ -14,7 +14,7 @@ function M.teach(game,mon,moveId,onDone)
   local function done(learned)
     if complete then return end
     complete=true
-    if onDone then return onDone(learned)end
+    if onDone then onDone(learned)end
   end
   local function say(text,next_,opts)
     stack:push(TextBox.new(game,text,next_,opts))
