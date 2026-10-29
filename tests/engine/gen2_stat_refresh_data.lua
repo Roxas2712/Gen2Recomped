@@ -45,6 +45,7 @@ for packed=0,65535 do
     end
   end
 end
+T.eq(Mon.hpDV({specialAttack=1}),0,'source HP helper reads the shared Special gene only')
 local fallback=Mon.stats(source,{specialAttack=3,specialDefense=10,hp=99},25,
   {specialAttack=65535,specialDefense=256})
 T.eq(fallback.specialAttack,value(60,3,25,65535),'legacy special-attack investment fallback')

@@ -52,10 +52,9 @@ end
 
 -- GSC stores only the four genes. A stale saved HP DV must not override
 -- their low bits when a mod/editor changes a gene and refreshes the stats.
-function Stats.hpDV(dvs)
+function Stats.hpDV(dvs, special)
   dvs=dvs or {}
-  local special=dvs.special
-  if special==nil then special=dvs.specialAttack or dvs.specialDefense end
+  if special==nil then special=dvs.special end
   return ((dvs.attack or 0)%2)*8+((dvs.defense or 0)%2)*4
     +((dvs.speed or 0)%2)*2+(special or 0)%2
 end
@@ -143,7 +142,7 @@ function Stats.calcGen2(base, dvs, level, statExp)
     return calcOne(stat or 1,dv or 0,math.max(0,effort or 0),level,hp)
   end
   local out={
-    hp=value(base.hp,Stats.hpDV(dvs),statExp.hp,true),
+    hp=value(base.hp,Stats.hpDV(dvs,special),statExp.hp,true),
     attack=value(base.attack,dvs.attack,statExp.attack),
     defense=value(base.defense,dvs.defense,statExp.defense),
     speed=value(base.speed,dvs.speed,statExp.speed),
