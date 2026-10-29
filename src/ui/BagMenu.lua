@@ -509,6 +509,13 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
           .modifyHappiness(game.save, "USEDTMHM", target)
         require("src.pokemon.Gen2Friendship").change(target,"LEARNMOVE")
       end
+      if require('src.core.GameVersion').isGen2() then
+        return (game.learnMoveOn or require('src.core.Game').learnMoveOn)(game,target,moveId,function(learned)
+          if learned and result=='learn' then consume(game,id,list)end
+          if learned then taught()end
+          returnToBag()
+        end)
+      end
       if #target.moves < 4 then
         table.insert(target.moves, { id = moveId, pp = mdef.pp })
         local who = target.nickname or game.data.pokemon[target.species].name
@@ -761,6 +768,9 @@ local function vanillaUseOn(game, battle, id, target, list, moveIndex, picker, p
               if mv.id == moveId then return nextStep() end
             end
             local mdef = game.data.moves[moveId]
+            if GameVersion.isGen2() then
+              return (game.learnMoveOn or require('src.core.Game').learnMoveOn)(game,target,moveId,nextStep)
+            end
             if #target.moves < 4 then
               table.insert(target.moves, { id = moveId, pp = mdef.pp })
               local name = target.nickname or def.name

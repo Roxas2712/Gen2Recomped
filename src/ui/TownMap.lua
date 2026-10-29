@@ -280,15 +280,24 @@ function TownMap.new(game, opts)
       end
       return false
     end
-    for mapId, enc in pairs(game.data.encounters or {}) do
-      local found = false
-      for _, group in pairs(enc) do
-        if holds(group) then found = true break end
+    if self.mode=='gen2' and require('src.core.GameVersion').isGen2() then
+      local byLandmark={}
+      for _,loc in ipairs(self.locs)do byLandmark[loc.landmark]=loc end
+      for _,index in ipairs(require('src.compat.gen2.Nests').find(game.data,opts.nestSpecies,nil,game.save))do
+        local loc=byLandmark[index]
+        if loc then self.nests[#self.nests+1]=loc end
       end
-      local loc = found and self.byMap[mapId]
-      if loc and not seen[loc] then
-        seen[loc] = true
-        table.insert(self.nests, loc)
+    else
+      for mapId, enc in pairs(game.data.encounters or {}) do
+        local found = false
+        for _, group in pairs(enc) do
+          if holds(group) then found = true break end
+        end
+        local loc = found and self.byMap[mapId]
+        if loc and not seen[loc] then
+          seen[loc] = true
+          table.insert(self.nests, loc)
+        end
       end
     end
     -- field.townMap.nest lifts the icon path out of the engine

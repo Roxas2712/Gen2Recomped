@@ -3,6 +3,10 @@
 local M={}
 local Assets=require('src.render.Assets')
 local OPTS={font='native_4',textMode=0}
+local Performance=require('src.core.Performance')
+-- Same palette-word invalidation as Gen1Recomp cd0ea1837. Keep the native
+-- host's color conversion and scissor/error ownership.
+local paints=setmetatable({},{__mode='k'})
 local quads={}
 local function tile(path,n,x,y)
   if not quads[n]then quads[n]=love.graphics.newQuad(n%40*8,math.floor(n/40)*8,8,8,320,24)end
@@ -11,6 +15,27 @@ end
 local function color(word)
   local function c(n)return math.floor(n*255/31+.5)/255 end
   return {c(word%32),c(math.floor(word/32)%32),c(math.floor(word/1024)%32),1}
+end
+local function palettePaint(s)
+  local p=s.palette
+  local cached=Performance.rsBattlePaintCache~=false and paints[s]
+  if cached and cached.a==p[2]and cached.b==p[3]and cached.c==p[4]
+    and cached.d==p[11]and cached.e==p[12]then return cached end
+  local colors={fg=color(p[2]),shadow=color(p[4]),bg=color(p[3])}
+  local out={a=p[2],b=p[3],c=p[4],d=p[11],e=p[12],colors=colors}
+  out.male={fg=color(p[12]),shadow=colors.bg,bg=colors.bg}
+  out.female={fg=color(p[11]),shadow=colors.bg,bg=colors.bg}
+  if Performance.rsBattlePaintCache~=false then paints[s]=out end
+  return out
+end
+local rowOpts=setmetatable({},{__mode='k'})
+local function options(colors)
+  local opts=Performance.rsBattlePaintCache~=false and rowOpts[colors]
+  if not opts then
+    opts={font='native_4',textMode=0,colors={fg=colors.fg,shadow=colors.shadow,bg={0,0,0,0}}}
+    if Performance.rsBattlePaintCache~=false then rowOpts[colors]=opts end
+  end
+  return opts
 end
 function M.available(battle)
   local v=require('src.core.GameVersion').get()
@@ -28,7 +53,7 @@ local function row(font,text,x,y,width,colors,fill)
     g.setScissor(left,top,math.max(0,math.min(sx+sw,x+width)-left),math.max(0,math.min(sy+sh,y+8)-top))
   else g.setScissor(x,y,width,8)end
   if fill then g.setColor(colors.bg);g.rectangle('fill',x,y,width,8)end
-  local opts={font='native_4',textMode=0,colors={fg=colors.fg,shadow=colors.shadow,bg={0,0,0,0}}}
+  local opts=options(colors)
   local ok,why=pcall(font.draw,tostring(text or ''),x,y-8,opts)
   if sx then g.setScissor(sx,sy,sw,sh)else g.setScissor()end
   g.setColor(1,1,1,1);if not ok then error(why,0)end
@@ -41,7 +66,7 @@ function M.draw(battle,battler,x,y,player,font,paint)
   local status=battler.shownStatus and battle:statusLabel({status=battler.shownStatus})
   local statusPath=status and s.status[bid+1][status]
   if status and not statusPath then return false end -- custom HUD labels keep the host painter
-  local colors={fg=color(s.palette[2]),shadow=color(s.palette[4]),bg=color(s.palette[3])}
+  local palette=palettePaint(s);local colors=palette.colors
   local g=love.graphics;local nameX=x+(player and 16 or 8)
   local blank=Assets.image(s.blank)
   g.setColor(1,1,1,1)
@@ -53,7 +78,7 @@ function M.draw(battle,battler,x,y,player,font,paint)
   if gender=='male'or gender=='female'then
     local offset=font.measure(battler.name,OPTS)
     if offset<56 then
-      local ink={fg=color(s.palette[gender=='male'and 12 or 11]),shadow=colors.bg,bg=colors.bg}
+      local ink=palette[gender]
       row(font,gender=='male'and '♂'or '♀',nameX+offset,y+8,56-offset,ink,false)
     end
   end
@@ -97,7 +122,7 @@ function M.drawSafari(battle,x,y,font)
   local hud=battle.data.constants.gen3BattleHud
   if not s or not battle.gen3Safari or not(hud and hud.images and hud.images.safari)then return false end
   local g=love.graphics;g.setColor(1,1,1,1);g.draw(Assets.image(hud.images.safari),x,y)
-  local colors={fg=color(s.palette[2]),shadow=color(s.palette[4]),bg=color(s.palette[3])}
+  local colors=palettePaint(s).colors
   local G=require('src.battle.Gen3Safari')
   for tile=0,6 do g.draw(Assets.image(s.blank),x+24+tile*8,y)end
   row(font,G.text(battle,'balls'),x+24,y+8,56,colors,true)

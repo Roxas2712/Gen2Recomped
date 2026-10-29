@@ -18,6 +18,16 @@ local Strings = require("src.core.Strings")
 
 local Evolution = {}
 
+function Evolution.levelReached(evo,level)
+  return level >= (evo.level or 0)
+end
+function Evolution.levelEntry(def,level)
+  for _,evo in ipairs(def and def.evolutions or{})do
+    if (evo.method=='EVOLVE_LEVEL' or evo.method=='LEVEL')
+        and Evolution.levelReached(evo,level) then return evo end
+  end
+end
+
 Evolution.METHODS = {
   -- Gen4 NARC records retain their numeric target and parameter. Keep these
   -- methods usable for installed caches as well as fresh imports.
@@ -31,7 +41,7 @@ Evolution.METHODS = {
   LEVEL = {
     check = function(game, mon, evo, trigger)
       if Evolution.holdsEverstone(game, mon) then return false end
-      return trigger.kind == "levelup" and mon.level >= (evo.level or 0)
+      return trigger.kind == "levelup" and Evolution.levelReached(evo,mon.level)
     end,
     describe = function(evo)
       return Strings("Level %d", evo.level or 0)
@@ -438,6 +448,9 @@ function Evolution.learnMoves(game,mon,moves,onDone)
     end
     local mdef = game.data.moves[moveId]
     if not mdef then return nextStep() end
+    if require('src.core.GameVersion').isGen2() then
+      return (game.learnMoveOn or require('src.core.Game').learnMoveOn)(game,mon,moveId,nextStep)
+    end
     local name = mon.nickname or def.name
     if #mon.moves < 4 then
       table.insert(mon.moves, { id = moveId, pp = mdef.pp })

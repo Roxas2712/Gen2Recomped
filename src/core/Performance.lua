@@ -110,6 +110,10 @@ Performance.gen4ChunkPrebuild = true
 Performance.buildWorkers = true
 -- W1a: copied Gen-3 compatibility atlas pixels; uploads stay on the main thread.
 Performance.atlasWorker = true
+-- Gen1Recomp performance follow-ups; each retains its synchronous control.
+Performance.gbAssetPrefetch = true
+Performance.audioPriorityPrewarm = true
+Performance.rsBattlePaintCache = true
 Performance.GC_PAUSE = 120
 Performance.GC_STEP_MUL = 300
 Performance.GC_BUDGET_SECONDS = 0.0005

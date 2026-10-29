@@ -148,7 +148,13 @@ T.eq(raised.species,'SPECIES_003','source constructor preserves canonical native
 T.eq(raised.dvs.special,11,'source constructor accepts explicit inherited DVs')
 T.eq(raised.item,'TEST_ITEM','source constructor retains its authored held item')
 T.eq(raised.moves[1].pp,3,'source constructor preserves authored PP')
-T.check(raised.moves~=authored and raised.moves[1]~=authored[1],'trainer construction does not alias source moves')
+T.eq(raised.moves,authored,'source constructor retains its authored move-array identity')
+T.eq(raised.moves[1],authored[1],'source constructor retains its authored move-slot identity')
+local nativeGenes={attack=8,defense=9,speed=10,special=11}
+local nativeRaised=Pokemon.new(data,'VENUSAUR',25,nil,nil,{dvs=nativeGenes,moves=authored})
+T.check(nativeRaised.dvs~=nativeGenes,'native trainer genes retain their existing copy policy')
+T.check(nativeRaised.moves~=authored and nativeRaised.moves[1]~=authored[1],
+  'native constructor retains independently owned moves')
 local save=require('src.core.SaveData').newGame();save.player.name='TEST';save.player.id=1234
 Mon.stampOT(save,raised)
 T.eq(raised.otId,1234,'source gift stamps the native OT identity')

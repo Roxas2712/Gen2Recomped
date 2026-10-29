@@ -26,6 +26,7 @@
 -- which is the question a report like this one has to answer first.
 
 local Logger = require("src.core.Logger")
+local FrameTrace = require("src.core.FrameTrace")
 
 local FrameProfile = {}
 
@@ -71,7 +72,15 @@ function FrameProfile.setEnabled(want)
 end
 
 function FrameProfile.toggle()
-  return FrameProfile.setEnabled(not on)
+  local want=not on
+  if want then
+    FrameTrace.start()
+  else
+    FrameTrace.stop()
+    local ok,written,why=pcall(FrameTrace.write,'frame-trace.json')
+    if not(ok and written) then Logger.warn('frame trace output failed: %s',tostring(why or written)) end
+  end
+  return FrameProfile.setEnabled(want)
 end
 
 -- The measuring primitive.  Returns a function that closes the section; call
@@ -84,9 +93,11 @@ end
 local function noop() end
 
 function FrameProfile.section(name)
-  if not on then return noop end
+  if not on then return FrameTrace.section(name) end
+  local traceClose = FrameTrace.section(name)
   local t0 = clock()
   return function()
+    traceClose()
     local dt = clock() - t0
     if total[name] == nil then
       total[name] = 0
@@ -111,6 +122,7 @@ function FrameProfile.now()
 end
 
 function FrameProfile.add(name, seconds)
+  FrameTrace.add(name, seconds)
   if not on then return end
   if not (seconds and seconds > 0) then seconds = seconds or 0 end
   if total[name] == nil then
