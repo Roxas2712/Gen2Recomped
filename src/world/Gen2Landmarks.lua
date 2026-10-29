@@ -73,4 +73,21 @@ function M.kantoStart(data)
  local pallet=data and data.maps and data.maps.PALLET_TOWN
  return tonumber(pallet and pallet.landmark) or index or (Version.get()=='crystal' and 0x2f or 0x2e)
 end
+function M.record(data,index)
+ if type(index)~='number' or index%1~=0 or index<0 or index>255 then return nil end
+ local rows=M.town(data);rows=rows and rows.landmarks
+ return rows and (rows[index] or rows[tostring(index)]) or nil
+end
+function M.id(data,index)
+ if type(index)~='number' or index%1~=0 or index<0 or index>255 then return nil end
+ if not M.town(data)then return nil end
+ local row=M.record(data,index)
+ return row and (row.landmarkId or row.id) or M.dataOrder(data)[index+1]
+end
+function M.region(data,index)
+ if type(index)~='number' or index%1~=0 or index<=0 or index>255 then return nil end
+ local ship=M.index(data,'LANDMARK_FAST_SHIP')
+ if ship and index>=ship then return nil end
+ return index<M.kantoStart(data) and 'johto' or 'kanto'
+end
 return M

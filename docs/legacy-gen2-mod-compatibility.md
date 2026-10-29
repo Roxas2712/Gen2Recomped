@@ -44,6 +44,16 @@ loop. `src.ui.gen2.ForgetMoveList` resolves to the native list module, so a
 presentation wrapper reaches the picker without editing the mod. These field
 contracts do not implement the separate source Battle turn/event interface.
 
+`src.core.gen2.Nests` and native AREA screens share the native
+`src.world.Gen2Nests` search. Grass at every time of day, water and active
+Johto roamers contribute sorted, deduplicated landmark indices. Fishing,
+headbutt-only, swarm replacement and Fast Ship entries do not become ordinary
+nest markers. An unmet roamer with zero HP remains visible; a retired or
+unreleased one does not. Reads use the current native map header rather than a
+saved landmark copy, without moving roamers or migrating saves. Landmark
+getters return the actual native records, and region boundaries follow the
+active cartridge/imported metadata, including Crystal's inserted Battle Tower.
+
 `tests/engine/gen2_field_learning.lua` drives the actual text/choice/picker
 stack through free, known, full, HM-refusal and cancellation paths. It also
 checks that sequential native field learning reaches a source wrapper and that
