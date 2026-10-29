@@ -10,7 +10,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        include:
+          # Preserve the existing macOS check name while selecting an available
+          # hosted pool. ARM jobs repeatedly expired before acquiring a runner.
+          - os: macos-latest
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner || matrix.os }}
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v7
