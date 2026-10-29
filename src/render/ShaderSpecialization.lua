@@ -5,9 +5,10 @@
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
 local Numeric=require('src.render.NumericUniformReplay')
-local S={deferInactiveNumeric=false}
+local Keys=require('src.render.ShaderVariantKeyCache')
+local S={deferInactiveNumeric=false,reuseVariantKeys=false}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredNumericUpdates=0,numericReplayWrites=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredNumericUpdates=0,numericReplayWrites=0,keyBuilds=0,keyReuses=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -116,7 +117,10 @@ local function remember(record,method,args)
    record.continuous[name]=true;stats.continuousUniforms=stats.continuousUniforms+1
   end
   local literal=not record.continuous[name]and row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
-  if record.scalars[name]~=literal then record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1 end
+  if record.scalars[name]~=literal then
+   local old=record.scalars[name];record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1
+   if record.keyCache then Keys.update(record.keyCache,name,old,literal)end
+  end
  end
  -- Textures/opaque values and the active program keep eager native writes.
  -- Only detached numeric banks of inactive programs may wait until reuse.
@@ -232,12 +236,25 @@ local function choose(record)
  end
  if love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()~=record.gamma then disable(record);return end
  if record.keyRevision~=record.scalarRevision then
-  local constants,key={},{}
-  for _,name in ipairs(record.plan.order)do
-   local value=record.scalars[name]
-   if value then constants[name]=value;key[#key+1]=name..'='..value end
+  local cached
+  if S.reuseVariantKeys and not record.keyCacheUnsupported then
+   if not record.keyCache then
+    record.keyCache=Keys.new(record.plan,record.scalars,limits.perSource)
+    record.keyCacheUnsupported=record.keyCache==nil
+   end
+   if record.keyCache then cached=Keys.get(record.keyCache)end
   end
-  record.constants,record.key=constants,table.concat(key,';');record.keyRevision=record.scalarRevision
+  if cached then record.constants,record.key=cached.constants,cached.key;stats.keyReuses=stats.keyReuses+1
+  else
+   local constants,key={},{}
+   for _,name in ipairs(record.plan.order)do
+    local value=record.scalars[name]
+    if value then constants[name]=value;key[#key+1]=name..'='..value end
+   end
+   record.constants,record.key=constants,table.concat(key,';');stats.keyBuilds=stats.keyBuilds+1
+   if S.reuseVariantKeys and record.keyCache then Keys.put(record.keyCache,record.key,record.constants)end
+  end
+  record.keyRevision=record.scalarRevision
  end
  if record.key==''then return end
  local depth=record.depthAdapter and record.depthAdapter.fragmentDepthTarget()or false

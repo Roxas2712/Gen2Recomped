@@ -35,7 +35,7 @@ love={graphics=g,getVersion=function()return 12 end,system={getOS=function()retu
  local value;return{push=function(_,v)value=v end,peek=function()return value end}
 end}}
 jit={arch='arm64'};os.getenv=function(n)if n=='POKEPORT_SHADER_BRANCHES'then return'1'end;return savedEnv(n)end
-local S=assert(loadfile('src/render/ShaderSpecialization.lua'))();S.deferInactiveNumeric=true;T.check(S.install())
+local S=assert(loadfile('src/render/ShaderSpecialization.lua'))();S.deferInactiveNumeric=true;S.reuseVariantKeys=true;T.check(S.install())
 local source='uniform float gate;uniform float amount;uniform float values[4];uniform mat4 matrix;uniform Image tex;vec4 effect(){if(gate>.5)return vec4(amount);return vec4(values[0]);}\n/*'..string.rep('x',65536)..'*/'
 local original=g.newShader(source);original:send('amount',1);original:send('gate',0);g.setShader(original);g.draw()
 local a=actual;T.check(a~=original,'first optional program')
@@ -71,12 +71,19 @@ oldB=data[b].writes.amount;original:send('amount',5)
 T.eq(data[b].writes.amount,oldB+1,'foreign owner permanently retains eager propagation')
 local before=data[original].values.amount[1];T.check(not pcall(methods.send,original,'amount',{}));T.eq(data[original].values.amount[1],before,'failed native validation remains atomic')
 local status=S.status();T.check(status.numericReplayWrites>0 and status.deferredNumericUpdates>0,'actual adapter paths exercised')
+T.check(S.status().keyReuses>0,'actual branch-key cache reused a prior native program key')
+S.reuseVariantKeys=false;original:send('gate',1);g.draw();T.eq(actual,b,'legacy key builder selects the same program')
+S.reuseVariantKeys=true;original:send('gate',0);g.draw();T.eq(actual,a,'cache survives disabled-key updates')
 -- Pure snapshot classification rejects every resource/opaque tail.
 local N=require('src.render.NumericUniformReplay')
 T.check(N.numericBank({{n=2,'column',{1,2,3,4}}}))
 T.check(not N.numericBank({{n=1,{resource={texture}}}}))
 T.check(not N.numericBank({{n=1,{[2]=1}}}))
 T.check(not N.numericBank({{n=1,setmetatable({1},{})}}))
+local continuous=g.newShader(source);continuous:send('gate',0);g.setShader(continuous);g.draw()
+continuous:send('gate',.25);g.draw();T.eq(actual,continuous,'continuous gate retains original dynamic program')
+continuous:send('gate',1);g.draw();T.eq(actual,continuous,'cached endpoint does not undo a continuous gate')
+g.setShader(original);g.draw()
 S.selectionTrace={}
 for i=1,1100 do g.draw()end
 T.eq(#S.selectionTrace,1024,'diagnostic selection trace is bounded')
