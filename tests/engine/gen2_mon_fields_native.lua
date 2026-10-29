@@ -10,6 +10,20 @@ local Stats=require('src.pokemon.Stats')
 local Battler=require('src.battle.Battler')
 local Native=require('src.battle.BattleState')
 local initial=Version.get()
+-- Exercise the real strict nested schema, not a direct unchecked Registry
+-- call. Both native split stats retain the same 1..255 bounds as other stats.
+local Schemas=require('src.mods.Schemas')
+for _,key in ipairs({'spatk','spdef'})do
+  for _,value in ipairs({1,91,255})do
+    T.check(Schemas.check(Schemas.REGISTRIES.pokemon,'pokemon','FIXMON_A',
+      {baseStats={[key]=value}},'patch'),'native split-stat patch accepted')
+  end
+  for _,value in ipairs({0,256,1.5,'91'})do
+    local accepted=Schemas.check(Schemas.REGISTRIES.pokemon,'pokemon','FIXMON_A',
+      {baseStats={[key]=value}},'patch')
+    T.eq(accepted,false,'invalid native split-stat patch rejected')
+  end
+end
 if not ok then
   Version.set('crystal')
   local data=T.fixtures.fresh();data.constants.gen=2
@@ -100,11 +114,13 @@ local run=T.sdk.loadMods({'mods/field_probe'},{data=data,fs=T.sdk.memfs({
  ['mods/field_probe/main.lua']=[[
    local mod=...
    local Mon=require('src.battle.gen2.Mon')
+   mod.content.pokemon:patch('FIXMON_A',{baseStats={spatk=91,spdef=92}})
    mod.exports.make=function(data)return Mon.new(data,'FIXMON_A',15,{rng=function(a)return a end})end
  ]],
 })})
 T.eq(#run.errors,0,'actual SDK source Mon consumer loads')
-T.eq(data.pokemon.FIXMON_A.baseStats.specialAttack,61,'actual Loader publishes source base-stat spelling')
+T.eq(data.pokemon.FIXMON_A.baseStats.specialAttack,91,'actual Loader accepts native split-stat patch and republishes source spelling')
+T.eq(data.pokemon.FIXMON_A.baseStats.specialDefense,92,'actual Loader preserves both native split-stat patches')
 local mon=run.loader.exports.field_probe.make(data)
 T.eq(mon.maxHp,mon.stats.hp,'actual source Mon constructor returns native maximum view')
 local Registry=require('src.mods.Registry')
