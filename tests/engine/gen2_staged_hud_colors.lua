@@ -14,8 +14,9 @@ Palette.setMode('redpp')
 for _,edition in ipairs{'gold','silver','crystal','red'}do
  Version.set(edition)
  local data=T.fixtures.fresh();require('src.render.Font').load(data)
- data.palettes={palettes={GREENBAR={{255,255,255},{247,214,123},{0,189,0},{0,0,0}},
-  EXPBAR={{255,255,255},{247,214,123},{33,140,255},{0,0,0}}}}
+ data.palettes=data.palettes or {palettes={},pokemon={}}
+ data.palettes.palettes.GREENBAR={{255,255,255},{247,214,123},{0,189,0},{0,0,0}}
+ data.palettes.palettes.EXPBAR={{255,255,255},{247,214,123},{33,140,255},{0,0,0}}
  local save=Save.newGame();save.party={Pokemon.new(data,'FIXMON_A',30)}
  local mods={exports={}}
  local b=Battle.newWild({data=data,save=save,mods=mods,stack={top=function()end}},'FIXMON_C',23)
