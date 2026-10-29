@@ -26,6 +26,14 @@ jobs:
         run: luajit tests/engine/gen2_movement_handoffs.lua
       - name: Exercise native connected-map targets and crossings
         run: luajit tests/engine/gen2_connection_targets.lua
+      - name: Exercise source and native field context consumers
+        run: luajit tests/engine/gen2_field_context.lua
+      - name: Compare complete class permissions with the pinned Gen1 engine
+        run: |
+          mkdir -p /tmp/gen2-field-permissions-contract
+          luajit tools/gen2_field_permissions_contract.lua native > /tmp/gen2-field-permissions-contract/native.txt
+          (cd .contract-reference/gen1 && luajit "$GITHUB_WORKSPACE/tools/gen2_field_permissions_contract.lua" reference) > /tmp/gen2-field-permissions-contract/reference.txt
+          cmp /tmp/gen2-field-permissions-contract/native.txt /tmp/gen2-field-permissions-contract/reference.txt
       - name: Compare all Crystal collision pairs with the pinned Gen1 engine
         run: |
           mkdir -p /tmp/gen2-permissions-contract

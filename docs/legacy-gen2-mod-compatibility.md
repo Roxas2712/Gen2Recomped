@@ -122,3 +122,24 @@ compiler-option contracts, standard 2D and API-3 custom programs retain the
 preceding engine compiler's output. Compact native shader sources without a
 trailing newline remain valid when the wrapper adds its preprocessor directives.
 The test uses synthetic geometry and no ROM; it does not replace a full mod run.
+
+
+### Live GSC field context and water permission queries
+
+The source `World` remains the actual native `OverworldController`, and
+`Permissions` remains the actual native `Collision` module. Existing native
+movement methods, strict terrain predicates and imported permission sets are
+unchanged. Additional `of`, land/water/wall, walkable, ledge and three-valued
+`surfable` queries accept GSC collision classes; `src.core.CollPermissions`
+exposes the same classification owner. These class queries do not reinterpret
+Gen3 collision blocking bits or replace actual map movement admission.
+
+`World:fieldContext(mon)` reads the live save/party, player/facing/upper collision
+classes, current block/index, native facing occupant, environment, movement state,
+forced-bike flag, escape point, Strength and darkness. `cellCollisionAcross`
+reads already resident neighbors with their actual pixel offsets, including live
+block edits. It does not load maps, advance scripts, roll encounters or modify
+saves. An absent neighbor is closed; a block index never addresses a foreign map.
+The existing non-GSC field-action protocols remain separate. This read interface
+does not claim the source FieldMoves action/result protocol or Aerodactyl-wall
+script callback; those are still open capabilities.
