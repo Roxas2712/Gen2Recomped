@@ -274,9 +274,12 @@ local function beforeDraw(method,object)
   if type(object)=='userdata'and object.typeOf and object:typeOf('Mesh')then
    first,count=object:getDrawRange();texture=object:getTexture()
   end
+  local depth,writes=love.graphics.getDepthMode and love.graphics.getDepthMode()
+  local blend,alpha=love.graphics.getBlendMode and love.graphics.getBlendMode()
   trace[#trace+1]={method=method,object=tostring(object),source=tostring(original(record)),
    program=tostring(variant and variant.shader or original(record)),key=record.key,
-   target=tostring(canvas),first=first,count=count,texture=tostring(texture)}
+   target=tostring(canvas),first=first,count=count,texture=tostring(texture),depth=depth,writes=writes,blend=blend,alpha=alpha,
+   color=love.graphics.getColor and{love.graphics.getColor()}or nil,scissor=love.graphics.getScissor and{love.graphics.getScissor()}or nil}
  end
 end
 local function admit(shader,source,second,third,n)
