@@ -1658,6 +1658,7 @@ function Loader:load(data)
   retireCompatibilityMaps()
   self.baseData = data
   require("src.core.Gen2SpeciesNames").publish(data)
+  require("src.world.Gen2SpriteMetadata").publish(data)
   require("src.pokemon.Gen2MonFields").publish(data)
   require("src.pokemon.Gen2Mail").load(data)
   require("src.compat.gen2.Decorations").useRegistry(data)
