@@ -142,7 +142,7 @@ return function(mod)
  mod.events:on('game.ready',function(payload)
   game=payload.game or payload;session.game=game
   baseline={};for _,name in ipairs(roots)do baseline[name]=Merge.deepCopy(game.data[name])end
-  mod.exports.baseTextSha256=love.data.encode('string','hex',love.data.hash('string','sha256',require('src.core.SaveSerializer').encode(baseline.text)))
+  mod.exports.baseTextSha256=love.data.encode('string','hex',love.data.hash('sha256',require('src.core.SaveSerializer').encode(baseline.text)))
   local ok,why=apply(initial or 'en',false)
   if not ok then session.error=why;session.opened=true end
   session:attach(game)
