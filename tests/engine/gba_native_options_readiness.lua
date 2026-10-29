@@ -53,7 +53,7 @@ Loader.new=function()return function(name)
  end}end
  if name=='src.import.gba.rse.text_chrome_extract'then return{
   extractLatin=function(_,face)T.eq(face,'small');return{width=256,height=512,fgRgba='',shRgba='',widths={}}end,
-  extractKeypadIcons=function()return{width=128,height=32,rgba=''}end}end
+  extractKeypadIcons=function(rom)T.eq(rom:u16(2),0x1234,'native keypad palette uses a complete u16 reader');return{width=128,height=32,rgba=''}end}end
  if name=='src.import.gba.rse.boot_gfx'then return{context=function()return{
   lz=function()end,pal=function()end,strip=function()return{png='data/generated/gba/native_options/arrows.png',w=16,h=16}end}
  end}end
@@ -73,6 +73,13 @@ for _,version in ipairs{'firered','leafgreen'}do
  T.eq(good,true,problem or'own FRLG keypad extractor dependency graph loads')
  T.eq(type(bytes)=='string'and#bytes,128*32*4,'own native keypad sheet reaches cache writer')
 end
+local cart={version='emerald',rom={u8=function()return 1 end,u16=function()return 0x1234 end}}
+local own=Loader.new('emerald');local S=own('src.import.gba.syms').of('emerald');local emitted={}
+Fs.write=function(path,raw)emitted[path]=raw;return true end
+local good,problem=pcall(Assets.extractFonts,cart,own,S)
+T.eq(good,true,problem or'actual Emerald font/keypad dependency graph completes')
+T.eq(type(emitted[Assets.KEYPAD])=='string'and#emitted[Assets.KEYPAD],128*32*4,'Emerald own keypad sheet reaches writer')
+for _,path in ipairs(Assets.resources('emerald'))do T.eq(type(emitted[path]),'string','native Emerald small face is emitted: '..path)end
 Fs.write=write;love.filesystem.load=fsLoad
 local Rows=require('src.ui.Gen3OptionRows');local host={};local step,activate=0,0;local page
 local owner={game=host,rows={{label='OWN STEP',engine={step=function(g,d)T.eq(g,host);step=step+d;return true end}},

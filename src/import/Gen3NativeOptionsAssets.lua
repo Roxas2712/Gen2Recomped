@@ -13,9 +13,10 @@ function M.resources(version)
 end
 -- Control tokens require the cartridge's keypad sheet. Falling back to words
 -- makes the native Hall caption collide with its right-aligned control hint.
-local function extractFonts(x,load,S)
+function M.extractFonts(x,load,S)
  local rom={id=x.version}
  function rom:get(at)return x.rom:u8(at)end
+ function rom:u16(at)return x.rom:u16(at)end
  local Fs,Writer=require('src.import.CacheFs'),require('src.import.LuaWriter')
  local function put(path,bytes)local ok,why=Fs.write(path,bytes);assert(ok,why)end
  local chrome
@@ -78,7 +79,7 @@ function M.extract(x)
   local c=load('src.import.gba.rse.boot_gfx').context(rom,cache,{game=version},'native_options')
   arrow=c:strip('arrows',c:lz('list_menu.o:sScrollIndicator_Gfx'),16,16,2,c:pal('sRedInterface_Pal',16))
  end
- extractFonts(x,load,S)
+ M.extractFonts(x,load,S)
  x._constants.gen3NativeOptions={format=2,version=version,textIR=text,frameCount=version=='emerald'and 20 or 10,
   manifest=version=='emerald'and M.MANIFEST or nil,arrow=arrow,resources=M.resources(version)}
 end
