@@ -78,6 +78,8 @@ for _,edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'})do
   T.eq(first.pp,54,'native healing shares source PP owner')
   T.eq(first.maxPp,54,'native healing publishes actual current maximum')
   local save=Save.newGame()
+  local Boxes=require('src.pokemon.Boxes')
+  Boxes.load(data);Boxes.ensure(save)
   local function wounded()
    local m=Pokemon.new(data,'FIXMON_A',20)
    m.moves={{id='FIX_TACKLE',pp=99,maxPp=61}}
