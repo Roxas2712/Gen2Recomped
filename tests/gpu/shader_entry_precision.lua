@@ -13,11 +13,16 @@ function M.run()
  local report={passed=false,checks=0,cases={},scope='Real LOVE12 synthetic shader entry compilation, validation and exact asymmetric GPU pixels; no third-party mod/gameplay acceptance.'}
  local vertex='vec4 position(mat4 m,vec4 v){return m*v;}'
  for _,q in ipairs{'lowp','mediump','highp'}do
-  local source=vertex..'\n#ifdef PIXEL\n'..q..' vec4 effect('..q..' vec4 color, Image tex, '..q..' vec2 uv, '..q..' vec2 screen){if(uv.x<0.25)discard;return Texel(tex,uv)*color;}\n#endif'
+ for _,returnMode in ipairs{'explicit','stage-default'}do
+  local qualifier=returnMode=='explicit'and(q..' ')or''
+  local stageDefault=returnMode=='stage-default'and'\n#ifdef GL_ES\n#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#endif\n#endif\n'or''
+  local source=vertex..'\n#ifdef PIXEL\n'..stageDefault..qualifier..'vec4 effect('..q..' vec4 color, Image tex, '..q..' vec2 uv, '..q..' vec2 screen){if(uv.x<0.25)discard;return Texel(tex,uv)*color;}\n#endif'
   local rawOK,raw=pcall(rawCompiler,source)
   if rawOK then raw:release()end
   local valid,message=g.validateShader(false,source)
   assert(valid,'Adapted validation failed: '..tostring(message))
+  local esValid,esMessage=g.validateShader(true,source)
+  assert(esValid,'Adapted ES validation failed: '..tostring(esMessage))
   local shader=g.newShader(source)
   g.push('all');g.origin();g.setCanvas(canvas);g.setScissor();g.setDepthMode();g.setShader(shader);g.setColor(1,1,1,1)
   g.setBlendMode('replace','premultiplied');g.clear(0,0,0,0);g.draw(image,0,0);g.pop()
@@ -30,7 +35,8 @@ function M.run()
    report.checks=report.checks+1
   end end
   pixels:release();shader:release()
-  report.cases[#report.cases+1]={precision=q,rawCompiled=rawOK,rawError=not rawOK and tostring(raw)or nil,adaptedValidation=true,adaptedPixels=true}
+  report.cases[#report.cases+1]={precision=q,returnPrecision=returnMode,rawCompiled=rawOK,rawError=not rawOK and tostring(raw)or nil,adaptedValidation=true,adaptedESValidation=true,adaptedPixels=true}
+ end
  end
  image:release();data:release();report.passed=true
  return report,canvas

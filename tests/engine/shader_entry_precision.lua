@@ -17,6 +17,16 @@ for _,q in ipairs{'lowp','mediump','highp'}do
  T.check(select(2,E.source(commented)),'commented declarations do not create extra entries')
  local withDirectives='#ifdef PIXEL\n#define CUSTOM_PRECISION precision highp float;\nCUSTOM_PRECISION\n'..authored..'\n#endif'
  T.check(select(2,E.source(withDirectives)),'literal parameter qualifiers survive user float precision directives')
+ local implicit=authored:gsub('^'..q..' vec4','vec4')
+ local defaultReturn,defaultChanged=E.source(implicit)
+ T.eq(defaultChanged,true,q..' parameters with an implicit return precision admitted')
+ T.check(defaultReturn:find('vec4 pokeportQualifiedPixelEffect('..q..' vec4',1,true)~=nil,
+  'implicit return and explicit input precisions preserved in the producer helper')
+ T.check(defaultReturn:find('if(uv.x<0.1)discard;return Texel(tex,uv)*color;',1,true)~=nil,
+  'implicit-return producer arithmetic and discard remain unchanged')
+ T.eq(select(2,E.source(defaultReturn)),false,'implicit-return adaptation is idempotent')
+ local waterStyle='#ifdef PIXEL\n#ifdef GL_ES\nprecision highp float;\n#endif\n'..implicit..'\n#endif'
+ T.check(select(2,E.source(waterStyle)),'stage default precision does not obscure explicit numeric inputs')
 end
 for _,source in ipairs{
  'vec4 effect(vec4 c,Image t,vec2 uv,vec2 sc){return c;}',
@@ -31,6 +41,8 @@ for _,source in ipairs{
  'precision highp sampler2D;\n'..entry('mediump'),
  'void pixelmain(){}\n'..entry('mediump'),
  'void pokeportQualifiedPixelEffect(){}\n'..entry('mediump'),
+ 'CUSTOM_RETURN '..entry('mediump'):gsub('^mediump ',''),
+ 'CUSTOM_RETURN\n'..entry('mediump'):gsub('^mediump ',''),
 }do
  local result,changed=E.source(source);T.eq(result,source,'unknown/custom entry is not guessed');T.eq(changed,false)
 end
@@ -54,5 +66,10 @@ local ok,message=love.graphics.validateShader(false,authored,options)
 T.eq(ok,true,'validator result retained');T.eq(message,'native validator result');T.eq(validated[1][2],compiled[1][1],'validation and compile use identical source')
 local nativeOptions={defines={POKEPORT_NATIVE_CLIP_SPACE=1}}
 love.graphics.newShader(authored,nativeOptions);T.eq(compiled[2][1],authored,'explicit native compiler contract preserved')
+local implicit='#ifdef PIXEL\n#ifdef GL_ES\nprecision highp float;\n#endif\n'..authored:gsub('^mediump vec4','vec4')..'\n#endif'
+love.graphics.newShader(implicit,options)
+love.graphics.validateShader(false,implicit,options)
+T.check(compiled[3][1]~=implicit,'implicit-return producer reaches the native constructor through the adapter')
+T.eq(validated[2][2],compiled[3][1],'implicit-return validation and compilation share exact source')
 love=savedLove
 T.finish('qualified legacy shader entry precision')

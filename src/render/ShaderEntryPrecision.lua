@@ -36,8 +36,16 @@ function E.source(source)
  local count=0
  for _ in code:gmatch('%f[%w_]vec4%s+effect%s*%b()%s*{')do count=count+1 end
  if count~=1 then return source,false end
- local first,_,q,args=code:find('%f[%w_]([%a_][%w_]*)%s+vec4%s+effect%s*(%b())%s*{')
- if not first or not precision[q]then return source,false end
+ local first,_,args=code:find('%f[%w_]vec4%s+effect%s*(%b())%s*{')
+ if not first then return source,false end
+ local before=code:sub(1,first-1)
+ local q=before:match('([%a_][%w_]*)%s*$')
+ -- A default-precision return is independent of the three explicitly
+ -- qualified numeric inputs. A preceding conditional boundary is not a
+ -- return qualifier; other unknown declaration/macro words stay untouched.
+ if q and not precision[q]then
+  if before:match('#%s*endif%s*$')then q=nil else return source,false end
+ end
  local parameters={}
  for p in args:sub(2,-2):gmatch('[^,]+')do parameters[#parameters+1]=p end
  if #parameters~=4 or not parameter(parameters[1],'vec4')
@@ -47,7 +55,7 @@ function E.source(source)
  local renamed=source:sub(1,a-1)..helper..source:sub(b+1)
  -- This entry precedes any user precision directives, exactly like LÖVE's
  -- prototype. The helper's three numeric parameters retain explicit precision.
- local prefix=('#ifdef PIXEL\n%s vec4 %s%s;\n'):format(q,helper,args)..[[
+ local prefix=('#ifdef PIXEL\n%svec4 %s%s;\n'):format(q and(q..' ')or'',helper,args)..[[
 vec4 effect(vec4 color, Image tex, vec2 uv, vec2 screen) {
  return pokeportQualifiedPixelEffect(color, tex, uv, screen);
 }
