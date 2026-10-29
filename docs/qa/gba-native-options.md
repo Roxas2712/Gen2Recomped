@@ -34,4 +34,12 @@ The fixture samples the title on the native canvas, host canvas and complete
 window frame; original PNG pixel checks corroborate those results. Review
 original-resolution captures when a reduced preview appears inconsistent.
 This is UI acceptance with a prepared fixture, not a complete ordinary story.
-FireRed/LeafGreen final native acceptance is still pending.
+FireRed and LeafGreen also pass independent fresh own-cartridge imports and
+combined native matrices after integrating public main 5f8c4c4. Each exercises
+all six enums, all ten frames, host callbacks, persistence, scrolling, CANCEL,
+reopening and the actual main-menu return. Their native keypad symbols retain
+the control-hint geometry. Each combined matrix records 52 captures across
+options, Hall PC and ending; representative original-resolution views were
+inspected. Their unchanged OPTION heading regions agree byte-for-byte before
+and after the frame switch. Emerald's targeted latest-main regression remains
+separate from its already accepted native UI run.
