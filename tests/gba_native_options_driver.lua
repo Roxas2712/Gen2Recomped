@@ -27,6 +27,21 @@ return function(game)
     local before=Save.encode(game.save);local rng=love.math.getRandomState()
     assert(require('src.render.GraphicsScope').call(game.stack:top().draw,game.stack:top()))
     assert(before==Save.encode(game.save)and rng==love.math.getRandomState(),'Option draw changed save/RNG')
+    if native and version=='emerald'and getmetatable(top)==UI then
+      assert(require('src.render.WindowFrame').capture(function(data)
+        local renderer=require('src.render.Renderer');local p=assert(renderer.uiPresentation)
+        local dpiX,dpiY=data:getWidth()/love.graphics.getWidth(),data:getHeight()/love.graphics.getHeight()
+        local ink=0
+        for y=9,24 do for x=24,95 do
+          local px=math.floor((p.x+(x+.5)*p.scaleX)*dpiX)
+          local py=math.floor((p.y+(y+.5)*p.scaleY)*dpiY)
+          assert(px>=0 and py>=0 and px<data:getWidth()and py<data:getHeight(),'Title sample outside final frame')
+          local r,g,b=data:getPixel(px,py)
+          if r>.4 and r>g+.1 and b<.5 then ink=ink+1 end
+        end end
+        report.finalTitleInkPixels=report.finalTitleInkPixels or{};report.finalTitleInkPixels[name]=ink
+      end))
+    end
     assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name
     if native and version=='emerald'and getmetatable(top)==UI then
       local image=native.canvas:newImageData();local ink=0
@@ -34,7 +49,15 @@ return function(game)
         if r>.4 and r>g+.1 and b<.5 then ink=ink+1 end
       end end
       image:release();report.titleInkPixels=report.titleInkPixels or{};report.titleInkPixels[name]=ink
+      local renderer=require('src.render.Renderer');local canvas=renderer.canvas:newImageData();local hostInk=0
+      for y=9,24 do for x=24,95 do local r,g,b=canvas:getPixel(x,y)
+        if r>.4 and r>g+.1 and b<.5 then hostInk=hostInk+1 end
+      end end
+      canvas:release();report.rendererTitleInkPixels=report.rendererTitleInkPixels or{};report.rendererTitleInkPixels[name]=hostInk
+      report.rendererFlags={anchors=renderer.uiAnchors and#renderer.uiAnchors or 0,anchorHold=renderer.uiAnchorHold,
+        uiCentered=renderer.uiCentered,uiWidth=renderer.canvas:getWidth(),uiHeight=renderer.canvas:getHeight()}
       persist();assert(ink>10,'Original Emerald option title lost its rendered pixels')
+      assert(report.finalTitleInkPixels[name]>10,'Original Emerald option title vanished during final composition')
     end
     persist()
   end
