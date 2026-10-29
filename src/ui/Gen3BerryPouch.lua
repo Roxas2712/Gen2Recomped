@@ -67,6 +67,7 @@ function Gen3BerryPouch:listRows()
 end
 
 local function isBerry(def)
+  if def and (def.keyItem or def.pocket=='KEY_ITEM')then return false end
   return def and (def.berry or def.pocket == "BERRY"
                   or (def.id and tostring(def.id):find("BERRY")))
 end

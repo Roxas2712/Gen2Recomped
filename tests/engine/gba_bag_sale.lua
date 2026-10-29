@@ -46,7 +46,8 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
     count=IR.fromAscii('x{STR_VAR_1}'),yes=IR.fromAscii('YES'),no=IR.fromAscii('NO')}
   local game={data={constants={gen=3,gen3Bag={version=version,pockets={ITEM=30,BERRY=46,KEY_ITEM=30,BALL=16,TM_HM=64}}},items={
     POTION={index=13,name='A%BC',pocket='ITEM',price=100},BERRY={index=133,name='BERRY',pocket='BERRY',price=20},
-    QUEST={index=259,name='QUEST',pocket='KEY_ITEM',price=100,keyItem=true},FREE={index=14,name='FREE',pocket='ITEM',price=0}}},
+    QUEST={index=259,name='QUEST',pocket='KEY_ITEM',price=100,keyItem=true},FREE={index=14,name='FREE',pocket='ITEM',price=0},
+    BERRY_POUCH={id='BERRY_POUCH',index=365,name='BERRY POUCH',pocket='KEY_ITEM',keyItem=true,price=0}}},
     save={inventory={},bagOrder={},money=50,unrelated='KEEP'}}
   local current,pops,refresh,key;local owner={game=game,rebuild=function()refresh=refresh+1 end}
   local frames,draws={},{}
@@ -91,13 +92,18 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
   T.eq(game.save.money,600);T.eq(game.save.inventory.POTION,1);T.eq(refresh,1)
   local purchases=0;for _,name in ipairs(sounds)do if name=='Purchase'then purchases=purchases+1 end end;T.eq(purchases,1)
   press('a');key='a';s:update();key=nil;T.eq(pops,1);T.eq(game.save.money,600);T.eq(game.save.unrelated,'KEEP')
-  s=make();press('a');game.save.inventory.POTION=0;press('a')
+  s=make();press('a');Bag.remove(game.save,'POTION',12,game.data);press('a')
   T.eq(pops,1,'stale sale closes without a false result');T.eq(game.save.money,50,'stale sale cannot create money')
   T.eq(refresh,0,'refused sale does not announce a transaction')
   s=make(nil,1);T.eq(s.mode,'confirm');game.save.money=999990;press('a');T.eq(game.save.money,999999)
   s=make('FREE');T.eq(s.mode,'cant');T.eq(game.save.inventory.FREE,12);press('a');T.eq(game.save.money,50)
   s=make('QUEST',1);T.eq(s.mode,'cant');press('b');T.eq(game.save.inventory.QUEST,1)
   s=make('BERRY',999);T.eq(s.max,version=='emerald'and 999 or 99);press('b')
+  assert(Bag.add(game.save,'BERRY_POUCH',1,game.data))
+  local pouch=require('src.ui.Gen3BerryPouch').new(game,{sell=true})
+  T.eq(#pouch.rows,2,'the berry container is never listed as a berry')
+  T.eq(pouch.rows[1].id,'BERRY');T.eq(pouch.rows[2].close,true)
+  T.eq(game.save.inventory.BERRY_POUCH,1,'opening its list preserves the key item')
   if version=='emerald'then
     s=make(nil,99);assert(Bag.add(game.save,'POTION',50,game.data))
     s.row.rsSlot=require('src.inventory.Gen3RsInventory').rows(game.save,game.data,'ITEM')[2].slot;s.row.qty=50;s:begin()

@@ -75,6 +75,7 @@ return function(game)
   if frlg then
     pocket('KEY_ITEM');select(root,'BERRY_POUCH');press('a');berry=game.stack:top()
     assert(getmetatable(berry)==require('src.ui.Gen3BerryPouch')and berry.sell)
+    for _,row in ipairs(berry.rows)do assert(row.id~='BERRY_POUCH','The container is not a berry')end
   else pocket('BERRY');berry=root end
   select(berry,'ORAN_BERRY');before=S.encode(game.save);press('a');sale=game.stack:top()
   assert(getmetatable(sale)==UI and sale.max==(frlg and 99 or 999));press('down');assert(sale.qty==sale.max)
