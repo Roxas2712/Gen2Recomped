@@ -14,7 +14,14 @@ test synchronization into this older offer. Its existing45-second external
 fixture process deadline remains unchanged. A newer fork composition passes
 the actual official LOVE11.5 TLS fixture (1512checks), all949/4 official
 ROM-free suites and70CI checks. Those receipts do not qualify this older
-combined host; its own real-worker qualification is pending. No GPU, release,
+combined host. Its own committed source `d8c7deb0` independently passes the
+actual official LOVE11.5 owned-loopback TLS fixture:1521 checks/595pump ticks
+in6.98seconds, with the original45-second process deadline unchanged. All134
+regular runtime files match the official archive byte-for-byte. Receipt:
+`upstream-download-retirement-1793247736116883000/receipt.json`. The installed
+storage helper manages the ephemeral fixture, processes and unique profile;
+only Python process/storage ownership is instrumented, not Lua assertions,
+worker responses or transport behavior. No GPU, release,
 all-sprite-download or selected actor-art acceptance is claimed.
 
 Integration/tests by Roxas2712 are offered under
