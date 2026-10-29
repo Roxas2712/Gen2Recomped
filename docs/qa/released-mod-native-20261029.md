@@ -1,0 +1,99 @@
+# Unchanged published mods: native compatibility investigation
+
+This is development-source evidence, not a release or complete-mod acceptance.
+Only the engine was changed. Published ZIPs and their installed files were
+compared byte for byte; the ROMs and the earned private QA checkpoint were
+unchanged. Protected Gen1 and player instances were not used as test hosts.
+
+## Actual Crystal result
+
+Source `92ea26df90f1701ea6601b3fb1041d12680cf938`, including main `42ff9dec`,
+ran on LÖVE12 Metal / Apple M3 with the published
+[Battle Art Gen2 2.1.4](https://github.com/absol89/Gen2Recomped-DramaticShapes/releases/tag/2.1.4)
+and [Gen1Follower 1.8.0](https://github.com/wild1walker/Gen1Follower/releases/tag/v1.8.0).
+
+- The native installer installed both releases, and the loader reported no mod
+  errors. All 178 Battle Art and 423 Follower files matched their ZIP members.
+- Normal title/CONTINUE input loaded the earned Cyndaquil checkpoint in Elm's
+  lab. Native world updates remained active throughout the test.
+- The normal display key selected the mod's voxel pipeline. Eight map palettes
+  reached the unchanged Gen2 adapter. Two real OS captures showed upright,
+  colored furniture and wall details, with the actual companion behind the player.
+- Normal START/Pokémon input opened the native party submenu and its FOLLOWER
+  entry. Normal left movement moved the player from `(5,3)` to `(3,3)` while
+  the same companion actor followed, using the published `follower_155.png`.
+- Normal display-key cycling selected First Person (level6) and Third Person
+  (level7). Both scene-ready flags and two actual OS captures per view were
+  checked. This proves selection/rendering in this room, not movement in those
+  modes or outdoor/cross-map acceptance.
+
+Eight OS captures were reviewed over four phases (field, party submenu, First
+Person, Third Person), with advancing native draw counters. The driver and
+native child exited successfully. Complete mod acceptance remains false.
+
+Visual limitations remain: the party HP fill appeared gray, and the close Third
+Person framing partly cropped the follower. These observations are not yet
+attributed to an engine defect. No claim of Gen1 visual parity follows from this
+room test.
+
+## Engine findings addressed
+
+1. The Gen2 adapter requires `world.palettes` before calling `Palettes.bgSet`.
+   The native world now exposes Data's live, owner-bound `gen2Palettes` view.
+   Dataset replacement and authored raw fields retain their normal behavior;
+   no copied palette cache or mod-specific palette constant is introduced.
+2. The adapter's title precache world is a plain data table with `tilesets` and
+   `atlasFor`. Native `atlasFor` now admits that supplied table without requiring
+   all live-world methods. Current/neighbor tilesets retain priority, raw atlas
+   semantics remain unchanged, and custom Gen3 descriptor dispatch is retained.
+3. Gen1Follower imports shared `src.world.PikachuFollower` even on Gen2. Its
+   named predicate setter previously existed only through `gen2.Follower`.
+   The shared controller now resolves the same native setter on the current
+   Gen2 edition. Gen1's existing native/shim contract and Gen3 owner remain
+   unchanged. The initial real test showing a menu entry but no follower was
+   preserved as a failed test, then repeated successfully after this correction.
+
+These follow the collector's earlier display-key/pipeline gate, NPC rebuild and
+sprite-definition, shader-entry precision, and verified producer-orientation
+changes. No mod entry, manifest or function was rewritten.
+
+## Scoped regression evidence
+
+Frozen source `ee72c716` passed 1,276 assertions in seven suites:
+`gen2_world_palettes` (31), `gen2_atlas_consumer` (30),
+`gen2_palette_context` (348), `gen2_people_sprites` (182), `api3_npc` (419),
+`legacy_npc_controls` (152), and `gen2_alias_world_reads` (14).
+
+Frozen source `92ea26df` passed another four relevant suites:
+`gen2_follower_predicate` (322), `follower_spawn` (3,238),
+`native_follower_callback_owner` (12), and `gen3_follower_owner` (13).
+The actual loader tests cover both import routes, mod unloading and failed-entry
+rollback; native follower tests retain Gen1/Gen3 behavior.
+
+On earlier combined source `6e05037e`, the actual LÖVE12 shader-entry GPU contract
+passed 192 asymmetric-pixel/discard checks each on Metal and OpenGL. Raw
+lowp/mediump entries failed Metal's precision check; the engine-adapted variants
+compiled, validated and produced the expected pixels. This is synthetic GPU
+evidence, not a complete third-party-mod pass.
+
+## Yellow and remaining acceptance
+
+On source `92ea26df`, a separate new Yellow journey installed and loaded
+Battle Art Voxel Fork1.11.2, Legendary Interiors0.20.0, Legendary 3D NPCs1.1.6-test16,
+and Legendary Battle Free Orbit0.1.0-test4 unchanged. All 1,347 installed files
+matched their published ZIP members. Normal intro/naming input reached the field;
+an actual OS observation showed a textured, upright Legendary bedroom with
+furniture, plants, lighting/shadows and the native player. LÖVE deprecation
+warnings remained visible in that development window.
+
+The mandatory disk-reserve guard then stopped the Yellow job. Its receipt was
+recovered from surviving driver/source metadata, file comparisons and terminal
+output; the exact child exit code was not recorded. It is **not a passed run**.
+The guarded starter's private exception cleanup was corrected to reap a stopped
+child and retain the failure receipt without resuming past the guard.
+
+Still required before complete acceptance or merge: current-head full CI and
+combined-main qualification; native battles and their HUD/camera; actual 3D NPC
+interaction; connected-map/outdoor traversal; save/restart; the separate
+Legendary host alternative; standalone battle-UI and follower combinations.
+Windows and packaged-release acceptance are not established by these macOS tests.
