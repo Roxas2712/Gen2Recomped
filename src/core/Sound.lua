@@ -928,7 +928,7 @@ local function hint(data, key, kind, name, pitch, tempo)
       if job.key==key and not job.priority then
         job.priority=true
         job.hint={key=key,kind=kind,name=name,pitch=pitch,tempo=tempo}
-        if chip and chip.prioritizeEffects then chip.prioritizeEffects(id)end
+        if type(chip)=='table'and chip.prioritizeEffects then chip.prioritizeEffects(id)end
       end
     end
     return false
@@ -938,7 +938,7 @@ local function hint(data, key, kind, name, pitch, tempo)
   priorityKeys[key]=true;priorityQueue[#priorityQueue+1]=job
   -- A registry render may already occupy the shared worker. Announce demand
   -- outside its command FIFO so that obsolete background work can yield.
-  if chip and chip.prioritizeEffects then chip.prioritizeEffects()end
+  if type(chip)=='table'and chip.prioritizeEffects then chip.prioritizeEffects()end
   return true
 end
 function Sound.prewarmSfx(data,name)
