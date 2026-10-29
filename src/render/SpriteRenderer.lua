@@ -387,7 +387,7 @@ function SpriteRenderer:draw(px, py, camX, camY, facing, walkPhase, stepFlip, to
   -- SPRITE_POKEMON objects wear the party menu icon (GetMonSprite.Mon ->
   -- LoadOverworldMonIcon): two frames that cycle on their own clock, and no
   -- facing at all -- the Lake of Rage Gyarados never turns to look at you.
-  if self.def.monIcon then
+  if self.def.monIcon and (self.def.frames or 2) == 2 and not self.def.walker then
     local t = love.timer and love.timer.getTime() or 0
     local quad = self.frames[math.floor(t * MON_ICON_FPS) % 2] or self.frames[0]
     blitFrame(image, quad, x, y, false, redraw)
