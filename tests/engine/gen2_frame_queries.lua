@@ -60,6 +60,25 @@ for _, edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'}) 
       T.eq(view.dpiY, dpi, 'source viewport retains DPI Y')
       T.check(math.abs(x*dpi-math.floor(x*dpi+.5))<1e-8, 'horizontal origin lands on a physical pixel')
       T.check(math.abs(y*dpi-math.floor(y*dpi+.5))<1e-8, 'vertical origin lands on a physical pixel')
+      -- Unchanged battle scenes pass drawable dimensions instead of window
+      -- dimensions. Those queries must use pixel coordinates exactly once.
+      local ps,px,py,pd,qpw,qph = probe.fit(game,w*dpi,h*dpi)
+      local pview = probe.viewport(game,w*dpi,h*dpi)
+      T.eq(ps, before.Sp, 'drawable query uses actual integer framebuffer scale')
+      T.check(math.abs(px-before.ox*dpi)<1e-8, 'drawable query matches native pixel origin X')
+      T.check(math.abs(py-before.oy*dpi)<1e-8, 'drawable query matches native pixel origin Y')
+      T.eq(pd, dpi, 'drawable query retains actual DPI metadata')
+      T.eq(qpw, w*dpi, 'drawable query retains actual pixel width')
+      T.eq(qph, h*dpi, 'drawable query retains actual pixel height')
+      T.check(math.abs(pview.gameWidth-before.vpw*dpi)<1e-8, 'drawable viewport width matches native pixels')
+      T.check(math.abs(pview.gameHeight-before.vph*dpi)<1e-8, 'drawable viewport height matches native pixels')
+      if edition=='crystal' and w==1024 and h==768 and dpi==2 then
+        -- Independent real Metal observation: native scale10/origin224,48;
+        -- the rejected API candidate instead returned10.5/origin184,12.
+        T.eq(ps, 10, 'actual Retina regression scale')
+        T.eq(px, 224, 'actual Retina regression horizontal origin')
+        T.eq(py, 48, 'actual Retina regression vertical origin')
+      end
       view.gameX = -1000; view.scale = -1
       local again = probe.viewport(game,w,h)
       T.eq(again.gameX, before.ox, 'returned view cannot mutate the next query')
@@ -68,6 +87,31 @@ for _, edition in ipairs({'gold','silver','crystal','prism','polishedcrystal'}) 
       T.eq(Version.get(), edition, 'public query does not change active cartridge')
     end
   end
+  for _,size in ipairs({{801,601,1.25},{1001,751,2},{1137,803,1.5}}) do
+    local w,h,dpi = size[1],size[2],size[3]
+    local pw,ph = math.floor(w*dpi),math.floor(h*dpi)
+    graphics.getDimensions = function() return w,h end
+    graphics.getPixelDimensions = function() return pw,ph end
+    graphics.getDPIScale, window.getDPIScale = function() return dpi end, function() return dpi end
+    local native = Renderer:frameRects()
+    local scale,x,y = probe.fit(game,pw,ph)
+    T.eq(scale, native.Sp, 'odd drawable size retains actual native pixel scale')
+    T.check(math.abs(x-native.ox*native.dpiX)<1e-8, 'odd drawable size retains native pixel origin X')
+    T.check(math.abs(y-native.oy*native.dpiY)<1e-8, 'odd drawable size retains native pixel origin Y')
+    T.eq(x%1, 0, 'odd drawable horizontal origin is a complete pixel')
+    T.eq(y%1, 0, 'odd drawable vertical origin is a complete pixel')
+  end
+  graphics.getDimensions = function() return 1024,768 end
+  graphics.getPixelDimensions = function() return 2048,1536 end
+  graphics.getDPIScale, window.getDPIScale = function() return 2 end, function() return 2 end
+  local nativeFit = Renderer.fitScale
+  Renderer.fitScale = function() return 3 end
+  local native = Renderer:frameRects()
+  local scale,x,y = probe.fit(game,2048,1536)
+  T.eq(scale, native.Sp, 'drawable query observes actual decorated native fit')
+  T.eq(x, native.ox*2, 'decorated native horizontal origin remains authoritative')
+  T.eq(y, native.oy*2, 'decorated native vertical origin remains authoritative')
+  Renderer.fitScale = nativeFit
   T.eq(#run.errors, 0, 'actual SDK query did not swallow an engine error')
   run.release()
 end
