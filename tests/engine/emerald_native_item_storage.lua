@@ -7,7 +7,8 @@ local W,S=require('src.import.LuaWriter'),require('src.core.SaveSerializer')
 local Loader=require('compat.gen1-rs.Loader');local Context=require('src.ui.Gen3EmeraldSceneContext')
 local oldV,oldRead,oldLoad,oldContext,oldGraphics=V.get(),Fs.read,love.filesystem.load,Context.new,love.graphics
 love.filesystem.load=loadfile;V.set('emerald')
-local native=Loader.new('emerald');local symbols=native('src.import.gba.syms').of('emerald')
+local native=Loader.new('emerald',{['src.core.GameVersion']=require('src.import.Gen3EmeraldCreditsAssets').versionBinding()})
+local symbols=native('src.import.gba.syms').of('emerald')
 local IR=native('src.core.game3.scripting.text_ir');local starts={}
 for _,name in ipairs(A.labels)do starts[assert(symbols.off(name))]=true end
 local x={version='emerald',_constants={},manifest={saveFields={bag={pcItemCount=50}}},
