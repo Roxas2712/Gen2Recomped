@@ -12,6 +12,13 @@ end
 -- Hold the bounded-queue fixture before the real worker reads cancellation.
 -- A wall-clock HTTP delay can expire while a busy CI host deschedules main.
 local commands, results, quit = ...
+local actualResults=results
+results={push=function(_,response)
+  -- Forward unchanged production results before the QA acknowledgement.
+  actualResults:push(response)
+  love.thread.getChannel("download-qa-completed"):push(response.id)
+end}
+
 local gate = love.thread.getChannel("download-qa-hold")
 local entered = love.thread.getChannel("download-qa-entered")
 local firstFile = true
@@ -21,6 +28,10 @@ local proxy = { demand = function()
     firstFile = false
     love.thread.getChannel("download-qa-start-entered"):push(job.id)
     while not love.thread.getChannel("download-qa-start"):peek() do love.timer.sleep(.001) end
+  end
+  if type(job)=="table" and job.dest=="downloads/retiring.bin" then
+    love.thread.getChannel("download-qa-retire-entered"):push(job.id)
+    while not love.thread.getChannel("download-qa-retire-release"):peek()do love.timer.sleep(.001)end
   end
   if type(job) == "table" and job.dest:match("^downloads/held%d+$") then
     entered:push(job.id)
