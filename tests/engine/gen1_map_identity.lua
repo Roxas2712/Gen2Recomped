@@ -33,7 +33,8 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
     end
   end
   for _, row in ipairs(Names[edition]) do
-    for _,alias in ipairs({row[3],row[4],row[5],nativeKeys[row[3]],row[1]..":"..row[2]})do equivalent(alias)end
+    local aliases={row[3],row[4],row[5],nativeKeys[row[3]],row[1]..":"..row[2]}
+    for i=1,5 do if aliases[i]~=nil then equivalent(aliases[i])end end
     local key, def = binding:nativeId(row[3])
     T.eq(key, nativeKeys[row[3]], "original name reaches actual native record")
     T.eq(def, maps[key], "definition is borrowed with its exact identity")
@@ -53,8 +54,14 @@ for _, edition in ipairs({ "firered", "leafgreen", "emerald", "ruby", "sapphire"
   local first = Names[edition][1]
   local key = nativeKeys[first[3]]
   local def = maps[key]
+  -- A native key may itself look like another map's legacy name. Preserve
+  -- legacy precedence, then its native-alias fallback when the slot retires.
+  maps[first[3]]=maps[nativeKeys[Names[edition][2][3]]]
+  equivalent(first[3])
   maps[key] = nil
   equivalent(first[3]);equivalent(key)
+  maps[first[3]]=nil
+  equivalent(first[3])
   T.eq(binding:nativeId(first[3]), nil, "removed native record retires its binding")
   maps[key] = { id = key, group = first[1], number = first[2] }
   equivalent(first[3]);equivalent(key)
