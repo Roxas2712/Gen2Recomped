@@ -66,5 +66,14 @@ local ivs={hp=31,attack=30,defense=29,speed=28,spatk=27,spdef=26}
 local g3=Stats.calc(gba,25,ivs,{})
 T.eq(g3.hp,math.floor((2*39+31)*25/100)+35,'Gen3 retains its independent six-IV formula')
 T.eq(getmetatable(g3),nil,'Gen3 stat blocks remain plain')
+local weak=setmetatable({}, {__mode='v'})
+do
+  local mon={stats={hp=3}};local battler={mon=mon,curStats=mon.stats}
+  mon.ownedRuntime=battler
+  Stats.trackBattler(battler);weak[1],weak[2]=mon,battler
+end
+for _=1,4 do collectgarbage('collect')end
+T.eq(weak[1],nil,'stat-owner tracking cannot retain an abandoned cyclic Pokemon')
+T.eq(weak[2],nil,'stat-owner tracking cannot retain a finished native battler')
 T.eq(_G.love,nil,'source stat APIs do not install a fake runtime')
 T.finish('source and native GSC stat formula, all genes, legacy fallbacks and generation guards without LOVE')
