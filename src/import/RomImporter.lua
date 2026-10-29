@@ -1289,8 +1289,8 @@ local function markerFor(version)
   -- sequence's art (extractTradeScene, gen3_trade_art) -- without it special
   -- 257 falls back to the bare swap, so both Gen 3 caches re-import once
   -- Summary presentation v1 adds source controls, type/category sprites and PP colours.
-  if version == "emerald" then revision = "emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
-  if GameVersion.isFRLG(version) then revision = "frlg-native-credits-v1:frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
+  if version == "emerald" then revision = "emerald-native-options-v2:emerald-native-main-menu-v1:emerald-ending-save-v1:emerald-native-hall-v1:emerald-native-credits-v1:emerald-native-boot-v1:emerald-trade-scene-v3:summary-presentation-v1:" end
+  if GameVersion.isFRLG(version) then revision = "frlg-native-options-v2:frlg-native-credits-v1:frlg-ending-save-v1:frlg-native-hall-v1:" .. version .. "-trade-scene-v1:summary-presentation-v1:" end
   if version=='ruby'or version=='sapphire'or version=='emerald'or version=='firered'or version=='leafgreen'then
     revision='gba-reference-evolution-v1:'..revision
   end
