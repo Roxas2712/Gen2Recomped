@@ -53,12 +53,16 @@ T.eq(changed.mon,mon,'friendship observer receives the live mon')
 T.eq(changed.from,254,'friendship records the prior byte')
 T.eq(changed.to,255,'friendship records the clamped byte')
 T.eq(changed.delta,1,'friendship reports the actual change')
-T.eq(changed.event,2,'vitamin maps to the public native event index')
+-- Frozen Gen1 Happiness.change emits the original symbolic event, including
+-- applied events at saturation. Preserve the cartridge byte separately.
+T.eq(changed.event,'USEDITEM','vitamin maps to the source event name')
+T.eq(changed.eventId,2,'vitamin retains the native cartridge event index')
 T.eq(changed.reason,'event','friendship identifies event changes')
-Friendship.change(mon,'VITAMIN');T.eq(#events("happiness.changed"),1,'clamped no-op does not announce a change')
+Friendship.change(mon,'VITAMIN');T.eq(#events("happiness.changed"),2,'applied event at saturation remains observable')
+T.eq(last('happiness.changed').delta,0,'saturated source event carries zero delta')
 mon.happiness=80
 local save={party={mon},flags={},player={name='TEST',id=1},pokedex={seen={},owned={}},options={}}
-Friendship.stepCycle(save);T.eq(#events("happiness.changed"),1,'first 256-step cycle cannot announce a point')
+Friendship.stepCycle(save);T.eq(#events("happiness.changed"),2,'first 256-step cycle cannot announce a point')
 Friendship.stepCycle(save);T.eq(last("happiness.changed").reason,'step','actual second cycle announces its point')
 T.eq(last("happiness.changed").event,nil,'step changes carry no event index')
 

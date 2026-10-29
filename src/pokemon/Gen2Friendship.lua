@@ -13,10 +13,15 @@ local changes = {
 
 local events={LEVELUP=1,VITAMIN=2,XITEM=3,GYMBATTLE=4,LEARNMOVE=5,
   FAINT=6,POISONFAINT=7,STRONGFOE=8,BITTERPOWDER=15,ENERGYROOT=16,REVIVALHERB=17,LEVELUPATHOME=19}
+local sourceEvents={LEVELUP='GAINLEVEL',VITAMIN='USEDITEM',XITEM='USEDXITEM',
+  FAINT='FAINTED',STRONGFOE='BEATENBYSTRONGFOE',LEVELUPATHOME='GAINLEVELATHOME'}
 local function changed(mon,from,event,reason)
   local Runtime=require('src.mods.Runtime')
-  if from~=mon.happiness and Runtime.wants("happiness.changed")then
-    Runtime.emit("happiness.changed",{mon=mon,event=event,reason=reason,
+  -- Source ChangeHappiness reports an applied event even at byte saturation
+  -- (or for a zero delta). Walking still reports only an actual change.
+  if (event~=nil or from~=mon.happiness) and Runtime.wants("happiness.changed")then
+    Runtime.emit("happiness.changed",{mon=mon,event=event and (sourceEvents[event]or event),
+      eventId=events[event],reason=reason,
       from=from,to=mon.happiness,delta=mon.happiness-from})
   end
 end
@@ -33,7 +38,7 @@ function Friendship.change(mon, reason)
   local h = mon.happiness
   local band = h < 100 and 1 or h < 200 and 2 or 3
   mon.happiness = math.max(0, math.min(255, h + row[band]))
-  changed(mon,h,events[reason],"event")
+  changed(mon,h,reason,"event")
   return true
 end
 
