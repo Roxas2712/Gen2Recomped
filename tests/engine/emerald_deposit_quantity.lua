@@ -2,7 +2,8 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit');local UI=require('src.ui.Gen3EmeraldDepositQuantity')
 local Menu=require('src.ui.Gen3BagMenu');local S=require('src.core.SaveSerializer')
-local Sound=require('src.core.Sound');local oldPlay,oldGraphics=Sound.play,love.graphics
+local Sound=require('src.core.Sound');local oldPlay,oldGraphics,oldLoad=Sound.play,love.graphics,love.filesystem.load
+love.filesystem.load=loadfile
 Sound.play=function()end
 local frames,texts,releases={}, {},0
 local font={COLOR={NORMAL={}},measure=function(s)return#s*6 end,
@@ -76,5 +77,5 @@ owner:depositItem('POTION');state=current;T.eq(state.max,12)
 press('right');press('a');T.eq(game.save.pcItems.POTION,11);T.eq(game.save.inventory.POTION,100)
 local rows=Native.rows(game.save,game.data,'ITEM');T.eq(rows[1].qty,99);T.eq(rows[2].qty,1)
 T.check(message and#message>0,'the original completion callback still publishes its result')
-V.set(oldVersion);Sound.play=oldPlay;love.graphics=oldGraphics
+V.set(oldVersion);Sound.play=oldPlay;love.graphics=oldGraphics;love.filesystem.load=oldLoad
 T.finish()
