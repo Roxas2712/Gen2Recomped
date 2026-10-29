@@ -50,6 +50,7 @@ ModCompat.ALIASES = {
   ["src.world.gen2.World"] = "src.world.OverworldController",
   ["src.world.gen2.Map"] = "src.world.Map",
   ["src.ui.gen2.BattleAnimView"] = "src.battle.Gen2AnimView",
+  ["src.ui.gen2.EvolutionAnim"] = "src.compat.gen2.EvolutionAnim",
   ["src.world.gen2.Permissions"] = "src.world.Collision",
   ["src.core.CollPermissions"] = "src.world.Gen2CollisionPermissions",
   -- State predicates and GSC Fly queries use the native mover/picker.
