@@ -4,6 +4,60 @@ API 1/2 source mods can still target the shared native engine. These adapters
 translate their original contracts at the loader boundary; no mod identifier is
 special-cased and no second battle controller, wallet or encounter engine runs.
 
+## Native Gen2 mods remain supported
+
+Gen1 compatibility adds entry points alongside the native Gen2 interfaces.
+It does not require an existing Gen2 mod to change its manifest, opt into a
+source profile, migrate its save, or convert its data to Gen1 formats. Module
+names alone are not evidence that two functions have interchangeable contracts.
+Keep native arguments, return values, RNG consumption and record ownership when
+adding a source adapter. Both consumer paths belong in regression tests.
+
+In particular, `src.pokemon.Pokemon.new(data, species, level, rng, form, opts)`
+keeps the native two-bound RNG and validated, copied Gen2 DVs. Its source
+counterpart, `src.battle.gen2.Mon.new(data, species, level, opts)`, accepts the
+original source options: nickname, HP, happiness, Pokerus, caught data, authored
+moves/stat experience, and held-item selection. Explicit source arrays and DVs
+remain the caller's objects. Both constructors create the actual native
+Pokemon; `experience` and `maxHp` remain live views of native storage rather
+than a second saved balance. The older function-RNG overload of the compatibility
+constructor also remains available.
+The two public constructors call a shared private builder independently. A
+native mod wrapping the existing six-argument constructor does not need to
+forward hidden source options or change its wrapper to keep both paths usable.
+
+The source helpers `displayName`, `eachSaveMon`, `syncSaveIdentity`,
+`evolutionAtLevel` and `wildItem` are additive. The held-item helper implements
+the two cartridge byte gates; this does not establish that native ROM imports
+already publish every species' held-item metadata. Save traversal covers real
+party, box and Day-Care records without treating unrelated mod data as Pokemon.
+Native sparse-slot traversal and source array traversal retain their respective
+policies. Source OT stamping returns the actual Pokemon; the existing native
+battle stamping method retains its own return and metadata behavior.
+
+`src.core.Game2:learnMoveOn(mon, moveId, onDone)` is the public GSC field
+teaching entry. Native TM/HM, Rare Candy and evolution/reminder field paths
+dispatch through that same method. A free slot writes once and completes after
+its message; a known move reports false. A full set uses the actual native
+Gen2 four-row picker, protects HMs, and supports cancellation and the stop/retry
+loop. `src.ui.gen2.ForgetMoveList` resolves to the native list module, so a
+presentation wrapper reaches the picker without editing the mod. These field
+contracts do not implement the separate source Battle turn/event interface.
+
+`tests/engine/gen2_field_learning.lua` drives the actual text/choice/picker
+stack through free, known, full, HM-refusal and cancellation paths. It also
+checks that sequential native field learning reaches a source wrapper and that
+loader teardown restores the original native method.
+
+`tests/engine/gen2_source_birth.lua` loads native and source consumers side by
+side, checks their distinct constructor contracts across the supported Gen2
+editions, and exercises the complete held-item byte domain. The ordinary
+engine and SDK suites remain required for both paths. These checks do not
+establish compatibility with every private engine-internals modification or
+replace the unchanged-mod graphics, download and gameplay acceptance runs.
+
+## Existing compatibility boundaries
+
 - Source encounter edits during legacy event callbacks update the native
   grass/time, water, tree and fishing records. The derived view remains read-only
   outside that callback scope, including after a throwing callback.
