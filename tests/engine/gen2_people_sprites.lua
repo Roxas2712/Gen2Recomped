@@ -85,7 +85,7 @@ Version.set('crystal')
 local Follower=require('src.world.OptionalFollower')
 local spawnPolicy=Follower.setShouldSpawn(function()return true end)
 local carried={id='carried',optionalFollower=true,mapId='OLD_MAP'}
-local carriedWorld={map={id='NEXT_MAP'},npcs={},entities={}}
+local carriedWorld={map={id='NEXT_MAP'},player={cellX=0,cellY=0},npcs={},entities={}}
 Follower.onMapEntered(Game,carriedWorld,{keepFollower=carried})
 T.eq(Follower.current(carriedWorld),carried,'native map handoff retains actual optional follower')
 T.eq(carried.mapId,'NEXT_MAP','carried follower provenance follows its new native map')
