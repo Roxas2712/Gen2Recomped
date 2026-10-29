@@ -13674,6 +13674,7 @@ function BattleState:drawHUDs(slide)
   -- per-pixel tint (grayFill) -- otherwise GREENBAR's red-channel-0 fill
   -- double-applies and the zone shade shader maps the whole bar to black (#229).
   local grayFill = self:colorMode()
+    and not (GameVersion.isGen2() and self:worldStaged())
   local showStatus = self:statusHUDVisible()
   local barData = self.data
   local fx = self.fx
