@@ -47,7 +47,7 @@ jobs:
       - name: Native screen, queue, input and current message ownership
         run: |
           failed=0
-          for suite in gen2_battle_queue_view gen2_move_selection gen2_battle_submenu gen2_battle_pack gen2_party_item_result gen2_pp_selection screen_space_ui party_live_data party_grid_navigation gen2_battle_scene gen2_battle_window battle_queue_lifecycle; do
+          for suite in gen2_battle_queue_view gen2_move_selection gen2_battle_submenu gen2_battle_pack gen2_party_item_result gen2_pp_selection screen_space_ui party_live_data party_grid_navigation gen2_battle_scene gen2_battle_window gen2_classic_draw_owner battle_queue_lifecycle; do
             if ! luajit "tests/engine/$suite.lua"; then failed=1; fi
           done
           exit "$failed"

@@ -1263,9 +1263,11 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
       local ownsSurface = wideState
         or (native ~= nil and state == native)
         or Game.wantsThisSurface(state)
-      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex then
+      if nativeWindowOverlays and windowUIIndex and i>windowUIIndex
+          and ScreenSpaceUI.windowStackState(state) then
         if renderVisible(self.stack,state) and state.draw then windowUIOverlay=true end
-      elseif nativeWindowStack and state~=self.overworld then
+      elseif nativeWindowStack and state~=self.overworld
+          and ScreenSpaceUI.windowStackState(state) then
         -- Paint this native state once at output resolution below. Keeping
         -- its controller on the native stack does not require rasterising
         -- vector menus and text through the cartridge-sized canvas.
@@ -1380,7 +1382,7 @@ local function paintResolvedFrame(self, scene, drawFrom, worldBelow, worldDrawn,
   if Renderer.gen2FrameManaged and (windowUI or nativeWindowStack) then
     Renderer.gen2WindowDraw = function(viewport)
       if windowUI then
-        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,false)
+        ScreenSpaceUI.draw(windowUI,Renderer,viewport,zones,windowUIOverlay)
         if windowUIOverlay then ScreenSpaceUI.drawNativeStack(self.stack,scene,windowUIIndex+1,
           self.overworld,Renderer,viewport,false) end
       else ScreenSpaceUI.drawNativeStack(self.stack,scene,drawFrom,self.overworld,

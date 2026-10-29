@@ -31,13 +31,21 @@ function M.classic(draw, renderer, width, height)
   G.pop()
   if not ok then error(err,0) end
 end
+-- A screen advertising a window protocol can decline it for its current
+-- draw owner. Honour that decision in the implicit native-stack path too;
+-- otherwise a classic draw wrapper is merely delayed past world composition.
+function M.windowStackState(state)
+  return not (type(state.drawsWidescreen)=='function'
+    and type(state.drawWidescreen)=='function' and not state:drawsWidescreen())
+end
 -- Gen2's reference renderer paints native overlays on its full-resolution
 -- scene, under a cartridge-grid transform. A drawer that resets origin()
 -- therefore gets real window pixels, not a 160x144 intermediate texture.
 function M.hasNativeStack(stack, scene, first, world)
   for i=first,#scene.states do
     local state=scene.states[i]
-    if state and state~=world and visible(stack,state) and type(state.draw)=='function' then return true end
+    if state and state~=world and visible(stack,state) and type(state.draw)=='function'
+        and M.windowStackState(state) then return true end
   end
   return false
 end
@@ -49,7 +57,8 @@ function M.drawNativeStack(stack, scene, first, world, renderer, viewport, opaqu
     M.classic(function()
       for i=first,#scene.states do
         local state=scene.states[i]
-        if state and state~=world and visible(stack,state) and type(state.draw)=='function' then
+        if state and state~=world and visible(stack,state) and type(state.draw)=='function'
+            and M.windowStackState(state) then
           G.push('all')
           -- Declared larger native surfaces retain their own origin. Plain
           -- GB states stay centred in a parent's expanded surface.
