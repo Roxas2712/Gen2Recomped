@@ -105,10 +105,7 @@ function Experience.apply(data, mon, defeatedDef, level, isTrainer,
     -- the difference between a raised Pokemon and a wild one at every level
     -- before that.
     Experience.awardEVs(mon, defeatedDef.evYield)
-  elseif gsc then
-    require('src.pokemon.Gen2Progression').nativeStatExp(mon,defeatedDef,numParticipants,
-      (tonumber(mon.pokerus)or 0)~=0,opts.halved)
-  else
+  elseif not gsc then
     -- stat exp is divided among participants too
     -- (DivideExpDataByNumMonsGainingExp divides wEnemyMonBaseStats)
     local statShare = math.max(1, numParticipants or 1)
@@ -141,6 +138,12 @@ function Experience.apply(data, mon, defeatedDef, level, isTrainer,
   end
   -- Lucky Egg is a per-recipient x1.5 held-item boost in Generation II.
   if not gsc then gained = HeldItems.modifyExperience(data, mon, gained)end
+  if gsc and not Stats.isGen3(speciesDef)then
+    -- Source GiveExperiencePass resolves exp.gain first, then awards effort
+    -- before the level/stat recalculation. Hook edits must be visible here.
+    require('src.pokemon.Gen2Progression').nativeStatExp(mon,defeatedDef,numParticipants,
+      require('src.pokemon.Gen2Pokerus').doublesStatExp(mon),opts.halved)
+  end
   return Experience.add(data, mon, gained)
 end
 

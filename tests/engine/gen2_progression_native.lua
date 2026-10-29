@@ -23,7 +23,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   ['mods/progression_probe/main.lua']=[[
    local mod=...
    local e=mod.exports
-   e.Mon=require('src.battle.gen2.Mon');e.events={};e.awards={};e.mode='delegate'
+   e.Mon=require('src.battle.gen2.Mon');e.events={};e.awards={};e.mode='delegate';e.effortBefore={}
    mod.content.growth_rates:override('CUSTOM_SOURCE',{expForLevel=function(n)return 2*n*n*n+.9 end})
    mod.events:on('pokemon.level_up',function(ev)
     e.events[#e.events+1]={mon=ev.mon,level=ev.level,previous=ev.prevLevel,
@@ -31,6 +31,8 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
    end)
    mod.hooks:wrap('exp.gain',function(next,ctx)
     e.awards[#e.awards+1]=ctx
+    e.effortBefore[#e.effortBefore+1]=ctx.mon.statExp.special
+    if e.mode=='infect'then ctx.mon.pokerus=32 end
     if e.mode=='override'then return 7 end
     if e.mode=='suppress_egg'then ctx.luckyEgg=false end
     return next(ctx)
@@ -94,7 +96,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
  local foe={baseExp=101,baseStats={hp=19,attack=21,defense=23,speed=25,spatk=31,spdef=199}}
  for _,pokerus in ipairs{0,0x21,0x20}do
   native=Pokemon.new(data,'FIXMON_A',40);native.pokerus=pokerus;native.item='QA_LUCKY'
-  local exp=native.exp;probe.awards={};probe.mode='delegate'
+  local exp=native.exp;probe.awards={};probe.effortBefore={};probe.mode='delegate'
   levels,amount=Experience.apply(data,native,foe,15,true,2,true,{halved=true})
   -- floor(101/2)*15/7 ->107; /2->53; trade79; trainer118; egg177.
   T.eq(amount,177,'actual native pool halves before level/participant/trade/trainer/egg rounding')
@@ -102,6 +104,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(native.statExp.special,7*(pokerus~=0 and 2 or 1),'actual active/cured Pokerus doubles shared Special Attack yield')
   T.eq(native.statExp.hp,4*(pokerus~=0 and 2 or 1))
   T.eq(#probe.awards,1,'one native exp.gain dispatch per award')
+  T.eq(probe.effortBefore[1],0,'actual source hook observes effort before this award')
   T.eq(probe.awards[1].mon,native);T.eq(probe.awards[1].participants,2)
   T.eq(probe.awards[1].halved,true);T.eq(probe.awards[1].luckyEgg,true)
   probe.mode='suppress_egg'
@@ -111,6 +114,9 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   _,amount=Experience.apply(data,native,foe,15,true,2,true,{halved=true})
   T.eq(amount,7,'explicit final hook return is not boosted again outside the owner')
  end
+ local infected=Pokemon.new(data,'FIXMON_A',40)
+ probe.mode='infect';Experience.apply(data,infected,foe,15,false,2,false,{halved=true})
+ T.eq(infected.statExp.special,14,'real exp.gain Pokerus edit precedes native effort award')
  -- Execute the real battle EXP.SHARE distribution, retaining actual party,
  -- source model, loser and per-recipient callback identities.
  require('src.render.Font').load(data)

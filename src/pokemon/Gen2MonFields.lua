@@ -131,6 +131,9 @@ function Fields.adoptStats(stats)
     local value=rawget(stats,source)
     if value~=nil then rawset(stats,native,value);rawset(stats,source,nil)end
   end
+  if rawget(stats,'special')==nil and rawget(stats,'spatk')~=nil then
+    rawset(stats,'special',rawget(stats,'spatk'))
+  end
   return stats
 end
 
