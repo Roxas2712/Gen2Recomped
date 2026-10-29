@@ -1,0 +1,64 @@
+{
+  "passed": true,
+  "sourceStable": true,
+  "sourceSha256": "8f013202dc9376d06be51eb6ef3962fbada0dc52a8ff0374d3dcc59c2ab7fd97",
+  "commit": "38d8fe5139508894747f9b0e3962adaa85c44fcc",
+  "results": [
+    {
+      "name": "tools/atlas_worker_check.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.12846829199999732,
+      "logSha256": "ce92b16908edeb7f2e0f7ece605bcc872de1c12e34abcb1b5a3748f2a1e2cc12"
+    },
+    {
+      "name": "tests/engine/native_atlas_resources.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.32163045800000134,
+      "logSha256": "25dd0f9f411752cc4d23a9144e18ba51a55cebb559b8e717b8c21a6fb2e89042"
+    },
+    {
+      "name": "tests/engine/native_atlas_pixels.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.11196633300000158,
+      "logSha256": "06416508d91d35c20de16fb03b00dd18713a636346f79b8733b3cc4163749ae2"
+    },
+    {
+      "name": "tests/engine/native_atlas_palettes.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.04049974999999861,
+      "logSha256": "9acf4f747066b19d05e08f85a9004d66219ada67c11676a9e1679a2fcc4d60ab"
+    },
+    {
+      "name": "tests/engine/native_field_view.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.6817387920000009,
+      "logSha256": "f1ff795fe3bacd96995cbc8e7c041ac3e0e9d1fc0288e604549cb089c70bcd98"
+    },
+    {
+      "name": "tests/engine/gate_hooks.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.37974212499999993,
+      "logSha256": "e30533029a2373aa7a892aacb4ed778911def6cb41f0c071f58c377e51dae3a6"
+    },
+    {
+      "name": "tests/mod_examples_tests.lua",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.27929008299999936,
+      "logSha256": "01d4aaa97bc0df6179ef3bf02ae2303072c56299a76847b0aaebcb212911f899"
+    },
+    {
+      "name": "actual-worker-host",
+      "spec": null,
+      "exit": 0,
+      "wallSeconds": 0.7996904170000008,
+      "logSha256": "28a548a2d535d8c86ed626c35c83732c1f9f265158e0ffa010214b9e781d98fc"
+    }
+  ]
+}

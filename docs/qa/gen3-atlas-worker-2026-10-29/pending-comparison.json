@@ -1,0 +1,13 @@
+{
+  "registered_source": "1482ea771774f3ebc280850a1f2a7f89164406f2",
+  "design": "ABBA, 4 fresh identical native Emerald cases, 60 real seconds each",
+  "required_focus": false,
+  "main_thread_budget_max_ratio": 0.8,
+  "frame_mean_max_ratio_per_pair": 1.05,
+  "seam_mean_max_ratio": 1.1,
+  "claims": "Bounded atlas preparation main-thread time; no complete-game FPS or energy claim.",
+  "complete": false,
+  "accepted": false,
+  "results": [],
+  "reason": "Both local full-test and waiting ABBA controller stopped at the mandatory20GiB free-disk reserve. No case timing was accepted."
+}

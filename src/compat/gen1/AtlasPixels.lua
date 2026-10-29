@@ -3,6 +3,7 @@
 local Tiles=require('src.render.Gen3Tiles')
 local PaletteCache=require('src.compat.gen1.AtlasPaletteCache')
 local M={COLS=16}
+local coreStates=setmetatable({}, {__mode='k'})
 local floor,concat=math.floor,table.concat
 local component5={}
 for n=0,31 do
@@ -32,7 +33,7 @@ function M.colors(words)
   end
   return out
 end
-function M.new(pair,layout,checkpoint)
+local function build(pair,layout,checkpoint,prepared)
   for _,bank in ipairs({pair.primary,pair.secondary})do
     assert(type(bank)=='table'and integer(bank.metatileCount,1024)
       and type(bank.metatiles)=='string'and#bank.metatiles>=bank.metatileCount*16
@@ -51,7 +52,15 @@ function M.new(pair,layout,checkpoint)
   local paletteCache=PaletteCache.new(decoder,layout)
   local self={decoder=decoder,mids={},midToSlot={},indexed={},under={},over={},paletteOverrides={},revision=0,checkpoint=checkpoint,
     background='\0\0\0\255',paletteUsers={},slotPalettes={},indexRevision=0}
-  local usedTiles={}
+  local usedTiles
+  if prepared then
+    usedTiles=prepared.usedTiles
+    for key,value in pairs(prepared.fields)do self[key]=value end
+    decoder:setAnimationTicks(0)
+    decoder:setPaletteTicks(0)
+    decoder.tileCache=prepared.tileCache
+  else
+  usedTiles={}
   local function add(mid)
     local slot=#self.mids;self.mids[slot+1]=mid;self.midToSlot[mid]=slot
     for _,entry in ipairs(decoder:entries(mid))do
@@ -65,6 +74,7 @@ function M.new(pair,layout,checkpoint)
   assert(#self.mids>0 and #self.mids<=1024,'invalid atlas metatile count')
   self.cols,self.rows=M.COLS,math.max(1,math.ceil(#self.mids/M.COLS))
   self.width,self.height=self.cols*16,self.rows*16
+  end
   local function activeCycle(slot,color)
     local bank=decoder:paletteBank(slot)
     local selected=decoder.paletteState and decoder.paletteState[slot<decoder.palettesInPrimary and'primaryFrames'or'secondaryFrames']
@@ -234,8 +244,37 @@ function M.new(pair,layout,checkpoint)
     end
     return out
   end
-  self:update(0)
+  if not prepared then self:update(0)end
   self.checkpoint=nil
+  coreStates[self]=usedTiles
   return self
+end
+function M.new(pair,layout,checkpoint)
+  return build(pair,layout,checkpoint)
+end
+function M.fromCore(result,pair,layout)
+  return build(pair,layout,nil,result)
+end
+-- Only detached channel-safe data crosses the worker boundary. Closures and
+-- the decoder's live bank references are recreated on the main thread.
+function M._toCore(model)
+  local fields={}
+  for _,key in ipairs({'mids','midToSlot','indexed','under','over','paletteOverrides',
+      'revision','background','paletteUsers','slotPalettes','indexRevision','cols','rows',
+      'width','height','paletteRows','paletteKey','backgroundChanged','bgr','ticks'})do
+    fields[key]=model[key]
+  end
+  return {fields=fields,usedTiles=assert(coreStates[model]),tileCache=model.decoder.tileCache,
+    rgbaUnder=model:rgba(false),rgbaOver=model:rgba(true),
+    blobUnder=model:blob(false),blobOver=model:blob(true)}
+end
+local nativeNew,nativeFromCore=M.new,M.fromCore
+function M._workerCompatible()
+  if getmetatable(M)~=nil or M.new~=nativeNew or M.fromCore~=nativeFromCore or M.COLS~=16 then return false end
+  for _,module in ipairs({Tiles,require('src.render.Gen3PaletteCycles'),require('src.render.Gen3PaletteSamples')})do
+    local guard=type(module)=='table' and rawget(module,'_workerCompatible')
+    if type(guard)~='function' or not guard()then return false end
+  end
+  return true
 end
 return M
