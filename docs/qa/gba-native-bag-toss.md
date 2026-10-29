@@ -23,6 +23,9 @@ Emerald's remaining physical split-slot behavior for repeated ordinary stacks.
   removal and serialization; edition-owned limits; own text/cache admission;
   quantity bounds; custom names; cancellation and single result commit.
 - 31 Ruby/Sapphire bag contract and 82 all-five pocket/return assertions pass.
+- Existing physical inventory, item-PC and authored-mail contracts also pass
+  115, 104 and 152 checks respectively. The inventory contract now expects
+  FRLG's corrected 999-item limit and verifies an immutable overflow refusal.
 - Emerald, FireRed and LeafGreen each pass a fresh complete own-cartridge
   import/title and a seven-capture native bag fixture: quantity three, NO,
   YES, result, a single item, the rebuilt list after that final item is
