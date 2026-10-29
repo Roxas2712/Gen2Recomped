@@ -26,3 +26,12 @@ Hall PC captions. Extraction and readiness now require that sheet for E/FRLG;
 Emerald's private font context also receives its own FONT_SMALL masks and
 widths. The original reference files remain byte-exact. The native options
 fixture explicitly checks the icons and Emerald small face before capture.
+
+Emerald native acceptance covers all six enums, the original twenty frames,
+MORE OPTIONS step/action callbacks, scrolling, CANCEL, actual persistence,
+reopening and main-menu return. Its twelve captures use the final renderer.
+The fixture samples the title on the native canvas, host canvas and complete
+window frame; original PNG pixel checks corroborate those results. Review
+original-resolution captures when a reduced preview appears inconsistent.
+This is UI acceptance with a prepared fixture, not a complete ordinary story.
+FireRed/LeafGreen final native acceptance is still pending.
