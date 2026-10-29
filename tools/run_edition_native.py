@@ -62,6 +62,11 @@ if args.freeze:
     paths.update([str(driver),'tests/drivers/util.lua'])
     if str(driver)=='tests/rs_battle_panel_native_driver.lua':
         paths.add('tests/rs_battle_panel_reference.lua')
+    if str(driver)=='tests/gba_hall_integration_native_driver.lua':
+        paths.update('tests/'+name for name in (
+            'gba_native_options_driver.lua','gba_hall_pc_native_driver.lua',
+            'rs_ending_save_native_driver.lua','emerald_ending_save_native_driver.lua',
+            'frlg_ending_save_native_driver.lua'))
     candidate={}
     for name in sorted(paths):
         source=ROOT/name;target=engine/name
