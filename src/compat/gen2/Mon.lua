@@ -2,6 +2,17 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+local function identity()return require('src.pokemon.IdentityRolls')end
+function M.vanillaShiny(dvs)return identity().gen2VanillaShiny(dvs)end
+function M.isShiny(dvs,context)return identity().gen2GeneShiny(dvs,context)end
+function M.vanillaGender(def,dvs)return identity().gen2VanillaGender(def,dvs)end
+function M.gender(def,dvs,context)return identity().gen2GeneGender(def,dvs,context)end
+function M.randomDVs()
+  local random=love and love.math and love.math.random or math.random
+  local dvs=require('src.pokemon.Stats').randomDVs(random)
+  dvs.hp=nil -- Source birth derives HP later, after any authored gene edits.
+  return dvs
+end
 local PP=require('src.pokemon.Gen2PP')
 function M.ppUpsOf(move,data)return PP.ups(data and data.moves and type(move)=='table' and data.moves[move.id],move)end
 function M.maxPpOf(move,data)return PP.forSlot(move,data and data.moves)end

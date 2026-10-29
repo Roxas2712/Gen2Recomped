@@ -35,5 +35,11 @@ The exact new fixture run against predecessor main `d822aba8` fails25 real
 method-presence probes (five methods across five GSC editions), as expected;
 its failed receipt is retained, not presented as a passing run.
 
-Full composed-tree qualification is pending. No GPU, unchanged-mod
+Exact composed head `d2555abf` passes950/950engine and4/4SDK suites and
+every available official ROM-free tier. All75latest exact-head CI checks
+succeed or are skipped; the first macOS transport job was cancelled at its
+five-minute limit and one identical-head job rerun passed. Strict merge
+`4a28411d` has the identical qualified tree `a5d704af`. Upstream PR401
+independently passes6642API/92real item-link checks and five older native
+regression groups. No GPU, unchanged-mod
 move-learning interaction or packaged-release acceptance is claimed yet.
