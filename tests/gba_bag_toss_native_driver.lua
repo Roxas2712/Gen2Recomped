@@ -80,18 +80,22 @@ return function(game)
   assert(owner.rows[owner.index].qty==9,'Bag did not rebuild the actual item count');press('b')
   assert(game.stack:top()==world)
   owner=bag('ANTIDOTE');state=toss(owner);assert(state.mode=='confirm'and state.max==1)
-  before=S.encode(game.save);shot('native-bag-toss-single-skips-quantity');press('b');unchanged(before);press('b')
+  before=S.encode(game.save);shot('native-bag-toss-single-skips-quantity');press('b');unchanged(before)
+  state=toss(owner);press('a');assert(state.mode=='done'and game.save.inventory.ANTIDOTE==1)
+  press('b');assert(state.committed and game.stack:top()==owner and game.save.inventory.ANTIDOTE==nil)
+  assert(owner.rows[owner.index]and owner.rows[owner.index].id~='ANTIDOTE','Last-item removal left a stale bag row/cursor')
+  press('b')
   game.save.options.gen3Frame=version=='emerald'and 20 or 10
   owner=bag('ORAN_BERRY',true);state=toss(owner);before=S.encode(game.save)
   -- The boundary view is a prepared UI selection, not an inventory mutation.
   state.qty=999;state:refreshMessage();shot('native-bag-toss-berry-999-last-frame')
   press('up');assert(state.qty==999);press('b');unchanged(before);press('b')
-  assert(game.stack:top()==world and game.save.inventory.ORAN_BERRY==999 and game.save.inventory.ANTIDOTE==1)
+  assert(game.stack:top()==world and game.save.inventory.ORAN_BERRY==999 and game.save.inventory.ANTIDOTE==nil)
   assert(game:writeSave()==true);local loaded=assert(IO.load(version))
   assert(S.encode(loaded.inventory)==S.encode(game.save.inventory),'Actual save/load lost the selected toss result')
   report.cases={quantityCancelPreservesSave=true,noPreservesSave=true,bPreservesSave=true,
     selectedQuantityCommittedOnce=true,nativeCountAndFrames=true,threeDigitBerryAndPouch=true,
-    oneItemSkipsQuantity=true,bagRebuildAndReturn=true,actualDiskRoundTrip=true}
+    oneItemSkipsQuantity=true,lastItemRemovalAndCursorValid=true,bagRebuildAndReturn=true,actualDiskRoundTrip=true}
   report.drawPreservesSaveRng=true;report.status='pass';persist()
   print('PASS_NATIVE_GBA_BAG_TOSS');love.event.quit(0)
 end
