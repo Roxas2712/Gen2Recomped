@@ -106,6 +106,24 @@ function Identity.bind(maps, edition)
     if not name then return nil, "unknown Gen1 map slot" end
     return name
   end
+  -- Resolve one observation with one native-record check. Keep the same
+  -- legacy-name precedence and native-alias fallback as the two-step callers.
+  -- This borrows the live definition; it never memoizes map/gameplay state.
+  function binding:resolve(id)
+    local canonical, g, n = Identity.lookup(edition, id)
+    if g then
+      local row = record(g, n)
+      if row then return row.key, row.def, canonical end
+    end
+    local def = type(id) == "string" and maps[id]
+    if type(def) ~= "table" then return nil, "map identity unavailable or retired" end
+    local row, why = record(def.group, def.number)
+    if not row then return nil, why end
+    if row.def ~= def then return nil, "native map binding retired" end
+    canonical = Identity.lookup(edition, def.group, def.number)
+    if not canonical then return nil, "unknown map slot" end
+    return row.key, row.def, canonical
+  end
   return binding
 end
 

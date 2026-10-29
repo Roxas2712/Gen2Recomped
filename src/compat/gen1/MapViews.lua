@@ -63,13 +63,8 @@ function Views.new(getGame, getEdition)
   end
   local function build(id)
     local ow, why = currentOwner(); if not ow then return nil, why end
-    local nativeId, def = binding:nativeId(id)
-    if not nativeId and maps[id] then
-      local alias = binding:legacyId(id)
-      if alias then nativeId, def = binding:nativeId(alias) end
-    end
+    local nativeId, def, canonical = binding:resolve(id)
     if not nativeId then return nil, "map identity unavailable" end
-    local canonical = binding:legacyId(nativeId)
     local live = loaded(ow, nativeId, def)
     if live and live.def ~= def then return nil, "resident map definition changed" end
     local w, h = def.width, def.height
