@@ -29,7 +29,11 @@ end
 local path=A.FONTS..'latin_narrow_widths.lua';local raw=files[path]
 widths[0]=nil;files[path]=Writer.encode(widths);T.eq(#A.missing('emerald'),1)
 widths[0]=17;files[path]=Writer.encode(widths);T.eq(#A.missing('emerald'),1);files[path]=raw
-local load=require('compat.gen1-rs.Loader').new('emerald',{['src.core.GameVersion']=V,__package={loaded={}}})
+local load=require('compat.gen1-rs.Loader').new('emerald',{['src.core.GameVersion']=V,__package={loaded={}},
+ ['src.core.game3.display']={W=240,H=160,TILE=8,COLS=30,ROWS=20},
+ ['src.ui.game3.window']={},['src.ui.game3.frlg_font']={STDPAL={[0]={},[1]={},[3]={}}},
+ ['src.ui.game3.rse.scene_kit']={},['src.mods.Runtime']=require('src.mods.Runtime'),
+ ['src.core.Logger']=require('src.core.Logger')})
 local IR=load('src.core.game3.scripting.text_ir')
 local Serial=require('src.core.SaveSerializer')
 V.set('emerald')
@@ -115,5 +119,33 @@ T.eq(texts[1].text,' 50');T.eq(texts[1].x,63);T.eq(texts[1].y,116)
 T.eq(texts[2].text,' 95');T.eq(texts[2].y,128);T.eq(texts[3].text,' 30');T.eq(texts[3].y,140)
 T.eq(view:drawMoveInfo({id='POTION'}),false)
 owner.pcList=true;T.eq(View.available(owner),false);owner.pcList=false
+-- Exercise the host entry point with the actual pinned list controller.
+local UI=require('src.ui.Gen3BagMenu')
+owner.emerald=true;owner.emeraldView=view;owner.pockets[1].key='ITEM'
+owner.rows={};for i=1,12 do owner.rows[i]={id='ITEM_'..i,label='ITEM '..i,qty=i}end
+local close={close=true,label='CLOSE BAG'};owner.rows[13]=close
+local rows=owner.rows;owner.index,owner.top=1,1
+local navigationSave=Serial.encode(game.save)
+UI.moveCursor(owner,-1);T.eq(owner.index,1,'UP at the first item does not wrap to CLOSE')
+for _=1,4 do UI.moveCursor(owner,1)end
+T.eq(owner.index,5);T.eq(owner.top,1,'the first five rows retain their native anchors')
+UI.moveCursor(owner,1);T.eq(owner.index,6);T.eq(owner.top,2,'scroll starts with the cursor in the fifth visible row')
+for _=1,3 do UI.moveCursor(owner,1)end
+T.eq(owner.index,9);T.eq(owner.top,5)
+glyphs={};texts={};view:drawNative()
+T.eq(glyphs[1].y,81,'selected ninth item stays in the native middle row')
+local selectedText;for _,row in ipairs(texts)do if row.text=='ITEM 9'then selectedText=row end end
+T.check(selectedText);T.eq(selectedText.y,81)
+for _=1,30 do UI.moveCursor(owner,1)end
+T.eq(owner.index,13);T.eq(owner.top,6);T.eq(owner.rows[owner.index],close,'CLOSE remains a selectable sentinel')
+for _=1,5 do UI.moveCursor(owner,-1)end
+T.eq(owner.index,8);T.eq(owner.top,5,'upward scroll keeps the fourth visible row')
+for _=1,30 do UI.moveCursor(owner,-1)end
+T.eq(owner.index,1);T.eq(owner.top,1);T.eq(owner.rows,rows,'navigation preserves the host row table')
+T.eq(Serial.encode(game.save),navigationSave,'scrolling preserves all saved values')
+owner.rows={close};owner.index,owner.top=1,1
+UI.moveCursor(owner,1);UI.moveCursor(owner,-1);T.eq(owner.index,1);T.eq(owner.top,1)
+local legacy={rows=rows,index=1,top=1,listRows=function()return 8 end}
+UI.moveCursor(legacy,-1);T.eq(legacy.index,13,'other presenters retain their existing navigation')
 Fs.read=oldRead;love.graphics=oldGraphics;love.filesystem.load=oldLoad;V.set(oldV)
 T.finish('Emerald native bag cache ownership, font readiness, list geometry and unchanged save')

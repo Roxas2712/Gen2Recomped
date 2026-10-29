@@ -109,6 +109,21 @@ function M:drawActions(menu)
   end
  end
 end
+-- Use the existing native list controller for its centered scroll thresholds
+-- and end stops. The controller receives the host rows without replacing or
+-- editing them; inventory, callbacks and CLOSE remain owned by the bag.
+function M:moveCursor(delta)
+ local owner=self.owner
+ if delta==0 or #owner.rows==0 then return false end
+ local List=self.load('src.ui.game3.list_menu')
+ local list=setmetatable({items=owner.rows,maxShowed=8,scroll=owner.top-1,
+  row=owner.index-owner.top},List)
+ list:clamp()
+ local changed=list:step(delta>0)~=0
+ owner.top,owner.index=list.scroll+1,list.scroll+list.row+1
+ if changed then owner.message=nil end
+ return changed
+end
 function M:drawNative(action)
  local owner,man=self.owner,self.manifest;local g=love.graphics
  local font=self.load('src.ui.game3.frlg_font');local K=self.load('src.import.gba.rse.boot_gfx')

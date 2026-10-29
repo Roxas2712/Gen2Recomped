@@ -445,6 +445,11 @@ function Gen3BagMenu:movePocket(delta)
 end
 
 function Gen3BagMenu:moveCursor(delta)
+  if self.emerald then
+    self.emeraldView=self.emeraldView or require('src.ui.Gen3EmeraldBagView').new(self)
+    if self.emeraldView:moveCursor(delta)then Sound.play(self.game.data,'Press_AB')end
+    return
+  end
   local n = #self.rows
   if n == 0 then return end
   self.message = nil
