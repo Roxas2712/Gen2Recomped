@@ -82,7 +82,7 @@ T.eq(description,false,'sale dialogue suppresses the underlying description inst
 top=owner;texts={};view:drawNative();description=false
 for _,row in ipairs(texts)do if row.text=='Heals HP.'then description=true end end
 T.eq(description,true,'ordinary lists retain their item description')
-top={emeraldBagMessageOwner=owner,presentation={rows={{id='POTION',label='POTION',qty=12}},index=1,top=1}}
+top={emeraldBagMessageOwner=owner,presentation={rows={{id='POTION',label='POTION',qty=12,description='OLD DESCRIPTION'}},index=1,top=1}}
 texts={};view:drawNative();local oldCount=false;description=false
 for _,row in ipairs(texts)do
  if row.text=='x12'then oldCount=true end
