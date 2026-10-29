@@ -78,8 +78,11 @@ failed macOS transport timeout. The strict merge tree equals the qualified
 tree. Actual GPU/window and release qualification remain open.
 [Live native GSC Pokemon fields](native-gen2-mon-fields.md), draft PR352,
 addresses five actual missing source field reads on native Pokemon records.
-Corrected source `2a000267` passes156 pure-data and162 native checks, plus
-the existing construction, identity and save regressions. The preceding
+Corrected source `23d4aaa5` passes184 pure-data,177 native and100 actual
+world/battle checkpoint checks, plus all13 checkpoint suites that failed
+in the first complete run. The corrected codecs retain strict refusal of
+custom runtime state and byte-identical recapture. Earlier construction,
+identity and save regressions also passed on the initial source. The preceding
 engine fails all five source-field checks and the absent-helper check.
 Full composed-tree, unchanged-mod GPU/menu and release qualification of
 this addition remain open.

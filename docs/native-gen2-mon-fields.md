@@ -34,6 +34,25 @@ Selected qualification on corrected source `2a000267`:
 - Existing data construction 691, native construction/art hydration 972,
   identity ownership 142, species identity 145 and save-summary 50 checks pass.
 
+Native mod loading also accepts bounded canonical `spatk`/`spdef` patches
+through its strict nested Pokemon schema. The real SDK probe patches both
+columns, rather than bypassing validation with direct registry calls.
+
+The first full run on `4590148b` passed933/946 engine suites;13 checkpoint
+groups rejected the new native metatables as opaque. Semantic codecs now
+authenticate only the helper's unchanged plain native wrappers, serialize
+only raw record entries and restore native field views on reconstructed
+saved Pokemon and current combat stats. Custom/protected/copied/edited
+metatables remain opaque. World reconstruction binds actual party, sparse
+boxes and native daycare slots without inspecting mod storage, rolling
+identity, recalculating stats or changing serialized progress. A dedicated
+real world/battle checkpoint probe checks raw snapshots, restored live
+aliases, separate transformed current stats and byte-identical recapture.
+Corrected source `23d4aaa5` passes184 pure-data,177 actual native and100
+semantic-codec checks, plus all13 previously failing checkpoint suites.
+Complete current-tree qualification is pending; the first failed full
+receipt must not be treated as a passing current-tree result.
+
 The first implementation lost custom metamethods on a cache miss; four pure
 checks caught it. The corrected cache selection passes all checks. The same
 native probe on the preceding committed engine fails six checks, including
