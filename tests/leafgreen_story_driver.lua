@@ -52,6 +52,9 @@ return function(game)
     local f=s.update or s.draw;r.source=type(f)=='function'and debug.getinfo(f,'S').short_src or '?'
     if s.pages and s.pageIndex then r.page=s.pages[s.pageIndex]end
     if s.entries then r.entries={};for i,e in ipairs(s.entries)do r.entries[i]=type(e)=='table'and fields(e,{'key','label','name','text'})or tostring(e)end end
+    if s.screenId=='Gen3StartMenu'and s.rows then
+      r.rows={};for i,row in ipairs(s.rows)do r.rows[i]=fields(row,{'key','id','label'})end
+    end
     if s.enemy then r.enemy=fields(s.enemy.mon or s.enemy,{'species','level','hp','status'})end
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
     if s.trainer then r.trainer=fields(s.trainer,{'name','class','id','index'})end
