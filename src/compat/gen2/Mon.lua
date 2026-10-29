@@ -41,4 +41,8 @@ function Mon.stats(base,dvs,level,statExp)
 end
 function Mon.syncIdentity(mon,data)return Native.syncIdentity(data,mon)end
 function Mon.refreshStats(mon,data)return Native.refreshStats(data,mon)end
+function Mon.movesAtLevel(def,level,moves)
+  return require('src.pokemon.Gen2Learnset').slots(def,level,moves)
+end
+function Mon.learnMove(mon,id,data)return require('src.pokemon.Gen2Learnset').learn(mon,id,data)end
 return setmetatable(Mon,{__index=Native})
