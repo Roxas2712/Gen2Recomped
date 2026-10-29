@@ -23,12 +23,19 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(#run.errors,0,'actual SDK source stat consumer loads')
   local api=run.loader.exports.refresh_probe
   local mon=Pokemon.new(data,'FIXMON_A',25)
+  local Battler=require('src.battle.Battler')
   for _,hp in ipairs{0,-1,5,999}do
     mon.hp=hp;mon.stats={hp=999,attack=1,defense=1,speed=1,spatk=1,spdef=1}
     local prior=mon.stats
+    local native=Battler.new(data,mon,false)
+    local transformed=Battler.new(data,mon,false)
+    local transformedStats={hp=22,attack=99,spatk=99,spdef=99}
+    transformed.curStats=transformedStats
     mon.dvs={attack=1,defense=1,speed=1,special=1,hp=0}
     T.eq(api.refresh(mon,data),mon,'source refresher retains actual native Pokemon identity')
     T.neq(mon.stats,prior,'source refresh recalculates an already existing native stat block')
+    T.eq(native.curStats,mon.stats,'actual native combat wrapper follows refreshed party statistics')
+    T.eq(transformed.curStats,transformedStats,'separate actual Transform/current override remains owned by its battler')
     T.eq(mon.stats.hp,Stats.calcGen2(data.pokemon.FIXMON_A.baseStats,mon.dvs,25).hp,'refresh derives HP from current genes')
     T.eq(mon.maxHp,mon.stats.hp,'source maximum follows native recalculation')
     T.eq(mon.hp,math.min(hp,mon.stats.hp),'refresh preserves wounds, fainted zero and source negative HP semantics')

@@ -4,6 +4,22 @@
 -- The HP DV is derived from the low bits of the other four DVs.
 
 local Stats = {}
+-- Live native wrappers share party stats until Transform replaces their own
+-- block. Weak keys retain neither finished battles nor Pokemon datasets.
+local statOwners=setmetatable({}, {__mode='k'})
+function Stats.trackBattler(battler)
+  statOwners[battler]=true
+  return battler
+end
+function Stats.replace(mon, stats)
+  local previous=mon.stats
+  mon.stats=stats
+  for owner in pairs(statOwners)do
+    if owner.mon==mon and owner.curStats==previous then owner.curStats=stats end
+  end
+  return stats
+end
+
 
 local ORDER = { "hp", "attack", "defense", "speed", "special" }
 Stats.ORDER = ORDER
