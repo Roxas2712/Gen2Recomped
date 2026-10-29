@@ -2127,6 +2127,9 @@ local function scrubKnownMon(mon, data)
       moves[1] = { id = fallback, pp = def.pp }
     end
   end
+  if require('src.core.GameVersion').isGen2() then
+    require('src.pokemon.Gen2PP').repair(mon,data.moves)
+  end
 end
 
 -- `slots` is how many places the list HAS, not how many are filled: a party is

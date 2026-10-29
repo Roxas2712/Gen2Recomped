@@ -24,8 +24,9 @@ executable linked against the same headers and static library. The builder
 checks target ELF architecture and records hashes. Its reports explicitly keep
 `targetExecutionQualified` and `releaseSelectable` false: Android execution and
 the actual LÖVE/JNI/thread/FFI boundary must be exercised before packaging can
-select a candidate. The existing application continues to use its current
-runtime until that qualification and selection work is complete.
+select a candidate. The regular application keeps its current runtime. Preview
+packaging selects an extended component only after the matching app-host gates
+pass for all shipping architectures.
 
 The workflow also executes both x86-64 candidates on an owned API-30 Android
 emulator through `check_android_target.py`. Transfers are hash-checked before
@@ -35,8 +36,8 @@ removes its own files afterward. ARM and 32-bit execution remain separate
 requirements. This standalone VM test does not replace the LÖVE/JNI/thread/FFI
 host gate, so its report also keeps release selection disabled.
 
-iOS needs separately built Apple framework slices and interpreter-mode
-qualification. Switch needs a rebuilt runtime and target execution. These
+iOS uses separately built Apple framework slices and interpreter-mode
+qualification. Switch still needs a rebuilt runtime and target execution. These
 build artifacts establish neither full platform parity nor original-mod
 startup, rendering or gameplay acceptance. Local QA uses the shared 20 GiB
 reserve and owned output leases.
@@ -70,7 +71,49 @@ Reports are written inside each test app's private directory; only installations
 created by that invocation are stopped and uninstalled. Candidate, APK and
 source hashes bind the evidence to the actual built inputs.
 
-The `Android LÖVE runtime host` workflow performs this x86-64 acceptance gate.
-Its result must be inspected before claiming host qualification. Reports keep
-release selection disabled: ARM/32-bit and physical devices, rendering, input,
-full original-mod gameplay, iOS and Switch still require their own acceptance.
+The `Android LÖVE runtime host` workflow builds and executes arm64-v8a,
+armeabi-v7a and x86_64 app candidates. ARM binaries run through the emulator's
+native bridge; the probe requires the reported Lua architecture to match the
+selected ABI. LÖVE's deliberate default of JIT-off on ARM is preserved. Both
+interpreter and explicitly enabled JIT closure boundaries are exercised.
+Reports describe emulation, not physical-device acceptance.
+
+## iOS interpreter components and guarded preview selection
+
+`build_ios.py` builds device arm64 plus arm64/x86_64 simulator archives from the
+same immutable LuaJIT source revision used by the desktop candidate. Stock and
+extended variants have matching public headers. Both explicitly disable JIT,
+including simulator builds, and retain LuaJIT's copyright notice.
+`qualify_ios_love.py` installs them in an owned prepared LÖVE source copy and
+executes both variants in fresh simulator apps. It checks Lua closures, the
+actual C API through a statically compiled native probe, FFI calls, separate
+LÖVE thread VMs and filesystem bindings. iOS LuaJIT deliberately disables dynamic
+FFI callbacks under `LJ_OS_NOJIT`: both stock and extended probes must explicitly
+confirm that restriction. Android additionally requires successful FFI callbacks.
+Only the explicitly created simulator and applications are removed.
+
+`component.py` stages components from passing, hash-linked candidate receipts.
+Android requires every shipping ABI. iOS requires an actual arm64 simulator
+host, all three built slices, and interpreter-only receipts. Architecture and
+archive-byte checks bind the generated XCFramework to the qualified libraries.
+Missing host gates, changed libraries/headers, mismatched source trees and
+incomplete ABI coverage are rejected. Component manifests keep physical-device
+acceptance separate from these checks.
+
+```sh
+python3 tools/mobile-runtime-check/component.py --platform android \
+  --engine-root /path/to/frozen-engine \
+  --candidate /path/to/arm64 --candidate /path/to/armv7 --candidate /path/to/x64 \
+  --output /path/to/new/android-component
+python3 tools/package_native_port.py --platform android \
+  --engine-root /path/to/frozen-engine --payload /path/to/preview.love \
+  --runtime-component /path/to/new/android-component/component.json \
+  --release-id YYYYMMDD.N --engine-version X.Y.Z --out /path/to/new/package
+```
+
+The iOS commands use `--platform ios`; provide its framework/host candidate
+directory to the component stager. Build tools may be newer than a frozen
+engine checkout, but payload source/release/profile checks still require exact
+agreement with that checkout. The payload is never restamped or repacked.
+Mobile qualification neither bundles private mods nor establishes a complete
+gameplay or physical GPU/input acceptance for KASC/VASC.

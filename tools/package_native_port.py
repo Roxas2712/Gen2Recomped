@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Build a mobile/console preview around the exact desktop engine payload."""
 import argparse
+import atexit
 import hashlib
+import importlib.util
 import json
 import os
 import plistlib
@@ -9,6 +11,7 @@ import re
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import zipfile
 from pathlib import Path
@@ -17,9 +20,31 @@ from build_native_preview import RUNTIME_COMMIT, verify_payload
 from stage_game_payload import stage
 
 ROOT = Path(__file__).resolve().parents[1]
+TOOLS_ROOT = ROOT
+RUNNER = subprocess.run
+STORAGE = None
 APP_ID = "de.roxas2712.gen2recomp.nativepreview"
 APPLE_DEPENDENCIES_COMMIT = "a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e"
 ANDROID_CERT = "91ff1bad5d97a2cafd3da7ecf04a6b084792073dcd28df63db812a787cfb24ea"
+
+
+def mobile_component(path, platform, destination=None):
+    spec = importlib.util.spec_from_file_location('mobile_runtime_component', TOOLS_ROOT/'tools/mobile-runtime-check/component.py')
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.install(path, platform, ROOT, destination)
+
+
+def runtime_receipts(component, destination):
+    """Preserve public proofs and notices alongside the linked runtime."""
+    source = component.parent
+    destination.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(component, destination/'component.json')
+    shutil.copytree(source/'reports', destination/'reports', dirs_exist_ok=True)
+    notices = list((source/'libraries').rglob('COPYRIGHT'))
+    if not notices:
+        raise ValueError('LuaJIT copyright notice missing from mobile component')
+    shutil.copyfile(notices[0], destination/'COPYRIGHT-LuaJIT')
 
 
 def digest(path):
@@ -28,7 +53,7 @@ def digest(path):
 
 
 def run(*args, **kwargs):
-    return subprocess.run(args, cwd=ROOT, check=True, **kwargs)
+    return RUNNER(args, cwd=ROOT, check=True, **kwargs)
 
 
 def one(paths):
@@ -80,8 +105,11 @@ def verify_embedded(package, platform, payload):
         raise ValueError("platform package changed the frozen engine payload")
 
 
-def android(payload, target, version):
+def android(payload, target, version, component=None):
     env = {**os.environ, "GEN2_APPLICATION_ID": APP_ID, "GEN2_APP_NAME": "RetroRecomped Preview"}
+    qualified = mobile_component(component, 'android') if component else None
+    if component:
+        runtime_receipts(component, ROOT/'mobile/android/app/src/embed/assets/runtime-qualification')
     run("bash", "scripts/build_android.sh", "--game-love", str(payload), "--version", version, env=env)
     apk = one((ROOT / "dist/android/debug").glob("*.apk"))
     sdk = Path(os.environ.get("ANDROID_HOME") or os.environ["ANDROID_SDK_ROOT"])
@@ -95,10 +123,13 @@ def android(payload, target, version):
     if not re.search(r"package: name='" + re.escape(APP_ID) + r"'", manifest):
         raise ValueError("APK preview application identifier mismatch")
     shutil.copyfile(apk, target)
-    return dict(runtime="vendored LÖVE Android 11.5a", runtimeCommit=None, signing="committed debug key", signingCertificate=ANDROID_CERT)
+    metadata = dict(runtime="vendored LÖVE Android 11.5a", runtimeCommit=None, signing="committed debug key", signingCertificate=ANDROID_CERT)
+    if qualified:
+        metadata['qualifiedRuntime'] = qualified
+    return metadata
 
 
-def ios(payload, target, version, release_id):
+def ios(payload, target, version, release_id, component=None):
     env = {**os.environ, "GEN2_BUNDLE_ID": APP_ID, "LOVE_SOURCE_REF": RUNTIME_COMMIT,
            "APPLE_DEPENDENCIES_REF": APPLE_DEPENDENCIES_COMMIT}
     run("bash", "scripts/build_ios.sh", "--fetch", "--package-only", "--game-love", str(payload), "--version", version, env=env)
@@ -106,16 +137,22 @@ def ios(payload, target, version, release_id):
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
     if commit != RUNTIME_COMMIT:
         raise ValueError("existing iOS sources do not match the pinned runtime; use a fresh build checkout")
+    qualified = mobile_component(component, 'ios', source/'platform/xcode/ios/libraries/Lua.xcframework') if component else None
     with tempfile.TemporaryDirectory(prefix="preview-ios-") as temp:
         work = Path(temp)
+        if STORAGE:
+            STORAGE.limit_output(work, 4 * 1024**3)
         run("xcodebuild", "-project", str(source / "platform/xcode/love.xcodeproj"), "-target", "love-ios",
             "-configuration", "Release", "-sdk", "iphoneos", "-destination", "generic/platform=iOS",
             "SYMROOT=" + str(work / "Products"), "OBJROOT=" + str(work / "Intermediates"),
             "CODE_SIGNING_ALLOWED=NO", "CODE_SIGNING_REQUIRED=NO", "CODE_SIGN_IDENTITY=",
             "ONLY_ACTIVE_ARCH=NO", "PRODUCT_BUNDLE_IDENTIFIER=" + APP_ID,
-            "MARKETING_VERSION=" + version, "CURRENT_PROJECT_VERSION=" + release_id)
+            "MARKETING_VERSION=" + version, "CURRENT_PROJECT_VERSION=" + release_id,
+            *(['OTHER_LDFLAGS=$(inherited) -Wl,-export_dynamic'] if component else []))
         app = one((work / "Products").rglob("*.app"))
         stage(payload, app / "game.love", version)
+        if component:
+            runtime_receipts(component, app/'runtime-qualification')
         info_path = app / "Info.plist"
         info = plistlib.loads(info_path.read_bytes())
         binary = app / info["CFBundleExecutable"]
@@ -131,8 +168,11 @@ def ios(payload, target, version, release_id):
         bundle.parent.mkdir()
         shutil.move(app, bundle)
         subprocess.run(["zip", "-qry", str(target), "Payload"], cwd=work, check=True)
-    return dict(runtime="LÖVE 12 iOS", runtimeCommit=RUNTIME_COMMIT,
+    metadata = dict(runtime="LÖVE 12 iOS", runtimeCommit=RUNTIME_COMMIT,
                 appleDependenciesCommit=APPLE_DEPENDENCIES_COMMIT, signing="unsigned; sideload signing required")
+    if qualified:
+        metadata['qualifiedRuntime'] = qualified
+    return metadata
 
 
 def switch(payload, target, version):
@@ -154,39 +194,69 @@ def switch(payload, target, version):
 
 
 def main():
+    global ROOT, RUNNER, STORAGE
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--platform", choices=("ios", "android", "switch"), required=True)
     parser.add_argument("--payload", type=Path, required=True)
     parser.add_argument("--release-id", required=True)
     parser.add_argument("--engine-version", required=True)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--engine-root", type=Path, default=ROOT,
+                        help="Committed engine checkout matching the frozen payload; build tools may be newer")
+    parser.add_argument("--runtime-component", type=Path,
+                        help="Qualified mobile component with passing matching stock/extended app-host gates")
     args = parser.parse_args()
+    ROOT = args.engine_root.resolve(strict=True)
+    component = args.runtime_component.resolve(strict=True) if args.runtime_component else None
+    if component and args.platform == 'switch':
+        parser.error('mobile Lua components support Android and iOS only')
     if not re.fullmatch(r"[0-9]{8}\.[0-9]+", args.release_id) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.engine_version):
         parser.error("expected YYYYMMDD.N release ID and X.Y.Z engine version")
     payload = args.payload.resolve()
     verify_payload(payload, args.engine_version)
     stage(payload, payload, args.engine_version)
     source = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+    dirty = subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no', '--',
+                                    'main.lua', 'conf.lua', 'src', 'assets', 'data', 'mobile/android',
+                                    'mobile/ios', 'scripts/build_android.sh', 'scripts/build_ios.sh'], cwd=ROOT, text=True)
+    if dirty:
+        raise ValueError('mobile host inputs must be committed before selecting a runtime')
     with zipfile.ZipFile(payload) as archive:
         release = json.loads(archive.read("src/preview/release.json"))
+        builtin = any(name.startswith('mods/UNI_LANGUAGE_NATIVE/') for name in archive.namelist())
     identity = "Gen2Recomp-NativePreview-" + args.release_id.replace(".", "-")
     if release != dict(sourceCommit=source, releaseId=args.release_id, engineVersion=args.engine_version, previewIdentity=identity):
         raise ValueError("payload and platform build must use the same source, release and profile")
     out = args.out.resolve()
+    if not os.getenv('GITHUB_ACTIONS'):
+        sys.path.insert(0, str(TOOLS_ROOT/'tools'))
+        import qa_storage as qa
+        qa._storage = qa.Storage(TOOLS_ROOT)
+        atexit.register(qa._storage.close)
+        for path in (TOOLS_ROOT, ROOT, payload, component, Path(sys.executable)):
+            if path is not None:
+                qa.qa_source(path)
+        qa.qa_cache(out.parent)
+        qa.qa_limit_output(out, 4 * 1024**3)
+        for relative in ('mobile/android/love/build', 'mobile/android/app/build', 'mobile/ios/love-src'):
+            qa.qa_limit_output(ROOT/relative, 4 * 1024**3)
+        RUNNER, STORAGE = qa.qa_run, qa._storage
     out.mkdir(parents=True, exist_ok=False)
     extension = dict(ios="ipa", android="apk", switch="zip")[args.platform]
     target = out / f"Gen2Recomped-NativePreview-{args.release_id}-{args.platform}.{extension}"
     if args.platform == "ios":
-        runtime = ios(payload, target, args.engine_version, args.release_id)
+        runtime = ios(payload, target, args.engine_version, args.release_id, component)
     elif args.platform == "android":
-        runtime = android(payload, target, args.engine_version)
+        runtime = android(payload, target, args.engine_version, component)
     else:
         runtime = switch(payload, target, args.engine_version)
     verify_embedded(target, args.platform, payload)
     metadata = dict(**runtime, platform=args.platform, engineVersion=args.engine_version, sourceCommit=source,
+                    buildToolsCommit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=TOOLS_ROOT,text=True).strip(),
                     previewIdentity=identity, payloadSha256=digest(payload), archiveSha256=digest(target),
                     archive=target.name, buildVerified=True, launchVerified=False, realDeviceVerified=False,
-                    extendedUpvaluesQualified=False, modsIncluded=False, automaticInstallation=False)
+                    extendedUpvaluesQualified=bool(runtime.get('qualifiedRuntime')), modsIncluded=builtin,
+                    builtinMods=['UNI_LANGUAGE_NATIVE'] if builtin else [], userModsIncluded=False, automaticInstallation=False)
     (out / "build.json").write_text(json.dumps(metadata, indent=2) + "\n")
     print(json.dumps(metadata, indent=2))
 

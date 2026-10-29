@@ -2,6 +2,28 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+local Caught=require('src.pokemon.Gen2CaughtData')
+for _,key in ipairs{'CAUGHT_TIME_MASK','CAUGHT_LEVEL_MASK','CAUGHT_GENDER_MASK',
+ 'CAUGHT_LOCATION_MASK','CAUGHT_EGG_LEVEL','LANDMARK_EVENT','LANDMARK_GIFT',
+ 'CAUGHT_BY','hasCaughtData','caughtTimeOf','caughtGenderOf','setCaughtData',
+ 'setGiftCaughtData','packCaughtData','unpackCaughtData'}do M[key]=Caught[key]end
+local function identity()return require('src.pokemon.IdentityRolls')end
+function M.vanillaShiny(dvs)return identity().gen2VanillaShiny(dvs)end
+function M.isShiny(dvs,context)return identity().gen2GeneShiny(dvs,context)end
+function M.vanillaGender(def,dvs)return identity().gen2VanillaGender(def,dvs)end
+function M.gender(def,dvs,context)return identity().gen2GeneGender(def,dvs,context)end
+function M.randomDVs()
+  local random=love and love.math and love.math.random or math.random
+  local dvs=require('src.pokemon.Stats').randomDVs(random)
+  dvs.hp=nil -- Source birth derives HP later, after any authored gene edits.
+  return dvs
+end
+local PP=require('src.pokemon.Gen2PP')
+function M.ppUpsOf(move,data)return PP.ups(data and data.moves and type(move)=='table' and data.moves[move.id],move)end
+function M.maxPpOf(move,data)return PP.forSlot(move,data and data.moves)end
+function M.partyMoves(mon)return PP.partyMoves(mon)end
+function M.restoreAllPp(mon,data)return PP.restore(mon,data and data.moves)end
+function M.repairMoves(mon,data)return PP.repair(mon,data and data.moves)end
 function M.hpDV(dvs)return require('src.pokemon.Stats').hpDV(dvs)end
 function M.stats(base,dvs,level,statExp)
   return require('src.pokemon.Stats').calcGen2(base,dvs,level,statExp)
