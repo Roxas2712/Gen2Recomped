@@ -76,6 +76,30 @@ for _,edition in ipairs{'red','gold','silver','crystal','prism','polishedcrystal
   end
 end
 
+-- Inspect the actual final world/UI blits, not only the rectangle query.
+metrics(360,640,2);Version.set('crystal');Position.setMode('top')
+Renderer:init()
+local vw,vh=Renderer:worldViewSize()
+Renderer.worldCanvas=G.newCanvas(vw,vh)
+Renderer.worldActive=true
+local nativeDraw=G.draw
+local worldDraw
+G.draw=function(image,x,y,rotation,sx,sy,...)
+  if image==Renderer.worldCanvas then worldDraw={x=x,y=y,sx=sx,sy=sy}end
+  return nativeDraw(image,x,y,rotation,sx,sy,...)
+end
+local final=Renderer:endFrame()
+G.draw=nativeDraw
+T.check(worldDraw~=nil,'actual compositor submits the native world canvas')
+if worldDraw then
+  T.check(worldDraw.y<=0,'raised world still covers the top edge')
+  T.check(worldDraw.y+vh*worldDraw.sy>=height,'grown world still covers the bottom edge')
+  T.eq(worldDraw.y,(math.floor((height*dpi-vh*4)/2)-352)/dpi,
+    'actual native world blit subtracts the same physical lift')
+end
+T.eq(final.gameY,0,'actual final classic UI is raised to the top')
+T.eq(Renderer.uiPresentation.y,0,'actual final UI blit uses the raised origin')
+
 -- A safe area owns the minimum top inset in LOVE units, then the compositor
 -- snaps the chosen origin to physical pixels. No OS display setting changes.
 metrics(360,640,2);Version.set('crystal');Position.setMode('top')
