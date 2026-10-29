@@ -1,7 +1,8 @@
 # Native GSC stat refresh
 
-Implementation is prepared on `codex/native-gen2-stat-refresh`; qualification
-has not run yet. This is an engine change, with the mod and player instances
+Implementation is on `codex/native-gen2-stat-refresh`. Corrected source
+`273692e8` passes the selected qualification below; full-tree and GPU/release
+acceptance remain open. This is an engine change, with the mod and player instances
 unchanged. It does not complete the standalone source battle model or the
 remaining source Mon API.
 
@@ -32,13 +33,17 @@ a separate Transform/current override remains separate. This binding uses
 weak native owners, without adding a helper field to saved Pokemon, creating
 a second Pokemon, running a presentation clock or retaining ended battles.
 
-Prepared probes cover all65536 gene combinations for HP derivation, sampled
+The pure probe covers all 65,536 gene combinations for HP derivation, sampled
 full-stat vectors against an independent integer square-root search, legacy
 fallbacks and Gen1/GBA guards without LOVE. A separate actual SDK/summary
 probe covers native identity, replacement, shared/transformed combat inputs
-and wounded/fainted HP. These descriptions are intended test scope, not
-passing results; complete selected/full-tree and unchanged-mod GPU/release
-acceptance remain open.
+and wounded/fainted HP. On source `273692e8`, all 185,360 data checks and 238 actual SDK/native
+checks pass. Existing summary326, identity142/7232/5290, field184/177/100,
+battler691/972, battle-checkpoint1387 and save-summary50 regressions also
+pass. On predecessor main `152e2372`, the exact new fixtures fail the missing
+formula check and all three native signature/refresher checks. These are
+actual independent frozen-host positive and negative runs. Complete
+full-tree and unchanged-mod GPU/release acceptance remain open.
 
 Native integration and tests by Roxas2712 follow `LICENSE-ROXAS2712.md`.
 Existing engine authors' rights and notices remain effective.
