@@ -51,8 +51,20 @@ This older adaptation uses its actual `BattleState.makeBattler`, controller
 and original RNG constructor signature. It does not fabricate the newer
 fork's extracted Battler, live source model, identity refresh or source
 options-record constructor, which are separate offered work. Its own native
-probe follows the actual older SDK loader/registry fold and is pending.
-It is stacked on upstream PR398 and its existing prerequisites.
+probe follows the actual older SDK loader/registry fold. Corrected source
+`6985a377` independently passes184 pure-data and170 native checks across
+its15 registered editions, plus4454 frame-query,116 chrome and1031
+screen-position regressions. The managed host is cleaned after exit.
+Its initial independent run on `c0ea73de` passed the pure-data/frame/chrome/
+position checks but rejected the actual SDK `spatk` patch as an unknown
+nested schema field. The schema now accepts native `spatk`/`spdef` with the
+same1..255 integer bounds; invalid inputs remain rejected. The native
+registry-fold test still patches both real columns and now passes.
+The older host has no semantic-checkpoint subsystem: no newer checkpoint
+facade or unqualified checkpoint integration is added to this offer.
+The pure helper authenticates its own unchanged raw-record wrappers and
+provides native-slot rebinding, with custom-owner refusal and no mod-storage
+traversal. It is stacked on upstream PR398 and its existing prerequisites.
 
 Independently owned integration/tests by Roxas2712 are offered under
 <https://github.com/Roxas2712/Gen2Recomped/blob/main/LICENSE-ROXAS2712.md>,
