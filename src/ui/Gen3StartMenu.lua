@@ -623,13 +623,21 @@ function Gen3StartMenu:startSave()
       -- shown before the write, which is what the message is for
       game.stack:push(TextBox.new(game,
         Strings("SAVING...\nDON'T TURN OFF THE POWER."), function()
-          local ok, err = pcall(function()
-            require("src.pokemon.Gen3GameStats").increment(game.save, 0)  -- GAME_STAT_SAVED_GAME
-            if game.writeSave then game:writeSave()
-            else require("src.core.SaveData").save(game.save) end
+          local save = game.save
+          local previousStats = save.gen3Stats
+          local previousCount = previousStats and previousStats[0]
+          local ok, written = pcall(function()
+            require("src.pokemon.Gen3GameStats").increment(save, 0)  -- GAME_STAT_SAVED_GAME
+            if game.writeSave then return game:writeSave()
+            else return require("src.core.SaveData").save(save) end
           end)
-          if not ok then
-            Logger.warn("gen3 start menu: save failed (%s)", tostring(err))
+          if not ok or written ~= true then
+            if save.gen3Stats then
+              save.gen3Stats[0] = previousCount
+              if not previousStats and not next(save.gen3Stats) then save.gen3Stats = nil end
+            end
+            Logger.warn("gen3 start menu: save failed (%s)",
+                        ok and "write refused" or tostring(written))
             self.savePanel = false
             game.stack:push(TextBox.new(game,
               Strings("Save failed.\nPlease try again.")))
