@@ -146,8 +146,9 @@ function Compat.install()
     elseif type(arg) == "userdata" and arg.typeOf and arg:typeOf("FileData") then
       text = arg:getString()
     end
-    local adapted, changed = Compat.source(text)
-    return changed and adapted or arg, changed
+    local qualified, precisionChanged = require('src.render.ShaderEntryPrecision').source(text)
+    local adapted, changed = Compat.source(qualified)
+    return (changed or precisionChanged) and adapted or arg, changed
   end
   g.newShader = function(a, b, c)
     local changed, changed2
