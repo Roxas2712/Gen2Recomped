@@ -24,7 +24,7 @@ function M.regionOf(...)return Native.regionOf(...)end
 function M.landmarkId(...)return Native.landmarkId(...)end
 function M.landmark(data,index)
  local row=Native.landmark(data,index)
- if not row then return nil end
+ if not row or type(row.x)~='number' or type(row.y)~='number' then return nil end
  local bucket=cached[row]
  if not bucket then bucket=setmetatable({},{__mode='v'});cached[row]=bucket end
  if bucket[index]then return bucket[index]end

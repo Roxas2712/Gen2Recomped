@@ -131,6 +131,10 @@ T.eq(probe.calls,1,'native AREA dispatches through the public source search wrap
 T.eq(ui.nests[1].px,view.x+4);T.eq(ui.nests[1].py,view.y+4,'both coordinate contracts locate the same marker')
 T.eq(N.landmark(d,1),row,'native getters retain raw OAM record identity')
 T.eq(row.index,nil,'source view does not stamp derived metadata into an older native record')
+row.x=nil
+T.eq(Source.landmark(d,1),nil,'name-only imports do not acquire fabricated source coordinates')
+T.eq(N.landmark(d,1),row,'native name-only records remain available on the native path')
+row.x=40
 T.eq(Landmarks.record(d,256),nil)
 require('src.mods.Loader').teardown();loaded.release();V.set(previous)
 T.finish('native/source GSC nests, live regional landmarks and actual native AREA ownership')
