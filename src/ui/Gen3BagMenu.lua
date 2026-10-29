@@ -145,15 +145,15 @@ local POCKET_KEYS = { "ITEM", "BALL", "TM_HM", "BERRY", "KEY_ITEM" }
 -- ...AND IT ASKS FOR THE WIDE SURFACE, like the title and the main menu, so
 -- the margins belong to this screen rather than to whatever is behind it.
 function Gen3BagMenu:uiSize()
-  if self.rs then return 240,160 end
+  if self.rs or self.emerald then return 240,160 end
   return gen3Wide().uiSize()
 end
 function Gen3BagMenu:wantsFillScale() return true end
-function Gen3BagMenu:wantsEdgeBleed() return not self.rs end
+function Gen3BagMenu:wantsEdgeBleed() return not(self.rs or self.emerald) end
 
 function Gen3BagMenu:sgbPalettes()
   local P = require("src.render.PaletteFX")
-  local w = self.rs and 240 or select(1, gen3Wide().uiSize())
+  local w = (self.rs or self.emerald)and 240 or select(1, gen3Wide().uiSize())
   return { P.trueColorZone(0, 0, math.ceil(w / 8) - 1,
                            math.ceil(GBA_H / 8) - 1) }
 end
@@ -297,6 +297,7 @@ function Gen3BagMenu.new(game, opts)
   self.rsTutorial = opts.rsTutorial and true or false
   self.rs = not self.pcList and (not self.scriptRows or opts.rsTutorial)
     and require('src.ui.Gen3RsBagView').available(game)
+  self.emerald = require('src.ui.Gen3EmeraldBagView').available(self)
   require('src.ui.Gen3BagPocketMemory').restore(self)
   self:rebuild()
   return self
@@ -342,7 +343,7 @@ function Gen3BagMenu:drawContentFrame(b, frameIndex)
 end
 
 function Gen3BagMenu:listRows()
-  if self.rs then return 8 end
+  if self.rs or self.emerald then return 8 end
   local r = self:screen()
   local n = math.floor(tonumber(r.list and r.list.rows) or FALLBACK.list.rows)
   return math.max(1, n)
@@ -427,6 +428,10 @@ end
 function Gen3BagMenu:close()
   self.game.stack:pop()
   if self.onCancel then self.onCancel() end
+end
+
+function Gen3BagMenu:exit()
+  if self.emeraldView then self.emeraldView:exit();self.emeraldView=nil end
 end
 
 function Gen3BagMenu:selected() return self.rows[self.index] end
@@ -753,6 +758,7 @@ function Gen3BagMenu:choose()
     entries = entries.entries,
     columns = entries.columns,
     rsBag = self.rs and self or nil,
+    emeraldBag = self.emerald and self or nil,
     onPick = function(kind) self:act(kind, row.id) end,
   }))
 end
@@ -1117,6 +1123,10 @@ function Gen3BagMenu:itemIcon(id, forcedIndex)
 end
 
 function Gen3BagMenu:draw()
+  if self.emerald then
+    self.emeraldView=self.emeraldView or require('src.ui.Gen3EmeraldBagView').new(self)
+    return self.emeraldView:draw()
+  end
   if self.rs then
     self.rsView = self.rsView or require('src.ui.Gen3RsBagView').new(self)
     return self.rsView:draw()
