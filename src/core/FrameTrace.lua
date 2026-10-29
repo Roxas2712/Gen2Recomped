@@ -10,12 +10,13 @@ local function bounded(n, default, maximum)
  return finite(n) and math.max(1,math.min(maximum,math.floor(n))) or default
 end
 local function text(value) return tostring(value or ''):sub(1,160) end
-function T.enabled() return active end
+function T.enabled(owner) return active and (owner==nil or owner==generation) end
 function T.start(options)
  options=options or {};generation=generation+1
  limits={frames=bounded(options.frames,180,600),events=bounded(options.events,128,512),labels=256}
  rows,current,labels,labelCount,sequence,context={},nil,{},0,0,''
  started=clock();active=true
+ return generation
 end
 function T.setContext(value) if active then context=text(value) end end
 function T.beginFrame(focused)

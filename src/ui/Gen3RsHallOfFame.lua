@@ -89,6 +89,7 @@ end
 function M:writeEnding()
   assert(self.saveEnding and self.savingDrawn,'League saving must be rendered before IO')
   if self.saved then return true end
+  require('src.core.Gen3HallHistory').recordScene(self)
   self.saved,self.saveError=require('src.core.Gen3RsEndingSave').write(self.game)
   self.saveFailure=not self.saved
   return self.saved

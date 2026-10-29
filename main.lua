@@ -1359,13 +1359,14 @@ function love.run()
   BootTrace.mark("love.run enter")
   local FrameTrace = require("src.core.FrameTrace")
   local automaticTrace = os.getenv("GEN2_FRAME_TRACE") == "1"
+  local automaticTraceOwner
   local traceFrames = 0
   local Performance = require("src.core.Performance")
   local GCFrameBudget = require("src.core.GCFrameBudget")
   GCFrameBudget.configure(Performance)
   if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
   BootTrace.mark("love.load returned")
-  if automaticTrace then FrameTrace.start({frames=600}) end
+  if automaticTrace then automaticTraceOwner=FrameTrace.start({frames=600}) end
 
   -- don't let love.load's cost land in the first frame's dt
   if love.timer then love.timer.step() end
@@ -1510,7 +1511,7 @@ function love.run()
       end
     end
     FrameTrace.endFrame(true)
-    if automaticTrace and FrameTrace.enabled() then
+    if automaticTrace and FrameTrace.enabled(automaticTraceOwner) then
       traceFrames=traceFrames+1
       if traceFrames>=600 then
         FrameTrace.stop();pcall(FrameTrace.write,"frame-trace.json")
