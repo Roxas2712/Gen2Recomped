@@ -45,11 +45,26 @@ The expanded unchanged SDK/compositor probe fails263 of4454 checks on that
 candidate. Implementation `3a2fff04` passes all4454, including the recorded
 Retina regression, actual drawable queries, odd pixel sizes and a decorated
 native fit. Existing chrome116, playfield585, viewport56, macOS surface1296
-and native battle-window315 checks also pass. The correction still needs a
-fresh actual Metal observation and complete current-tree qualification.
+and native battle-window315 checks also pass.
+
+A fresh Metal run of committed source `123b8036` (the same implementation
+tree as `3a2fff04`, now containing main `f610ab75`) passes the actual
+checkpoint CONTINUE, connected field walk and natural Route29 encounter.
+The unchanged consumer's 2048x1536 query returns scale10/origin224,48,
+matching the native compositor's physical rectangle. Four inspected owned
+OS-window images cover the two selected field camera flags with advancing
+native draw serials. Both flags select the same authored battle-stage view;
+different battle perspectives are not established. All 27336 mod files,
+their QA copies, the ROM and the original earned checkpoint are unchanged.
+The process exits successfully and its managed test host is cleaned.
+
+This accepts the observed Retina coordinate correction only. Bottom command
+art remains partly outside the window, even though its actual hit rectangles
+end at the bottom edge. Full visual parity is rejected pending a matched
+Gen1 comparison. Complete current-tree qualification is also still required.
 
 This selected CPU proof does not establish every skin/cutout/safe-area or
 custom surface configuration, odd-sized fractional-DPI logical queries, physical
-Windows behavior or unchanged-mod GPU presentation. Matched Gen1/fork
+Windows behavior or general unchanged-mod GPU presentation. Matched Gen1/fork
 window/target/letterbox observations and visible battle-actor pinning remain
 required before claiming visual acceptance or a release fix.
