@@ -179,7 +179,7 @@ end
 -- Wrap a call in a section and hand back whatever it returned.  For the sites
 -- where the body is one expression and an explicit close would need a local.
 function FrameProfile.wrap(name, fn, ...)
-  if not on then return fn(...) end
+  if not on and not FrameTrace.enabled() then return fn(...) end
   local close = FrameProfile.section(name)
   local a, b, c, d = fn(...)
   close()
