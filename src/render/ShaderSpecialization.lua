@@ -251,7 +251,7 @@ local function choose(record)
  end
  return variant
 end
-local function beforeDraw()
+local function beforeDraw(method,object)
  if stats.sources==0 then return end
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
  if not record then return end
@@ -266,6 +266,18 @@ local function beforeDraw()
   if actual~=variant.shader then raw.setShader(variant.shader)end
   stats.uses=stats.uses+1;if variant.depth then stats.depthUses=stats.depthUses+1 end
  else raw.setShader(original(record));stats.fallbacks=stats.fallbacks+1 end
+ local trace=S.selectionTrace
+ if trace and #trace<1024 then
+  local canvas=love.graphics.getCanvas and love.graphics.getCanvas()
+  if type(canvas)=='table'then canvas=canvas[1]end
+  local first,count,texture
+  if type(object)=='userdata'and object.typeOf and object:typeOf('Mesh')then
+   first,count=object:getDrawRange();texture=object:getTexture()
+  end
+  trace[#trace+1]={method=method,object=tostring(object),source=tostring(original(record)),
+   program=tostring(variant and variant.shader or original(record)),key=record.key,
+   target=tostring(canvas),first=first,count=count,texture=tostring(texture)}
+ end
 end
 local function admit(shader,source,second,third,n)
  if compiling or n>3 or second~=nil or third~=nil or type(source)~='string'or #source<limits.minBytes or #source>limits.maxBytes then return end
@@ -313,7 +325,7 @@ function S.install()
  end
  for _,name in ipairs{'draw','drawInstanced','drawFromShader','drawLayer','drawIndirect','drawFromShaderIndirect','rectangle','polygon','circle','ellipse','arc','line','points','print','printf'}do
   local native=g[name]
-  if native then g[name]=function(...)beforeDraw();return native(...)end end
+  if native then g[name]=function(...)if S.selectionTrace then beforeDraw(name,...)else beforeDraw()end;return native(...)end end
  end
  if raw.present then g.present=function(...)sweep();return raw.present(...)end end
  return true

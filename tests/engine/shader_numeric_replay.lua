@@ -77,5 +77,11 @@ T.check(N.numericBank({{n=2,'column',{1,2,3,4}}}))
 T.check(not N.numericBank({{n=1,{resource={texture}}}}))
 T.check(not N.numericBank({{n=1,{[2]=1}}}))
 T.check(not N.numericBank({{n=1,setmetatable({1},{})}}))
+S.selectionTrace={}
+for i=1,1100 do g.draw()end
+T.eq(#S.selectionTrace,1024,'diagnostic selection trace is bounded')
+T.eq(S.selectionTrace[1].source,tostring(original),'trace retains no native alias')
+T.eq(S.selectionTrace[1].program,tostring(actual),'trace records actual selected program')
+S.selectionTrace=nil
 love,jit,os.getenv=savedLove,savedJit,savedEnv;package.loaded['src.render.LegacyShaderCompat']=savedLegacy;package.loaded['src.render.AlphaDepthCompat']=savedAlpha
 T.finish('deferred numeric shader banks, array tails, textures and foreign aliases')
