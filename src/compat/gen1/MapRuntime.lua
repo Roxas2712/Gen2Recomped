@@ -21,6 +21,10 @@ function M.new(getGame, getEdition)
   local owner,data,nativeMaps,edition,binding,pairBinding,epoch
   local maps,known,published,loaded = {},setmetatable({},{__mode='k'}),{},{}
   local ended,allIndexed = false,false
+  local layoutReads,layoutGeneration=nil,0
+  local snapshotHits,snapshotReads=0,0
+  local function pack(...)return{n=select('#',...),...}end
+  local unpack=table.unpack or unpack
   local function clear()
     if observing or ended then
       views:release();views=not ended and Views.new(getGame,getEdition)or nil;observing=false
@@ -28,7 +32,7 @@ function M.new(getGame, getEdition)
     if pairBinding then pairBinding:release() end
     owner,data,nativeMaps,edition,binding,pairBinding,epoch=nil,nil,nil,nil,nil,nil,nil
     maps,known,published,loaded={},setmetatable({},{__mode='k'}),{},{}
-    allIndexed=false
+    allIndexed=false;layoutReads=nil;layoutGeneration=layoutGeneration+1
   end
   local function session()
     if ended then return nil,'map runtime released' end
@@ -134,6 +138,8 @@ function M.new(getGame, getEdition)
       return nil,'owned map definition retired'
     end
     if not def then def,why=self:definition(id);if not def then return nil,why end end
+    if layoutReads and layoutReads[def]then snapshotHits=snapshotHits+1;return layoutReads[def]end
+    if layoutReads then snapshotReads=snapshotReads+1 end
     observing=true
     local view;view,why=views:map(id);if not view then return nil,why end
     local prior=published[def.id]
@@ -144,8 +150,22 @@ function M.new(getGame, getEdition)
       published[def.id]=view
     end
     loaded[def.id]=true
+    if layoutReads then layoutReads[def]=view.midLayout end
     return view.midLayout
   end
+  -- Explicit presentation transaction. Original definition identities and
+  -- native simulation remain live; repeated layout observations share the
+  -- first admitted owned snapshot until this synchronous draw finishes.
+  function handle:withLayoutSnapshot(work,...)
+    assert(type(work)=='function','layout snapshot needs a synchronous callback')
+    local game=session();if not game then return work(...)end
+    local previous,startEpoch,startGeneration=layoutReads,epoch,layoutGeneration;layoutReads={}
+    local result=pack(pcall(work,...))
+    layoutReads=epoch==startEpoch and layoutGeneration==startGeneration and previous or nil
+    if not result[1]then error(result[2],0)end
+    return unpack(result,2,result.n)
+  end
+  function handle:layoutSnapshotStats()return{active=layoutReads~=nil,hits=snapshotHits,reads=snapshotReads}end
   function handle:definitions()
     local game,why=session();if not game then return nil,why end
     if allIndexed then return maps end
@@ -190,6 +210,7 @@ function M.new(getGame, getEdition)
   function handle:invalidate(id)
     local game=session();if not game then return end
     views:invalidate(id)
+    layoutGeneration=layoutGeneration+1;if layoutReads then layoutReads={}end
     if id==nil then clear() end
   end
   function handle:isOwned(def) session();return epoch~=nil and known[def]==epoch end
