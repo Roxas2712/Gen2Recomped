@@ -212,7 +212,9 @@ function Pokemon.new(data, species, level, rng, form, opts)
     species = species,
     form = nativeForm,
     level = level,
-    exp = Growth.expForLevel(def.growthRate, level),
+    exp = generation==2 and Growth.record(data,def.growthRate)
+      and Growth.evaluate(Growth.record(data,def.growthRate),level)
+      or Growth.expForLevel(def.growthRate, level),
     dvs = dvs,
     -- the Gen 3 half.  Absent on the older generations, so nothing there
     -- changes shape and no save written by them grows a field.

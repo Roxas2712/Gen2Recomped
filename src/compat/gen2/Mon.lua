@@ -2,6 +2,14 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+local Progression=require('src.pokemon.Gen2Progression')
+for _,key in ipairs{'MAX_LEVEL','MAX_STAT_EXP','STAT_EXP_ORDER','newStatExp','gainStatExp',
+ 'experienceGain','partySpecies','writeStats','gainExperience'}do M[key]=Progression[key]end
+local Growth=require('src.pokemon.Growth')
+M.growthFor=Growth.record
+M.experienceForLevel=Growth.evaluate
+M.levelForExperience=Growth.sourceLevel
+M.registerInto=Growth.registerCoefficients
 local Caught=require('src.pokemon.Gen2CaughtData')
 for _,key in ipairs{'CAUGHT_TIME_MASK','CAUGHT_LEVEL_MASK','CAUGHT_GENDER_MASK',
  'CAUGHT_LOCATION_MASK','CAUGHT_EGG_LEVEL','LANDMARK_EVENT','LANDMARK_GIFT',

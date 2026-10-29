@@ -35,6 +35,8 @@ local function getter(kind, object, key, previous, data)
   elseif key=='maxHp' then
     local stats=rawget(object,'stats')
     return type(stats)=='table' and stats.hp or nil
+  elseif key=='experience' then
+    return rawget(object,'exp')
   elseif key=='name' or key=='types' then
     local def=data and data.pokemon and data.pokemon[object.species]
     if def then return key=='name' and (def.name or object.species) or def.types end
@@ -65,6 +67,8 @@ local function metatableFor(kind, previous, data)
       return write(oldWrite,object,statNames[key],value)
     elseif kind=='mon' and key=='maxHp' and type(rawget(object,'stats'))=='table' then
       object.stats.hp=value;return
+    elseif kind=='mon' and key=='experience' then
+      return write(oldWrite,object,'exp',value)
     end
     return write(oldWrite,object,key,value)
   end
@@ -115,6 +119,18 @@ end
 
 function Fields.stats(stats)
   attach(stats,'stats')
+  return stats
+end
+
+-- A source writeStats call may supply a literal split-stat table. Adopt the
+-- two names into native storage on that same table; protected custom owners
+-- remain opaque, as at the ordinary field-view boundary.
+function Fields.adoptStats(stats)
+  if not attach(stats,'stats')then return stats end
+  for source,native in pairs(statNames)do
+    local value=rawget(stats,source)
+    if value~=nil then rawset(stats,native,value);rawset(stats,source,nil)end
+  end
   return stats
 end
 
