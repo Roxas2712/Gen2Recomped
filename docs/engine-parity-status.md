@@ -15,8 +15,8 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `25c0b749c1476c83d1729c67a5dbdabe598dd8a8`,
-including screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
+The fetched fork main is `152e237246c2b3d653de4e1f1a8341e2d965de75`,
+including native Pokemon-field PR352, screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
 the earlier native RNG PR336. PR349's exact composed tree passes942/942
 engine suites,4/4 SDK suites and every available official ROM-free tier;
 all77 exact-head CI checks succeeded or were skipped before its strict
@@ -76,7 +76,7 @@ suites and all available official ROM-free tiers. All77 latest exact-head
 CI checks succeeded or were skipped, including the same-head rerun of a
 failed macOS transport timeout. The strict merge tree equals the qualified
 tree. Actual GPU/window and release qualification remain open.
-[Live native GSC Pokemon fields](native-gen2-mon-fields.md), draft PR352,
+[Live native GSC Pokemon fields](native-gen2-mon-fields.md), merged PR352,
 addresses five actual missing source field reads on native Pokemon records.
 Corrected source `23d4aaa5` passes184 pure-data,177 native and100 actual
 world/battle checkpoint checks, plus all13 checkpoint suites that failed
@@ -84,8 +84,24 @@ in the first complete run. The corrected codecs retain strict refusal of
 custom runtime state and byte-identical recapture. Earlier construction,
 identity and save regressions also passed on the initial source. The preceding
 engine fails all five source-field checks and the absent-helper check.
-Full composed-tree, unchanged-mod GPU/menu and release qualification of
-this addition remain open.
+Exact source `da71c3d3` passes947/947 engine suites,4/4 SDK suites and every
+available official ROM-free tier; all83 exact-head CI checks succeed or are
+skipped. Strict merge `152e2372` has the identical qualified tree. A real
+unchanged-VASC Crystal instance verifies party fields and the actual CENTER
+option/source query. CUA reports the Mac locked; the bounded run ends with
+no OS image and does not accept the remaining positions or camera/battle
+phases. All original/copy mod, ROM and source checkpoint hashes match.
+Actual unchanged-mod GPU/window and final release qualification remain open.
+Upstream PR399 independently passes184 pure-data/170 actual older-host native
+checks plus4454/116/1031 frame/chrome/position regressions.
+
+[Native GSC stat refresh](native-gen2-stat-refresh.md) is the next candidate:
+shared native/source formula, explicit source identity argument order,
+actual summary recalculation and weak shared-combat-stat rebinding. Source
+273692e8 passes185360 data/238 native checks and existing identity, summary,
+field, battler and checkpoint regressions; predecessor main fails the exact
+new source formula/signature/refresher probes. Full-tree acceptance remains
+open for this addition.
 
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.

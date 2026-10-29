@@ -2,6 +2,13 @@
 -- Pokemon constructor takes a two-bound RNG. Keep the actual native mon.
 local Native=require('src.pokemon.Pokemon')
 local M={}
+function M.hpDV(dvs)return require('src.pokemon.Stats').hpDV(dvs)end
+function M.stats(base,dvs,level,statExp)
+  return require('src.pokemon.Stats').calcGen2(base,dvs,level,statExp)
+end
+-- Source signatures put the Pokemon first; the native owner takes data first.
+function M.syncIdentity(mon,data)return Native.syncIdentity(data,mon)end
+function M.refreshStats(mon,data)return Native.refreshStats(data,mon)end
 function M.new(data,id,level,opts)
   if type(opts)~='table' then return Native.new(data,id,level,opts) end
   local rng=opts.rng or love.math.random
