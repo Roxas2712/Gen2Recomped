@@ -3,6 +3,7 @@ function love.errorhandler(err)
  return function()return 1 end
 end
 local Fetch, Net, base
+local fileSubmitted,fileCompleted,fileDestinations={},{},{}
 local checks, pulses = 0, 0
 local function check(ok, message)
   checks = checks + 1
@@ -19,11 +20,35 @@ local function await(api, handle)
     pulses = pulses + 1; love.timer.sleep(.005)
   end
 end
+-- Logical cancellation precedes physical worker retirement. Record real
+-- response acknowledgements so each bounded-queue phase starts deliberately.
+local function awaitFileRetirement(wanted)
+  local at=love.timer.getTime()
+  while true do
+    local completed=love.thread.getChannel("download-qa-completed")
+    while true do local id=completed:pop();if not id then break end;fileCompleted[id]=true end
+    local pending=false
+    for id in pairs(wanted)do if not fileCompleted[id]then pending=true;break end end
+    if not pending then return end
+    check(love.timer.getTime()-at<5,'actual file workers retire before the next queue phase')
+    love.timer.sleep(.005)
+  end
+end
 function love.load()
   love.thread.getChannel("download-qa-start"):clear()
   love.thread.getChannel("download-qa-start-entered"):clear()
   love.thread.getChannel("download-qa-hold"):clear()
   love.thread.getChannel("download-qa-entered"):clear()
+  love.thread.getChannel("download-qa-completed"):clear()
+  love.thread.getChannel("download-qa-retire-entered"):clear()
+  love.thread.getChannel("download-qa-retire-release"):clear()
+  local Download=require('src.net.AsyncDownload')
+  local download=Download.download
+  Download.download=function(url,destination,options)
+    local id,why=download(url,destination,options)
+    if id then fileSubmitted[id]=true;fileDestinations[destination]=id end
+    return id,why
+  end
   Fetch = require('src.net.Fetch'); Net = require('src.mods.Net')
   base = assert(os.getenv('GET_TEST_URL'))
   local newThread = love.thread.newThread
@@ -224,8 +249,25 @@ function love.run()
     state=await(fileApi,invalidTarget)
     check(state.status=='error' and love.filesystem.getInfo('downloads').type=='directory','publish error preserves existing directory')
     Fetch.release(invalidTarget)
+    awaitFileRetirement(fileSubmitted)
+    -- Hold one real cancelled worker, fill seven remaining credits, then
+    -- verify exactly one credit returns on its actual response acknowledgement.
+    local retiring=assert(Fetch.download(base..'/slow','downloads/retiring.bin'))
+    local retireEntered=love.thread.getChannel("download-qa-retire-entered")
+    local retireAt=love.timer.getTime()
+    while retireEntered:getCount()==0 do
+      check(love.timer.getTime()-retireAt<5,'retiring worker enters its actual fixture barrier')
+      love.timer.sleep(.005)
+    end
+    local nativeRetiring=retireEntered:pop()
+    check(nativeRetiring==fileDestinations['downloads/retiring.bin'],'acknowledgement identifies the actual native request')
+    Fetch.cancel(retiring);Fetch.release(retiring)
     local heldFiles={}
-    for i=1,8 do heldFiles[i]=assert(Fetch.download(base..'/slow','downloads/held'..i)) end
+    for i=1,7 do heldFiles[i]=assert(Fetch.download(base..'/slow','downloads/held'..i)) end
+    check(Fetch.download(base..'/slow','downloads/held8')==nil,'cancelled occupied worker still consumes its native credit')
+    love.thread.getChannel("download-qa-retire-release"):push(true)
+    awaitFileRetirement({[nativeRetiring]=true})
+    heldFiles[8]=assert(Fetch.download(base..'/slow','downloads/held8'))
     local entered=love.thread.getChannel("download-qa-entered")
     local heldAt=love.timer.getTime()
     while entered:getCount()<2 do
@@ -246,6 +288,7 @@ function love.run()
   end, debug.traceback)
   love.thread.getChannel("download-qa-start"):push(true)
   love.thread.getChannel("download-qa-hold"):push(true)
+  love.thread.getChannel("download-qa-retire-release"):push(true)
   if not ok then io.stderr:write(tostring(err).."\n");io.stderr:flush(); if Fetch then Fetch.shutdown() end end
   return function() return ok and 0 or 1 end
 end
