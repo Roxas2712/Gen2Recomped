@@ -1357,11 +1357,15 @@ end
 
 function love.run()
   BootTrace.mark("love.run enter")
+  local FrameTrace = require("src.core.FrameTrace")
+  local automaticTrace = os.getenv("GEN2_FRAME_TRACE") == "1"
+  local traceFrames = 0
   local Performance = require("src.core.Performance")
   local GCFrameBudget = require("src.core.GCFrameBudget")
   GCFrameBudget.configure(Performance)
   if love.load then love.load(love.arg.parseGameArguments(arg), arg) end
   BootTrace.mark("love.load returned")
+  if automaticTrace then FrameTrace.start({frames=600}) end
 
   -- don't let love.load's cost land in the first frame's dt
   if love.timer then love.timer.step() end
@@ -1378,12 +1382,17 @@ function love.run()
   local dt = 0
 
   return function()
+    if FrameTrace.enabled() then FrameTrace.beginFrame(love.window and love.window.hasFocus()) end
+    local closeEvents = FrameTrace.section('event pump and handlers')
     -- process events
     if love.event then
       love.event.pump()
       for name, a, b, c, d, e, f in love.event.poll() do
         if name == "quit" then
           if not love.quit or not love.quit() then
+            if FrameTrace.enabled() then
+              FrameTrace.stop();pcall(FrameTrace.write,"frame-trace.json")
+            end
             -- Android keeps the process and its task alive after LOVE's own
             -- teardown, so the relaunched task re-enters an activity whose
             -- native main already returned; end the process outright once the
@@ -1397,10 +1406,13 @@ function love.run()
         love.handlers[name](a, b, c, d, e, f)
       end
     end
+    closeEvents()
 
     -- update dt
     if love.timer then dt = love.timer.step() end
+    local closeGC = FrameTrace.section('collector frame budget')
     GCFrameBudget.beginFrame(Performance)
+    closeGC()
 
     -- call update and draw
     --
@@ -1429,12 +1441,16 @@ function love.run()
           file:write(encoded:getString());file:close()
         end
       end
+      local closeDrain = FrameTrace.section('graphics stack drain')
       GraphicsStack.drain()
+      closeDrain()
+      local closeWindow = FrameTrace.section('window frame (includes scene draw)')
       WindowFrame.draw(function()
         love.graphics.origin()
         love.graphics.clear(love.graphics.getBackgroundColor())
         if love.draw then love.draw() end
       end,capture)
+      closeWindow()
       local closeP = FrameProfile.section("present (GPU wait / vsync)")
       love.graphics.present()
       presented = true
@@ -1491,6 +1507,13 @@ function love.run()
         closeSleep()
       else
         love.timer.sleep(0.001)
+      end
+    end
+    FrameTrace.endFrame(true)
+    if automaticTrace and FrameTrace.enabled() then
+      traceFrames=traceFrames+1
+      if traceFrames>=600 then
+        FrameTrace.stop();pcall(FrameTrace.write,"frame-trace.json")
       end
     end
   end
