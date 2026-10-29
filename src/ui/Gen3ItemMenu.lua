@@ -48,9 +48,12 @@ function Gen3ItemMenu.new(game, opts)
   self.columns = math.max(1, math.floor(tonumber(opts.columns) or 2))
   self.onPick = opts.onPick
   self.rsBag = opts.rsBag
-  if self.rsBag then
+  self.emeraldBag=opts.emeraldBag
+  if self.emeraldBag and(self.columns>2 or(self.columns==2 and#self.entries>6))then self.emeraldBag=nil end
+  if self.rsBag or self.emeraldBag then
+    local bag=self.rsBag or self.emeraldBag
     self.isOpaque=true
-    self.sgbPalettes=function()return self.rsBag:sgbPalettes()end
+    self.sgbPalettes=function()return bag:sgbPalettes()end
     self.wantsEdgeBleed=function()return false end
   end
   -- Scripted cartridge tutorials (FireRed's POKé DUDE) drive this exact
@@ -93,7 +96,7 @@ function Gen3ItemMenu:step(dir)
   local cols, rows = self.columns, self.rows
   local r = math.floor((self.index - 1) / cols)
   local c = (self.index - 1) % cols
-  if self.rsBag then
+  if self.rsBag or self.emeraldBag then
     local dr=dir=='up' and -1 or dir=='down' and 1 or 0
     local dc=dir=='left' and -1 or dir=='right' and 1 or 0
     local rr,cc=r+dr,c+dc
@@ -155,6 +158,11 @@ function Gen3ItemMenu:keypressed(key)
 end
 
 function Gen3ItemMenu:draw()
+  if self.emeraldBag then
+    local bag=self.emeraldBag
+    bag.emeraldView=bag.emeraldView or require('src.ui.Gen3EmeraldBagView').new(bag)
+    return bag.emeraldView:draw(self)
+  end
   if self.rsBag then
     local bag=self.rsBag
     bag.rsView=bag.rsView or require('src.ui.Gen3RsBagView').new(bag)

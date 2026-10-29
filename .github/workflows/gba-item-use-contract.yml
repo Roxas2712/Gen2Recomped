@@ -27,6 +27,7 @@ jobs:
           luajit tests/engine/gba_save_result.lua
           luajit tests/engine/frlg_bag_registration_assets.lua
           luajit tests/engine/gba_bag_sale.lua
+          luajit tests/engine/emerald_native_bag.lua
           luajit tests/engine/gba_pc_transfer_guards.lua
           luajit tests/engine/item_use_dispatch.lua
           luajit tests/engine/api3_compat.lua
