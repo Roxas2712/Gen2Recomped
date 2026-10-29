@@ -8,6 +8,7 @@ end
 local Stats=require('src.pokemon.Stats')
 local Mon=require('src.compat.gen2.Mon')
 T.check(type(Mon.stats)=='function'and type(Mon.hpDV)=='function','actual source formula entry points exist')
+if type(Mon.stats)~='function'or type(Mon.hpDV)~='function' then T.finish('source stat formula APIs are absent')end
 -- Independent integer search for the cartridge ceiling-square-root loop.
 local function bonus(n)
   local root=0

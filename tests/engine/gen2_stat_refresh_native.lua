@@ -16,6 +16,7 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
     ['mods/refresh_probe/main.lua']=[[
       local mod=...
       local Mon=require('src.battle.gen2.Mon')
+      mod.exports.hasRefresh=type(Mon.refreshStats)=='function'
       mod.exports.refresh=function(mon,data)return Mon.refreshStats(mon,data)end
       mod.exports.identity=function(mon,data)return Mon.syncIdentity(mon,data)end
     ]],
@@ -23,6 +24,11 @@ for _,edition in ipairs{'gold','silver','crystal','prism','polishedcrystal'}do
   T.eq(#run.errors,0,'actual SDK source stat consumer loads')
   local api=run.loader.exports.refresh_probe
   local mon=Pokemon.new(data,'FIXMON_A',25)
+  mon.name='BEFORE SOURCE SYNC'
+  T.eq(api.identity(mon,data),mon,'actual source identity signature returns the original Pokemon')
+  T.eq(mon.name,data.pokemon.FIXMON_A.name,'actual source identity refresh reads the correct dataset')
+  T.check(api.hasRefresh,'actual source refreshStats entry point exists')
+  if not api.hasRefresh then run.release();Version.set(initial);T.finish('actual source stat refresh is absent')end
   local Battler=require('src.battle.Battler')
   for _,hp in ipairs{0,-1,5,999}do
     mon.hp=hp;mon.stats={hp=999,attack=1,defense=1,speed=1,spatk=1,spdef=1}
