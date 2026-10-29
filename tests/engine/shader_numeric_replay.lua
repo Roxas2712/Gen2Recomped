@@ -2,6 +2,7 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit')
 local savedLove,savedJit,savedEnv=love,jit,os.getenv
+local savedAlpha=package.loaded['src.render.AlphaDepthCompat']
 local savedLegacy=package.loaded['src.render.LegacyShaderCompat'];package.loaded['src.render.LegacyShaderCompat']=nil
 local actual,draws=nil,{}
 local data=setmetatable({},{__mode='k'});local methods={}
@@ -54,6 +55,15 @@ T.eq(data[a].values.tex[1],texture);T.eq(data[b].values.tex[1],texture,'inactive
 -- Disabling the candidate still settles a previously pending bank on reuse.
 original:send('amount',3);S.deferInactiveNumeric=false;original:send('gate',1);g.draw();T.eq(data[b].values.amount[1],3)
 S.deferInactiveNumeric=true;original:send('amount',4)
+-- Rebase the engine-owned depth interposition. Internal replays traversing
+-- its old setter closure must not masquerade as foreign alias writes.
+local previousSetter=methods.send
+methods.send=function(self,...)return previousSetter(self,...)end
+package.loaded['src.render.AlphaDepthCompat']={followsShaderMethods=function()return true end,source=function(s)return s,false end,compileNative=compile,fragmentDepthTarget=function()return false end}
+local extra=g.newShader(source)
+original:send('gate',0);g.draw()
+T.eq(data[a].values.amount[1],4,'rebased numeric replay keeps current state')
+T.eq(S.status().unsupported,0,'engine rebase does not recurse or disable owner')
 -- A foreign variant setter is ordered after all deferred source writes.
 a:send('amount',99);T.eq(data[a].values.amount[1],99)
 original:send('gate',0);g.draw();T.eq(data[a].values.amount[1],99,'foreign override is not overwritten by old pending data')
@@ -67,5 +77,5 @@ T.check(N.numericBank({{n=2,'column',{1,2,3,4}}}))
 T.check(not N.numericBank({{n=1,{resource={texture}}}}))
 T.check(not N.numericBank({{n=1,{[2]=1}}}))
 T.check(not N.numericBank({{n=1,setmetatable({1},{})}}))
-love,jit,os.getenv=savedLove,savedJit,savedEnv;package.loaded['src.render.LegacyShaderCompat']=savedLegacy
+love,jit,os.getenv=savedLove,savedJit,savedEnv;package.loaded['src.render.LegacyShaderCompat']=savedLegacy;package.loaded['src.render.AlphaDepthCompat']=savedAlpha
 T.finish('deferred numeric shader banks, array tails, textures and foreign aliases')

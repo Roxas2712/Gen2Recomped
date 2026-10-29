@@ -15,6 +15,11 @@ local records={}
 local hooks={}
 local sourceBytes=0
 local raw,compiling
+local function replayNumeric(record,variant)
+ local previous=compiling;compiling=true
+ local ok,why=pcall(Numeric.apply,record,variant,stats)
+ compiling=previous;return ok,why
+end
 local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 local function original(record)
@@ -113,8 +118,8 @@ local function remember(record,method,args)
   local literal=not record.continuous[name]and row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
   if record.scalars[name]~=literal then record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1 end
  end
- -- Eager writes keep existing variant textures current, release their old C
- -- texture references, and flush pending batches at the native uniform seam.
+ -- Textures/opaque values and the active program keep eager native writes.
+ -- Only detached numeric banks of inactive programs may wait until reuse.
  local deferred=S.deferInactiveNumeric and not record.numericReplayUnsafe and Numeric.numericBank(bank)
  local current=deferred and raw.getShader()
  for _,variant in pairs(record.variants)do if variant then
@@ -154,7 +159,7 @@ local function hook(shader)
     -- An independently held native alias keeps its established write order.
     -- Settle all pending programs BEFORE forwarding the foreign setter.
     local ok,why=pcall(function()
-     for _,variant in pairs(owner.variants)do if variant then Numeric.apply(owner,variant,stats)end end
+     for _,variant in pairs(owner.variants)do if variant then local done,err=replayNumeric(owner,variant);if not done then error(err)end end end
     end)
     owner.numericReplayUnsafe=true
     if not ok then stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(owner)end
@@ -252,7 +257,7 @@ local function beforeDraw()
  if not record then return end
  local variant=choose(record)
  if variant and(variant.numericPendingCount or 0)>0 then
-  local ok,why=pcall(Numeric.apply,record,variant,stats)
+  local ok,why=replayNumeric(record,variant)
   if not ok then
    stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(record);variant=nil
   end
