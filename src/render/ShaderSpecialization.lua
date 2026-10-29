@@ -4,9 +4,10 @@
 -- remains the fallback for unsupported source, values or resource lifetimes.
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
-local S={}
+local Numeric=require('src.render.NumericUniformReplay')
+local S={deferInactiveNumeric=false}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredNumericUpdates=0,numericReplayWrites=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -114,11 +115,16 @@ local function remember(record,method,args)
  end
  -- Eager writes keep existing variant textures current, release their old C
  -- texture references, and flush pending batches at the native uniform seam.
- for _,variant in pairs(record.variants)do
-  if variant and record.hook.hasUniform(variant.shader,name)then
-   record.hook[method](variant.shader,name,unpack(args,2,args.n))
+ local deferred=S.deferInactiveNumeric and not record.numericReplayUnsafe and Numeric.numericBank(bank)
+ local current=deferred and raw.getShader()
+ for _,variant in pairs(record.variants)do if variant then
+  if deferred and variant.shader~=current then
+   Numeric.queue(variant,name);stats.deferredNumericUpdates=stats.deferredNumericUpdates+1
+  else
+   Numeric.clear(variant,name)
+   if record.hook.hasUniform(variant.shader,name)then record.hook[method](variant.shader,name,unpack(args,2,args.n))end
   end
- end
+ end end
  record.bankRevision=record.bankRevision+1
 end
 local function afterSend(record,method,args,...)
@@ -143,6 +149,16 @@ local function hook(shader)
  for _,method in ipairs{'send','sendColor'}do
   if h[method]then h.wrapped[method]=function(self,...)
    local record=not compiling and originals[self]
+   local owner=not compiling and variants[self]
+   if owner then
+    -- An independently held native alias keeps its established write order.
+    -- Settle all pending programs BEFORE forwarding the foreign setter.
+    local ok,why=pcall(function()
+     for _,variant in pairs(owner.variants)do if variant then Numeric.apply(owner,variant,stats)end end
+    end)
+    owner.numericReplayUnsafe=true
+    if not ok then stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(owner)end
+   end
    if not record or record.disabled or record.hook~=h then return h[method](self,...)end
    return afterSend(record,method,pack(...),h[method](self,...))
   end;methods[method]=h.wrapped[method]end
@@ -235,6 +251,12 @@ local function beforeDraw()
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
  if not record then return end
  local variant=choose(record)
+ if variant then
+  local ok,why=pcall(Numeric.apply,record,variant,stats)
+  if not ok then
+   stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(record);variant=nil
+  end
+ end
  if variant then
   if actual~=variant.shader then raw.setShader(variant.shader)end
   stats.uses=stats.uses+1;if variant.depth then stats.depthUses=stats.depthUses+1 end
