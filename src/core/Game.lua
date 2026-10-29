@@ -143,6 +143,12 @@ function Game:load()
   -- seed=true keeps what entry chunks wrote through mod.save before any
   -- save existed; the skeleton fires save.created exactly once
   self:adoptSave(self.save, true)
+  -- GSC creation callbacks may sync other display settings from the live
+  -- pipeline ladder. Restore it first, as the source Game2 boot does;
+  -- otherwise that sync replaces a saved camera level with boot's zero.
+  if require("src.core.GameVersion").isGen2() then
+    require("src.render.Pipelines").applyOptions(self.save.options)
+  end
   ModRuntime.emit("save.created", { save = self.save })
   -- apply the persisted audio + display options before anything plays
   self:applyOptions(self.save.options)
