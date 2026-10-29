@@ -3936,6 +3936,8 @@ function BattleState:resumeCheckpoint()
 end
 
 function BattleState:enter()
+  local Sound=require('src.core.Sound')
+  if Sound.prewarmBattle then pcall(Sound.prewarmBattle,self)end
   if self:gen3Layout()then self.rsBattlePanel=require('src.battle.Gen3RsBattlePanel').new(self)end
   -- Out of useable POKéMON before the battle even starts.  pokered does not
   -- skip the battle: .checkAnyPartyAlive (engine/battle/core.asm:158-162)
