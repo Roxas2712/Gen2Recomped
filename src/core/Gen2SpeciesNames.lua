@@ -202,6 +202,9 @@ function M.write(target, registry)
   local state = supported() and states[target]
   for id in pairs(registry.ops) do
     local value = registry:get(id)
+    if Version.isGen2() and type(value)=='table' and type(value.baseStats)=='table' then
+      require('src.pokemon.Gen2MonFields').stats(value.baseStats)
+    end
     -- Full replacements addressed by a legacy name still carry a native id.
     if state and getmetatable(target) == state.meta and type(value) == "table"
        and state.aliases[value.id] == id then value.id = id end

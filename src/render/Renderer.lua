@@ -13,6 +13,7 @@ local PaletteFX = require("src.render.PaletteFX")
 local Pipelines = require("src.render.Pipelines")
 local PixelCanvas = require("src.render.PixelCanvas")
 local PixelFit = require("src.render.PixelFit")
+local ScreenPosition = require("src.core.ScreenPosition")
 local Runtime = require("src.mods.Runtime")
 local GbcColorCorrection = require("src.render.GbcColorCorrection")
 local Output = require("src.render.Output")
@@ -306,9 +307,16 @@ function Renderer:setWorldBounds(w, h)
 end
 
 function Renderer:worldViewSize()
-  local _, _, pw, ph = displayMetrics()
-  local sp = Zoom.scale(self:fitScale())
+  local ww, wh, pw, ph, _, dpiY = displayMetrics()
+  local fitted = self:fitScale()
+  local sp = Zoom.scale(fitted)
   local vw, vh = math.ceil(pw / sp), math.ceil(ph / sp)
+  local _, uih = self:uiSize()
+  local lift = not self.splitViewport and ScreenPosition.pixelLift(ww, wh, ph,
+    uih * fitted, dpiY) or 0
+  -- A raised camera needs extra map below it; shifting an unchanged canvas
+  -- alone exposes the clear color at the bottom of the window.
+  if lift > 0 then vh = vh + 2 * math.ceil(lift / sp) end
   -- Even sizes keep Camera:follow on integer pixels (viewW/2 is integral),
   -- so unfloored FX/sprite math cannot phase-shimmer against the tile layer.
   if vw % 2 ~= 0 then vw = vw + 1 end
@@ -1029,6 +1037,9 @@ local function frameRects(self, r, windowW, windowH, surfaceW, surfaceH)
   local vpw, vph = uiw * Sx, uih * Sy
   -- Snap the letterbox origin to a framebuffer pixel, then convert to units.
   local pixelX, pixelY = PixelFit.origin(pw, ph, uiw, uih, Sp)
+  local lift = not self.splitViewport and ScreenPosition.pixelLift(ww, wh, ph,
+    uih * Sp, dpiY) or 0
+  pixelY = pixelY - lift
   local ox, oy = pixelX / dpiX, pixelY / dpiY
   -- The UI has its own scale: it steps down as the survey zoom goes out (see
   -- uiScale), so it can be smaller than the world letterbox.  Un-zoomed these
@@ -1046,12 +1057,14 @@ local function frameRects(self, r, windowW, windowH, surfaceW, surfaceH)
   local Ux, Uy = Up / dpiX, Up / dpiY
   local uvpw, uvph = uiw * Ux, uih * Uy
   local uiPixelX, uiPixelY = PixelFit.origin(pw, ph, uiw, uih, Up)
+  if lift > 0 then uiPixelY = math.max(0, uiPixelY - lift) end
   local uox, uoy = uiPixelX / dpiX, uiPixelY / dpiY
   r = r or {}
   r.ww,r.wh,r.pw,r.ph,r.dpiX,r.dpiY = ww,wh,pw,ph,dpiX,dpiY
   r.vx,r.vy,r.cut,r.vux,r.vuy,r.vuw,r.vuh = 0,0,0,0,0,ww,wh
   r.Sp,r.Sx,r.Sy,r.uiw,r.uih,r.vpw,r.vph,r.ox,r.oy = Sp,Sx,Sy,uiw,uih,vpw,vph,ox,oy
   r.Up,r.Ux,r.Uy,r.uvpw,r.uvph,r.uox,r.uoy = Up,Ux,Uy,uvpw,uvph,uox,uoy
+  r.lift = lift
   return r
 end
 function Renderer:frameRects()
@@ -1345,7 +1358,7 @@ local function endFrame(self, zones, worldZones, privateViewport)
     sp = self:worldPresentationScale(sp, pw, ph, wvw, wvh)
     sx, sy = sp / dpiX, sp / dpiY
     local wox = math.floor((pw - wvw * sp) / 2) / dpiX
-    local woy = math.floor((ph - wvh * sp) / 2) / dpiY
+    local woy = (math.floor((ph - wvh * sp) / 2) - r.lift) / dpiY
     -- Tilt mode projects the ground world pass through the perspective mesh
     -- (SGB zones baked in beforehand -- see drawTiltedWorld -- so no zone
     -- scissoring here).  drawTiltedWorld returns false when tilt is off or

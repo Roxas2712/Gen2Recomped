@@ -61,7 +61,14 @@ The process exits successfully and its managed test host is cleaned.
 This accepts the observed Retina coordinate correction only. Bottom command
 art remains partly outside the window, even though its actual hit rectangles
 end at the bottom edge. Full visual parity is rejected pending a matched
-Gen1 comparison. Complete current-tree qualification is also still required.
+Gen1 comparison.
+
+Exact head `7da7b119` subsequently passes the complete official ROM-free
+command:943/943 engine suites,4/4 SDK suites and every available tier.
+All76 exact-head CI checks succeed or are skipped. PR350 merges as
+`836125c1` with the identical independently qualified tree. This qualification
+does not include the later screen-position child feature or constitute
+final Windows/macOS release-package acceptance.
 
 This selected CPU proof does not establish every skin/cutout/safe-area or
 custom surface configuration, odd-sized fractional-DPI logical queries, physical

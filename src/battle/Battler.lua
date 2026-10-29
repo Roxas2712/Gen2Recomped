@@ -9,6 +9,7 @@ local Gen2 = require('src.battle.Gen2BattleRead')
 local Battler = {}
 
 function Battler.new(data, mon, isPlayer, save, battle)
+  if Version.isGen2() then require('src.pokemon.Gen2MonFields').bind(data,mon) end
   local def = Forms.definition(data, mon)
   local badgeBoosts = data.constants and data.constants.badgeBoosts
   local badges
@@ -47,6 +48,7 @@ function Battler.new(data, mon, isPlayer, save, battle)
     curTypes = def.types,
     curMoves = mon.moves,
   }
+  if Version.isGen2() then require('src.pokemon.Stats').trackBattler(battler) end
   return Gen2.bind(Held.bind(battler, battle), battle)
 end
 

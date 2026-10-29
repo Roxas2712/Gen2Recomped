@@ -128,8 +128,11 @@ local function loadMon(self)
   -- which crashed the HP bar draw below (#233).  Redundant once
   -- SaveData.validate has run over a loaded save, but this is the site the
   -- original recomputes at, and it also covers a mon handed in by a mod.
-  Stats.ensure(game.data.pokemon[mon.species], mon)
-  require("src.pokemon.Pokemon").syncIdentity(game.data, mon)
+  if isGen2() then
+    require('src.pokemon.Pokemon').refreshStats(game.data,mon)
+  else
+    Stats.ensure(game.data.pokemon[mon.species], mon)
+  end
   self.isEgg = require("src.pokemon.Party").isEgg(mon) and true or false
   local Sprites = require("src.pokemon.Sprites")
   if self.isEgg then
