@@ -799,9 +799,11 @@ end
 
 local gbPrefetch=require('src.render.GbAssetPrefetch')
 local nativeShadeRegion,nativeShadeAvailable=ShadeRecolour.region,ShadeRecolour.available
+local nativeGroupAt,nativeGroupColors,nativeGbcPack=PaletteFX.worldGroupAt,PaletteFX.worldGroupColors,PaletteFX.gbcPack
+local nativeBorrowStart,nativeTileColors=TileRenderer.borrowStart,TileRenderer.gen2TileColors
 -- Snapshot only the concrete native palette words, including borrowed tiles
 -- and aliases. A fresh signature at admission rejects edited palettes/maps.
-local function gbcPrefetchPlan(imagePath,tilesetId,mapId,perRow,data)
+local function gbcPrefetchPlan(imagePath,tilesetId,mapId,perRow,data,verifyOnly)
   if ShadeRecolour.region~=nativeShadeRegion or ShadeRecolour.available~=nativeShadeAvailable then return end
   local payload,signature,size=Assets.prefetchPayload(imagePath)
   if not payload or payload.width%8~=0 or payload.height%8~=0
@@ -812,20 +814,40 @@ local function gbcPrefetchPlan(imagePath,tilesetId,mapId,perRow,data)
   local borrowed=ts and TileRenderer.borrowStart(ts)
   local rows=ts and gen2PalColors(ts)
   local total=payload.width*payload.height/64
-  local colors,aliases,stamp={},{},{signature,tostring(perRow)}
+  local palettes,tiles,aliases,stamp={},{},{},{signature,tostring(perRow)}
+  -- Native tiles share a handful of palette rows. Snapshot/check each row
+  -- once per plan, rather than allocating four RGB tables for every tile.
+  -- This memo is local: in-place edits are still checked afresh at admission.
+  local checked,byColor,nextPalette={},{},0
+  local memoRows=PaletteFX.worldGroupAt==nativeGroupAt and PaletteFX.worldGroupColors==nativeGroupColors
+    and PaletteFX.gbcPack==nativeGbcPack and TileRenderer.borrowStart==nativeBorrowStart
+    and TileRenderer.gen2TileColors==nativeTileColors
+    and(not(ts and ts.palMap)or getmetatable(ts.palMap)==nil)
   local function copy(row)
-    if not row then stamp[#stamp+1]='-';return false end
+    if not row then stamp[#stamp+1]='-';return 0 end
+    local hit=memoRows and checked[row]
+    if hit then stamp[#stamp+1]=hit.signature;return hit.id end
     if type(row)~='table'or getmetatable(row)~=nil then error('Custom palette')end
-    local out={}
+    local out=not verifyOnly and{}or false
+    local words={}
     for i=1,4 do
       local c=row[i];assert(type(c)=='table'and getmetatable(c)==nil,'Custom palette')
-      out[i]={}
+      if out then out[i]={}end
       for n=1,3 do local v=c[n]
         assert(type(v)=='number'and v%1==0 and v>=0 and v<=255,'Custom palette')
-        out[i][n]=v;stamp[#stamp+1]=string.char(v)
+        if out then out[i][n]=v end
+        words[#words+1]=string.char(v)
       end
     end
-    return out
+    local value='+'..table.concat(words)
+    local id=byColor[value]
+    if not id then
+      nextPalette=nextPalette+1;id=nextPalette;byColor[value]=id
+      if out then palettes[id]=out end
+    end
+    if memoRows then checked[row]={signature=value,id=id}end
+    stamp[#stamp+1]=value
+    return id
   end
   for t=0,total-1 do
     local row
@@ -833,16 +855,18 @@ local function gbcPrefetchPlan(imagePath,tilesetId,mapId,perRow,data)
       row=TileRenderer.gen2TileColors(ts.palMap,rows,t)
     end
     if not row then local group=PaletteFX.worldGroupAt(tilesetId,mapId,t);row=group and groups[group+1]end
-    colors[t+1]=copy(row)
+    local value=copy(row)
+    if not verifyOnly then tiles[t+1]=value end
   end
   for _,al in ipairs(PaletteFX.TILE_ALIASES and PaletteFX.TILE_ALIASES[mapId]or {})do
     if al.alias<total then
       assert(al.alias>=0 and al.alias%1==0 and al.tile>=0 and al.tile<total and al.tile%1==0,'Custom alias')
       stamp[#stamp+1]=al.tile..':'..al.alias
-      aliases[#aliases+1]={tile=al.tile,alias=al.alias,colors=copy(groups[al.group+1])}
+      local value=copy(groups[al.group+1])
+      if not verifyOnly then aliases[#aliases+1]={tile=al.tile,alias=al.alias,palette=value}end
     end
   end
-  payload.kind,payload.perRow,payload.colors,payload.aliases='bake',perRow,colors,aliases
+  payload.kind,payload.perRow,payload.palettes,payload.tilePalettes,payload.aliases='bake',perRow,palettes,tiles,aliases
   return payload,table.concat(stamp,'|'),size
 end
 function TileRenderer.prefetchAtlas(data,mapId,front)
@@ -861,7 +885,7 @@ local function getGbcAtlas(imagePath, tilesetId, mapId, perRow, data)
   local key = imagePath .. gbcKeyFor(mapId)
   if gbcAtlasCache[key] ~= nil then return gbcAtlasCache[key] or nil end
   if gbPrefetch.has('atlas:'..key)then
-    local ok,payload,signature=pcall(gbcPrefetchPlan,imagePath,tilesetId,mapId,perRow,data)
+    local ok,payload,signature=pcall(gbcPrefetchPlan,imagePath,tilesetId,mapId,perRow,data,true)
     local pixels=ok and payload and gbPrefetch.get('atlas:'..key,signature,true)
     if pixels then
       local uploaded,img=pcall(love.graphics.newImage,pixels)
