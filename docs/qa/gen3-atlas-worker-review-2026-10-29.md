@@ -1,7 +1,9 @@
 # Atlas-Worker: budgetierte Veröffentlichung und Vergleichsstatus
 
-Der PR bleibt ein Entwurf. Die Korrektheit der neuen Upload-Strecke ist
-geprüft; ein vollständiger, gültiger Aus/An-Vergleich steht weiterhin aus.
+Dieser historische Zwischenstand dokumentiert die zunächst blockierte Prüfung.
+Der anschließend vollständig bestandene Vergleich und die aktuelle Freigabe
+stehen im [abschließenden Nachweis](gen3-atlas-worker-qualified-2026-10-29.md).
+Die folgenden Abbrüche und offenen Punkte beschreiben den damaligen Stand.
 
 ## Behobene Arbeit außerhalb des Budgets
 

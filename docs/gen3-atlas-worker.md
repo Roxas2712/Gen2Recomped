@@ -32,9 +32,12 @@ uses it cannot establish a worker speedup. `check_performance_baseline.py
 host, enters the production replacement boundary with the native game/map/
 actors/clock and records actual adapter draws and worker cache provenance.
 No alternate simulation or shipping callback is installed. OFF and ON use
-the same source and bridge scene. The measured source is `a474e83b`, including main `9d8eec4c`. The
-performance gate is **not met**; the PR remains a draft. No runtime merge
-is qualified by these measurements.
+the same source and bridge scene. The initial `a474e83b` comparison below,
+including main `9d8eec4c`, did not qualify a merge. The subsequent complete
+ABBA comparison on `3b06b0bf`, including main `dc691d626`, satisfies the
+pre-registered performance gate. See the [current qualification](qa/gen3-atlas-worker-qualified-2026-10-29.md)
+for all four cases, exact scope and validation; it establishes an atlas
+main-thread preparation benefit, not a general game FPS or energy claim.
 
 `luajit tools/atlas_worker_check.lua` checks all five GBA editions, exact RGBA
 and index streams, live animations and palette edits, reference ownership,
@@ -82,12 +85,17 @@ focused checks (849 assertions and five integration stages, all passing). The ti
 [Raw qualification and measurements](qa/gen3-atlas-worker-2026-10-27/qualification.json)
 are retained alongside `coroutine-ownership.json`, `seam-off.json` and `seam-on.json`.
 
-## Erneute Prüfung am 28. Oktober
+## Historische Zwischenstände und qualifizierter Abschluss
 
-Die Korrekturen, erneute aktuelle-main-Qualifikation und weiterhin nicht
-erfüllte Performance-Bedingung sind in der [Folgeprüfung](qa/gen3-atlas-worker-review-2026-10-28.md)
-getrennt dokumentiert. Der Entwurfsstatus und die Integrationssperre bleiben erhalten.
+Die [Prüfung vom 28. Oktober](qa/gen3-atlas-worker-review-2026-10-28.md) und der
+[zunächst blockierte Folgestand vom 29. Oktober](qa/gen3-atlas-worker-review-2026-10-29.md)
+bleiben als getrennte Zwischenstände erhalten. Ihre abgewiesenen Fokusläufe
+und abgebrochenen Tests begründen keinen Leistungsnachweis.
 
-Die [Folgeprüfung vom29.Oktober](qa/gen3-atlas-worker-review-2026-10-29.md)
-dokumentiert die budgetierten Uploads, echten Textur-Readbacks und den weiterhin
-offenen Vergleich. Die historischen Messungen oben qualifizieren diese Änderung nicht.
+Der [abschließende gleiche Aus–An–An–Aus-Vergleich](qa/gen3-atlas-worker-qualified-2026-10-29.md)
+besteht dagegen alle vorab festgelegten Kriterien: 56,34 beziehungsweise
+70,32 Prozent weniger gemessene Hauptthread-Zeit für die Atlasdienste, höchstens
+0,33 Prozent Änderung der mittleren Framezeit und keine Verschlechterung der
+gemittelten Nahtmaxima. Der gleiche Quellkopf besteht 956/956 Engine-Suites,
+SDK 4/4, alle verfügbaren ROM-freien Tiers sowie die echten Grafikprüfungen.
+Die unveränderte Qualität, Besitzer- und Fallback-Grenzen sind im Nachweis erfasst.
