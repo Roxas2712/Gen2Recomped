@@ -8,6 +8,9 @@ Add passive queries through the existing Gen2 chrome and native viewport
 owners: logical scale/origin, window DPI, actual drawable dimensions and
 a detached classic 160x144 viewport result. They do not replace native
 composition, mutate the cartridge or allocate another scene renderer.
+Actual drawable-size queries use framebuffer coordinates. The shared
+`PixelFit` helper extracts the existing compositor scale/origin arithmetic;
+drawable inputs must not receive a second DPI multiplication.
 
 This offer is based on the native viewport/touch stack in PR383. It includes
 the already offered Chrome component from PR224 with all of its required
@@ -17,7 +20,7 @@ and before the hardware shade-register permutation; the optional native
 `effectiveColors(c,invert)` argument supplies that operation without a
 second palette state. Calls without the optional flag retain their behavior.
 
-Selected validation on offered implementation `5e4ee81f`:
+Historical selected validation on offered implementation `5e4ee81f`:
 
 - 3161 frame-query checks through the actual API2 SDK and the actual older
   native `Renderer:endFrame` compositor, across five GSC editions, six
@@ -28,8 +31,23 @@ Selected validation on offered implementation `5e4ee81f`:
 - The same frame-query probe fails cleanly on the preceding PR383 source
   `a3f0d344` because the two methods are missing.
 
+The newer fork's real Metal test then exposed a case those initial logical
+queries did not cover: unchanged VASC passes2048x1536 framebuffer dimensions
+in a1024x768 DPI2 window. The initial query returned scale10.5/origin184,12;
+the actual native compositor uses pixel scale10/origin224,48. That initial
+candidate is rejected for coordinate acceptance. The expanded probe fails
+263 of4454 checks on that fork candidate.
+
+Offered correction `d3652034` independently passes4454 frame-query checks
+through this older host's actual compositor and116 menu-chrome checks.
+The expanded probe includes actual drawable arguments, the recorded Retina
+regression, odd pixel dimensions and decorated native fitting. The same
+shared-policy correction passes the newer fork's4454 query checks plus
+its existing window/playfield/chrome regressions. Actual corrected GPU
+observations and complete current-tree qualification remain pending.
+
 Complete combined-host tests, every custom skin/cutout/safe-area and odd
-fractional-DPI configuration, physical Windows behavior, matched unchanged
+fractional-DPI logical configuration, physical Windows behavior, matched unchanged
 mod GPU/actor pinning and release acceptance remain open. The concrete
 missing API is established; this does not yet prove the cause or correction
 of a particular clipped command card.
