@@ -15,8 +15,8 @@ percentage can be inferred from them or from the number of passing tests.
 
 ## Current checkpoint, 29 October 2026
 
-The fetched fork main is `d822aba828156f9e2fda32aac0a667649a2c5247`,
-including transport-test PR354, stat-refresh PR353, native Pokemon-field PR352, screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
+The fetched fork main is `4a28411d4a965afaf1491edb8e0f63522f9773b5`,
+including source-PP PR355, transport-test PR354, stat-refresh PR353, native Pokemon-field PR352, screen-position PR351, native frame-query PR350, the qualified native battle batch PR349, GBA evolution PR344 and
 the earlier native RNG PR336. PR349's exact composed tree passes942/942
 engine suites,4/4 SDK suites and every available official ROM-free tier;
 all77 exact-head CI checks succeeded or were skipped before its strict
@@ -118,12 +118,23 @@ fixture passes1512 checks and the exact final PR head `0185fb13` passes all
 skipped, including three real platform transports and separately dispatched
 native HTTP, import and package contracts. Strict merge `d822aba8` has the
 identical independently qualified tree.
-[Source PP operations](native-gen2-mon-pp.md), draft PR355, add the actual
+[Source PP operations](native-gen2-mon-pp.md), merged PR355, add the actual
 native slot API and shared healing/save repair. Corrected source `43f697d8`
 passes6642 new checks and six actual existing regression groups. The exact
-fixture against predecessor main fails25 missing-method probes. Full composed
-qualification is pending; no unchanged-mod menu interaction or release
-acceptance is inferred.
+fixture against predecessor main fails25 missing-method probes. Exact head
+`d2555abf` passes950/950engine and4/4SDK suites with75latest CI checks
+succeeding or skipped; strict merge `4a28411d` has the identical qualified
+tree. Upstream PR401 independently passes6642API/92actual item-link checks
+and five older native regressions. Existing upstream HTTP PR273 is updated
+to `8e015af6`: its older actual official LOVE11.5 TLS fixture passes1521checks
+with its45-second process deadline unchanged. No unchanged-mod menu
+interaction or release acceptance is inferred.
+
+[Source identity signatures](native-gen2-source-identity.md) are the next
+candidate: gene/definition arguments over native shared hook owners, including
+the previously incompatible inherited `Mon.isShiny` signature. Source
+`c38d06a6` passes262168data/450SDK-native checks plus the existing identity,
+appearance, PP and stat groups. Full composed-tree qualification is pending.
 
 Full source-model `Battle.new`, the standalone turn/event API and arbitrary
 writable model fields remain open; these foundations do not close them.
