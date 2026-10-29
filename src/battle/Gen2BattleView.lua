@@ -30,12 +30,18 @@ function View.bind(screen)
     enemyParty = function() return screen.enemyParty end,
     save = function() return screen.game.save end,
     data = function() return screen.data end,
+    rng = function() return rawget(screen.battle, '_nativeLoveRng') end,
+    random = function() return rawget(screen.battle, '_nativeRandom') end,
     stages = function() return screen.battle:stageTables() end,
     wild = function() return screen.kind == "wild" end,
     playerIndex = function() return indexOf(partyOf(screen), screen.player and screen.player.mon) end,
     enemyIndex = function() return indexOf(screen.enemyParty, screen.enemy and screen.enemy.mon) end,
     over = function() return screen.result ~= nil or screen.dead == true or screen._gen2Complete == true end,
     outcome = function() return screen.result end,
+    -- The controller increments once per actual round, before turn-start
+    -- observers, including link participants and spectators. A source query
+    -- must not start a round or initialize checkpoint/persistent state.
+    turn = function() return screen.turnCount or 0 end,
     battleType = function() return screen.battleType end,
     trainer = function() return screen.trainer end,
     tutorial = function() return screen.demo or screen.dudeDemo or screen.pokedudeDemo end,

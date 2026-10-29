@@ -50,6 +50,11 @@ attribution conditions and preservation of earlier permissions.
 
 ## Gen1 touch-skin runtime
 
+`src/core/ScreenPosition.lua` is adapted from Gen1Recomp revision
+`535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91` under the preserved GPLv3/Section 7
+terms in [licenses/GEN1RECOMP-TOUCH-SKINS.md](licenses/GEN1RECOMP-TOUCH-SKINS.md).
+Its native compositor/option integration retains those terms and credits.
+
 `src/core/TouchSkin.lua`, `DeltaSkin.lua`, `SkinZip.lua`, `PdfImage.lua`,
 and the identified custom-skin/haptic/hotbar sections in `TouchControls.lua` are adapted
 from Gen1Recomp commit `535a5ec088c1ae1bf4d91dd3e35a56f64cf46d91`.

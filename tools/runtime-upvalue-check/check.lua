@@ -1,10 +1,12 @@
 -- ROM-free runtime probe. A higher minimum is an explicit experimental gate;
 -- the stock runtime is still expected to support the default minimum of 60.
 local minimum = tonumber(arg and arg[1]) or 60
+local interpreterOnly = arg and arg[2] == 'interpreter-only'
 assert(minimum >= 1 and minimum <= 120, 'minimum must be between 1 and 120')
 local Json = require('src.link.Json')
 local compile = loadstring or load
 local report = {runtime = jit and jit.version or _VERSION, minimum = minimum,
+  interpreterOnly = interpreterOnly or false,
   cases = {}, checks = 0}
 local function check(value, reason)
   assert(value, reason); report.checks = report.checks + 1
@@ -21,6 +23,7 @@ local function factory(count)
   return compile(table.concat(lines, '\n'), '@synthetic-shared-upvalues-' .. count)
 end
 local wasJit = jit and jit.status()
+if interpreterOnly then assert(not wasJit, 'interpreter-only host must have JIT disabled') end
 for _, count in ipairs({1, 8, 32, 60, 61, 64, 96, 120}) do
   local chunk, why = factory(count)
   local result = {upvalues = count, compiles = chunk ~= nil}
@@ -28,8 +31,8 @@ for _, count in ipairs({1, 8, 32, 60, 61, 64, 96, 120}) do
     check(count > minimum, 'required closure rejected: ' .. tostring(why))
     check(tostring(why):find('upvalues', 1, true), 'unexpected compiler rejection')
   else
-    for _, mode in ipairs({'interpreter', 'jit'}) do
-      if mode == 'interpreter' then if jit then jit.off(); jit.flush() end
+    for _, mode in ipairs(interpreterOnly and {'interpreter'} or {'interpreter', 'jit'}) do
+      if mode == 'interpreter' then if jit and not interpreterOnly then jit.off(); jit.flush() end
       elseif jit then jit.on(); jit.flush(); jit.opt.start('hotloop=1', 'hotexit=1') end
       local first, second = chunk()
       local found = 0
@@ -48,7 +51,7 @@ for _, count in ipairs({1, 8, 32, 60, 61, 64, 96, 120}) do
       -- Match stock LuaJIT's debug-surgery contract: a previously constant
       -- upvalue may be embedded in a trace. Flush before replacing it.
       -- https://github.com/LuaJIT/LuaJIT/issues/968
-      if jit then jit.flush() end
+      if jit and not interpreterOnly then jit.flush() end
       check(debug.setupvalue(first, found, value + 7) == name, 'high-index debug write')
       expected = expected + 7
       local observed = second(0)
@@ -56,7 +59,7 @@ for _, count in ipairs({1, 8, 32, 60, 61, 64, 96, 120}) do
         :format(count, mode, tostring(observed), tostring(expected)))
       local dumped = string.dump(first)
       local restored = assert(compile(dumped, '@restored-shared-upvalues'))
-      if jit then jit.flush() end
+      if jit and not interpreterOnly then jit.flush() end
       for index = 1, found do
         local _, current = debug.getupvalue(first, index)
         check(debug.setupvalue(restored, index, current) ~= nil, 'restore bytecode upvalue')
@@ -67,6 +70,6 @@ for _, count in ipairs({1, 8, 32, 60, 61, 64, 96, 120}) do
   end
   report.cases[#report.cases + 1] = result
 end
-if jit then if wasJit then jit.on() else jit.off() end end
+if jit and not interpreterOnly then if wasJit then jit.on() else jit.off() end end
 report.passed = true
 print('RUNTIME_UPVALUES ' .. Json.encode(report))
