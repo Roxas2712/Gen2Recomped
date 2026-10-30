@@ -3,7 +3,7 @@
 The SDK has no cartridge-derived code. ROMs and player files are never copied
 into build caches or distributed. Copyright (c) 2026 Roxas2712.
 """
-import concurrent.futures,hashlib,json,os,shutil,sys
+import concurrent.futures,hashlib,json,os,shutil,sys,subprocess
 from pathlib import Path
 from native_workspace import manager,lock_file
 
@@ -86,7 +86,11 @@ def compile_guest(root,sdk,runtime,rom,region,build,final,qa):
     command=[compiler,'-shared','-static','-Wl,--export-all-symbols','-o',str(pending),*[str(p)for p in objects],
         '-Wl,--start-group',*[str(sdk/p)for p in runtime['libraries']],'-Wl,--end-group',
         '-lws2_32','-lcomdlg32','-lole32','-luuid','-ladvapi32','-lshell32','-lwinmm']
-    with (build/'link.log').open('w',encoding='utf-8')as stream:qa.qa_run(command,env=env,stdout=stream,stderr=stream,check=True)
+    log=build/'link.log'
+    try:
+        with log.open('w',encoding='utf-8')as stream:qa.qa_run(command,env=env,stdout=stream,stderr=stream,check=True)
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError('Native Pinball linking failed:\n'+log.read_text(encoding='utf-8',errors='replace')[-12000:])from error
     # The previous working library remains intact after an interrupted linker.
     with pending.open('rb')as stream:
         if stream.read(2)!=b'MZ':raise ValueError('The native linker produced no Windows DLL.')
