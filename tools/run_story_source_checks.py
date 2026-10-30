@@ -24,7 +24,8 @@ def main():
     assert remaining>0, 'Resource slot expired'
     qa_storage._storage=qa_storage.Storage(ROOT)
     atexit.register(qa_storage._storage.close)
-    for source in (ROOT,Path(__file__),Path(sys.executable),ROOT/'tests/test_story_frozen_sources.py',ROOT/'tools/story_frozen_sources.py'):
+    for source in (ROOT,Path(__file__),Path(sys.executable),ROOT/'tests/test_story_frozen_sources.py',ROOT/'tools/story_frozen_sources.py',
+                   ROOT/'tests/test_story_save_operator.py',ROOT/'tools/story_save_operator.py'):
         qa_storage.qa_source(source)
     out=ROOT/'.local/qa'/('story-source-checks-'+datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f'))
     qa_storage.qa_cache(out);out.mkdir(parents=True)
@@ -34,7 +35,7 @@ def main():
         assert remaining>0, 'Resource slot expired during preparation'
     with (out/'tests.log').open('wb')as log:
         result=qa_storage.qa_run([sys.executable,'-m','unittest','discover','-s','tests',
-            '-p','test_story_frozen_sources.py','-v'],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=remaining)
+            '-p','test_story_*.py','-v'],cwd=ROOT,env=env,stdout=log,stderr=log,timeout=remaining)
     print((out/'tests.log').read_text(),flush=True)
     return result.returncode
 
