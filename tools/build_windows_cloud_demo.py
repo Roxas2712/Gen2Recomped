@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Package the qualified Windows runtime and current private demo without user data."""
+"""Package the public fork with a qualified Windows runtime and no user data."""
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 import argparse, atexit, hashlib, importlib.util, io, json, os, shutil, struct, sys, zipfile
 from pathlib import Path, PurePosixPath
@@ -94,6 +94,7 @@ def build(a):
   r'"%~dp0RetroRecomped.exe" > "%TEMP%\RetroRecomped-Cloud-Test.log" 2>&1','set "result=%ERRORLEVEL%"',
   r'type "%TEMP%\RetroRecomped-Cloud-Test.log"','echo.',r'echo Report/log: %TEMP%\RetroRecomped-Cloud-Test.log','pause','exit /b %result%',''])
  (bundle/'Cloud-Test.cmd').write_bytes(diagnostic.encode('ascii'))
+ (bundle/'Profil-Auswahl.cmd').write_bytes(b'@echo off\r\nsetlocal\r\nset "RETRO_WINDOWS_CHOOSE_PROFILE=1"\r\n"%~dp0RetroRecomped.exe" %*\r\n')
  guide=(ROOT/'tools/windows-demo/README.txt').read_text(encoding='utf-8')
  (bundle/'LIESMICH.txt').write_text(guide,encoding='utf-8-sig')
  receipt={'schema':1,'author':'Roxas2712','build':VERSION,'sourceRevision':revision,'platform':'Windows x64',

@@ -2,7 +2,8 @@ RETRORECOMPED – WINDOWS-DEMO 20261030.3 (64 BIT)
 Integration: Roxas2712. Bestehende Autorenrechte bleiben erhalten.
 
 START UND BISHERIGE DATEN
-1. ZIP vollständig entpacken. Alle DLL-Dateien neben RetroRecomped.exe lassen.
+1. Bisherige Demo schließen, ZIP vollständig entpacken. Alle DLL-Dateien neben
+   RetroRecomped.exe lassen.
 2. RetroRecomped.exe per Doppelklick öffnen.
 3. Ein vorhandenes Profil wird direkt wiederverwendet. Bei mehreren Profilen
    wählst du deinen bisherigen Ordner. Die Auswahl wird für später gemerkt.
@@ -10,6 +11,8 @@ START UND BISHERIGE DATEN
 Die Suche umfasst die üblichen Gen2Recomp-, älteren LOVE- und Preview-Profile.
 ROM-Importe, Spielstände, installierte Mods und Konto bleiben an ihrem Ort.
 Es werden keine alten Profile verschoben, zusammengeführt oder gelöscht.
+Profil-Auswahl.cmd zeigt die Auswahl bei Bedarf erneut; dafür muss keine
+Spielstand- oder Einstellungsdatei gelöscht werden.
 Ist die Profilsuche nicht möglich, wird der Fehler angezeigt. Dann nicht
 vorschnell ein neues Spiel beginnen; der bisherige Datenordner bleibt erhalten.
 

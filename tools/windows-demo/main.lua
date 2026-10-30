@@ -24,9 +24,12 @@ function love.load()
  local saved=P.readChoice(love.filesystem)
  rows,notice=P.scan(love.filesystem)
  if rows then
-  local row=P.choose(rows,saved);if row then start(row,true);return end
+  local row=P.choose(rows,saved)
+  if row and os.getenv('RETRO_WINDOWS_CHOOSE_PROFILE')~='1'then start(row,true);return end
  else rows={}end
- rows[#rows+1]={identity='Gen2Recomp',new=true}
+ local standard=false
+ for _,row in ipairs(rows)do if row.identity=='Gen2Recomp'then standard=true end end
+ if not standard then rows[#rows+1]={identity='Gen2Recomp',new=not notice}end
 end
 function love.draw()
  local g=love.graphics;local w,h=g.getDimensions();g.clear(.035,.05,.08)

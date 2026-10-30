@@ -162,7 +162,7 @@ jobs:
           retention-days: 14
   windows-preview:
     if: ${{ inputs.windows_only == true }}
-    runs-on: windows-2022
+    runs-on: windows-2025
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v7

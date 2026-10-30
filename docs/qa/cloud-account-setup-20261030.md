@@ -65,10 +65,10 @@ device switch, wait for the cloud acknowledgement.
 
 ## Evidence and limits
 
-- 99 launcher suites and 120 syntax checks passed. Targeted follow-ups cover
+- Public Windows port: 91 launcher suites and 102 syntax checks passed. Targeted follow-ups cover
   latest-save selection, upload acknowledgements, restored local metadata,
   normal-save commit hooks, ownership/privacy and waiting before game startup.
-- German source audit: 1,121 reviewed strings in 27 views, none missing. Other
+- German source audit: 1,081 reviewed strings in 27 views, none missing. Other
   languages retain the existing translation/fallback mechanisms.
 - Nine real local HTTPS scenarios against the existing Laravel server use
   isolated SQLite storage, accounts and two separate sessions/profiles for one
@@ -77,8 +77,10 @@ device switch, wait for the cloud acknowledgement.
   automatic real-HTTPS retry, second-device restore, foreign-account isolation
   and a revoked token. The headless queue scheduler is a fixture; HTTP, TLS,
   Laravel, authentication and object persistence are real.
-- Native macOS checks exercise the actual UI/Task/HTTP worker and the anonymous
-  public account-policy endpoint. They do not upload real player data.
+- Earlier native macOS checks exercise the preceding UI/Task/HTTP implementation
+  and the anonymous public account-policy endpoint. They do not qualify the
+  final Windows executable. Its build/runtime evidence is recorded separately
+  in docs/qa/windows-cloud-demo-20261030.md.
 - Windows/Linux/iOS/Android/NX/UWP HTTPS routing is covered by platform/API
   fixtures. This does not establish physical Windows, phone or console success,
   internet two-device gameplay, or exact modded battle continuation.

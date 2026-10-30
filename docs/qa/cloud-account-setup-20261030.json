@@ -2,15 +2,16 @@
   "schema": 1,
   "author": "Roxas2712",
   "date": "2026-10-30",
-  "launcherSuites": 99,
-  "syntaxChecks": 120,
-  "reviewedGermanStrings": 1121,
+  "launcherSuites": 91,
+  "syntaxChecks": 102,
+  "reviewedGermanStrings": 1081,
   "httpsChecks": 9,
-  "nativeMacChecks": 4,
+  "nativeMacChecks": 0,
   "nativeNetworkScope": "real anonymous policy request; no real player upload",
   "headlessQueueScheduler": "fixture; actual HTTPS Laravel server and persistence",
   "windows": "platform/native-API fixtures; no physical Windows run",
   "productionQualified": false,
   "serverMigrationRequired": false,
-  "automaticUploadScope": "normal progress; explicit exact snapshots and private import uploads retain separate controls"
+  "automaticUploadScope": "normal progress; explicit exact snapshots and private import uploads retain separate controls",
+  "scope": "Public Windows port; predecessor native Mac evidence is separate"
 }

@@ -1,5 +1,8 @@
 # Cloud save feedback and safe re-import — 30 October 2026
 
+This original implementation report predates the public Windows port. See
+`windows-cloud-demo-20261030.md` for the current package and its test scope.
+
 Integration and qualification: Roxas2712. Existing engine and contributor rights
 remain unchanged. No ROM, player save, credential or imported artwork is committed.
 
