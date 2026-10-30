@@ -5,6 +5,11 @@ end
 local Fetch, Net, base
 local fileSubmitted,fileCompleted,fileDestinations={},{},{}
 local checks, pulses, maxPollWall = 0, 0, 0
+local phase='startup'
+local function mark(value)
+  phase=value
+  io.stderr:write('HTTP QA: '..value..'\n');io.stderr:flush()
+end
 local function check(ok, message)
   checks = checks + 1
   assert(ok, message)
@@ -74,6 +79,7 @@ end
 function love.run()
   local ok, err = xpcall(function()
     love.load()
+    mark('worker startup')
     local loader = {}
     local function mod(id, network) return Net.forMod(loader, {manifest={id=id, permissionSet={network=network}}}) end
     local a, b, denied = mod('a', true), mod('b', true), mod('denied', false)
@@ -86,6 +92,7 @@ function love.run()
       logs:release(h);Net.unloadAll();Fetch.shutdown();return
     end
     if base:sub(1,8)=='https://' then
+      mark('TLS log requests')
       local function reporter(id,path)
         local record={manifest={id=id,permissionSet={network=true},log_url=base..path}}
         return Net.forMod(loader,record),Net.logReporter(loader,record)
@@ -111,6 +118,7 @@ function love.run()
     check(a:get('file:///etc/hosts') == nil, 'non HTTP URL denied')
     check(a:get(base:gsub('^https:','http:')..'/binary', {boundedHttpsGet=1}) == nil, 'bounded HTTPS rejects HTTP')
     local started = love.timer.getTime()
+    mark('GET bounds, cancellation and deadlines')
     local slow = assert(a:get(base..'/slow', {maxSeconds=3}))
     check(love.timer.getTime()-started < .1, 'GET starts without waiting for server')
     check(b:poll(slow).status == 'error', 'handles isolated between mods')
@@ -139,7 +147,9 @@ function love.run()
     check(a:get(base..'/slow')==nil,'per-mod pending ceiling')
     Net.releaseAll(loader,'a')
     check(a:poll(held[1]).status=='error','unload invalidates handles')
+    mark('GET worker shutdown')
     Net.unloadAll();Fetch.shutdown()
+    mark('GET worker restart')
     check(Fetch.available(),'worker service can restart')
     local restart=assert(b:get(base..'/binary'));state=await(b,restart)
     check(state.status=='ok','GET after shutdown works');b:release(restart)
@@ -166,6 +176,7 @@ function love.run()
       check(love.filesystem.read(target) == 'previous complete file', label)
     end
     oldFile()
+    mark('streaming file publication')
     started = love.timer.getTime()
     local fileJob = assert(Fetch.download(base..'/stream', target, {size=262144}))
     -- Cold thread startup depends on the host scheduler. Prove nonblocking
@@ -209,6 +220,7 @@ function love.run()
     check(observedProgress, 'progress available before transfer finishes')
     check(love.filesystem.read(target) == pattern:rep(1024), 'streaming preserves all binary bytes')
     Fetch.release(fileJob)
+    mark('file bounds and cancellation')
     for _, case in ipairs({
       {'/missing', {size=14}, 'HTTP failure'},
       {'/partial', {}, 'truncated response'},
@@ -236,11 +248,13 @@ function love.run()
     check(state.status=='ok' and love.filesystem.getInfo('downloads/empty.bin').size==0,'zero-byte HTTP success')
     Fetch.release(empty)
     local large=assert(Fetch.download(base..'/large','downloads/large.bin',{size=17*1024*1024,maxBytes=20*1024*1024}))
+    mark('large binary file')
     state=await(fileApi,large)
     check(state.status=='ok' and state.receivedBytes==17*1024*1024,'file can exceed in-memory GET ceiling')
     check(love.filesystem.read('downloads/large.bin')==pattern:rep(69632),'large file bytes exact')
     Fetch.release(large)
     local delayedPath='downloads/delay-publish.bin'
+    mark('claimed file publication')
     assert(love.filesystem.write(delayedPath,'previous complete file'))
     local finishing=assert(Fetch.download(base..'/binary',delayedPath,{size=14}))
     local observedPublication=false
@@ -266,6 +280,7 @@ function love.run()
     check(state.status=='error' and love.filesystem.getInfo('downloads').type=='directory','publish error preserves existing directory')
     Fetch.release(invalidTarget)
     awaitFileRetirement(fileSubmitted)
+    mark('cancelled worker credits')
     -- Hold one real cancelled worker, fill seven remaining credits, then
     -- verify exactly one credit returns on its actual response acknowledgement.
     local retiring=assert(Fetch.download(base..'/slow','downloads/retiring.bin'))
@@ -295,7 +310,9 @@ function love.run()
     check(Fetch.download(base..'/slow','downloads/overflow')==nil,'release cannot bypass occupied file workers')
     love.thread.getChannel("download-qa-start"):push(true)
   love.thread.getChannel("download-qa-hold"):push(true)
+    mark('file worker shutdown')
     Fetch.shutdown()
+    mark('shutdown staging verification')
     for _, child in ipairs(love.filesystem.getDirectoryItems('net-download')) do
       check(#love.filesystem.getDirectoryItems('net-download/'..child)==0,'shutdown cleans file worker staging data')
     end
@@ -305,6 +322,7 @@ function love.run()
   love.thread.getChannel("download-qa-start"):push(true)
   love.thread.getChannel("download-qa-hold"):push(true)
   love.thread.getChannel("download-qa-retire-release"):push(true)
-  if not ok then io.stderr:write(tostring(err).."\n");io.stderr:flush(); if Fetch then Fetch.shutdown() end end
+  love.thread.getChannel("download-qa-publish-release"):push(true)
+  if not ok then io.stderr:write('HTTP QA phase: '..phase..'\n'..tostring(err).."\n");io.stderr:flush(); if Fetch then Fetch.shutdown() end end
   return function() return ok and 0 or 1 end
 end
