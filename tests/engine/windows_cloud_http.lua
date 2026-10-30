@@ -7,6 +7,12 @@ package.loaded.https={request=function(url,opts)calls=calls+1;last=opts;return c
 require('src.core.HostShell').popen=function()error('Windows native HTTPS must not spawn cmd.exe')end
 local H=require('src.cloud.Http')
 check(H.available(),'Windows native transport is available without curl')
+local platforms={'Linux','OS X','iOS','Android','NX','UWP'}
+for _,platform in ipairs(platforms)do
+ love.system.getOS=function()return platform end
+ check(H.available()and H.request('GET','https://example.invalid/policy',{sensitive=true})==200,'bundled HTTPS works without shell tools on '..platform)
+end
+love.system.getOS=function()return'Windows'end;calls=0
 local payload=[[Ünicode save bytes % ! \ paths]]
 local c=H.request('PUT','https://example.invalid/save',{sensitive=true,body=payload,headers={Authorization='Bearer fixture'}})
 check(c==200 and last.data==payload and last.headers.Authorization=='Bearer fixture','native transport preserves body and authentication without shell encoding')

@@ -696,6 +696,9 @@ function love.update(dt)
   -- The report deliberately runs nothing else: the boot path it is reporting on
   -- is the code that just died.
   if bootReport then return end
+  require('src.storage.CloudOutbox').tick(editorMode or TouchEditor or autopilot or driverCo
+    or Importer and (Importer._storageTask or Importer._profileApplying or Importer.workState=='working' or Importer._cloudRestoreOnce)
+    or RetroOverlay.job or Game and (Game.linkSession or Game.retroArena))
   require('src.cloud.Presence').tick()
   require('src.cloud.AccountBadge').tick()
   if not autopilot and not driverCo and not editorMode and not TouchEditor then

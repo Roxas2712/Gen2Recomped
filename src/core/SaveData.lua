@@ -1816,6 +1816,8 @@ function SaveData.commitSave(fs, main, bak, encoded, live, reencode)
     local sync=package.loaded['src.storage.SyncStatus']
     local version,slot=main:match('^saves/([%w_]+)/([%w_]+)%.lua$')
     if sync and sync.changed and version and prevBytes~=encoded then sync.changed(version,slot) end
+    local outbox=package.loaded['src.storage.CloudOutbox']
+    if outbox and version and prevBytes~=encoded then pcall(outbox.changed,version,slot) end
     if type(live) == "table" then loadedWalkerKeys[main] = SaveSafety.walkerKeys(live) end
   end
   return ok, err
@@ -1830,6 +1832,8 @@ function SaveData.save(data, mods)
   end
   -- write to the file matching this save's own version, not just the active
   -- one, so Blue/Yellow playthroughs land in save_blue.lua / save_yellow.lua
+  local outbox=package.loaded['src.storage.CloudOutbox']
+  if outbox and outbox.ensureSlot then pcall(outbox.ensureSlot,data.version or GameVersion.get())end
   local FILENAME, BACKUP_FILENAME = saveNames(data.version)
   local identity = require("src.core.PlaythroughIdentity")
   local fs = persistFs(nil)

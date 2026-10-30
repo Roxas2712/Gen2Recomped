@@ -8,7 +8,8 @@
 -- OneDrive): request(method, url, { headers = {...}, body = "..." }) returns
 -- status, body (or nil, why).
 --
---   desktop  curl (HostShell's transport): the body goes through a temp file
+--   desktop  bundled HTTPS when available; curl on older runtimes.
+--            Legacy provider bodies go through a temp file
 --            (--data-binary @file), the response into another, the status
 --            from -w -- so nothing is ever put on a command line but names.
 --   Android  love.system.httpRequest(json) -> GameActivity.httpRequest, which
@@ -128,12 +129,9 @@ local function viaLuaHttps(method, url, opts)
   return code, body or ""
 end
 
-local function isIOS() return love and love.system and love.system.getOS and love.system.getOS() == "iOS" end
-
-local function isWindows() return love and love.system and love.system.getOS and love.system.getOS()=='Windows' end
 function H.available()
   if love and love.system and type(love.system.httpRequest) == "function" then return true end
-  if (isIOS() or isWindows()) and luaHttps() then return true end
+  if luaHttps() then return true end
   local ok, HostShell = pcall(require, "src.core.HostShell")
   return ok and HostShell.haveCurl and HostShell.haveCurl() or false
 end
@@ -153,8 +151,8 @@ function H.request(method, url, opts)
   if love and love.system and type(love.system.httpRequest) == "function" then
     return viaBridge(method, url, opts)
   end
-  -- Windows native HTTPS avoids cmd.exe quoting and CRT/Unicode temp paths.
-  if (isIOS() or isWindows()) and luaHttps() then return viaLuaHttps(method, url, opts) end
+  -- Packaged HTTPS works without provider SDKs, shell tools or temp paths.
+  if luaHttps() then return viaLuaHttps(method, url, opts) end
   local status, body
   if opts.sensitive then status,body=viaPrivateCurl(method,url,opts)
   else status,body=viaCurl(method,url,opts) end

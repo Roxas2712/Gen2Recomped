@@ -20,8 +20,11 @@ local saves={persistenceFs=function()return fs end,readSlotBytes=function()retur
  peekSlot=function()return S.decode(fs.read(name)or'')end,createSlot=function()return 'slot1'end,
  renameSlot=function()return true end,writeSlot=function(_,_,save)return fs.write(name,S.encode(save))end}
 package.loaded['src.core.SaveData']=saves
+local options={cloudAutoSync=true,cloudService='retro'}
+saves.loadOptions=function()return options end
 local R=require('src.cloud.RetroCloud');R.API=c.url
 R.accessToken=function()return c.token end;R.accountId=function()return c.account end;R.account=function()return c.account..'@example.invalid'end
+R.signedIn=function()return true end;R.registrationStatus=function()return'approved'end
 local C=require('src.import.CloudSync');local Sync=require('src.storage.SyncStatus')
 local store,problem=R.open()
 if c.mode=='revoked' then
@@ -31,7 +34,28 @@ assert(store,problem)
 if c.mode=='foreign' then
  assert(#store.list('saves/red')==0,'foreign account can see another account save');print('Cloud HTTPS foreign-account check passed');return
 end
-if c.mode=='upload' or c.mode=='partial' then
+if c.mode=='auto-offline' or c.mode=='auto-retry'then
+ -- The queue schedules actual HTTPS requests, using a headless task runner.
+ -- This does not qualify native LOVE workers or a Windows OS.
+ package.loaded['src.core.GameVersion']={ORDER={'red'},info=function(v)return v=='red'and{}end}
+ package.loaded['src.cloud.Task']={new=function(fn)return{cancel=function()end,poll=function()local a,b=fn();return{kind='done',first=a,second=b}end}end}
+ local now=0;love.timer.getTime=function()return now end
+ local O=require('src.storage.CloudOutbox')
+ if c.mode=='auto-offline'then
+  assert(fs.write(name,S.encode({player={name='Automatic'},playTime=240})))
+  assert(O.changed('red','slot1'))
+  local H=require('src.cloud.Http');local request=H.request
+  H.request=function()return nil,'Offline fixture'end
+  now=2;O.tick();now=4;O.tick();H.request=request
+  local pending=S.decode(assert(fs.read(O.FILE))).pending['red/slot1']
+  assert(pending and pending.attempts==1 and Sync.get('red','slot1').state=='error')
+ else
+  assert(S.decode(assert(fs.read(O.FILE))).pending['red/slot1'],'pending journal lost across client restart')
+  O.retry();now=2;O.tick();now=4;O.tick()
+  assert(not S.decode(assert(fs.read(O.FILE))).pending['red/slot1'],'automatic retry did not acknowledge the real HTTPS upload')
+  assert(Sync.get('red','slot1').state=='available')
+ end
+elseif c.mode=='upload' or c.mode=='partial' then
  local save={player={name=c.mode=='partial'and'Updated'or'HTTPS'},meta={playthroughId='https-fixture'},playTime=c.mode=='partial'and 180 or 120}
  assert(fs.write(name,S.encode(save)))
  if c.mode=='partial' then package.loaded['src.storage.SuspendStore']={sync=function()error('Injected exact-transfer failure')end}end

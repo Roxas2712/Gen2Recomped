@@ -59,7 +59,8 @@ end
 function W.open(self,after)
   if self._developerOverlay then require('src.import.DeveloperWorkspace').close(self) end
   local choice=type(after)=='table' and after.storagePrompt and not (Auth.accountId and Auth.accountId())
-  self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
+  self._accountOverlay={mode=choice and 'storage_choice' or Auth.signedIn() and 'account' or 'login',after=after,email='',name='',password='',confirmation='',code='',repositories={''},restore=true,
+    cloudSync=require('src.storage.CloudSetup').defaultEnabled(self:_settings()),rects={},scroll=0,accountAtOpen=Auth.accountId and Auth.accountId()}
   if choice then return end
   local cached,image=require('src.cloud.AccountBadge').read()
   if cached then local f=self._accountOverlay;f.nickname=cached.name;f.friendTag=cached.friend_tag;f.displayRole=cached.display_role;f.avatarPreset=cached.avatar_preset;f.avatarColor=cached.avatar_color;f.avatarImage=image end
@@ -69,18 +70,19 @@ function W.close(self)
   local f=self._accountOverlay;if f then require('src.ui.FriendChat').clear(f);if f.job then f.job:cancel() end;clearSecrets(f);f.challenge=nil;inputMode(f,nil) end
   self._accountOverlay=nil
 end
-local function connected(self,f)
+local function connected(self,f,choice)
+  if Auth.registrationStatus and Auth.registrationStatus()~='approved' then f.mode='account';f.notice='Your email is confirmed. Your account is waiting for staff approval.';job(self,'devices',devices);return end
   if Auth.accountId and Auth.accountId()~=f.accountAtOpen then require('src.storage.AccountStorage').profileChanged(self) end
-  -- Restore is offered explicitly; uploads need their separate opt-in.
-  local settings=self:_settings();settings.cloudAutoSync=f.cloudSync==true
-  settings.cartridgeCloudSync=f.cloudSync==true
-  settings.gameCacheDownload=f.restore~=false
-  self._cloudRestoreOnce=f.restore~=false
-  settings.launcherSaveStorageChoice=f.cloudSync and 'cloud' or 'local'
-  if self._saveSettings then self:_saveSettings() end
-  self._settingsRowCache=nil
+  local ready,why=require('src.storage.CloudSetup').prepare(self,f,choice)
+  if ready=='review'then f.mode='cloud_setup';f.profileSources=why;f.notice=nil;f.scroll=0;return end
+  if not ready then f.mode='accountSettings';f.notice=why;return end
   local after=f.after;W.close(self)
-  if after=='developer' then self:_openDeveloper()
+  if type(after)=='table'and after.kind=='play'and self._cloudRestoreOnce and self._storageSync then
+    self._storageResumeAfter=after;self._cloudRestoreOnce=nil
+    self:_storageSync(nil,nil,nil,'restore');return
+  end
+  if after=='walker' then self:_sbGo('walker')
+  elseif after=='developer' then self:_openDeveloper()
   elseif after=='browse' then self.findLoaded=false;self:_refreshFind(true)
   elseif after=='bank' or after=='bankDex' or after=='history' or type(after)=='table' and after.kind=='play' then require('src.storage.AccountStorage').resume(self,after)
   else W.open(self) end
@@ -101,7 +103,11 @@ function W.action(self,id)
   if id=='back' and f.document then f.document=nil;f.scroll=0;return end
   if require('src.ui.FriendChat').action(f,id)then f.mode=f.chat and'friendChat'or'friends';f.scroll=0;return end
   if f.chat then require('src.ui.FriendChat').clear(f)end
-  if f.job then return end
+  if f.job then if id=='enableCloud'then f.enableCloudAfterLoad=true end;return end
+  if id=='enableCloud' then f.cloudSync=true;f.restore=true;connected(self,f);return end
+  if f.mode=='cloud_setup'and(id=='cloudSeparate'or id=='cloudLocal'or id=='cloudGuest')then
+    connected(self,f,id=='cloudSeparate'and'separate'or id=='cloudGuest'and'guest'or'local');return
+  end
   if id:match('^field:') then inputMode(f,id:sub(7));return end
   inputMode(f,nil)
   if f.mode=='giftAdmin' and require('src.import.GiftDesigner').action(f,id) then f.scroll=0;return end
@@ -282,6 +288,7 @@ function W.tick(self)
     f.devices=doc.devices;f.nickname=doc.name;f.permissions=doc.permissions;f.notice=doc.profileError
     if doc.profile then profile(self,doc.profile) end
     if doc.social then f.social=doc.social;require('src.cloud.Presence').accept(doc.social) end
+    if f.enableCloudAfterLoad then f.enableCloudAfterLoad=nil;W.action(self,'enableCloud');return end
     if f.afterView then local view=f.afterView;f.afterView=nil;W.action(self,view);return end
     if f.after=='giftAdmin' then f.after=nil;W.action(self,'newGift');return end
     local storage=require('src.storage.AccountStorage')
@@ -351,7 +358,7 @@ function W.draw(self)
     local r=self:_chipButton(x+24*s,top,'',{w=width-48*s,h=h,kind='accent'});r.id=id;f.rects[#f.rects+1]=r
     text(label,x+36*s,top+10*s,width-72*s);top=top+h+12*s
   end
-  local function check(label,key) row((f[key] and '[x] ' or '[ ] ')..label,'toggle:'..key) end
+  local function check(label,key) row((f[key] and '[x] ' or '[ ] ')..L(label),'toggle:'..key) end
   local function field(label,key,secret)
     paragraph(label)
     local value=key:match('^repo(%d+)$') and f.repositories[tonumber(key:sub(5))] or f[key] or ''
@@ -599,11 +606,20 @@ function W.draw(self)
       if f.profile.avatar_pending then paragraph('Your image is already available on your own devices. Public display follows the ModCompass image review.') end
     end
     row('BACK TO MY PROFILE','account')
+  elseif f.mode=='cloud_setup'then
+    paragraph('Your saves. Your account.',true)
+    paragraph('Local progress was found on this device. Choose whether it belongs to this account. Nothing is deleted or moved.')
+    for _,source in ipairs(f.profileSources or{})do
+      row(source=='guest'and'USE MY GUEST PROGRESS'or'USE MY LOCAL PROGRESS',source=='guest'and'cloudGuest'or'cloudLocal')
+    end
+    row('START WITH MY CLOUD SAVES IN A SEPARATE PROFILE','cloudSeparate')
+    paragraph('Your imported games remain installed. Separate profiles keep their own progress and mod settings.')
   elseif f.mode=='accountSettings' then
     paragraph(L('ACCOUNT PROFILE')..' · '..tostring(Auth.accountId and Auth.accountId() or L('Updating identity')))
     paragraph('Saves, Bank and mod choices are kept separately for each account.')
     paragraph('The same account connects your mods, developer projects, custom cartridge artwork and optional cloud storage.')
     row('CONTINUE ON ANOTHER DEVICE · HOW IT WORKS','transferGuide')
+    row('SET UP AUTOMATIC ACCOUNT CLOUD','enableCloud')
     row('SYNC MY SAVES & CUSTOM CARTRIDGES','sync')
     local storage=require('src.storage.AccountStorage');local permitted,why=storage.check()
     if storage.enabled and not permitted then
@@ -642,14 +658,13 @@ function W.draw(self)
       end
       row('READ TERMS OF USE','read:terms');check('I accept the terms of use','terms')
       row('READ PRIVACY NOTICE','read:privacy');check('I have read the privacy notice','privacy')
-      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
-      paragraph('Cloud sync includes your cartridge designs and their images. Mod profile downloads are separate settings. ROMs and imported game caches are not uploaded.')
+      check('Automatically sync my saves with my ModCompass account (recommended)','cloudSync')
+      paragraph('Normal saves sync with your account. Cartridge designs, mod downloads and imported game uploads have separate settings.')
       row('CREATE ACCOUNT · SEND EMAIL CODE','submit');row('ALREADY REGISTERED? SIGN IN','login')
     elseif f.mode=='login' then
       paragraph('WELCOME BACK',true);field('Email','email');field('Password','password',true)
-      check('Enable automatic save & cartridge sync on this device (optional)','cloudSync')
-      check('Download my cloud saves and private imported games on this device','restore')
-      paragraph('Private game downloads avoid importing again. Uploading imported game data is a separate opt-in under Cloud settings. Automatic save sync also includes Bank and cartridge designs.')
+      check('Automatically sync my saves with my ModCompass account (recommended)','cloudSync')
+      paragraph('Sign in once. Normal saves upload automatically and cloud progress is restored on your other devices. No provider keys or sync folders are needed. Uploading imported game data stays a separate choice.')
       row('SIGN IN & LINK THIS DEVICE','submit');row('CREATE AN ACCOUNT','register');row('FORGOT PASSWORD','forgot')
     elseif f.mode=='forgot' then paragraph('RECOVER YOUR ACCOUNT',true);field('Email','email');row('SEND RECOVERY CODE','submit');row('BACK TO SIGN IN','back')
     else

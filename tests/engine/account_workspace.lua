@@ -31,9 +31,9 @@ f.name='Fixture';f.email='fixture@example.test';f.password='fixture-password';f.
 f.terms=true;f.privacy=true;f.developer=true;f.rights=true;f.repositories={'author/first','author/second'}
 W.action(UI,'submit');check(f.password=='' and f.confirmation=='','submitted passwords are cleared from the form immediately')
 W.tick(UI);check(f.mode=='email_code' and sent.repositories[2]=='author/second','all supplied projects accompany the email-code registration')
-check(not UI.settings,'registration does not upload saves before verification')
+check(not UI.settings.cloudAutoSync,'registration does not enable upload before verification')
 f.code='12345678';W.action(UI,'submit');W.tick(UI)
-check(not UI._accountOverlay and UI.refreshed and UI.settings.cloudAutoSync==false,'email confirmation links this device and returns to browsing with sync explicitly off')
+check(not UI._accountOverlay and UI.refreshed and UI.settings.cloudAutoSync==true,'email confirmation links this device and returns to browsing with automatic account sync')
 signed=false;W.open(UI);W.tick(UI);f=UI._accountOverlay
 W.action(UI,'field:name');UI:textinput('Jörg');UI:keypressed('backspace');check(f.name=='Jör','backspace preserves valid UTF-8 nickname characters')
 W.action(UI,'register');f.developer=true;for i=2,45 do W.action(UI,'addRepo') end
@@ -109,4 +109,11 @@ for _,mode in ipairs({'friends','inbox'})do
 end
 W.action(UI,pinId);check(pinAction==pinId,'account actions route Pinball to its adapter')
 UI._pinFriends=nil;W.close(UI)
+W.open(UI);f=UI._accountOverlay;if f.job then f.job:cancel();f.job=nil end
+f.mode='login';f.cloudSync=true
+local T=require('src.translation.Service');T.setLauncher({launcherLanguage='de'})
+local printed={};local printf=love.graphics.printf;love.graphics.printf=function(value)printed[#printed+1]=tostring(value)end
+W.draw(UI);love.graphics.printf=printf
+check(table.concat(printed,'\n'):find('[x] Meine Spielstände automatisch',1,true),'the real checked cloud label is translated before its checkbox marker is added')
+T.setLauncher({launcherLanguage='en'});W.close(UI)
 print('Account workspace: '..n..' checks passed')

@@ -48,6 +48,7 @@ end
 function R.signedIn() local value=load();return value~=nil and value.access~=nil and not value.revoked and not revoked[value.access] end
 function R.account() local value=load();return value and value.email end
 function R.accountId() local value=load();return value and value.accountId end
+function R.profileScope()return 'retro:'..tostring(R.account()or ''):lower()end
 function R.nickname() local value=load();return value and (value.name or value.email) end
 function R.acceptAccount(doc)
   local value=load()
@@ -131,7 +132,7 @@ function R.open()
   for _,object in ipairs(doc.objects) do
     if type(object.path)=='string' and type(object.revision)=='string' then revisions[object.path]=object.revision end
   end
-  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope='retro:'..tostring(email or ''):lower(),storage=doc.storage}
+  local store={kind='retro',label='RetroRecomped Cloud',accountId=accountId,profileScope=R.profileScope(),storage=doc.storage}
   function store.has(path) return revisions[path]~=nil end
   function store.list(directory)
     local prefix=directory..'/'

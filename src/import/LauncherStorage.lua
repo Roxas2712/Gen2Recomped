@@ -18,6 +18,8 @@ function Storage.install(RI)
     local ready={};for v,on in pairs(self.ready) do ready[v]=on end
     require('src.import.LauncherBackdrop').stop()
     local task,why=Task.new(function()
+      local outbox=package.loaded['src.storage.CloudOutbox']
+      while outbox and outbox.job do Task.yield()end
       local target,err=self:_sbCloudTarget()
       if not target then return nil,err end
       if cartChoice then
@@ -102,9 +104,12 @@ function Storage.install(RI)
     end
     add({kind='section',label='YOUR STORAGE',cloud=true,note='Saves, Bank and designs use progress storage. Private imported games have a separate account quota and remain available locally after app updates.'})
     add({kind='option',scope='launcher',label='AUTOMATIC SAVE SYNC',
-      note='Sync while the launcher is open. Local play remains available offline.',
+      note='New normal saves upload automatically, including during play. Offline saves retry when connected. Exact resume has its own save action.',
       row={id='cloudAutoSync',values={true,false},labels={[true]='ON',[false]='OFF'}}})
     add({kind='action',label='MODCOMPASS ACCOUNT & DEVICES',value='OPEN',action='retroCloudAccount'})
+    if self:_settings().cloudAutoSync~=true or not require('src.storage.AccountStorage').check()then
+      add({kind='action',label='SET UP AUTOMATIC ACCOUNT CLOUD',value='ENABLE',action='cloudSetup'})
+    end
     add({kind='section',label='PRIVATE IMPORTED GAMES',cloud=true,note='Optional private copies of data you imported yourself, shared only with your own account devices. Saves keep their own quota. Existing imports are preserved when a cloud copy is activated.'})
     add({kind='option',scope='launcher',label='UPLOAD MY IMPORTED GAMES TO MY PRIVATE CACHE',note='Uploads game content to your private account storage. No sharing between accounts.',row={id='gameCacheUpload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
     add({kind='option',scope='launcher',label='DOWNLOAD MY PRIVATE GAMES ON THIS DEVICE',note='Restore matching game/import revisions after signing in.',row={id='gameCacheDownload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
@@ -131,6 +136,10 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
+    if entry and entry.action=='cloudAdvanced' then self._cloudAdvanced=not self._cloudAdvanced;self._settingsRowCache=nil;return end
+    if entry and entry.action=='cloudSetup' then
+      self:_openAccount();return require('src.import.AccountWorkspace').action(self,'enableCloud')
+    end
     if entry and entry.action=='storageRetry' then
       local status=Sync.get()
       local r=self._storageRetry or {version=status and status.edition,slot=status and status.slot}
@@ -143,6 +152,7 @@ function Storage.install(RI)
     end
     if entry and entry.action=='retroCloudAccount' then self:_openAccount();return end
     if entry and entry.action=='retroCloudCancel' then
+      self._storageResumeAfter=nil
       if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
       if self._storageProgress then Sync.result({sync=self._storageProgress.sync,warnings={'Extra transfer cancelled. Local saves are preserved.'}})
       else Sync.set('cancelled') end
@@ -156,6 +166,11 @@ function Storage.install(RI)
     local result=set(self,entry,value,...)
     local id=entry and entry.row and entry.row.id
     if id=='modProfileAutoDownload' and value then self:_settings().modProfileSync=true end
+    if id=='cloudAutoSync' then
+      self:_settings().cloudSetupVersion=require('src.storage.CloudSetup').VERSION
+      self:_saveSettings();self._storageNext=0
+      if value then require('src.storage.CloudOutbox').retry()else require('src.storage.CloudOutbox').cancel()end
+    end
     if id=='modProfileSync' and not value then self:_settings().modProfileAutoDownload=false end
     if id=='modProfileSync' or id=='modProfileAutoDownload' then self._storageNext=0;self._settingsRowCache=nil end
     if id=='gameCacheUpload' or id=='gameCacheDownload' then self._storageNext=0;self._settingsRowCache=nil end
@@ -163,6 +178,7 @@ function Storage.install(RI)
   end
   local play=RI.play
   RI.play=function(self,...)
+    self._storageResumeAfter=nil
     -- A discarded launcher cannot continue a coroutine into a running game.
     if self._storageTask then
       self._storageTask:cancel();self._storageTask=nil
@@ -198,6 +214,10 @@ function Storage.install(RI)
           end
           for _,v in ipairs(self._storageVersions or {}) do pcall(self._refreshSlots,self,v) end
           GameCache.refresh();self:_recheckReady()
+          if self._storageResumeAfter then
+            local after=self._storageResumeAfter;self._storageResumeAfter=nil
+            if status.state=='available'then require('src.storage.AccountStorage').resume(self,after)end
+          end
         end
       elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay
         and (not self._accountOverlay or self._cloudRestoreOnce and self._accountOverlay.mode=='account' and not self._accountOverlay.job and require('src.storage.AccountStorage').check())
@@ -207,7 +227,7 @@ function Storage.install(RI)
         local service=self:_sbCloudService()
         local definitions=require('src.import.LauncherSidebar').CLOUD_SERVICES
         local definition=definitions[service]
-        if definition and require(definition.auth).signedIn() then
+        if definition and require(definition.auth).signedIn() and require('src.storage.AccountStorage').check() then
           local mode=self._cloudRestoreOnce and 'restore' or self:_settings().cloudAutoSync==false and 'games' or nil
           self._cloudRestoreOnce=nil;self:_storageSync(nil,nil,nil,mode)
         end

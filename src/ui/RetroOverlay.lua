@@ -54,6 +54,8 @@ local function transfer(version,slot,exact)
   O.cloudProgress=nil
   local auth=require('src.cloud.RetroCloud');O.cloudScope=auth.accountId and auth.accountId()
   O.job,why=Task.new(function()
+    local outbox=package.loaded['src.storage.CloudOutbox']
+    while outbox and outbox.job do Task.yield()end
     local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
     return require('src.import.CloudSync').syncOne(store,version,slot,true,function(normal)O.cloudProgress=normal end,not exact)
   end)

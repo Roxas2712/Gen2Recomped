@@ -54,7 +54,8 @@ def main():
   profiles=[]
   for n in ['device-a','device-b','foreign','revoked']:
    path=out/n;qa.qa_source(path);qa.qa_profile(path);(path/'saves/red').mkdir(parents=True);profiles.append(path)
-  cases=[('upload',0,0,None),('restore',2,1,'HTTPS'),('partial',0,0,None),('restore',2,1,'Updated'),('foreign',1,2,None),('revoked',2,3,None)]
+  cases=[('upload',0,0,None),('restore',2,1,'HTTPS'),('partial',0,0,None),('restore',2,1,'Updated'),
+   ('auto-offline',0,0,None),('auto-retry',0,0,None),('restore',2,1,'Automatic'),('foreign',1,2,None),('revoked',2,3,None)]
   for index,(mode,who,profile,expected)in enumerate(cases):
    config=out/('case-'+str(index)+'.json');config.write_text(json.dumps(accounts[who]|{'token':('0'*64 if mode=='revoked'else accounts[who]['token']),'mode':mode,'expected':expected,'profile':str(profiles[profile]),'url':url}));config.chmod(0o600)
    with(out/('case-'+str(index)+'.log')).open('w')as stream:qa.qa_run([os.sys.executable,str(ROOT/'tools/run_lua_check.py'),str(ROOT/'tests/engine/cloud_http_client.lua')],cwd=ROOT,env=env|{'CLOUD_SAVE_QA_CONFIG':str(config)},stdout=stream,stderr=stream,check=True,timeout=90)

@@ -25,14 +25,20 @@ local R={ready={red=false},_settings=function()return options end,_sbCloudRows=n
  _sbCloudTarget=function()return{kind='retro',accountId='17'}end}
 require('src.import.LauncherStorage').install(R)
 local Sync=require('src.storage.SyncStatus')
+local resumed
+package.loaded['src.storage.AccountStorage'].resume=function(_,after)resumed=after.version end
+R._storageResumeAfter={kind='play',version='red'}
 R:_storageSync(nil,nil,nil,'restore');R:update(0)
+assert(resumed=='red'and not R._storageResumeAfter,'post-login play waits for a completed restore')
 assert(cacheOptions.gameCacheDownload==true and cacheOptions.gameCacheUpload==false,
  'an explicit restore downloads games despite disabled automatic downloads and never enables upload')
 assert(bankPull==true and cartChoice=='download','restore includes the account Bank and designs without publishing local changes')
 assert(Sync.get().state=='available','a complete account restore is available')
 assert(walkerPull==true,'explicit account restore includes its read-only Walker restore')
 warning='A private game import needs updating'
+resumed=nil;R._storageResumeAfter={kind='play',version='red'}
 R:_storageSync(nil,nil,nil,'restore');R:update(0)
+assert(not resumed and not R._storageResumeAfter,'a failed or partial restore never silently starts stale progress')
 assert(Sync.get().state=='partial' and Sync.get().detail:find(warning,1,true),
  'the real launcher callback must retain a private cache failure after the normal save restore succeeds')
 assert(R.settingsNotice:find(warning,1,true),'the detailed failure remains visible for recovery')
@@ -53,4 +59,4 @@ R._storageTask={cancel=function()end};R._storageProgress=nil;R:play()
 assert(not R._storageTask and Sync.get().state=='cancelled','starting a game cannot leave an orphaned uploading badge')
 R._storageTask={cancel=function()end};R._storageProgress={sync='uploaded'};R:play()
 assert(Sync.get().state=='partial','starting a game preserves an already completed normal upload')
-print('Launcher account restore: 10 checks passed')
+print('Launcher account restore: 12 checks passed')
