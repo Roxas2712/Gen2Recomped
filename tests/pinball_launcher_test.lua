@@ -22,7 +22,7 @@ package.loaded['src.import.LauncherHardware']={appearance=noop,cartridge=noop}
 package.loaded['src.import.LauncherSequence']={new=function()return{}end}
 local backdropStops=0
 package.loaded['src.import.LauncherBackdrop']={setPaused=noop,stop=function()backdropStops=backdropStops+1 end}
-local Play={setExternalContext=noop,clearExternalContext=noop};package.loaded['src.cloud.Play']=Play
+local Play={setExternalContext=noop,clearExternalContext=noop,read=function()return{}end,refresh=noop};package.loaded['src.cloud.Play']=Play
 local RI={_ui={inside=function()return false end},new=function()return{}end,palette=function()return{link={},warning={}}end}
 for _,key in ipairs{'textinput','keypressed','keyreleased','mousepressed','gamepadpressed','draw','update','_sbGames','_sbOpenGame','_sbDrawContent','_sbOwns','_sbMousepressed','_sbBack','_sbGo','_sbBackdropWant','play'}do RI[key]=noop end
 local animations=false;RI._settings=function()return{launcherAnimations=animations}end
@@ -87,4 +87,17 @@ local imported=0;ui._pinImport=function(_,path)imported=imported+1 end
 ui:_pinChooseImport();callback({});check(imported==0 and not ui._pinPicker,'picker cancellation does not start preparation')
 ui:_pinChooseImport();ui._pinOpen=false;callback({'/tmp/own-pinball.gba'});check(imported==0,'a late file selection cannot import after leaving Pinball')
 ui._pinOpen=true;ui:_pinChooseImport();callback({'/tmp/own-pinball.gba'});check(imported==1,'an active Pinball picker starts import')
+Translation.setLauncher({launcherLanguage='en'})
+love.data={hash=function(_,s)return s end,encode=function(_,_,s)return s end}
+local GBC=require('src.import.LauncherPinballGBC')
+local gbcSession={locale='en',edition='pinballgbc',guest='gbc',rom_sha1='gbc-rom',backend='gbc-build',content='USA',sram_size=8192}
+GBC.session=function(locale)if not locale or locale=='en'then return gbcSession end end
+ui._pinImport=RI._pinImport;ui._pinPlayer=nil;ui._launcherSequence=nil;animations=false
+ui:_sbOpenGame('pinballgbc');ui:_sbDrawContent(0,0,1000,700)
+check(ui.browseConsole=='gbc'and ui.tab=='pinballgbc','GBC opens in its own cartridge family')
+local gbcLabels={};for _,r in ipairs(ui._pinButtons)do gbcLabels[r.label]=true end
+check(gbcLabels['DUEL TABLE: RED']and not gbcLabels['DUEL TABLE: RUBY'],'GBC duel labels identify the original fields')
+check(gbcLabels['LOCAL · 2 PLAYERS']and gbcLabels['MODCOMPASS · WITH FRIENDS'],'GBC reuses local and friend duel actions')
+check(ui._pinFriends:context(true).edition=='pinballgbc','GBC presence never advertises the GBA edition')
+ui:_sbOpenGame('pinballrs');check(ui.browseConsole=='gba'and not ui.ready.pinballgbc==false,'switching cartridges keeps independent readiness')
 print(checks..' Pinball launcher lifecycle checks passed')

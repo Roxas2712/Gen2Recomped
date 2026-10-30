@@ -19,6 +19,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--love',type=Path,required=True)
+    parser.add_argument('--edition',choices=['pinballrs','pinballgbc'],default='pinballrs')
     parser.add_argument('--label',default='current')
     parser.add_argument('--seconds',type=int,default=40)
     parser.add_argument('--seats',type=int,choices=(1,2),default=1)
@@ -31,7 +32,7 @@ def main():
     if not re.fullmatch(r'[a-z0-9-]{1,40}',args.label)or not 10<=args.seconds<=600:
         parser.error('Use a lowercase label and 10–600 seconds.')
     executable=args.love.expanduser().resolve(strict=True)
-    work=ROOT/'.local/pinball-rs'
+    work=ROOT/('.local/pinball-gbc'if args.edition=='pinballgbc'else'.local/pinball-rs')
     manifest=json.loads((work/'library.json').read_text())
     if not manifest.get('ready'):parser.error('Prepare the private Pinball installation first.')
     installed=Path.home()/'.local/lib/origami-qa-storage/active-tools'
@@ -71,7 +72,7 @@ def main():
     (profile/'pinball-locale.txt').write_text(args.locale)
     report=cache/'report.json'
     env=dict(os.environ,POKEPORT_IDENTITY=identity,OA_QA_IDENTITY=identity,
-        ASCENDANT_PINBALL_ROOT=str(ROOT),ASCENDANT_PINBALL_START='1',ASCENDANT_PINBALL_SEATS=str(args.seats),
+        ASCENDANT_PINBALL_ROOT=str(ROOT),ASCENDANT_PINBALL_START='1'if args.edition=='pinballrs'else'',ASCENDANT_PINBALL_GBC_START='1'if args.edition=='pinballgbc'else'',ASCENDANT_PINBALL_SEATS=str(args.seats),
         PINBALL_FRAME_ALLOW_BACKGROUND='1'if args.allow_background else'0',PINBALL_FRAME_PAUSE_UNFOCUSED='1'if args.pause_unfocused else'0',PINBALL_FRAME_FIELD=str(args.field),PINBALL_FRAME_LOCALE=args.locale,PINBALL_FRAME_REPORT=str(report),PINBALL_FRAME_SECONDS=str(args.seconds),PINBALL_FRAME_PLAYER=str(player),
         PINBALL_FRAME_TABLE='1'if args.full_table else'0')
     started=time.time()

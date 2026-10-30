@@ -990,7 +990,7 @@ function Sidebar.install(RI)
   function RI:_sbToolUsable(tool, version)
     local info = GameVersion.info(version) or require("src.import.LauncherExternalGames").info(version)
     if not info then return false, "unknown game" end
-    if version == 'pinballrs' and not tool.noGame then
+    if (version == 'pinballrs'or version=='pinballgbc') and not tool.noGame then
       return false, 'Use the Pinball player menu for this cartridge.'
     end
     if tool.needsReady or tool.id == "translate" or tool.id == "saveExport" then

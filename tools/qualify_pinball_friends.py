@@ -15,6 +15,7 @@ ROOT=Path(__file__).resolve().parents[1]
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--lua',default='lua')
+    parser.add_argument('--edition',choices=['pinballrs','pinballgbc'],default='pinballrs')
     parser.add_argument('--love',type=Path,help='Use the actual LÖVE LuaJIT runtime, including launcher UI regression.')
     args=parser.parse_args()
     executable=str(args.love.expanduser().resolve(strict=True))if args.love else shutil.which(args.lua)
@@ -53,7 +54,7 @@ def main():
             command=[executable,str(host)]
         log=cache/(Path(suite).stem+'.log')
         with log.open('w')as output:
-            result=qa.qa_run(command,cwd=ROOT,stdout=output,stderr=output,timeout=60)
+            result=qa.qa_run(command,cwd=ROOT,env=dict(os.environ,PINBALL_TEST_EDITION=args.edition),stdout=output,stderr=output,timeout=60)
         print(log.read_text()[-5000:],flush=True)
         if result.returncode:return result.returncode
     return 0

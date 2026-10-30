@@ -23,7 +23,8 @@ function M.new(session,options)
  options=options or {};serial=serial+1
  local self={session=session,options=options,seats=options.seats==2 and 2 or 1,images={},stats={},notice=Strings("Loading Pinball …"),
   settings={filter='pixels',integer=false,audioSeat=1,full_table=false,opponentView=true},font=love.graphics.newFont(16),small=love.graphics.newFont(12)}
- local saved=love.filesystem.read('pinball-display.json')
+ local displayFile=session.guest=='gbc'and'pinball-gbc-display.json'or'pinball-display.json'
+ local saved=love.filesystem.read(displayFile)
  if saved then local ok,v=pcall(Json.decode,saved);if ok and type(v)=='table'then for _,k in ipairs{'filter','integer','audioSeat','full_table','opponentView'}do if v[k]~=nil then self.settings[k]=v[k]end end end end
  self.input=require('src.pinball.Input').new(self.seats,love.joystick.getJoysticks())
  self.channel='ascendant.pinball.'..serial..'.'..love.timer.getTime()
@@ -160,7 +161,7 @@ function M.new(session,options)
     g.setColor(.63,.71,.76);g.printf(self.viewFailed and Strings("Opponent view unavailable") or self.duel.viewEnabled and Strings("Preparing opponent view …") or Strings("This friend is using a version without live view."),x+16,h*.5,slot-32,'center')
    end
    if not preview then
-    local title=self.duel and (i==1 and 'DU' or self.options.opponent or 'DEIN FREUND')or self.seats>1 and ('SPIELER '..i)or 'POKÉMON PINBALL · RUBY & SAPPHIRE'
+    local title=self.duel and (i==1 and 'DU' or self.options.opponent or 'DEIN FREUND')or self.seats>1 and ('SPIELER '..i)or(session.guest=='gbc'and'POKÉMON PINBALL · GAME BOY COLOR'or'POKÉMON PINBALL · RUBY & SAPPHIRE')
     g.setColor(.44,.83,.89);g.printf(title,x+12,12,slot-24,'left')
     local points=self.duel and i==2 and self.duel.remoteScore or self.stats[i]and self.stats[i].score
     if points then g.setColor(1,1,1);g.printf(Strings("%.0f points",points),x+12,self.duel and 36 or 12,slot-24,'right')end
@@ -214,7 +215,7 @@ function M.new(session,options)
    for _,img in pairs(self.images)do img:setFilter(self.settings.filter=='smooth'and 'linear'or 'nearest')end
   elseif key=='f10'then changed=true;self.settings.integer=not self.settings.integer
   elseif key=='f11'then love.window.setFullscreen(not love.window.getFullscreen(),'desktop')end
-  if changed then love.filesystem.write('pinball-display.json',Json.encode(self.settings))end
+  if changed then love.filesystem.write(displayFile,Json.encode(self.settings))end
  end
  function self:keyreleased()end
  function self:mousepressed()end

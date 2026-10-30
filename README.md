@@ -95,6 +95,10 @@ into a folder the launcher scans instead. See
 
 ### Supported games
 
+The original **Pokémon Pinball (GBC)** has a separate experimental native
+backend; see [private build and controls](docs/PINBALL-GBC.md). It appears in
+the GBC library after preparation with the player's verified cartridge.
+
 Only specific canonical dumps are accepted. The importer verifies SHA-1 before
 creating any game data; a dump it does not accept is named (game, region,
 revision) so you know why — see [docs/rom-revisions.md](docs/rom-revisions.md).

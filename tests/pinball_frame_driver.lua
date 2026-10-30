@@ -48,6 +48,13 @@ Player.new=function(session,options)
  p.probeRound={field=options.field,number=#rounds+1};rounds[#rounds+1]=p.probeRound
  p.input={buttons=function(_,seat)
   local st=p.stats[seat];local n=st and st.frame or 0
+  if session.guest=='gbc'then
+   if not st then return 0 end
+   if st.main==2 or st.main==3 then return n%45<4 and 1 or 0 end
+   if st.main==8 then return n%45<4 and 1 or 0 end
+   if st.main==4 then return n%120<55 and 1 or n%120<110 and 32 or 0 end
+   return 0
+  end
   if st and st.main==10 then
    if n%45>=4 then return 0 end
    if st.fieldSelectionStep==0 and st.fieldSelection~=options.field then return options.field==1 and 16 or 32 end

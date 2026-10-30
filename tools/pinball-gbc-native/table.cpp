@@ -1,0 +1,122 @@
+// Original 192x272 table from cartridge VRAM and stage draw routines.
+// Host integration by Roxas2712. Addresses validated against pret/pokepinball.
+#include "table.h"
+#include "gb_snapshot.h"
+#include "ppu.h"
+#include <array>
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+
+namespace {
+constexpr unsigned W=192,H=285;
+thread_local GBContext* graphics_guest=nullptr;
+uint8_t& ram(GBContext*c,unsigned a){return c->wram[0x1000+a-0xd000];}
+// Call a cartridge graphics routine in a bounded, disposable context. The
+// sentinel return is intercepted before fetch; interrupts cannot run here.
+bool call(GBContext*c,unsigned bank,unsigned pc) {
+    c->pc=pc;c->rom_bank=bank;c->hram[0x78]=bank;c->sp=0xdff0;
+    c->ime=0;c->ime_pending=0;c->halted=0;c->stopped=0;c->stop_mode_active=0;
+    c->frame_done=0;c->run_cycle_budget=0;
+    gb_write16(c,c->sp,0xfffe);
+    const uint32_t start=c->cycles;c->run_cycle_budget=2000000;c->run_cycle_budget_start=start;
+    auto*previous=graphics_guest;graphics_guest=c;
+    for(unsigned slice=0;slice<32&&c->pc!=0xfffe&&uint32_t(c->cycles-start)<2000000;slice++) {
+        c->stopped=0;c->frame_done=0;gbrt_dispatch(c,c->pc);
+        if(c->has_unimplemented_interpreter_opcode)break;
+    }
+    graphics_guest=previous;c->run_cycle_budget=0;
+    return c->pc==0xfffe&&!c->has_unimplemented_interpreter_opcode;
+}
+void color(uint8_t*out,const uint8_t*pal,unsigned index) {
+    unsigned v=pal[index*2]|unsigned(pal[index*2+1])<<8;
+    out[0]=(v&31)*255/31;out[1]=((v>>5)&31)*255/31;out[2]=((v>>10)&31)*255/31;out[3]=255;
+}
+void half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
+    const auto*ppu=static_cast<GBPPU*>(c->ppu);
+    std::array<uint8_t,W*136> ids{},priority{};
+    const unsigned lcd=c->hram[0x1e],map=(lcd&8)?0x1c00:0x1800;
+    for(unsigned y=0;y<136;y++)for(unsigned x=0;x<W;x++) {
+        const unsigned cell=map+(y/8)*32+x/8;
+        const unsigned attr=c->vram[0x2000+cell],tile=c->vram[cell];
+        const int base=(lcd&16)?tile*16:0x1000+int(int8_t(tile))*16;
+        const unsigned ty=(attr&64)?7-y%8:y%8,tx=(attr&32)?x%8:7-x%8;
+        const unsigned off=((attr&8)?0x2000:0)+base+ty*2;
+        const unsigned id=((c->vram[off]>>tx)&1)|(((c->vram[off+1]>>tx)&1)<<1);
+        ids[y*W+x]=id;priority[y*W+x]=attr&128;
+        color(&out[((first+y)*W+x)*4],ppu->bg_palette_ram,(attr&7)*4+id);
+    }
+    const uint8_t*oam=canonical?c->oam:c->wram+0x1000;
+    const int sx=canonical?int(int8_t(c->hram[0x21])):0;
+    const int sy=canonical?int(int8_t(c->hram[0x20])):0;
+    const unsigned sh=(lcd&4)?16:8;
+    // Reverse order ensures lower OAM index wins the CGB sprite priority.
+    std::array<uint8_t,W*136> occupied{};
+    for(int i=0;i<40;i++) {
+        const auto*o=oam+i*4;
+        int px=int(o[1])-8+sx,py=int(o[0])-16+sy;
+        if(o[0]==0||o[0]>=160||o[1]==0||o[1]>=200)continue;
+        const unsigned attr=o[3],tile=sh==16?(o[2]&254):o[2];
+        for(unsigned yy=0;yy<sh;yy++)for(unsigned xx=0;xx<8;xx++) {
+            int x=px+xx,y=py+yy;if(x<0||x>=int(W)||y<0||y>=136)continue;
+            unsigned ty=(attr&64)?sh-1-yy:yy,tx=(attr&32)?xx:7-xx;
+            unsigned off=((attr&8)?0x2000:0)+tile*16+ty*2;
+            unsigned id=((c->vram[off]>>tx)&1)|(((c->vram[off+1]>>tx)&1)<<1);
+            unsigned at=y*W+x;
+            if(!id||occupied[at])continue;
+            occupied[at]=1;
+            if(ids[at]&&((attr&128)||priority[at]))continue;
+            color(&out[((first+y)*W+x)*4],ppu->obj_palette_ram,(attr&7)*4+id);
+        }
+    }
+}
+}
+// The runtime's documented game hook terminates a scratch-only graphics call
+// before fetching its synthetic return PC. Canonical dispatch is untouched.
+extern "C" int game_dispatch_override(GBContext*c,uint16_t pc) {
+    if(c==graphics_guest&&pc==0xfffe){c->stopped=1;return 1;}return 0;
+}
+GBCTable::~GBCTable(){if(scratch)gb_context_destroy(scratch);}
+bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
+    const unsigned stage=ram(live,0xd4ac);
+    if(ram(live,0xd8f1)!=4||ram(live,0xd8f2)!=2||stage>5||(stage&2)||!(live->io[0x40]&128))return false;
+    if(!scratch) {
+        scratch=gb_context_create(&live->config);
+        if(!scratch)return false;
+        scratch->hardware_mode_pref=GB_HARDWARE_MODE_CGB;scratch->mbc_type=live->mbc_type;
+        if(!gb_context_load_rom(scratch,live->rom,live->rom_size))return false;
+    }
+    uint8_t*blob=nullptr;size_t size=0;
+    if(!gb_snapshot_serialize(live,&blob,&size)){failures++;return false;}
+    bool restored=gb_snapshot_deserialize(scratch,blob,size);std::free(blob);
+    if(!restored){if(failures++==0)std::fprintf(stderr,"[GBC table] scratch snapshot rejected\n");return false;}
+    const unsigned other=stage^1;
+    ram(scratch,0xd4ac)=other;
+    ram(scratch,0xd548)=0; // one ball only: the canonical live half owns it
+    ram(scratch,0xd57d)=0; // the live half owns the authored timer overlay
+    // A host snapshot may land during the cartridge's OAM DMA. Scratch
+    // rendering has no bus arbitration with the live LCD; stale DMA must not
+    // discard the synthetic call stack or graphics writes.
+    scratch->dma.active=0;scratch->dma.pending=0;scratch->hdma.active=0;scratch->wram_bank=1;
+    scratch->hram[0x20]=0;scratch->hram[0x21]=0;
+    gb_write8(scratch,0xff40,scratch->io[0x40]&127);
+    if(!call(scratch,3,0x66c2)||!call(scratch,0,0x0916)||!call(scratch,2,0x44b7)) {
+        if(failures++==0)std::fprintf(stderr,"[GBC table] scratch graphics call failed at %02x:%04x sp=%04x\n",scratch->rom_bank,scratch->pc,scratch->sp);
+        return false;
+    }
+    // The cartridge's staged palettes retain their original color before a
+    // fade; the live half uses the actual current PPU palettes and animation.
+    auto*sp=static_cast<GBPPU*>(scratch->ppu);
+    std::memcpy(sp->bg_palette_ram,scratch->wram+0x1200,64);
+    std::memcpy(sp->obj_palette_ram,scratch->wram+0x1240,64);
+    out.assign(W*H*4,0);
+    half(scratch,out,(other&1)?136:0,false);
+    half(live,out,(stage&1)?136:0,true);
+    const auto*frame=gb_get_framebuffer(live);
+    if(frame)for(unsigned y=0;y<13;y++)for(unsigned x=0;x<160;x++) {
+        const unsigned pixel=frame[(131+y)*160+x];auto*dst=&out[((272+y)*W+16+x)*4];
+        dst[0]=pixel>>16;dst[1]=pixel>>8;dst[2]=pixel;dst[3]=255;
+    }
+    return true;
+}

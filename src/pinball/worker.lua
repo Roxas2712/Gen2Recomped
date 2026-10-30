@@ -3,6 +3,7 @@ require('love.thread');require('love.timer');require('love.image');require('love
 local Json=require('src.link.Json');local job=Json.decode(...)
 local ABI=require('src.pinball.ABI');local ffi=ABI.ffi
 local Clock=require('src.pinball.Clock')
+local gbc=job.session.guest=='gbc'
 local channels={}
 for _,k in ipairs{'commands','frames','events'}do channels[k]=love.thread.getChannel(job.channel..'.'..k)end
 local function emit(event)channels.events:push(Json.encode(event))end
@@ -113,8 +114,13 @@ local ok,why=pcall(function()
     if phase=='preparing'then
      buttons=0
      if n%45<3 then
-      local main=read(0x0200B0C2)
-      if main==0 or main==1 then buttons=1
+      local main=read(gbc and 0xd8f1 or 0x0200B0C2)
+      if gbc then
+       if main==2 or main==3 then buttons=1
+       elseif main==8 and read(0xd8f2)==1 then
+        buttons=read(0xd913)~=(job.field or 0)and((job.field or 0)==1 and 16 or 32)or 1
+       end
+      elseif main==0 or main==1 then buttons=1
       elseif main==10 then
        local selected=read(0x02002840,2)
        local step=read(0x02002842,2)
@@ -159,19 +165,24 @@ local ok,why=pcall(function()
      end)
     end
     if diagnostics then local t=love.timer.getTime();diagnostics.image=diagnostics.image+t-stamp;stamp=t end
-    local game=read(job.session.game_pointer_address or 0x020314E0,4);local valid=game>=0x02000000 and game<0x02040000
-    message.stats[i]={main=read(0x0200B0C2),sub=read(0x0200B0C3),field=read(0x0200B0C4),
+    local game=not gbc and read(job.session.game_pointer_address or 0x020314E0,4)or 0;local valid=game>=0x02000000 and game<0x02040000
+    message.stats[i]={main=read(gbc and 0xd8f1 or 0x0200B0C2),sub=read(gbc and 0xd8f2 or 0x0200B0C3),field=read(gbc and 0xd4ac or 0x0200B0C4),
      score=valid and read(game+0x44,4)+100000000*read(game+0x48,4)or 0,
      lives=valid and read(game+0x30)or 0,frame=tonumber(lib.ascendant_pinball_frame(m))}
     local stats=message.stats[i]
+    if gbc then
+     local points=0
+     for offset=5,0,-1 do local digit=read(0xd46a+offset);points=points*100+math.floor(digit/16)*10+digit%16 end
+     stats.score=points;stats.lives=math.max(0,read(0xd49e)-read(0xd49d)+1)+read(0xd49b)
+    end
     if diagnostics then
      stats.overlay={flags=read(0x0200B0CF),shop=read(0x0200B0E8,2),cutscene=read(0x0200B0EC,2)}
      if stats.main==10 then stats.fieldSelection=read(0x02002840,2);stats.fieldSelectionStep=read(0x02002842,2)end
     end
     if job.duel then
-     if phase=='preparing' and stats.main==2 and stats.sub==1 then prepared[i]=true end
+     if phase=='preparing' and(gbc and stats.main==4 and stats.sub==2 or not gbc and stats.main==2 and stats.sub==1)then prepared[i]=true end
      best[i]=math.max(best[i]or 0,stats.score);stats.score=best[i];stats.elapsed=elapsed[i]or 0
-     if phase=='playing' and (stats.elapsed>=(job.frameLimit or 18000) or stats.main==2 and stats.sub>=2 and stats.field<2 or stats.main==8)then done[i]=true end
+     if phase=='playing' and (stats.elapsed>=(job.frameLimit or 18000)or(gbc and(read(0xd616)~=0 or stats.main~=4)or not gbc and(stats.main==2 and stats.sub>=2 and stats.field<2 or stats.main==8)))then done[i]=true end
      stats.done=done[i]or false
     end
     if diagnostics then local t=love.timer.getTime();diagnostics.stats=diagnostics.stats+t-stamp;stamp=t end

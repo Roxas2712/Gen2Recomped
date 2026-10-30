@@ -3,6 +3,7 @@ local Json=require('src.link.Json');local Shell=require('src.core.HostShell')
 local job,channel=...
 local ok,why=pcall(function()
  local args={job.python,'-B','-E','-s',job.root..'/tools/pinball_rs.py','import','--rom',job.path,'--worker-protocol'}
+ if job.edition=='pinballgbc'then args={job.python,'-B','-E','-s',job.root..'/tools/pinball_gbc.py','prepare','--rom',job.path}end
  for _,name in ipairs{'cmake','ninja'}do if job[name]then args[#args+1]='--'..name;args[#args+1]=job[name]end end
  for i,value in ipairs(args)do args[i]=Shell.quote(value)end
  local pipe=assert(Shell.popen(table.concat(args,' ')..' 2>&1','r'))
@@ -15,7 +16,8 @@ local ok,why=pcall(function()
    end
   else tail=(tail..line..'\n'):sub(-1500);channel:push(Json.encode{progress='Preparing your Pinball game …'})end
  end
- pipe:close()
+ local closed=pipe:close()
+ if job.edition=='pinballgbc'then terminal=closed and data and data.ready and 0 or 1 end
  channel:push(Json.encode{ok=terminal==0,data=data,error=terminal~=0 and tail or nil})
 end)
 if not ok then channel:push(Json.encode{ok=false,error=tostring(why)})end
