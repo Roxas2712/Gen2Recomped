@@ -2,11 +2,6 @@
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 import time
 
-if __package__:
-    from .rs_story_checkpoint import is_save_yes
-else:
-    from rs_story_checkpoint import is_save_yes
-
 FIELD = 'src/world/OverworldController.lua'
 START = 'src/ui/Gen3StartMenu.lua'
 TEXT = 'src/render/TextBox.lua'
@@ -40,7 +35,6 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
         return result('Missing or saturated native saved-game counter')
     initial_count = count
     entered = False
-    confirmed = False
 
     def press(button):
         # One receipt per press preserves the actual SAVE/YES boundary.
@@ -57,8 +51,11 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
         if type(count) is not int or count not in (initial_count, initial_count + 1):
             return result('Unexpected saved-game counter; checkpoint not recorded')
         if field():
-            if not (entered and confirmed and count == initial_count + 1):
+            if not (entered and count == initial_count + 1):
                 return result('SAVE did not confirm one successful native write')
+            # The UI may reach YES between client observations. Only the
+            # driver's actual before-input receipts can prove that boundary;
+            # record() rechecks those instead of trusting this polled view.
             receipt = record()
             sha = receipt.get('normalCheckpointSHA256')
             assert isinstance(sha, str) and len(sha) == 64, 'Checkpoint guard did not record save bytes'
@@ -98,7 +95,6 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
             if top['index'] == 2:
                 state = press('up')
                 continue
-            confirmed = confirmed or is_save_yes(state)
             state = press('a')
         elif source == TEXT or (native_rs and top.get('phase') in ('saving_msg', 'saving', 'saved')):
             state = press('a')

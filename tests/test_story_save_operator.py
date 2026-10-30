@@ -28,6 +28,7 @@ class Protocol:
         self.sent = []
         self.receipts = []
         self.recorded = 0
+        self.drift_before = {}
 
     def send(self, commands):
         if commands:
@@ -36,6 +37,9 @@ class Protocol:
             assert cmd['op'] == 'press' and cmd.get('times', 1) == 1
             expected, after = self.stages[len(self.sent)]
             assert cmd['button'] == expected, (cmd, expected)
+            if len(self.sent) in self.drift_before:
+                self.state = copy.deepcopy(self.drift_before[len(self.sent)])
+                self.state.update(seq=len(self.sent), queuedCommands=len(self.sent))
             before = copy.deepcopy(self.state)
             self.sent.append(cmd)
             self.state = copy.deepcopy(after)
@@ -86,6 +90,28 @@ class StorySaveOperatorTests(unittest.TestCase):
         phases = [r['before']['top'].get('phase') for r in ui.receipts if is_save_yes(r['before'])]
         self.assertEqual(phases, ['confirm', 'overwrite'])
         self.assertEqual(ui.recorded, 1)
+
+    def test_yes_reached_between_observations_uses_the_actual_input_receipt(self):
+        ui = generic()
+        ui.stages = ui.stages[:3] + [
+            ('a', frame(dict(source=TEXT, page=['saving']))),
+            ('a', frame(dict(source=TEXT, page=['saved']), count=5)),
+            ('a', frame(dict(source=FIELD), count=5)),
+        ]
+        ui.drift_before[3] = frame(dict(source=CHOICE, index=1))
+        self.assertTrue(save_via_ui(ui.send, ui.record)['saved'])
+        self.assertEqual(ui.recorded, 1)
+
+    def test_counter_increment_without_an_actual_yes_is_rejected_by_checkpoint_guard(self):
+        ui = generic()
+        ui.stages = ui.stages[:3] + [
+            ('a', frame(dict(source=TEXT, page=['saving']))),
+            ('a', frame(dict(source=TEXT, page=['saved']), count=5)),
+            ('a', frame(dict(source=FIELD), count=5)),
+        ]
+        with self.assertRaises(AssertionError):
+            save_via_ui(ui.send, ui.record)
+        self.assertEqual(ui.recorded, 0)
 
     def test_refused_generic_write_cannot_record_the_previous_save(self):
         ui = generic(success=False)
