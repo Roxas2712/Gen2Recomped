@@ -7,6 +7,14 @@ package.loaded['src.tcg.Player']={new=function()
   close=function()closed=closed+1;return true end,keypressed=function(self,k)if k=='escape'then self.done=true end end}
 end}
 local M=require('src.import.LauncherTCG')
+local runtime,environment=love,os.getenv
+os.getenv=function(name)if name=='ASCENDANT_TCG_GBC_ROOT'then return nil end;return environment(name)end
+for _,surface in ipairs{false,{}, {filesystem={}}}do
+ love=surface or nil
+ assert(not M.available(),'An optional native backend must stay unavailable without filesystem source discovery')
+end
+love=runtime;os.getenv=environment
+print('TCG availability without LÖVE source discovery: PASS')
 M.session=function()return {schema=1,ready=true}end
 local RI={_ui={}}
 RI.new=function()return setmetatable({ready={},tab='gold',section='games'}, {__index=RI})end

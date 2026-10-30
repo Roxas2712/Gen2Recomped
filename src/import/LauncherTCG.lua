@@ -1,8 +1,12 @@
 -- Separate original Pokémon TCG cartridge; integration by Roxas2712.
 local M={}
 local function exists(path)local f=type(path)=='string'and io.open(path,'rb');if not f then return false end;f:close();return true end
+local function sourceRoot()
+ local fs=love and love.filesystem
+ return os.getenv('ASCENDANT_TCG_GBC_ROOT')or(fs and type(fs.getSource)=='function'and fs.getSource())or nil
+end
 function M.session()
- local root=os.getenv('ASCENDANT_TCG_GBC_ROOT')or(love and love.filesystem.getSource())
+ local root=sourceRoot()
  if not root then return end
  local f=io.open(root..'/.local/tcg-gbc/library.json','rb');if not f then return end
  local bytes=f:read('*a');f:close();local ok,d=pcall(require('src.link.Json').decode,bytes)
@@ -19,7 +23,7 @@ end
 function M.install(RI)
  local function import(self,path)
   if self._tcgJob or self._tcgPlayer then return end
-  local root=os.getenv('ASCENDANT_TCG_GBC_ROOT')or love.filesystem.getSource()
+  local root=sourceRoot()
   if not root or not exists(root..'/tools/tcg_gbc.py')then self._tcgNotice='TCG-Buildwerkzeuge sind in diesem Paket nicht verfügbar.';return end
   self._tcgChannel=love.thread.newChannel();self._tcgJob=love.thread.newThread('src/tcg/import_worker.lua')
   self._tcgNotice='TCG wird vorbereitet …'
