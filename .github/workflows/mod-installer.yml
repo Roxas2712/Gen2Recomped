@@ -1,0 +1,92 @@
+name: Cancellable mod installer
+on:
+  pull_request:
+    paths:
+      - 'src/mods/**'
+      - 'src/import/Launcher*.lua'
+      - 'src/import/RomImporter.lua'
+      - 'src/import/CacheFs.lua'
+      - 'tests/engine/*mod*install*.lua'
+      - 'tests/engine/cancellable_mod_install.lua'
+      - 'tests/engine/launcher_community.lua'
+      - 'tests/engine/launcher_mod_profiles.lua'
+      - 'tests/modkit/install_fs.lua'
+      - 'tests/mod_install_runtime/**'
+      - 'tools/qualify_mod_installer.py'
+      - '.github/workflows/mod-installer.yml'
+permissions:
+  contents: read
+concurrency:
+  group: mod-installer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    if: github.repository == 'Roxas2712/Gen2Recomped' && !github.event.repository.private
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - run: sudo apt-get update && sudo apt-get install -y luajit
+      - name: Native launcher, cancellation, recovery and compatibility
+        run: |
+          luajit tests/engine/cancellable_mod_install.lua
+          luajit tests/engine/mod_install_safety.lua
+          luajit tests/engine/mod_install_profiles.lua
+          luajit tests/engine/mod_install_launcher.lua
+          luajit tests/engine/launcher_community.lua
+          luajit tests/engine/launcher_mod_profiles.lua
+          luajit tests/engine/mod_profile_recovery.lua
+          luajit tests/engine/launcher_mods_tests.lua
+          luajit tests/engine/mod_update_tests.lua
+          luajit tests/engine/mod_download.lua
+          luajit tests/engine/nx_mod_archive_preflight.lua
+          luajit tests/engine/gen2_lifecycle_callbacks.lua
+          luajit tests/engine/session_process_shutdown.lua
+  filesystem:
+    if: github.repository == 'Roxas2712/Gen2Recomped' && !github.event.repository.private
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15-intel, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+      - if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y love
+      - name: Real ZIPs, native filesystem exchange and isolated profile
+        shell: python
+        run: |
+          import os, pathlib, shutil, subprocess, sys, time, urllib.request, zipfile
+          host = os.environ['RUNNER_OS']
+          target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'installer-runtime'
+          if host == 'Linux':
+              executable = shutil.which('love')
+          else:
+              suffix = 'macos' if host == 'macOS' else 'win64'
+              target.mkdir()
+              archive = target / 'runtime.zip'
+              for attempt in range(3):
+                  try:
+                      with urllib.request.urlopen(f'https://github.com/love2d/love/releases/download/11.5/love-11.5-{suffix}.zip', timeout=60) as response, archive.open('wb') as output:
+                          shutil.copyfileobj(response, output)
+                      break
+                  except OSError:
+                      if attempt == 2: raise
+                      time.sleep(attempt + 1)
+              with zipfile.ZipFile(archive) as z: z.extractall(target)
+              executable = next(target.rglob('love.app/Contents/MacOS/love')) if host == 'macOS' else next(target.rglob('lovec.exe'))
+              if host == 'macOS': executable.chmod(0o755)
+          subprocess.run([sys.executable, 'tools/qualify_mod_installer.py', '--love', str(executable), '--output', str(target / 'evidence')], check=True)
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mod-installer-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/installer-runtime/evidence/report.json
+            ${{ runner.temp }}/installer-runtime/evidence/runtime.log
+          if-no-files-found: warn
+          retention-days: 7

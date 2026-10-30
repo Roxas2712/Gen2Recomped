@@ -118,6 +118,8 @@ check(ui.modUpdateInfo.first.status=='available' and ui.modUpdateInfo.second.sta
 check(ui.modUpdateInfo.first.best.zip.name=='first-2.0.0.zip' and ui.modUpdateInfo.second.best.zip.name=='second-2.0.0.zip','a shared repository still selects and caches the correct ZIP for each individual mod')
 check(not C._updateOwner,'completed startup checks release their old launcher instance')
 local L=require('src.mods.LauncherMods');local oldList,oldInstall=L.list,L.installFromRelease
+local Cache=require('src.import.CacheFs');local oldRoot=Cache.root
+Cache.root=function()return '/owned-community-fixture'end
 local installed={{id='first',github='Author/Shared',version='1.0.0'}}
 local sourceScans=0
 L.list=function() sourceScans=sourceScans+1;return installed end
@@ -135,6 +137,7 @@ signedIn=true;ui:_communityStartDownload('new-mod',release('2.0.0','Author/Share
 signedIn=false;ui:update(0)
 check(not ui._communityDownload and installs==0,'a new online install cannot finish after sign-out through the guest update exception')
 D.start=oldStart;L.list=oldList;L.installFromRelease=oldInstall
+Cache.root=oldRoot
 print('Launcher community: '..checks..' checks passed')
 
 -- A Task timeout terminates the coroutine before its HTTP fallback can run.

@@ -2607,6 +2607,9 @@ end
 -- always deleted; a USB copy is the player's file, so a failed one is only
 -- skipped for the rest of the session.
 local function consumePick(self, name, safName, ok)
+  if safName=='picked_mod.zip' and self._localModInstall then
+    self._localModInstall.pick={name,safName};return
+  end
   if ok or name == safName then
     love.filesystem.remove(name)
     return
@@ -2614,6 +2617,7 @@ local function consumePick(self, name, safName, ok)
   self.pickSkip = self.pickSkip or {}
   self.pickSkip[name] = true
 end
+function RomImporter:_consumeInstalledModPick(name,safName,ok)return consumePick(self,name,safName,ok)end
 
 local function chooseRom(promptName)
   promptName = promptName or "Pokemon"
@@ -4341,20 +4345,7 @@ function RomImporter:chooseMods()
   -- already waiting in the inbox comes first, because a USB or MTP copy is a
   -- whole batch that costs no taps at all.
   if self.android or self.ios then
-    local waiting = self:_inboxMods()
-    if #waiting > 0 then
-      -- Reinstall rather than refuse: an inbox zip is not consumed (it stays
-      -- for MTP recovery), so a second press finds the same files and a plain
-      -- install would call every one of them "already installed".
-      self:_installMods(waiting, { replace = true })
-    end
-    if not self:_pickManyBegin("mod") then
-      if #waiting == 0 then
-        self.modNotice = { ok = false, text =
-          Strings("Could not open the file picker. Copy your mod .zip files "
-                  .. "into imports/mods/ instead.") }
-      end
-    end
+    self:_installModInbox(false,true)
     return
   end
   local picks = chooseZips()
@@ -4368,24 +4359,11 @@ function RomImporter:chooseMods()
   -- Falling through to the inbox there would install a folder of mods somebody
   -- had just cancelled out of choosing.
   self:ensureModsInboxDir()
-  local inbox = self:_inboxMods()
   if hasNativePicker() then
-    self.modNotice = { ok = false, text = #inbox > 0
-      and Strings("No mod .zip files chosen. %d are waiting in %s/imports/mods/ if you meant those.",
-            #inbox, love.filesystem.getSaveDirectory())
-      or Strings("No mod .zip files chosen.") }
+    self.modNotice = { ok = false, text = Strings("No mod .zip files chosen.") }
     return
   end
-  if #inbox > 0 then
-    -- Reinstall rather than refuse: an inbox zip is not consumed (it stays in
-    -- imports/mods/ for MTP recovery), so a second press finds the same files
-    -- and a plain install would call every one of them "already installed".
-    self:_installMods(inbox, { replace = true })
-    return
-  end
-  self.modNotice = { ok = false, text =
-    Strings("No file picker here. Copy your mod .zip files into:\n%s/imports/mods/\nthen press Import many again.",
-      love.filesystem.getSaveDirectory()) }
+  self:_installModInbox(false)
 end
 
 -- Every .zip waiting in the save-dir inbox, in the save-dir-relative spelling
@@ -4420,13 +4398,7 @@ function RomImporter:chooseModFolder()
   if self.workState == "working" then return end
   if self.android or self.ios then
     -- no folder picker on either bridge; the inbox IS the folder there
-    local inbox = self:_inboxMods()
-    if #inbox > 0 then
-      self:_installMods(inbox, { replace = true })
-    else
-      self.modNotice = { ok = false, text =
-        Strings("Copy your mod .zip files into imports/mods/ first.") }
-    end
+    self:_installModInbox(false)
     return
   end
   local folder = chooseFolder()
@@ -4434,14 +4406,7 @@ function RomImporter:chooseModFolder()
     self.modNotice = { ok = false, text = Strings("No folder chosen.") }
     return
   end
-  local LauncherMods = require("src.mods.LauncherMods")
-  local zips, err = LauncherMods.zipsInFolder(folder)
-  if not zips then
-    self.tab = "mods"
-    self.modNotice = { ok = false, text = tostring(err) }
-    return
-  end
-  self:_installMods(zips)
+  self:_installModFolder(folder)
 end
 
 -- A MULTI-FILE DROP IS ONE IMPORT, not N.
@@ -4503,20 +4468,7 @@ function RomImporter:chooseMod()
     return
   end
   if self.android then
-    local name = findPendingMod(true, self.pickSkip)
-    if name then
-      self:_installMod(name)
-      consumePick(self, name, "picked_mod.zip",
-        self.modNotice and self.modNotice.ok)
-      return
-    end
-    if not pickFile("mod") then
-      self.modNotice = { ok = false,
-        text = "Could not open the file picker. Copy a mod .zip via USB." }
-    else
-      self.pickPending = true
-      self.pickTimer = 0
-    end
+    self:_installModInbox(true,false,true)
     return
   end
   local path = chooseZip()
@@ -4526,12 +4478,17 @@ function RomImporter:chooseMod()
   -- scan the inbox the same way the ROM path does.  Before this, chooseMod
   -- reached here, got nil from chooseZip and returned in silence -- pressing
   -- Import on the MODS tab did nothing at all and said nothing about why.
-  local found = findPendingMod(true, self.pickSkip)
-  if found then
-    -- Reinstall rather than refuse: see _installMod's note on the inbox.
-    self:_installMod(found, { replace = true })
-    return
-  end
+  self:_installModInbox(true)
+  return
+end
+
+function RomImporter:_openModNativePicker()
+  if not pickFile('mod')then
+    self.modNotice={ok=false,text='Copy your mod ZIP into imports/mods/ and import again.'}
+  else self.pickPending=true;self.pickTimer=0 end
+end
+
+function RomImporter:_modInboxHint()
   if self.isNX or Platform.romImportMode() == "save-directory"
       or love.system.getOS() == "Linux" then
     self:ensureModsInboxDir()
@@ -12126,5 +12083,6 @@ require("src.import.NativeLanguageSetup").install(RomImporter)
 require("src.import.LauncherPokemonXY").install(RomImporter)
 require("src.import.LauncherPinball").install(RomImporter)
 require("src.import.LauncherGameMods").install(RomImporter)
+require("src.import.LauncherInstallJobs").install(RomImporter)
 
 return RomImporter

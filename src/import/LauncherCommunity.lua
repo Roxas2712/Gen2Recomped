@@ -291,7 +291,9 @@ function C.install(RI)
     if self._communityDownload then notice(self,'A mod is already downloading.',false);return end
     local job,why=Download.start(release)
     if not job then notice(self,tostring(why),false);return end
-    self._communityDownload={job=job,id=id,release=release,title=title or id,repo=repo,phase='download',bytes=0,guestUpdate=guestUpdate}
+    local root=require('src.import.CacheFs').root()or love.filesystem.getSaveDirectory()
+    self._communityDownload={job=job,id=id,release=require('src.mods.Merge').deepCopy(release),title=title or id,repo=repo,
+      phase='download',bytes=0,guestUpdate=guestUpdate,installRoot=root}
     notice(self,Strings('Downloading %s inside RetroRecomped…',title or id),true)
   end
   function RI:_findInstall(entry)
@@ -310,7 +312,14 @@ function C.install(RI)
   function RI:_communityCancelDownload()
     local state=self._communityDownload
     if state then
+      if state.installJob then
+        if not require('src.mods.LauncherMods').cancelInstall(state.installJob)then
+          notice(self,'Finishing the complete installation…',true);return false
+        end
+        state.cancelled=true;notice(self,'Cancelling installation and cleaning up…',true);return true
+      end
       state.job:cancel();self._communityDownload=nil
+      if state.path then love.filesystem.remove(state.path)end
       notice(self,'Download cancelled. Installed mods are unchanged.',true)
     end
   end
@@ -408,7 +417,9 @@ function C.install(RI)
         or (Strings('Downloading %s…',state.title)..' · '..string.format('%.1f',bytes/1048576)..' MB'..(total and (' / '..string.format('%.1f',total/1048576)..' MB') or ''))
       love.graphics.setFont(self.hintFont);U.col(RI.palette().link)
       love.graphics.printf(label,x,y+used,math.max(60,w-110*s),'left')
-      if state.phase=='download' then self._communityCancelRect=self:_chipButton(x+w-100*s,y+used,'CANCEL',{w=100*s,h=30*s}) end
+      if not state.installJob or not(state.installJob.committed or state.installJob.pendingReceipt or state.installJob.cleaning)then
+        self._communityCancelRect=self:_chipButton(x+w-100*s,y+used,'CANCEL',{w=100*s,h=30*s})
+      end
       local bar=y+used+40*s
       U.col(RI.palette().cardBorder,.35);love.graphics.rectangle('fill',x,bar,w,5*s,2*s,2*s)
       U.col(RI.palette().link);love.graphics.rectangle('fill',x,bar,w*(state.phase=='install' and 1 or total and math.min(1,bytes/total) or .1),5*s,2*s,2*s)
@@ -459,7 +470,6 @@ function C.install(RI)
       if download and (download.phase=='install' or not download.guestUpdate) then
         local permitted=require('src.mods.ModAccess').checkUpdate(download.id,download.release,download.repo)
         if not permitted then
-          if download.phase=='install' and download.path then love.filesystem.remove(download.path) end
           self:_communityCancelDownload()
         else download.guestUpdate=true end
       end
@@ -487,14 +497,33 @@ function C.install(RI)
     if self._launcherSequence then return update(self,dt,...) end
     local download=self._communityDownload
     if download then
-      if download.phase=='install' then
-        if download.gameAccount and (not Auth.signedIn() or Auth.accountId()~=download.gameAccount) then
-          if download.path then love.filesystem.remove(download.path) end
-          self:_communityCancelDownload();notice(self,'The account or selected game changed. Choose the mod again.',false)
+      local root=download.installRoot and(require('src.import.CacheFs').root()or love.filesystem.getSaveDirectory())
+      if download.installRoot and not require('src.mods.ModInstallJob').sameRoot(root,download.installRoot)then
+        self:_communityCancelDownload()
+        if not self._communityDownload then
+          if download.path then love.filesystem.remove(download.path)end
+          notice(self,'The installation folder changed. Retry the mod download.',false)
           return update(self,dt,...)
         end
-        local installed,version,mismatch=require('src.mods.LauncherMods').installFromRelease(download.id,download.release,download.path,download.gameVersion)
+      end
+      if download.phase=='install' then
+        if download.gameAccount and (not Auth.signedIn() or Auth.accountId()~=download.gameAccount) then
+          if self:_communityCancelDownload()~=false then
+            notice(self,'The account or selected game changed. Cancelling the mod installation.',false)
+            if not self._communityDownload then return update(self,dt,...)end
+          else download.accountChanged=true end
+        end
+        local packages=require('src.mods.LauncherMods')
+        if not download.installJob then
+          local job,why=packages.beginInstallFromRelease(download.id,download.release,download.path,download.gameVersion)
+          if not job then self._communityDownload=nil;notice(self,tostring(why),false);return update(self,dt,...)end
+          download.installJob=job
+        end
+        local state,installed,version,mismatch=packages.stepInstall(download.installJob)
+        if state~='done'then return update(self,dt,...)end
+        if download.path then love.filesystem.remove(download.path)end
         self._communityDownload=nil
+        if download.installJob.pendingReceipt and not installed then self._modInstallRecoveryBlocked=true;self._profileRecoveryBlocked=true end
         if installed then
           if download.repo then
             local options=SaveData.loadOptions();options.modInstallSources=options.modInstallSources or {}
@@ -502,7 +531,7 @@ function C.install(RI)
             SaveData.saveOptions(options)
           end
           self:_refreshMods();notice(self,mismatch or Strings('Installed %s %s. Enable it in Installed mods.',download.title,tostring(version)),not mismatch)
-        else notice(self,Strings('Install failed: %s',Strings(tostring(version))),false) end
+        else notice(self,download.cancelled and 'Installation cancelled. Current package unchanged.'or Strings('Install failed: %s',Strings(tostring(version))),false) end
       else
         local result=download.job:poll()
         if result.kind=='done' then download.phase='install';download.path=result.path;download.bytes=result.bytes;download.digest=result.digest

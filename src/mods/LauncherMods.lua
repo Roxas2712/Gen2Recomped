@@ -1222,10 +1222,12 @@ local function freeInstallPath(fs, id)
   return nil, ("could not find a free folder for '%s' under mods/"):format(id)
 end
 
-function LauncherMods.installZip(source, opts)
-  local ok, result, err, version = pcall(LauncherMods._installZipInner, source, opts)
+function LauncherMods.installZip(source, opts, job)
+  if job then require('src.mods.ModInstallTransaction').start(job)end
+  local ok, result, err, version = pcall(LauncherMods._installZipInner, source, opts, job)
+  if job then job:finishItem()end
   if not ok then return nil, "import failed: " .. tostring(result) end
-  if result then
+  if result and not job then
     pcall(function()
       local folder=LauncherMods.folderFor(err)
       local bytes=folder and love.filesystem.read(folder.."/manifest.json")
@@ -1238,6 +1240,135 @@ function LauncherMods.installZip(source, opts)
     end)
   end
   return result, err, version
+end
+
+-- Jobs own only launcher IO. Mod content/callback formats are never converted.
+function LauncherMods.beginInstallZip(source,opts)
+  opts=require('src.mods.Merge').deepCopy(opts or{})
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    return LauncherMods.installZip(source,opts,job)
+  end)
+end
+function LauncherMods.stepInstall(job,budget,clock)return require('src.mods.ModInstallJob').step(job,budget,clock)end
+function LauncherMods.cancelInstall(job)return require('src.mods.ModInstallJob').cancel(job)end
+function LauncherMods.releaseStaleInstalls()return require('src.mods.ModInstallJob').releaseAll()end
+function LauncherMods.installBusy()return require('src.mods.ModInstallJob').busy()end
+function LauncherMods.beginRecoverInstalls()
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    return require('src.mods.ModProfileInstallJobs').recover(job)
+  end)
+end
+function LauncherMods.beginBackupProfile(ids)
+  local selected={};for i,id in ipairs(ids or{})do selected[i]=id end
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    return require('src.mods.ModProfileInstallJobs').backup(job,selected)
+  end)
+end
+function LauncherMods.beginRestoreProfile(snapshot)
+  snapshot=require('src.mods.Merge').deepCopy(snapshot)
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    return require('src.mods.ModProfileInstallJobs').restore(job,snapshot)
+  end)
+end
+function LauncherMods.beginFinishProfile(snapshot)
+  snapshot=require('src.mods.Merge').deepCopy(snapshot)
+  return require('src.mods.ModInstallJob').new(function(job)
+    return require('src.mods.ModInstallTransaction').finishProfile(job,snapshot)
+  end)
+end
+local function installSources(job,sources,opts)
+  local summary={installed={},skipped={},failed={}}
+  for i,source in ipairs(sources or{})do
+    job:checkpoint('next package',i-1,#sources)
+    local ok,name,version=LauncherMods.installZip(source,opts,job)
+    if ok then summary.installed[#summary.installed+1]=name
+    else summary.failed[#summary.failed+1]={name=type(source)=='string' and source or 'archive',err=name}end
+    if job.halted then break end
+  end
+  return summary
+end
+function LauncherMods.beginInstallMany(sources,opts)
+  opts=require('src.mods.Merge').deepCopy(opts or{})
+  local selected={};for i,value in ipairs(sources or{})do selected[i]=value end
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    return installSources(job,selected,opts)
+  end)
+end
+local function scanZips(job,directory,oneLevel)
+  local fs=love.filesystem;local result={}
+  for _,name in ipairs(fs.getDirectoryItems(directory))do
+    assert(type(name)=='string'and name~='.'and name~='..'and not name:find('[/\\%z%c]'),'Invalid import folder entry.')
+    local path=directory==''and name or directory..'/'..name
+    local info=fs.getInfo(path)
+    if name:sub(1,2)~='._'and info then
+      if info.type=='file'and name:lower():match('%.zip$')then result[#result+1]=path
+      elseif oneLevel and info.type=='directory'then
+        for _,child in ipairs(scanZips(job,path,false))do result[#result+1]=child end
+      end
+    end
+    job:checkpoint('scanning',#result,0)
+  end
+  table.sort(result);return result
+end
+function LauncherMods.beginInstallInbox(first)
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    local sources,seen={},{}
+    for _,directory in ipairs({'imports/mods',''})do
+      for _,path in ipairs(scanZips(job,directory,false))do
+        if not seen[path]then sources[#sources+1]=path;seen[path]=true end
+      end
+    end
+    if first and #sources>1 then sources={sources[1]}end
+    job.sourceCount=#sources
+    return installSources(job,sources,{replace=true})
+  end)
+end
+function LauncherMods.beginInstallFolder(path)
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    local mount=job.token..'-scan'
+    local release=CacheFs.scopedMount(path,mount)
+    assert(release,'This folder could not be inspected safely. Select its ZIP files directly.')
+    job:defer(release)
+    local sources={}
+    for _,found in ipairs(scanZips(job,mount,true))do sources[#sources+1]=path..'/'..found:sub(#mount+2)end
+    release()
+    job.sourceCount=#sources
+    return installSources(job,sources)
+  end)
+end
+function LauncherMods.beginInstallFromRelease(id,release,path,expectedGame,expectedVersion)
+  release=require('src.mods.Merge').deepCopy(release)
+  return require('src.mods.ModInstallJob').new(function(job)
+    require('src.mods.ModInstallTransaction').recover(job)
+    assert(type(id)=='string' and id:match('^[%w_%-][%w_.%-]*$') and type(release)=='table' and release.zip,'Invalid mod release.')
+    if not path then
+      local download,why=require('src.mods.ModDownload').start(release);assert(download,why)
+      job:defer(function()download:cancel();if path then love.filesystem.remove(path)end end)
+      while true do
+        local response=download:poll()
+        if response.kind=='done' then path=response.path;break end
+        assert(response.kind=='progress',response.error or 'Download cancelled.')
+        job:checkpoint('downloading',response.bytes or 0,response.total or 0)
+      end
+    end
+    local folder=LauncherMods.folderFor(id)
+    local bytes=folder and love.filesystem.read(folder..'/manifest.json')
+    local current=bytes and decodeManifest(bytes,folder)
+    local original=current and current.raw.install_source_id
+    local ok,name,version=LauncherMods.installZip(path,{replace=true,expectId=original or id,
+      installId=original and id or nil,expectGame=expectedGame,expectVersion=expectedVersion},job)
+    if not ok then return nil,name end
+    local mismatch=release.version and version~=release.version and
+      ('Release '..tostring(release.version)..' contains manifest version '..tostring(version)..'.')or nil
+    return true,version,mismatch
+  end)
 end
 
 -- MANY AT ONCE.
@@ -1348,13 +1479,14 @@ function LauncherMods.summarize(res)
   return #res.installed > 0 and #res.failed == 0, table.concat(parts, "\n")
 end
 
-function LauncherMods._installZipInner(source, opts)
+function LauncherMods._installZipInner(source, opts, job)
   opts = opts or {}
   if not (love and love.filesystem) then
     return nil, "mod install needs LOVE"
   end
   local fs = love.filesystem
-  local data, readErr = readArchive(source)
+  local data, readErr
+  if job then data=job:readArchive(source)else data,readErr=readArchive(source)end
   if not data then return nil, readErr end
 
   -- Cheap magic-byte check before anything is staged.  Every real zip starts
@@ -1368,7 +1500,7 @@ function LauncherMods._installZipInner(source, opts)
       .. " (need a real .zip; skip Mac ._ files from MTP)"
   end
 
-  local mount = "mod_import_mount"
+  local mount = job and (job.token..'-archive')or "mod_import_mount"
   local tmp, mountKey = nil, nil
   local mounted = false
 
@@ -1377,7 +1509,12 @@ function LauncherMods._installZipInner(source, opts)
   -- Horizon refuses -- the Switch answers "file already open" and the whole
   -- import failed as "that .zip could not be opened".  Mounting the bytes
   -- never touches the filesystem twice, so it works there and everywhere.
-  if fs.newFileData then
+  if job and job.archivePath then
+    -- The staged file is already on the mounted writable root. LOVE 11
+    -- rejects arbitrary absolute archive paths unless they were dropped.
+    assert(fs.mount(job.archivePath,mount),'The staged ZIP could not be opened.')
+    mounted,mountKey=true,job.archivePath
+  elseif fs.newFileData then
     local archiveName = ("mod_import_%d_%d.zip"):format(
       os.time(), math.random(0, 999999))
     local okFd, fd = pcall(fs.newFileData, data, archiveName)
@@ -1389,8 +1526,12 @@ function LauncherMods._installZipInner(source, opts)
 
   if not mounted then
     -- Fallback: stage into a save-dir temp so a path mount can reach it.
-    tmp = ("mod_import_%d_%d.zip"):format(os.time(), math.random(0, 999999))
-    local okw, writeErr = fs.write(tmp, data)
+    tmp = job and(job.area..'/archive.zip')or("mod_import_%d_%d.zip"):format(os.time(), math.random(0, 999999))
+    local okw, writeErr
+    if job then
+      assert(CacheFs.rawCreateDirectory(job.area),'Could not create archive staging.')
+      job:write(tmp,data);okw=true
+    else okw,writeErr=fs.write(tmp,data)end
     if not okw then
       return nil, "could not stage the .zip: " .. tostring(writeErr)
     end
@@ -1401,10 +1542,15 @@ function LauncherMods._installZipInner(source, opts)
     mountKey = tmp
   end
 
+  local cleaned=false
   local function cleanup()
-    pcall(fs.unmount, mountKey)
+    if cleaned then return end
+    if job then assert(fs.unmount(mountKey),'Could not release the package archive.')
+    else pcall(fs.unmount,mountKey)end
+    cleaned=true
     if tmp then fs.remove(tmp) end
   end
+  if job then job:defer(cleanup)end
 
   local prefix, rootErr = LauncherMods.locateRoot(topLevelPaths(mount))
   if not prefix then
@@ -1430,6 +1576,9 @@ function LauncherMods._installZipInner(source, opts)
   end
   -- Module-page recommendations must also match the actual ZIP manifest,
   -- before replacing any installed files. Catalogue metadata is not enough.
+  if opts.expectVersion and manifest.version~=opts.expectVersion then
+    cleanup();return nil,'Mod archive does not contain the pinned version.'
+  end
   if opts.expectGame then
     local game=require('src.core.GameVersion').info(opts.expectGame)
     if not game or game.external or not ModTargets.supports(manifest,opts.expectGame)
@@ -1493,6 +1642,10 @@ function LauncherMods._installZipInner(source, opts)
     local free, freeErr = freeInstallPath(fs, manifest.id)
     if not free then cleanup(); return nil, freeErr end
     dest = free
+  end
+  if job then
+    return require('src.mods.ModInstallTransaction').publish(job,root,dest,manifest,installedRaw,
+      cloneNumber,opts,LauncherMods.checkoutAt,cleanup)
   end
   if fs.getInfo(dest) then
     -- ...AND AN UPDATE MUST NOT SHADOW A WORKING TREE.
