@@ -677,7 +677,7 @@ end
 -- overwrites the sheet's own tiles in VRAM in the original, so it has to be
 -- recolored and OG-RED-redrawn exactly like the sheet rather than blitted as
 -- raw DMG shades (#384).
-function SpriteRenderer:drawTile(path, x, y, flip)
+function SpriteRenderer:drawTile(path, x, y, flip, rect)
   local image, redraw = getImage(path), false
   if self.def.trueColor then
     redraw = preserveSpriteColor(x, y, 16, 8)
@@ -691,9 +691,16 @@ function SpriteRenderer:drawTile(path, x, y, flip)
   end
   local iw, ih = image:getDimensions()
   self.tileQuads = self.tileQuads or {}
-  self.tileQuads[path] = self.tileQuads[path]
-                         or love.graphics.newQuad(0, 0, iw, ih, iw, ih)
-  blitFrame(image, self.tileQuads[path], x, y, flip, redraw)
+  local key = path .. ':' .. iw .. ':' .. ih
+  if rect then
+    assert(rect[1]>=0 and rect[2]>=0 and rect[3]>0 and rect[4]>0
+      and rect[1]+rect[3]<=iw and rect[2]+rect[4]<=ih,'fishing pose exceeds image')
+    key = key .. ':' .. table.concat(rect,':')
+  end
+  self.tileQuads[key] = self.tileQuads[key] or (rect
+    and love.graphics.newQuad(rect[1],rect[2],rect[3],rect[4],iw,ih)
+    or love.graphics.newQuad(0,0,iw,ih,iw,ih))
+  blitFrame(image, self.tileQuads[key], x, y, flip, redraw)
 end
 
 return SpriteRenderer

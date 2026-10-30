@@ -1267,6 +1267,12 @@ R.constants = {
 R.field = {
   semantics = "deep", target = "field",
   keys = {
+    emotes = f.rec{
+      shock=f.opt(f.path),question=f.opt(f.path),happy=f.opt(f.path),sad=f.opt(f.path),
+      heart=f.opt(f.path),bolt=f.opt(f.path),sleep=f.opt(f.path),fish=f.opt(f.path),
+      grassRustle=f.opt(f.path),jumpShadow=f.opt(f.path),cutGrass=f.opt(f.path),
+      fishing=f.opt(f.path),fishingFemale=f.opt(f.path),order=f.opt(f.list(f.str)),
+    },
     ledges = f.list(f.rec{
       facing = f.enum{ "up", "down", "left", "right" },
       input = f.enum{ "up", "down", "left", "right" },

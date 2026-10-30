@@ -225,10 +225,17 @@ function Player:refreshFishTiles(data)
     if type(v) == "string" then return v end
     return type(v) == "table" and v.path or nil
   end
+  self._emoteData = GameVersion.isGen2() and data or nil
+  self.fishTileCrops = nil
   local pose
+  if self._emoteData then
+    local Game = package.loaded['src.core.Game']
+    local gender = Game and Game.save and Game.save.player and Game.save.player.gender
+    pose,self.fishTileCrops,self._emoteArt = require('src.world.Gen2FieldGraphics').fishing(data,gender)
+  end
   local form = require("src.pokemon.Sprites").playerForm(data)
   local fish = form and form.fish
-  if fish then
+  if fish and not pose then
     pose = { down = pathOf(fish.down), up = pathOf(fish.up),
              left = pathOf(fish.side) }
   end
@@ -1052,6 +1059,9 @@ function Player:startStairExit(speedX, speedY, facing)
 end
 
 function Player:draw(camX, camY)
+  if self._emoteData and require('src.world.Gen2FieldGraphics').token(self._emoteData) ~= self._emoteArt then
+    self:refreshFishTiles(self._emoteData)
+  end
   local sprite, px, py, facing, phase, flip, hopping = self:pose()
   -- the shadow stays on the ground under the jumper, mirrored out of the
   -- single 8x8 tile the ROM stores -- but the two engines lay it out
@@ -1067,7 +1077,11 @@ function Player:draw(camX, camY)
   --   parks sprites 38/39 offscreen at y=$a0, because its tile is a
   --   full-height half-ellipse that already fills the row.  Mirroring
   --   that tile downward stacked a second blob under the first (#408).
-  if hopping and self.shadowImg and self.shadowGen3 then
+  local sourceShadow = hopping and self._emoteData
+    and require('src.world.Gen2FieldGraphics').shadow(self._emoteData,self,camX,camY)
+  if sourceShadow then
+    -- Native Gen2 OBJ pair has already been drawn at the ground position.
+  elseif hopping and self.shadowImg and self.shadowGen3 then
     love.graphics.draw(self.shadowImg, math.floor(self.px - camX),
                        math.floor(self.py - camY) + self.shadowGen3)
   elseif hopping and self.shadowImg then
@@ -1089,7 +1103,8 @@ function Player:draw(camX, camY)
   if fishTile then
     sprite:draw(px, py, camX, camY, facing, 0, false, true)
     sprite:drawTile(fishTile, math.floor(px - camX),
-                    math.floor(py - camY) - 4 + 8, facing == "right")
+                    math.floor(py - camY) - 4 + 8, facing == "right",
+                    self.fishTileCrops and self.fishTileCrops[facing])
     return
   end
   -- ...AND THE THING YOU ARE SITTING ON, under everything.
