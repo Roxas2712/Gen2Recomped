@@ -26988,18 +26988,24 @@ end
 --
 -- The badge ORDER is the region's, not an address: Roxanne, Brawly, Wattson,
 -- Flannery, Norman, Winona, Tate & Liza, Juan.
+-- FRLG instead uses its own native party-menu enum: Flash, Cut, Fly,
+-- Strength, Surf, Rock Smash, Waterfall. Its seven gates must participate
+-- in the script vote and publication in that order, with no DIVE entry.
 -- ---------------------------------------------------------------------------
 
-local FIELD_MOVE_BADGE = {
-  CUT = 1, FLASH = 2, ROCK_SMASH = 3, STRENGTH = 4,
-  SURF = 5, FLY = 6, DIVE = 7, WATERFALL = 8,
-}
+local BADGED_FIELD_MOVES = {'CUT','FLASH','ROCK_SMASH','STRENGTH','SURF','FLY','DIVE','WATERFALL'}
 
 function RomExtractorGen3:fieldMoveGates(scripts)
+  local fieldMoveBadge={}
+  local region=self:isFireRedManifest()and'firered'or'emerald'
+  local FieldBadges=require('src.import.Gen3FieldBadges')
+  for _,id in ipairs(BADGED_FIELD_MOVES)do
+    fieldMoveBadge[id]=FieldBadges.number(region,id)
+  end
   local moveNumber = {}
   local order = (self._constants or {}).moveOrder or {}
   for n, id in pairs(order) do
-    if FIELD_MOVE_BADGE[id] then moveNumber[id] = n end
+    if fieldMoveBadge[id] then moveNumber[id] = n end
   end
 
   -- EVERY flag a field-move script checks before it asks about the move.
@@ -27028,7 +27034,7 @@ function RomExtractorGen3:fieldMoveGates(scripts)
 
   -- a base is right when it explains the most of them at once
   local votes = {}
-  for id, badge in pairs(FIELD_MOVE_BADGE) do
+  for id, badge in pairs(fieldMoveBadge) do
     for f in pairs(candidates[moveNumber[id] or -1] or {}) do
       local b = f - (badge - 1)
       votes[b] = (votes[b] or 0) + 1
@@ -27077,7 +27083,7 @@ function RomExtractorGen3:fieldMoveGates(scripts)
   end
   local moves, badges = {}, {}
   for i = 1, 8 do badges[i] = base + i - 1 end
-  for id, badge in pairs(FIELD_MOVE_BADGE) do
+  for id, badge in pairs(fieldMoveBadge) do
     if moveNumber[id] then
       moves[id] = { move = moveNumber[id], badge = badge,
                     badgeFlag = badges[badge],
@@ -27163,7 +27169,7 @@ function RomExtractorGen3:fieldMoveGates(scripts)
   -- wall asks for DIG.  ShouldDoBrailleDigEffect (1795E8) checks the flag,
   -- the map and the tile and nothing else: there is no badge to check.
   --
-  -- Added here rather than in FIELD_MOVE_BADGE precisely so it cannot pick
+  -- Added here rather than in BADGED_FIELD_MOVES precisely so it cannot pick
   -- up a badge by being in that table.
   do
     local order = (self._constants or {}).moveOrder or {}

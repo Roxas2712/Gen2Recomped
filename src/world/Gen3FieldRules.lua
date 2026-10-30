@@ -1,5 +1,7 @@
 -- Underwater is outdoors for escape-warp recording, but never for Fly.
 local Rules = {}
+local Badges=require('src.import.Gen3FieldBadges')
+Rules.badgeNumber,Rules.badgeFlag=Badges.number,Badges.flag
 local travel = { TOWN=true, CITY=true, ROUTE=true, OCEAN_ROUTE=true,
                  [1]=true, [2]=true, [3]=true, [6]=true }
 function Rules.allowsTravel(def)

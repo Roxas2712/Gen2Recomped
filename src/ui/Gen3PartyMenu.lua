@@ -259,8 +259,9 @@ function Gen3PartyMenu:flashUsableBy(mon)
   local gate = (self.game.data.constants or {}).gen3FieldMoves
   local flash = gate and gate.FLASH
   if not flash then return false end
-  if flash.badgeFlag then
-    local key = ("FLAG_G3_%04X"):format(flash.badgeFlag)
+  local badgeFlag=require('src.world.Gen3FieldRules').badgeFlag(self.game.data,'FLASH',require('src.core.GameVersion').get())
+  if badgeFlag then
+    local key = ("FLAG_G3_%04X"):format(badgeFlag)
     if not (self.game.save.flags and self.game.save.flags[key]) then
       return false
     end
