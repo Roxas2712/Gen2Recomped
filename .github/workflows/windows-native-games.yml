@@ -57,6 +57,8 @@ jobs:
             ~/.cargo/git
             .local/qa/windows-native-sdk-build/cargo-target
           key: windows-native-rust-v1-${{ hashFiles('tools/pokemon-xy-bridge/Cargo.lock','tools/pokemon-xy-bridge/src/**/*.rs','tools/pokemon_xy_source_pins.json','tools/windows_native_components.json') }}
+          restore-keys: |
+            windows-native-rust-v1-
       - name: Build pinned game-data-free native components
         if: ${{ !inputs.sdk_run_id }}
         shell: pwsh
