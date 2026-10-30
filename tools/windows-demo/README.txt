@@ -36,8 +36,11 @@ DIAGNOSE FÜR DEN WINDOWS-TEST
 Cloud-Test.cmd startet einen getrennten QA-Test ohne Zugriff auf dein Profil.
 Er prüft die mitgelieferte HTTPS-Bibliothek, einen echten öffentlichen HTTPS-
 Aufruf sowie Save-/Profil-Regressionsfälle mit künstlichen Daten. Er meldet
-damit keinen erfolgreichen Upload deiner echten Spielstände. Die JSON-Ausgabe
-und der Logpfad erscheinen danach im Fenster. Für den vollständigen Kontotest
+damit keinen erfolgreichen Upload deiner echten Spielstände. Der Logpfad und
+der Ordner der JSON-Datei erscheinen danach im Fenster. Falls der Konsolenlog
+leer bleibt, liegt der Bericht unter %APPDATA%/oasc-windows-cloud-qa-<Zeit>/
+cloud-selftest.json (bei älterem Layout zusätzlich unter LOVE/).
+Für den vollständigen Kontotest
 normal starten, anmelden, im Spiel speichern und den Save auf Gerät B prüfen.
 
 UMFANG

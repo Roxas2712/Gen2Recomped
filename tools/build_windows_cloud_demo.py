@@ -90,11 +90,13 @@ def build(a):
  for name in ['NOTICE.md','LICENSE-ROXAS2712.md','LICENSE','LICENSE.MD']:
   p=ROOT/name
   if p.is_file():shutil.copy2(p,bundle/name)
- diagnostic='\r\n'.join(['@echo off','setlocal','set "RETRO_WINDOWS_CLOUD_SELFTEST=1"',
+ diagnostic='\r\n'.join(['@echo off','setlocal DisableDelayedExpansion','set "RETRO_WINDOWS_CLOUD_SELFTEST=1"',
   r'"%~dp0RetroRecomped.exe" > "%TEMP%\RetroRecomped-Cloud-Test.log" 2>&1','set "result=%ERRORLEVEL%"',
-  r'type "%TEMP%\RetroRecomped-Cloud-Test.log"','echo.',r'echo Report/log: %TEMP%\RetroRecomped-Cloud-Test.log','pause','exit /b %result%',''])
+  r'type "%TEMP%\RetroRecomped-Cloud-Test.log"','echo.',r'echo Log: "%TEMP%\RetroRecomped-Cloud-Test.log"',
+  r'echo JSON: "%APPDATA%\oasc-windows-cloud-qa-...\cloud-selftest.json"',
+  r'echo Older profile layout: "%APPDATA%\LOVE\oasc-windows-cloud-qa-...\cloud-selftest.json"','pause','exit /b %result%',''])
  (bundle/'Cloud-Test.cmd').write_bytes(diagnostic.encode('ascii'))
- (bundle/'Profil-Auswahl.cmd').write_bytes(b'@echo off\r\nsetlocal\r\nset "RETRO_WINDOWS_CHOOSE_PROFILE=1"\r\n"%~dp0RetroRecomped.exe" %*\r\n')
+ (bundle/'Profil-Auswahl.cmd').write_bytes(b'@echo off\r\nsetlocal DisableDelayedExpansion\r\nset "RETRO_WINDOWS_CHOOSE_PROFILE=1"\r\n"%~dp0RetroRecomped.exe" %*\r\n')
  guide=(ROOT/'tools/windows-demo/README.txt').read_text(encoding='utf-8')
  (bundle/'LIESMICH.txt').write_text(guide,encoding='utf-8-sig')
  receipt={'schema':1,'author':'Roxas2712','build':VERSION,'sourceRevision':revision,'platform':'Windows x64',
