@@ -6,7 +6,13 @@ function M.available(game)
   and game.data.constants.gen3NativeParty,require('src.core.GameVersion').get())
 end
 function M.forHost(owner)
- return M.available(owner.game)and not(owner.battle or owner.chooseOrder or owner.noInput)
+ if not M.available(owner.game)or owner.battle or owner.chooseOrder or owner.noInput then return false end
+ -- GBA item pickers do not carry opts.battle. Their real battle remains
+ -- underneath the bag on the stack and still owns its presentation route.
+ for _,state in ipairs(owner.game.stack and owner.game.stack.states or{})do
+  if state.isBattleState then return false end
+ end
+ return true
 end
 function M.retainStatus(game,battle,id,list)
  return not battle and M.available(game)and getmetatable(list)==require('src.ui.Gen3BagMenu')

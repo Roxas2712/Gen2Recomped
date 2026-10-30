@@ -34,6 +34,9 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
  for role,ir in pairs(spec.textIR)do spec.textIR[role]={};T.eq(Assets.valid(spec,version),false);spec.textIR[role]=ir end
  local owner={game=game};T.eq(View.forHost(owner),true)
  for _,flag in ipairs{'battle','chooseOrder','noInput'}do owner[flag]=true;T.eq(View.forHost(owner),false);owner[flag]=nil end
+ game.stack={states={{isBattleState=true},{isMenu=true}}}
+ T.eq(View.forHost(owner),false,'a battle item picker is identified by its actual underlying battle')
+ game.stack=nil
  for _,foreign in ipairs{'ruby','sapphire','gold'}do T.eq(Assets.valid(spec,foreign),false);T.eq(#Assets.missing(foreign),0)end
 end
 Fs.read,Fs.exists=oldRead,oldExists
