@@ -1,6 +1,7 @@
 """Serial real-socket and SQLite recovery checks, run only by NAS QA."""
 import json
 import atexit
+import os
 from pathlib import Path
 import socket
 import sys
@@ -11,10 +12,16 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.gen1_session_relay import Relay, PROFILE
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
-import qa_storage as qa
-qa._storage = qa.Storage(Path(__file__).resolve().parents[1])
-atexit.register(qa._storage.close)
-qa.qa_source(Path(__file__).resolve().parents[1])
+if os.getenv('GITHUB_ACTIONS') == 'true':
+    # Hosted jobs have disposable workspaces. The local cache manager uses
+    # POSIX descriptor leases and must not be imported on Windows runners.
+    spawn = subprocess.Popen
+else:
+    import qa_storage as qa
+    qa._storage = qa.Storage(Path(__file__).resolve().parents[1])
+    atexit.register(qa._storage.close)
+    qa.qa_source(Path(__file__).resolve().parents[1])
+    spawn = qa.qa_popen
 
 
 class RelayTests(unittest.TestCase):
@@ -98,8 +105,10 @@ class RelayTests(unittest.TestCase):
         rows = self.exchange(forged, dict(type='session_open', mode='trade', profile='wrong'))
         self.assertTrue(rows and rows[0]['type'] == 'session_error')
 
+    @unittest.skipUnless(sys.platform.startswith('linux'),
+                         'The fallback FFI TCP adapter is a Linux-only fixture')
     def test_actual_lua_tcp_channel_codec_and_native_commit(self):
-        child = qa.qa_popen(['luajit', 'tests/fixtures/gen1_interfaces/transport/client.lua',
+        child = spawn([os.getenv('LUA', 'luajit'), 'tests/fixtures/gen1_interfaces/transport/client.lua',
                                   '%s:%s' % self.relay.address], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         deadline = time.monotonic() + 20
         while child.poll() is None and time.monotonic() < deadline:

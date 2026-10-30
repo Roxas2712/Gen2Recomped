@@ -31,7 +31,12 @@ for _,kind in ipairs({'foreign','checkout'})do
  local m=Fake();local path=pack(m,'native','1.0.0');T.eq(drain(assert(Mods.beginInstallZip(path))),true,'fixture installs')
  local original=m.files['mods/native/manifest.json'];path=pack(m,'native','2.0.0')
  if kind=='foreign'then m.foreign=function(path)if path:match('^mods/')then return '/protected-location'end end
- else m.files['mods/native/.git/HEAD']='owned source checkout marker'end
+ else
+  m.files['mods/native/.git/HEAD']='owned source checkout marker'
+  local marker=io.open('\\owned\\mods\\native\\.git\\HEAD','rb')
+  T.check(marker~=nil,'filesystem fixture recognizes Windows checkout probe separators')
+  if marker then marker:close()end
+ end
  local ok=drain(assert(Mods.beginInstallZip(path,{replace=true})))
  T.eq(ok,nil,'refuses replacing '..kind..' location')
  T.eq(m.files['mods/native/manifest.json'],original,'refusal preserves existing package')

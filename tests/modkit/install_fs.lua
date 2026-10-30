@@ -7,7 +7,7 @@ return function()
  local Safety=require('src.core.SaveSafety')
  local old={fs=love.filesystem,open=io.open,cache={},load=Saves.loadOptions,save=Saves.saveOptions,folders=Saves.gameFolders,
   persistence=Saves.persistenceFs,real=Safety.realPath}
- local function rel(path)return path:gsub('^/owned/','')end
+ local function rel(path)return (path:gsub('\\','/'):gsub('^/owned/',''))end
  local function lookup(path)
   path=rel(path)
   for prefix,tree in pairs(m.mounts)do
@@ -111,6 +111,7 @@ return function()
  end
  love.filesystem=fs
  io.open=function(path,mode)
+  path=path:gsub('\\','/')
   if path:sub(1,7)~='/owned/'then return nil end
   return fs.newFile(path,mode=='rb'and'r'or'w')
  end
