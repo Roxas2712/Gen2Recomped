@@ -8,6 +8,13 @@ function M.fromBag(game,battle,id,list)
   return M.active()and not battle and item and item.machine
     and getmetatable(list)==require('src.ui.Gen3BagMenu')or false
 end
+-- Status medicines must keep their selected party member on screen until
+-- the result is acknowledged, including a refusal that consumes no item.
+function M.statusFromBag(game,battle,id,list)
+  return M.active()and not battle and list and list.rs==true
+    and getmetatable(list)==require('src.ui.Gen3BagMenu')
+    and require('src.inventory.Gen3FieldUse').kind(game.data,id)=='status'or false
+end
 -- item_use.c:689-722: boot, PC login cue, contained move and the (7,7)
 -- teaching question precede the party picker. NO/B leaves the same bag open.
 function M.prompt(game,battle,id,list,onYes)

@@ -132,6 +132,26 @@ T.eq(pops,1,'team cancel pops once')
 -- A retained medicine picker owns its result window just as the retained
 -- teaching picker does. Keep the host TextBox input and completion callback.
 local Machine=require('src.inventory.Gen3RsMachineUse')
+local BagMenu=require('src.ui.Gen3BagMenu');local Screens=require('src.ui.Screens')
+local statusBag=setmetatable({game=game,rs=true},BagMenu)
+game.data.items.ANTIDOTE={index=14,name='ANTIDOTE'}
+game.data.items.CUSTOM_CURE={index=500,name='Renamed medicine'}
+game.data.constants.gen3ItemEffects={ANTIDOTE={cures={'PSN'}},CUSTOM_CURE={cureAll=true}}
+local oldPush,captured=Screens.push
+Screens.push=function(_,kind,opts)T.eq(kind,'PartyMenu');captured=opts end
+for _,version in ipairs({'ruby','sapphire'})do
+ V.set(version)
+ require('src.ui.BagMenu').useItem(game,nil,'ANTIDOTE',statusBag)
+ T.eq(captured.keepOpen,true,version..' status target survives actual bag dispatch')
+ T.eq(Machine.statusFromBag(game,nil,'CUSTOM_CURE',statusBag),true,'ROM effect survives renamed display text')
+ T.eq(Machine.statusFromBag(game,{},'ANTIDOTE',statusBag),false,'battle keeps its own result route')
+ statusBag.rs=false;T.eq(Machine.statusFromBag(game,nil,'ANTIDOTE',statusBag),false,'legacy bag stays unchanged');statusBag.rs=true
+ T.eq(Machine.statusFromBag(game,nil,'ANTIDOTE',{}),false,'foreign list has no native party owner')
+end
+for _,version in ipairs({'red','gold','emerald','firered','leafgreen'})do
+ V.set(version);T.eq(Machine.statusFromBag(game,nil,'ANTIDOTE',statusBag),false,'other editions keep their own target lifecycle')
+end
+Screens.push=oldPush
 local nativePages,nativeDraws,done=0,0,0
 screen.keepOpen,screen.pickOnly,screen.tmhm,screen.battle=true,true,nil,nil
 screen.rsNative={machinePages=function(_,pages)nativePages=nativePages+1;return pages end,
