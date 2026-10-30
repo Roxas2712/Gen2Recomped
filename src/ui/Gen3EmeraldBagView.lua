@@ -134,16 +134,42 @@ function M:drawNative(action)
  local narrow={font='narrow',colors=normal}
  local bg=female and man.background.variants.female or man.background.png
  g.setColor(1,1,1,1);g.draw(self:image(bg),0,0)
+ local switching=owner.emeraldSwitch
+ if switching then
+  local entry=assert(man.transition)
+  g.draw(self:image(female and entry.variants.female or entry.png),112,16)
+  local height=math.min(16,switching.age)*8
+  if height>0 then
+   g.setScissor(112,16,120,height);g.draw(self:image(bg),0,0);g.setScissor()
+  end
+ end
  local ind=man.indicator;local path=female and ind.variants.female or ind.png;local image=self:image(path)
  local iw,ih=image:getDimensions()
  for i=1,#owner.pockets do
   g.draw(image,self:quad(path,i==owner.pocket and 8 or 0,0,8,8,iw,ih),(i-1+5)*8,24)
  end
  local pocket=owner.pockets[owner.pocket];local label=pocket.name or''
- font.draw(label,32+math.floor((64-font.measure(label))/2),9,
-  {colors={fg=color(17),shadow=color(20),bg={0,0,0,0}}})
+ local function name(text,x)
+  font.draw(text,x+math.floor((64-font.measure(text))/2),9,
+   {colors={fg=color(17),shadow=color(20),bg={0,0,0,0}}})
+ end
+ if switching then
+  local offset=math.min(8,math.floor(switching.age/2))*8*switching.dir
+  g.setScissor(32,8,64,16)
+  name(owner.pockets[switching.from].name or'',32-offset)
+  name(label,32+64*switching.dir-offset);g.setScissor()
+ else name(label,32)end
  local bag=man.sprites[female and'female'or'male'];path=bag.png;image=self:image(path);iw,ih=image:getDimensions()
- g.setColor(1,1,1,1);g.draw(image,self:quad(path,0,(FRAME[pocket.key]or 1)*64,64,64,iw,ih),36,34)
+ local frame=(switching and switching.age<=5)and 0 or(FRAME[pocket.key]or 1)
+ local drop=switching and math.min(0,switching.age-5)or 0
+ g.setColor(1,1,1,1);g.draw(image,self:quad(path,0,frame*64,64,64,iw,ih),36,34+drop)
+ if switching then
+  local entry=assert(man.sprites.ball);local ball=self:image(entry.png);local bw,bh=ball:getDimensions()
+  local center=16-(switching.age+1)%2
+  local angle=-switching.dir*switching.age*8*math.pi*2/256
+  g.draw(ball,self:quad(entry.png,0,0,16,16,bw,bh),center,center,angle,1,1,8,8)
+  return
+ end
  local top=self.game.stack:top();local selected=top~=owner
  local sale=selected and not action and getmetatable(top)==require('src.ui.Gen3BagSale')
  local message=top.emeraldBagMessageOwner==owner

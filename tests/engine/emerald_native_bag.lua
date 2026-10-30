@@ -38,7 +38,7 @@ local IR=load('src.core.game3.scripting.text_ir')
 local Serial=require('src.core.SaveSerializer')
 V.set('emerald')
 local texts,glyphs,draws,frames,cursors={}, {}, {}, {}, {};local forcedIcon
-love.graphics={setColor=function()end,draw=function(...)draws[#draws+1]={...}end,
+love.graphics={setColor=function()end,setScissor=function()end,draw=function(...)draws[#draws+1]={...}end,
  newQuad=function(x,y,w,h)return{x=x,y=y,w=w,h=h}end}
 local font={CHAR_SELECTOR_ARROW=239,COLOR={NORMAL={}},
  measure=function(text,opts)return#text*(opts and opts.font=='narrow'and 5 or 6)end,
@@ -55,7 +55,8 @@ function owner:selected()return self.rows[self.index]end
 function owner:itemIcon(_,forced)forcedIcon=forced end
 local top=owner;game.stack={top=function()return top end}
 local manifest={background={png='bg',variants={female='female-bg'}},indicator={png='indicator',variants={female='female-indicator'}},
- sprites={male={png='male-bag'},female={png='female-bag'},arrows={png='arrows',w=16,h=16},swap={png='swap'}},
+ transition={png='switch',variants={female='female-switch'}},
+ sprites={male={png='male-bag'},female={png='female-bag'},arrows={png='arrows',w=16,h=16},swap={png='swap'},ball={png='ball'}},
  palettes={male={},female={}},textIR={close=IR.fromAscii('CLOSE BAG'),count=IR.fromAscii('x{STR_VAR_1}'),
  number=IR.fromAscii('{STR_VAR_1} {STR_VAR_2}'),hmNumber=IR.fromAscii('H{STR_VAR_1} {STR_VAR_2}'),
  returnTo=IR.fromAscii('Return to {STR_VAR_1}.'),selected=IR.fromAscii('{STR_VAR_1} is selected.'),
@@ -166,6 +167,24 @@ local prompt;for _,row in ipairs(texts)do if row.text=='Move ITEM 6\nwhere?'then
 T.check(prompt);T.eq(prompt.x,3);T.eq(prompt.y,105)
 T.eq(Serial.encode(game.save),navigationSave,'moving-line rendering never edits any saved value')
 owner.emeraldSwap=nil
+owner.emeraldSwitch={from=1,dir=1,age=0};texts={};draws={};glyphs={}
+view:drawNative();T.eq(#glyphs,0,'no stale cursor is drawn during the pocket wipe')
+local bagDraw,ballDraw,eraseDraw
+for _,draw in ipairs(draws)do
+ if draw[1].path=='male-bag'then bagDraw=draw end
+ if draw[1].path=='ball'then ballDraw=draw end
+ if draw[1].path=='switch'then eraseDraw=draw end
+end
+T.check(eraseDraw);T.eq(eraseDraw[2],112);T.eq(eraseDraw[3],16)
+T.eq(bagDraw[2].y,0,'the bag starts closed');T.eq(bagDraw[4],29,'native five-pixel drop')
+T.eq(ballDraw[3],15);T.eq(ballDraw[4],15);T.eq(ballDraw[7],1);T.eq(ballDraw[9],8)
+for _,row in ipairs(texts)do T.check(row.y~=105,'description waits for the new list')end
+owner.emeraldSwitch.age=6;draws={};view:drawNative()
+for _,draw in ipairs(draws)do
+ if draw[1].path=='male-bag'then T.eq(draw[2].y,64);T.eq(draw[4],34)end
+ if draw[1].path=='ball'then T.check(draw[5]<0,'RIGHT spins clockwise')end
+end
+owner.emeraldSwitch=nil
 -- Exercise the real bag update route across fixed frames, including the
 -- same repeat boundary while the original insertion line is active.
 setmetatable(owner,UI)
@@ -208,6 +227,25 @@ tick({b=true,down=true},{b=true,down=true})
 T.eq(owner.emeraldSwap,nil,'cancel wins over a simultaneous repeated direction')
 T.eq(owner.index,3,'cancel retains the native insertion cursor adjustment')
 T.eq(Serial.encode(game.save),navigationSave,'held input never edits saved values')
+local Pocket=require('src.ui.Gen3EmeraldBagPocket')
+local nav={game=game,pockets={{},{},{}},pocket=1,index=9,top=5,rows=rows}
+nav.movePocket=function(self,d)self.pocket=(self.pocket-1+d)%3+1;self.rows=rows;self.index,self.top=1,1 end
+Pocket.start(nav,1);T.eq(nav.pocket,2);T.eq(nav.emeraldSwitch.age,0)
+for _=1,16 do T.eq(Pocket.update(nav),true)end
+T.eq(nav.emeraldSwitch.age,16);T.eq(Pocket.update(nav),true);T.eq(nav.emeraldSwitch,nil)
+T.eq(Pocket.update(nav),false)
+nav.index,nav.top=12,6;nav.message='Previous item refusal';Pocket.start(nav,-1)
+T.eq(nav.message,nil,'the previous pocket message cannot cover the new description')
+T.eq(nav.pocket,1);T.eq(nav.index,9);T.eq(nav.top,5,'each pocket restores its own scroll')
+Pocket.start(nav,-1);T.eq(nav.pocket,3,'LEFT wraps from the first pocket')
+Pocket.start(nav,1);T.eq(nav.pocket,1,'fresh changes can chain before animation completion')
+T.eq(nav.emeraldSwitch.from,3);T.eq(nav.emeraldSwitch.age,0)
+nav.index,nav.top=13,6;Pocket.remember(nav)
+nav.rows={close};nav.index,nav.top=1,1;Pocket.restore(nav)
+T.eq(nav.index,1);T.eq(nav.top,1,'removing items clamps retained positions')
+nav.index,nav.top=4,1;nav.scriptRows={close};Pocket.remember(nav);nav.scriptRows=nil
+Pocket.restore(nav);T.eq(nav.index,1,'scripted lists never replace the retained real cursor')
+T.eq(Serial.encode(game.save),navigationSave,'pocket positions are session-local, never save edits')
 owner.emerald=false;owner.listRows=function()return 8 end;owner.index,owner.top=1,1
 tick();tick({down=true},{down=true},100)
 T.eq(owner.index,2,'legacy presenters retain their own input behavior')

@@ -300,6 +300,7 @@ function Gen3BagMenu.new(game, opts)
   self.emerald = require('src.ui.Gen3EmeraldBagView').available(self)
   require('src.ui.Gen3BagPocketMemory').restore(self)
   self:rebuild()
+  if self.emerald then require('src.ui.Gen3EmeraldBagPocket').restore(self)end
   return self
 end
 
@@ -426,6 +427,7 @@ function Gen3BagMenu:rebuild()
 end
 
 function Gen3BagMenu:close()
+  if self.emerald then require('src.ui.Gen3EmeraldBagPocket').remember(self)end
   self.game.stack:pop()
   if self.onCancel then self.onCancel() end
 end

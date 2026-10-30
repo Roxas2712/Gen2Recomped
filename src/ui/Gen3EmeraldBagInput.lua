@@ -3,6 +3,7 @@
 -- Pocket switches and actions remain fresh presses, as in item_menu.c.
 local M={}
 function M.update(owner,input)
+ local Pocket=require('src.ui.Gen3EmeraldBagPocket')
  local view,keys
  if input.isDown then
   owner.emeraldView=owner.emeraldView or require('src.ui.Gen3EmeraldBagView').new(owner)
@@ -15,9 +16,10 @@ function M.update(owner,input)
   keys=view.keys;keys:trackHeld(input)
  end
  if not owner.emeraldSwap and not owner.lockPocket then
-  if input:wasPressed('left')then owner:movePocket(-1);return end
-  if input:wasPressed('right')then owner:movePocket(1);return end
+  if input:wasPressed('left')then Pocket.start(owner,-1);return end
+  if input:wasPressed('right')then Pocket.start(owner,1);return end
  end
+ if Pocket.update(owner)then return end
  -- Share the same repeat clock with insertion mode without synthesizing an
  -- action or changing the input object used by another screen.
  local repeated=input
