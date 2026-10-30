@@ -100,3 +100,12 @@ The same pinned GPLv3/Section 7 grant also covers the additional original
 The native lobby, durable SQLite relay, native save transaction journal and
 portable `compat/gen1_session` protocol/peer integration are contributions by
 Roxas2712. No proprietary Gen1 launcher UI, ROM or game assets are copied.
+
+## Optional Pokémon TCG cartridge backend
+
+The TCG host, direct input-lockstep connection, TCG mod API 1, launcher bridge
+and qualification tools are integration contributions by **Roxas2712**. The
+private build recipe uses mstan/gbrecompiled at its documented pinned revision;
+its authors' existing rights and licence obligations remain unchanged. No
+runtime checkout, cartridge, ROM-derived C, binary or battery file is bundled
+with this contribution. See docs/TCG-GBC.md and docs/TCG-MOD-API.md.

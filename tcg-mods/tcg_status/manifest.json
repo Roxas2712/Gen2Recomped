@@ -1,0 +1,1 @@
+{"id":"tcg_status","name":"TCG Status Overlay","version":"1.0.0","game":"tcggbc","api":1,"online":"cosmetic","capabilities":["overlay","memory.read"]}

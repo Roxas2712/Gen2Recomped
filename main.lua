@@ -1297,6 +1297,8 @@ function love.threaderror(thread, errorstring)
 end
 
 function love.quit()
+  local tcg=package.loaded["src.tcg.Player"]
+  if tcg then tcg.shutdown()end
   local pinball = package.loaded['src.pinball.Player']
   if pinball then pinball.shutdown() end
   local kalos = package.loaded['src.import.PokemonXYNative']
