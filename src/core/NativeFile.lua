@@ -5,7 +5,7 @@
 local NativeFile = {}
 local windowsAPI
 
-local function windowsRead(path)
+local function windowsBindings()
   local ffi = require('ffi')
   if ffi.os ~= 'Windows' then return nil, 'native Windows reader unavailable' end
   if not windowsAPI then
@@ -19,7 +19,12 @@ local function windowsRead(path)
     ]]
     windowsAPI = ffi.load('kernel32')
   end
-  local api = windowsAPI
+  return ffi,windowsAPI
+end
+
+local function windowsRead(path)
+  local ffi,api=windowsBindings()
+  if not ffi then return nil,api end
   local n = api.MultiByteToWideChar(65001, 8, path, #path, nil, 0)
   if n == 0 then return nil, 'invalid UTF-8 file path' end
   local wide = ffi.new('uint16_t[?]', n + 1)
@@ -60,6 +65,49 @@ local function windowsRead(path)
   api.CloseHandle(handle)
   if not ok then return nil, bytes end
   return bytes, why
+end
+
+-- Bounded, read-only input for cooperative importers. Keep the old whole-file
+-- read contract above; callers of this API own and close the returned handle.
+function NativeFile.openRead(path)
+  if type(path)~='string' or path=='' or path:find('%z')then return nil,'invalid native file path'end
+  local osName=love and love.system and love.system.getOS and love.system.getOS()
+  if osName~='Windows'then
+    local file,why=io.open(path,'rb');if not file then return nil,why end
+    local size=file:seek('end')
+    if not size or not file:seek('set',0)then file:close();return nil,'cannot measure/rewind native file'end
+    return file,size
+  end
+  local called,stream,size=pcall(function()
+    local ffi,api=windowsBindings();if not ffi then return nil,api end
+    local n=api.MultiByteToWideChar(65001,8,path,#path,nil,0)
+    if n==0 then return nil,'invalid UTF-8 file path'end
+    local wide=ffi.new('uint16_t[?]',n+1)
+    if api.MultiByteToWideChar(65001,8,path,#path,wide,n)==0 then return nil,'cannot convert UTF-8 file path'end
+    local handle=api.CreateFileW(wide,0x80000000,1,nil,3,0x08000000,nil)
+    if handle==ffi.cast('void *',-1)then return nil,'cannot open native file (Windows error '..tonumber(api.GetLastError())..')'end
+    handle=ffi.gc(handle,api.CloseHandle)
+    local length=ffi.new('int64_t[1]')
+    local measured=api.GetFileSizeEx(handle,length)~=0
+    local bytes=tonumber(length[0]);local closed=false
+    local file={}
+    function file:close()
+      if closed then return true end
+      if api.CloseHandle(handle)==0 then return nil,'cannot close native file'end
+      closed=true;ffi.gc(handle,nil);return true
+    end
+    if not measured or bytes<0 then file:close();return nil,'cannot measure native file'end
+    function file:read(amount)
+      if closed then return nil,'native file is closed'end
+      if type(amount)~='number' or amount<1 or amount>4*1024*1024 or amount%1~=0 then return nil,'invalid stream chunk size'end
+      local buffer,count=ffi.new('uint8_t[?]',amount),ffi.new('unsigned long[1]')
+      if api.ReadFile(handle,buffer,amount,count,nil)==0 then return nil,'cannot read native file (Windows error '..tonumber(api.GetLastError())..')'end
+      local got=tonumber(count[0]);return ffi.string(buffer,got),got
+    end
+    return file,bytes
+  end)
+  if not called then return nil,stream end
+  return stream,size
 end
 
 function NativeFile.read(path)

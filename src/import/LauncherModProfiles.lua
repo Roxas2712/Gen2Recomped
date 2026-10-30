@@ -15,18 +15,50 @@ local function clearFiles(state)
 end
 local function stop(self,why)
   local state=self._profileApplying;if not state then return end
+  if state.restoreJob or state.finishJob then message(self,'Finishing profile recovery or commit…',true);return false end
   if state.job then state.job:cancel() end
   if state.download then state.download:cancel() end
+  local installation=state.installJob or state.backupJob
+  if installation then
+    state.stopWhy=why
+    if Packages.cancelInstall(installation)then state.stage='cancelling' end
+    message(self,'Cancelling the transfer and preserving the previous profile…',true);return true
+  end
   if state.backup then
-    local ran,ok,err=pcall(Packages.restoreProfile,state.backup)
-    if not ran or not ok then
-      self._profileRecoveryBlocked=true;message(self,'Mod profile recovery needs attention: '..tostring(err or ok),false)
-    else message(self,why..' Previous mod files and activation restored.',false) end
-  else message(self,why..' Installed mods are unchanged.',false) end
+    local job,err=Packages.beginRestoreProfile(state.backup)
+    if job then state.restoreJob=job;state.stage='restoring';state.stopWhy=why;return true end
+    self._profileRecoveryBlocked=true;message(self,'Mod profile recovery needs attention: '..tostring(err),false)
+  else
+    if Saves.persistenceFs().read('mod_profile_recovery.lua')then self._profileRecoveryBlocked=true end
+    message(self,why..' Installed mods are unchanged.',false)
+  end
   clearFiles(state);self._profileApplying=nil;self:_refreshMods()
 end
 function M.tick(self)
   local state=self._profileApplying;if not state then return end
+  if state.stage=='cancelling' then
+    local key=state.installJob and 'installJob'or'backupJob'
+    local status,result=Packages.stepInstall(state[key]);if status~='done'then return end
+    if key=='backupJob'and type(result)=='table'then state.backup=result end
+    state[key]=nil;return stop(self,state.stopWhy or 'Profile cancelled.')
+  elseif state.stage=='restoring' then
+    local status,ok,why=Packages.stepInstall(state.restoreJob);if status~='done'then return end
+    state.restoreJob=nil
+    if not ok then self._profileRecoveryBlocked=true;message(self,'Profile recovery files retained: '..tostring(why),false)
+    else self._profileRecoveryBlocked=nil;message(self,(state.stopWhy or 'Transfer cancelled.')..' Previous profile restored.',false)end
+    clearFiles(state);self._profileApplying=nil;self:_refreshMods();return
+  elseif state.stage=='finishing' then
+    local status,ok,why=Packages.stepInstall(state.finishJob);if status~='done'then return end
+    state.finishJob=nil
+    if not ok then
+      self._profileRecoveryBlocked=true;clearFiles(state);self._profileApplying=nil
+      message(self,'Profile commit recovery is required: '..tostring(why),false);return
+    end
+    clearFiles(state);self._profileApplying=nil;if not state.plan.resume then self._modProfilePlan=nil end
+    self._settingsCache=nil;self:_refreshMods()
+    message(self,state.plan.resume and 'This save’s mod versions and activation have been restored.'or'Cloud mod profile applied. Package versions and activation now match.',true)
+    return
+  end
   if state.stage=='catalogue' then
     if self._communityFindJob then return end
     if not self.findIndex then stop(self,'ModCompass catalogue unavailable.');return end
@@ -89,13 +121,26 @@ function M.tick(self)
     end
     if not Profile.unchanged(state.plan,Packages.list(),Saves.loadOptions()) then stop(self,'Local mods changed while downloading. Sync again.');return end
     local ids={};for _,file in ipairs(state.files) do ids[#ids+1]=file.id end
-    local backup,why=Packages.backupProfile(ids)
+    if not state.backupJob then
+      local job,why=Packages.beginBackupProfile(ids)
+      if not job then stop(self,'Could not preserve the current profile: '..tostring(why));return end
+      state.backupJob=job
+    end
+    local status,backup,why=Packages.stepInstall(state.backupJob);if status~='done'then return end
+    state.backupJob=nil
     if not backup then stop(self,'Could not preserve the current profile: '..tostring(why));return end
     state.backup=backup;state.stage='install';state.cursor=1
   elseif state.stage=='install' then
     local file=state.files[state.cursor]
     if file then
-      local ok,version,mismatch=Packages.installFromRelease(file.id,file.release,file.path)
+      if not state.installJob then
+        local job,why=Packages.beginInstallFromRelease(file.id,file.release,file.path,nil,file.release.version)
+        if not job then stop(self,'Profile installation failed: '..tostring(why));return end
+        state.installJob=job
+      end
+      local status,ok,version,mismatch=Packages.stepInstall(state.installJob);if status~='done'then return end
+      state.installJob=nil
+      if state.stopWhy then stop(self,state.stopWhy);return end
       if not ok or mismatch or version~=file.release.version then stop(self,'Profile installation failed: '..tostring(mismatch or version));return end
       state.cursor=state.cursor+1
     else
@@ -104,15 +149,16 @@ function M.tick(self)
       if not Saves.saveOptions(options) then stop(self,'Could not save package provenance.');return end
       local ok,why=Profile.accept(state.plan)
       if not ok then stop(self,tostring(why));return end
-      local finished,err=Packages.finishProfile(state.backup)
-      if not finished then stop(self,tostring(err));return end
-      clearFiles(state);self._profileApplying=nil;if not state.plan.resume then self._modProfilePlan=nil end;self._settingsCache=nil;self:_refreshMods()
-      message(self,state.plan.resume and 'This save’s mod versions and activation have been restored.' or 'Cloud mod profile applied. Package versions and activation now match.',true)
+      local job,err=Packages.beginFinishProfile(state.backup)
+      if not job then stop(self,tostring(err));return end
+      state.finishJob=job;state.stage='finishing'
     end
   end
 end
 function M.install(RI)
+  function RI:_cancelProfileInstall()return stop(self,'Profile transfer cancelled.')end
   function RI:_communityApplyProfile(plan,manual)
+    if self._profileRecoveryBlocked or self._modInstallRecoveryBlocked then message(self,'Recover the unfinished installation first.',false);return end
     if self._profileApplying or self._communityDownload or self._storageTask then message(self,'Finish the current download or sync first.',false);return end
     if (plan.kind=='conflict' or plan.engineMismatch) and not manual then self._modProfilePlan=plan;message(self,'Cloud mod profile needs review.',false);return end
     local installed=Packages.list()
@@ -135,14 +181,8 @@ function M.install(RI)
     local self=new(...)
     local bytes=Saves.persistenceFs().read('mod_profile_recovery.lua')
     if bytes then
-      local ok,snapshot=pcall(require('src.core.SaveSerializer').decode,bytes)
-      local restored,why
-      if ok then
-        local ran,a,b=pcall(Packages.restoreProfile,snapshot)
-        restored=ran and a;why=ran and b or a
-      end
-      if not restored then self._profileRecoveryBlocked=true;message(self,'Unfinished mod profile needs recovery: '..tostring(why or snapshot),false)
-      else message(self,'Recovered the previous complete mod profile after an interrupted transfer.',true) end
+      self._pendingProfileRecovery=true;self._profileRecoveryBlocked=true
+      message(self,'Preparing recovery of the previous complete mod profile…',true)
     end
     return self
   end
@@ -156,12 +196,7 @@ function M.install(RI)
       return
     end
     if entry and entry.action=='modProfileRecover' then
-      local bytes=Saves.persistenceFs().read('mod_profile_recovery.lua')
-      local ran,ok,why=pcall(function()
-        return Packages.restoreProfile(require('src.core.SaveSerializer').decode(bytes or ''))
-      end)
-      if ran and ok then self._profileRecoveryBlocked=nil;self:_refreshMods();message(self,'Previous complete mod profile restored.',true)
-      else message(self,'Recovery files are preserved: '..tostring(why or ok),false) end
+      self:_recoverModInstallations()
       return
     end
     if entry and entry.action=='modProfileReview' and self._modProfilePlan then
@@ -221,7 +256,7 @@ function M.install(RI)
       if state.total then label=label..string.format(' · %.1f / %.1f MB',(state.bytes or 0)/1048576,state.total/1048576) end
       love.graphics.setFont(self.hintFont);RI._ui.col(RI.palette().link)
       love.graphics.printf(label,x,y,math.max(60,w-110*s),'left')
-      if state.stage~='install' and state.stage~='backup' then self._profileCancelRect=self:_chipButton(x+w-100*s,y,'CANCEL',{w=100*s,h=32*s}) end
+      if not state.restoreJob and not state.finishJob then self._profileCancelRect=self:_chipButton(x+w-100*s,y,'CANCEL',{w=100*s,h=32*s}) end
       return 50*s+original(self,x,y+50*s,w,h-50*s,...)
     end
   end

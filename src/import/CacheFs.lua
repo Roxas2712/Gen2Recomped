@@ -1357,4 +1357,21 @@ function CacheFs.withMounted(dir, mountPoint, fn)
   return res
 end
 
+-- An explicit lease for a coroutine which may be discarded on cancellation.
+-- Its release uses the same PHYSFS API as acquisition; LOVE's public unmount
+-- cannot resolve an external directory acquired through the native bridge.
+-- Never borrow an existing mount or expose arbitrary contents at the root.
+function CacheFs.scopedMount(dir, mountPoint)
+  if type(dir)~='string' or dir=='' or type(mountPoint)~='string' or mountPoint=='' then return nil end
+  local mount,unmount,at=resolveMount(),resolveUnmount(),resolveMountPoint()
+  if not(mount and unmount and at) or at(dir)then return nil end
+  if not mount(dir,mountPoint,true)then return nil end
+  local released=false
+  return function()
+    if released then return true end
+    assert(unmount(dir),'Could not release the owned import-folder mount.')
+    released=true;return true
+  end
+end
+
 return CacheFs

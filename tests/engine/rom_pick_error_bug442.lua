@@ -51,8 +51,8 @@ local function clearSaveDir()
   end
 end
 
--- Only the fields the Android focus / choose / chooseMod paths read.  _installMod
--- is stubbed per case because the outcome it reports is what consumePick keys on.
+-- Only the fields the Android focus / choose / chooseMod paths read. Focus uses
+-- the selected result seam; the USB Choose case below exercises the real job.
 local function freshImporter(opts)
   opts = opts or {}
   pickCalls = {}
@@ -194,14 +194,33 @@ end
 -- A USB copy is the player's own file: keep it, but stop retrying it this session.
 do
   clearSaveDir()
+  local owned = require("tests.modkit.install_fs")()
   love.filesystem.write("mymod.zip", "not a zip")
   local ri = freshImporter({})
   ri:chooseMod()
-  eq(ri._installed, "mymod.zip", "Import Mod picks up a USB copy")
+  local job = ri._localModInstall and ri._localModInstall.job
+  check(job ~= nil, "Import Mod starts the cooperative USB import")
+  check(love.filesystem.getInfo("mymod.zip") ~= nil,
+    "the source is retained while the job owns it")
+  local function settle()
+    for _ = 1, 1000 do
+      if not ri._localModInstall then return end
+      ri:_stepModInstall()
+    end
+    error("USB picker job did not terminate")
+  end
+  settle()
+  eq(job and job.sources and job.sources[1], "mymod.zip", "Import Mod picks up a USB copy")
+  check(ri.modNotice and ri.modNotice.ok == false,
+    "the real installer reports the invalid archive")
   check(love.filesystem.getInfo("mymod.zip") ~= nil, "the player's own file stays")
+  check(ri.pickSkip and ri.pickSkip["mymod.zip"], "the rejected USB file is skipped this session")
   ri:chooseMod()
+  settle()
   eq(#pickCalls, 1, "the second tap opens the picker instead of retrying it")
   eq(pickCalls[1], "mod", "and asks for a mod archive")
+  eq(owned.files["mods/mymod/manifest.json"], nil, "no rejected package is published")
+  owned.restore()
 end
 
 clearSaveDir()

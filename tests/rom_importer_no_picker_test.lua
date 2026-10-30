@@ -68,6 +68,7 @@ check(ok, "Import ROM for Yellow does not crash either")
 ri = freshImporter()
 ok, err = pcall(function() ri:chooseMod() end)
 check(ok, "Import mod does not crash without a picker: " .. tostring(err))
+for _=1,100 do if not ri._localModInstall then break end;ri:_stepModInstall()end
 check(ri.modNotice ~= nil and ri.modNotice.ok == false,
   "and reports that the picker could not open")
 

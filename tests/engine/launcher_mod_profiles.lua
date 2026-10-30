@@ -23,6 +23,17 @@ local packages={list=function() return installed end,
   restoreProfile=function() event('restore');recovered=true;return true end,
   finishProfile=function() event('finish');return true end,
 }
+local function job(fn)return{body=fn}end
+packages.beginBackupProfile=function(ids)return job(function()return packages.backupProfile(ids)end)end
+packages.beginInstallFromRelease=function(...)local args={...};return job(function()return packages.installFromRelease(unpack(args))end)end
+packages.beginRestoreProfile=function(snapshot)return job(function()return packages.restoreProfile(snapshot)end)end
+packages.beginFinishProfile=function(snapshot)return job(function()return packages.finishProfile(snapshot)end)end
+packages.stepInstall=function(value)
+ if not value.begun then value.begun=true;return 'running',{}end
+ if value.cancelled then return 'done',nil,'cancelled'end
+ return 'done',value.body()
+end
+packages.cancelInstall=function(value)value.cancelled=true;return true end
 package.loaded['src.mods.LauncherMods']=packages
 package.loaded['src.mods.ModDownload']={start=function(release)
   event('download:'..release.tag)
@@ -56,7 +67,7 @@ local function ui()
   return value
 end
 local function drain(value)
-  for _=1,30 do if not value._profileApplying then return end;value:update(0) end
+  for _=1,60 do if not value._profileApplying then return end;value:update(0) end
   error('profile did not terminate')
 end
 local plan={kind='apply',profile={mods=wanted},hash='remote',scope='account'}
