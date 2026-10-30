@@ -23,4 +23,17 @@ local O={page='centerLobby',game={save={party={1}}}}
 C.action(O,'centerPublic');check(O.notice:find('Sign in',1,true)and C.mode=='off','guests receive a clear online sign-in explanation without auto-advertising')
 local rows=C.rows(O);local ids={};for _,r in ipairs(rows)do ids[r.id]=true end
 check(ids.nearTrade and ids.nearBattle,'separate nearby trade and battle lobbies remain available to guests')
+generation=3;version='firered'
+local originalGame={save={party={1}}};O.game=originalGame
+O.close=function()O.game=nil end;O.open=function(game)O.game=game end
+package.loaded['src.ui.RetroOverlay']=O
+local captured
+package.loaded['src.features.Gen1CableLobby']={open=function(game)captured=game;return{}end}
+C.action(O,'compatCable')
+check(captured==originalGame,'cable entry retains its native owner when closing the overlay clears O.game')
+O.game=originalGame;O.job={};captured=nil
+C.action(O,'compatCable');check(captured==nil and O.game==originalGame,'active upload prevents opening another owner')
+O.job=nil
+package.loaded['src.features.Gen1CableLobby'].open=function()return nil,'not admitted'end
+C.action(O,'compatCable');check(O.game==originalGame and O.notice=='not admitted','failed admission restores the Center overlay')
 print('Center lobby: '..n..' checks passed')

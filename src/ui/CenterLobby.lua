@@ -59,6 +59,14 @@ end
 function C.action(O,id)
  if id=='centerLobby'then C.open(O.game);return true end
  if O.page~='centerLobby'then return false end
+ if id=='compatCable'then
+  if O.job then O.notice='Wait for the upload, or cancel it first.';return true end
+  local game=O.game
+  C.stop();local overlay=require('src.ui.RetroOverlay');overlay.close()
+  local screen,why=require('src.features.Gen1CableLobby').open(game)
+  if not screen then overlay.open(game);overlay.page='centerLobby';overlay.notice=why;C.error=why end
+  return true
+ end
  if id=='centerOff'then
   C.stop();C.onlineDirty=Auth.signedIn();return true
  end
@@ -107,6 +115,7 @@ function C.rows(O)
  end
  if C.mode~='off'and #(C.players or{})==0 then add('noop','Waiting for ready players','Open the lobby on both devices and choose Friends or Public.')end
  add('nearTrade','NEARBY · WLAN TRADE LOBBY','Automatic discovery on the same network · No Internet or account required.')
+ if require('src.core.GameVersion').generation()<=3 then add('compatCable','OPTIONAL · COMPATIBILITY CABLE','Private relay · Resume trades · Shared Gen3 battle rules.')end
  add('nearBattle','NEARBY · WLAN BATTLE LOBBY','Same edition and link rules · Accept or decline on the other device.')
  if C.near then
   if C.near.phase=='incoming'then

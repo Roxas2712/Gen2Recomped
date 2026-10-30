@@ -96,6 +96,7 @@ function Capabilities.supports(surface, name, version)
     if name=='gen1.world-session-v1' then return gen==3 end
     if name=='gen1.save5-v1' then return gen==1 end
     if name=='gen1.link3-trade-v1' then return gen==1 or gen==2 end
+    if name=='gen1.cable-lobby-v1'or name=='gen1.relay-recovery-v1'or name=='gen1.sync-battle-v1'then return gen>=1 and gen<=3 end
     if name=='gen1.gba-exchange-v1' then return gen==3 end
     if name=='gen1.link3-codec-v1' then return gen>=1 and gen<=3 end
     return false,'unknown optional feature'

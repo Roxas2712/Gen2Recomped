@@ -146,6 +146,8 @@ do
   T.check(m:supports('features','gen1.battle-simulation-v1'),'API3 advertises detached source simulation')
   T.check(m:supports('features','gen1.save5-v1'),'GB host advertises explicit Save5 converter')
   T.eq(m:supports('features','gen1.gba-exchange-v1'),false,'GB host does not advertise GBA exchange')
+  T.check(m:supports('features','gen1.cable-lobby-v1')and m:supports('features','gen1.sync-battle-v1'),'API3 advertises the explicit lobby and common kernel')
+  T.check(type(m.features.gen1.link3.openCable)=='function'and type(m.features.gen1.battle.sync)=='function','actual mod loader publishes added entry points')
   T.check(type(m.features.gen1.battle.new)=='function','real loader publishes opt-in constructor')
   T.check(type(m.features.gen1.save5.import)=='function','real loader publishes explicit data converter')
   T.eq(probes(), 0, "entry does not resolve Game")

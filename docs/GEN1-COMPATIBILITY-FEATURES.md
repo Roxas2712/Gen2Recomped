@@ -14,6 +14,9 @@ or switch native link negotiation. Capabilities use `mod:supports('features', na
 | `gen1.save5-v1` | Explicit Red/Blue/Yellow Save-5/Save-4 data conversion |
 | `gen1.link3-codec-v1` | Gen1/2/3 party wire conversion against mounted catalogs |
 | `gen1.link3-trade-v1` | Protocol-3 GB trade state machine, Gen1/2 hosts |
+| `gen1.cable-lobby-v1` | Additional native lobby/room-code/consent UI, Gen1/2/3 |
+| `gen1.relay-recovery-v1` | Durable private relay transcript and native Game3 trade receipts |
+| `gen1.sync-battle-v1` | Explicit shared g3u kernel and hash barriers, Gen1/2/3 |
 | `gen1.gba-exchange-v1` | Game3 offer/block/commit data verifier, GBA hosts |
 
 ## Detached GSC battles
@@ -143,11 +146,12 @@ unchanged advertised offer, both relay digests and a strictly newer commit round
 A candidate is detached data; `receipt.nativeWrites=0`. Duplicate commits and
 swapped blocks cannot apply. `abort()` releases an unfinished exchange.
 
-This feature is the verified data plane, **not a complete multiplayer lobby**:
-room discovery, cable UI/trade scene, mail-block transport, relay journal/recovery
-and native Game3 save commitment still require an integrating transport/owner.
-It cannot establish the authenticity of an untrusted relay. Full live exchange
-between two desktop applications has not been exercised by headless QA.
+`gbaExchange` remains the pure data-plane verifier. The additional
+`feature.link3.openCable()` integrates room creation/join, native party/consent
+UI, durable relay decisions, native save receipts and interrupted-session
+recovery. The added `feature.battle.sync()` supplies a shared-kernel battle
+mode. See [the setup, common-rule limits and Gen1 peer adapter](GEN1-CABLE-RELAY.md).
+Mail-block transfer and a trade movie are outside this menu-based cable feature.
 
 ## Validation
 

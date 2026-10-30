@@ -56,6 +56,7 @@ The optional API-3 `mod.features.gen1` surface now provides a detached source
 GSC battle engine, native-owned Game3 load/script/prefetch sessions, explicit
 Gen1 Save-5/Save-4 conversion, Link-3 party codecs and GB trade sessions, and
 Game3 block/commit verification. See [the versioned contract and examples](GEN1-COMPATIBILITY-FEATURES.md).
-Native Save-4/Link-2 remain the defaults. Full cross-engine multiplayer battle
-lockstep, Game3 room/cable/mail/relay-recovery integration and the separate full
-fishing/terrain-emote-sheet contract remain outside these features.
+Native Save-4/Link-2 remain the defaults. The additional [cable/relay feature](GEN1-CABLE-RELAY.md)
+now supplies the native lobby, durable recovery and explicit common-kernel
+synchronous battles. Mail blocks, a trade movie and the separate full
+fishing/terrain-emote-sheet contract remain outside those added contracts.

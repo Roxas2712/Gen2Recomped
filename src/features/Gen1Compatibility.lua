@@ -12,7 +12,7 @@ function M.forHost(getGame,data,loader,modId)
   local trades=setmetatable({},{__mode='k'})
   local feature={revision=M.REVISION,reference=M.REFERENCE}
   local battle=require('src.features.Gen1BattleSimulation')
-  feature.battle={new=function(options)return battle.new(options)end,bundle=function(options)return battle.bundle(options)end,revision=battle.REVISION}
+  feature.battle={sync=require('src.features.Gen1SyncBattle').new,new=function(options)return battle.new(options)end,bundle=function(options)return battle.bundle(options)end,revision=battle.REVISION}
   local save=require('src.features.Gen1Save5')
   feature.save5={
     import=function(bytes)return save.import(bytes,data)end,
@@ -40,6 +40,14 @@ function M.forHost(getGame,data,loader,modId)
     return world,why
   end
   feature.link3={
+    openCable=function(options)
+      local owner,why=game();if not owner then return nil,why end
+      local opts={};for k,v in pairs(options or{})do opts[k]=v end
+      opts.checkOwner=function()return game()==owner end
+      local screen,reason=require('src.features.Gen1CableLobby').open(owner,opts)
+      if screen then trades[screen]=true end
+      return screen,reason
+    end,
     gbaExchange=require('src.features.Gen1GbaExchange').new,
     hello=function()
       local owner,why=game();if not owner then return nil,why end

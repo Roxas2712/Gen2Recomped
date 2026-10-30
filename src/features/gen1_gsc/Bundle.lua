@@ -19,8 +19,8 @@ local function loadTrusted(path,env)
 end
 function B.new(options)
   options=options or {}
-  local version=options.version or 'crystal'
-  assert(version=='gold'or version=='silver'or version=='crystal','GSC simulation requires gold, silver or crystal')
+  local version=options.version or(options.profile=='g3u'and 'firered'or 'crystal')
+  assert(options.profile=='g3u'or version=='gold'or version=='silver'or version=='crystal','GSC simulation requires gold, silver or crystal')
   local seed=options.seed or 2712
   assert(type(seed)=='number'and seed==seed and math.abs(seed)<math.huge,'finite simulation seed required')
   local state=(math.floor(seed)%2147483646)+1
@@ -60,13 +60,28 @@ function B.new(options)
       return(text:gsub('{DONE}',''):gsub('{PROMPT}',''))
     end},
   }
+  if options.profile=='g3u'then
+    local function boundary(name)
+      return setmetatable({}, {__index=function(_,key)return function()error('g3u external boundary: '..name..'.'..tostring(key),2)end end})
+    end
+    for _,name in ipairs{'src.import.CacheFs','src.core.game3.dataset','src.mods.Gen3Compat','src.core.game3.rs.enigma',
+      'src.import.gba.pokemon_extract','src.import.CacheBlob','src.core.game3.palette_mods','src.import.gba.extract_island1',
+      'src.core.game3.battle.anim','src.core.game3.audio','src.core.game3.battle.shiny_seq',
+      'src.core.game3.battle.mon_anim_battle','src.core.game3.trainer_pic'}do bridges[name]=boundary(name)end
+    bridges['src.import.CacheFs'].readAt=function()error('g3u external cache read',2)end
+    bridges['src.import.CacheFs'].new=function()error('g3u external cache instance',2)end
+    bridges['src.import.gba.versions']={MOVES_COUNT=355,SPECIES_COUNT=412}
+    bridges.bit=hostRequire('bit')
+  end
+  local testHarness
+  if options.testing and options.profile=='g3u'then testHarness=hostRequire('tests.harness').suite(options.testLabel or 'pinned g3u source')end
   local env,cache,loading={},{},{}
   local fixedTime=options.time or 0
-  local safeOs={time=function()return fixedTime end,date=function(format,time)return os.date(format,time or fixedTime)end,clock=os.clock}
+  local safeOs={getenv=function()return nil end,time=function()return fixedTime end,date=function(format,time)return os.date(format,time or fixedTime)end,clock=os.clock}
   local globals={assert=assert,error=error,pcall=pcall,xpcall=xpcall,select=select,type=type,
     tostring=tostring,tonumber=tonumber,pairs=pairs,ipairs=ipairs,next=next,unpack=unpack,
     setmetatable=setmetatable,getmetatable=getmetatable,rawget=rawget,rawset=rawset,rawequal=rawequal,
-    string=string,table=table,math=pureMath,os=safeOs,coroutine=coroutine,print=print,
+    io=options.testing and{open=function()return nil end}or nil,debug={traceback=debug.traceback},string=string,table=table,math=pureMath,os=safeOs,coroutine=coroutine,print=print,
     love={math={random=random}},_VERSION=_VERSION}
   setmetatable(env,{__index=globals});env._G=env
   env.package={path='',loaded=cache,preload={}}
@@ -77,9 +92,9 @@ function B.new(options)
     assert(not loading[name],'cyclic simulation module: '..tostring(name))
     local path=Inventory[name]
     if path then path='src/features/gen1_gsc/vendor/'..path
-    elseif options.testing and name:match('^tests%.gen2_[%w_]+$')then
+    elseif options.testing and (name:match('^tests%.gen2_[%w_]+$')or name:match('^tests%.engine%.[%w_]+$'))then
       path='tests/fixtures/gen1_interfaces/vendor/'..name:gsub('%.','/')..'.lua'
-    elseif options.testing and(name=='tests.harness'or name=='tests.love_stub')then return hostRequire(name)
+    elseif options.testing and(name=='tests.harness'or name=='tests.love_stub')then return name=='tests.harness'and(testHarness or hostRequire(name))or hostRequire(name)
     else error('module is outside the detached GSC contract: '..tostring(name),2)end
     loading[name]=true
     local ok,value=pcall(loadTrusted(path,env))
