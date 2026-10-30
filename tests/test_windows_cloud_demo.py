@@ -6,6 +6,14 @@ sys.path.insert(0,str(ROOT/'tools'))
 spec=importlib.util.spec_from_file_location('windows_demo_builder',ROOT/'tools/build_windows_cloud_demo.py')
 B=importlib.util.module_from_spec(spec);spec.loader.exec_module(B)
 class WindowsDemoPackaging(unittest.TestCase):
+ def test_native_host_stack_matches_the_gba_runtime_without_reducing_larger_hosts(self):
+  body=bytearray(400);body[:2]=b'MZ';struct.pack_into('<I',body,60,64);body[64:68]=b'PE\0\0';struct.pack_into('<H',body,68,0x8664)
+  optional=88;struct.pack_into('<H',body,optional,0x20b);struct.pack_into('<Q',body,optional+72,1024**2);struct.pack_into('<Q',body,optional+88,123456)
+  updated,reserve=B.native_host_stack(body)
+  self.assertEqual(reserve,16*1024**2);self.assertEqual(struct.unpack_from('<Q',updated,optional+88)[0],123456)
+  struct.pack_into('<Q',body,optional+72,32*1024**2)
+  self.assertEqual(B.native_host_stack(body)[1],32*1024**2)
+  with self.assertRaises(ValueError):B.native_host_stack(body[:120])
  def test_paths(self):
   for path in ['../save.lua','C:/private','/private','saves\\slot.lua']:
    with self.subTest(path=path),self.assertRaises(ValueError):B.safe(path)

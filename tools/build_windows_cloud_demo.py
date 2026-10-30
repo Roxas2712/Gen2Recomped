@@ -19,6 +19,15 @@ def pe(data):
  if data[:2]!=b'MZ'or len(data)<64:raise ValueError('Missing Windows PE binary')
  offset=struct.unpack_from('<I',data,60)[0]
  if offset+24>len(data)or data[offset:offset+4]!=b'PE\0\0'or struct.unpack_from('<H',data,offset+4)[0]!=0x8664:raise ValueError('Expected Windows x64 PE binary')
+def native_host_stack(data):
+ # The upstream GBA runtime requests a 16-MiB host stack. A DLL's /STACK
+ # setting cannot change its host, so set the fused EXE's reserve instead.
+ pe(data);body=bytearray(data);optional=struct.unpack_from('<I',body,60)[0]+24
+ if optional+88>len(body)or struct.unpack_from('<H',body,optional)[0]!=0x20b:raise ValueError('Missing x64 host stack header')
+ reserve=max(16*1024**2,struct.unpack_from('<Q',body,optional+72)[0])
+ struct.pack_into('<Q',body,optional+72,reserve)
+ struct.pack_into('<I',body,optional+64,0) # clear the unsigned host's stale PE checksum
+ return bytes(body),reserve
 def install_native_sdk(archive,report_path,bundle,git_tree):
  report=json.loads(report_path.read_text(encoding='utf-8-sig'))
  if report.get('passed')is not True or report.get('platform')!='Windows' or not report.get('checks') or any(row.get('passed')is not True for row in report['checks']):
@@ -99,7 +108,7 @@ def build(a):
    if name=='lua51.dll':data=library.read_bytes()
    if name!='love.exe':(bundle/name).write_bytes(data)
    runtime_hashes[name]=hashlib.sha256(data).hexdigest()
-  exe=files['love.exe']
+  exe,host_stack=native_host_stack(files['love.exe'])
  payload=out/'RetroRecomped-Windows.love'
  with zipfile.ZipFile(base_payload)as old,zipfile.ZipFile(payload,'w',zipfile.ZIP_DEFLATED,compresslevel=6)as z:
   for name in old.namelist():
@@ -139,7 +148,7 @@ def build(a):
   'runtimeArtifact':RUNTIMES['windows']['id'],'runtimeSha256':sha(a.runtime),'luaLibrarySha256':sha(library),
   'componentSha256':sha(a.component),'componentEngineTreeVerified':True,'componentEngineSource':manifest.get('engineSource'),
   'basePayloadSha256':sha(base_payload),'payloadSha256':sha(payload),'fusedExeSha256':sha(target),'runtimeFilesSha256':runtime_hashes,
-  'profilePolicy':'read-only discovery; reuse chosen directory; no legacy migration or copy; portable.txt not bundled',
+  'profilePolicy':'read-only discovery; reuse chosen directory; no legacy migration or copy; portable.txt not bundled','hostStackReserveBytes':host_stack,
   'privateRomsSavesCredentialsBundled':False,'nativeRuntime':native,'windowsDemoExecuted':False,'playerCloudUploadTested':False}
  (bundle/'build.json').write_text(json.dumps(receipt,indent=2)+'\n')
  archive=out/('RetroRecomped-Windows-Demo-'+VERSION+'-win64.zip')
