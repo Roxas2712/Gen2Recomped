@@ -6935,10 +6935,9 @@ end
 -- fieldMoveGates).  A dataset with no placement charges nothing, so an older
 -- import still hands the moves over rather than refusing all eight.
 local function gen3BadgeHeld(moveId)
-  local gate = Game.data.constants and Game.data.constants.gen3FieldMoves
-  local entry = gate and gate[moveId]
-  if not (entry and entry.badgeFlag) then return true end
-  local key = ("FLAG_G3_%04X"):format(entry.badgeFlag)
+  local flag=require('src.world.Gen3FieldRules').badgeFlag(Game.data,moveId,GameVersion.get())
+  if flag==nil then return true end
+  local key = ("FLAG_G3_%04X"):format(flag)
   return (Game.save.flags and Game.save.flags[key]) and true or false
 end
 

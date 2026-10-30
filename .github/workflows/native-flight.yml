@@ -14,6 +14,11 @@ on:
       - 'src/ui/game3/rse/region_map.lua'
       - 'src/core/game3/field.lua'
       - 'src/world/OverworldController.lua'
+      - 'src/world/Gen3FieldRules.lua'
+      - 'src/ui/Gen3PartyMenu.lua'
+      - 'src/import/RomExtractorGen3.lua'
+      - 'src/import/Gen3FieldBadges.lua'
+      - 'tests/engine/gen3_field_badges.lua'
       - 'tests/engine/native_region_map_observations.lua'
       - 'tests/engine/native_fly_boundary.lua'
       - '.github/workflows/native-flight.yml'
@@ -32,6 +37,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y luajit
       - name: Native observations and once-only departure
         run: |
+          luajit tests/engine/gen3_field_badges.lua
           luajit tests/engine/native_region_map_observations.lua
           luajit tests/engine/native_fly_boundary.lua
           luajit tests/engine/native_fly_arrival.lua
