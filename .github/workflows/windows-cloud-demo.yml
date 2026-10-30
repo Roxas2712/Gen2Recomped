@@ -40,13 +40,13 @@ jobs:
           python tools/build_windows_cloud_demo.py
           --runtime "${{ runner.temp }}/love-runtime.zip"
           --component "${{ runner.temp }}/windows-cloud-runtime/component.json"
-          --out "${{ runner.temp }}/windows-demo"
+          --out "${{ github.workspace }}/.local/qa/windows-cloud-demo-build/candidate"
       - uses: actions/upload-artifact@v7
         with:
           name: windows-cloud-demo
           path: |
-            ${{ runner.temp }}/windows-demo/*-win64.zip
-            ${{ runner.temp }}/windows-demo/verification.json
+            ${{ github.workspace }}/.local/qa/windows-cloud-demo-build/candidate/*-win64.zip
+            ${{ github.workspace }}/.local/qa/windows-cloud-demo-build/candidate/verification.json
           if-no-files-found: error
           retention-days: 14
   native-package-test:

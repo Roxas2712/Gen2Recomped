@@ -64,10 +64,12 @@ Build locally after downloading the qualified component:
 python3 tools/build_windows_cloud_demo.py \
   --runtime /path/to/official-love12-win64.zip \
   --component /path/to/windows-cloud-runtime/component.json \
-  --out /path/to/new-output-folder
+  --out .local/qa/windows-cloud-demo-build/candidate
 ```
 
 The builder rejects an existing output folder and preserves old packages.
+Use a fresh known QA copy layout under `.local/qa/<run>/candidate`; arbitrary
+temporary folders are intentionally rejected by the storage manager.
 It always creates a fresh payload from the committed, clean engine inputs;
 external pre-packed payloads cannot bypass the source qualification binding.
 `verification.json` records source revision, runtime/component hashes, archive
