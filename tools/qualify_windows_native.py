@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real Windows native ABI/toolchain checks; synthetic inputs, no player ROMs."""
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
-import argparse,ctypes,hashlib,json,os,platform,struct,sys,shutil
+import argparse,contextlib,ctypes,hashlib,json,os,platform,struct,sys,shutil
 from pathlib import Path
 from native_workspace import manager,lock_file
 
@@ -42,13 +42,36 @@ def main():
         rom=work/'synthetic-gba.fixture';body=bytearray(1024);struct.pack_into('<I',body,0xC0,0xEAFFFFFE);rom.write_bytes(body)
         qa.qa_run([str(sdk/'bin/gba_recompile.exe'),'--rom',str(rom),'--entry','0x080000C0','--out',str(work/'generated'),'--max-functions','32','--codegen-shards','2'],env=env,check=True)
         check((work/'generated/dispatch_table.cpp').is_file(),'Native GBA recompiler processes synthetic guest code in a Unicode path')
-        check_vulkan(sdk,check)
-        check_3ds_guest(sdk,work,qa,bridge,check)
-        check_pinball(sdk,work,qa,check)
+        with elevated_runner_driver(sdk):
+            check_vulkan(sdk,check)
+            check_3ds_guest(sdk,work,qa,bridge,check)
+            check_pinball(sdk,work,qa,check)
         report['sdkManifestSha256']=hashlib.sha256((sdk/'files.json').read_bytes()).hexdigest()
         report['passed']=True
     finally:
         out.write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
+
+@contextlib.contextmanager
+def elevated_runner_driver(sdk):
+    # GitHub's disposable Windows VM runs elevated: the official loader
+    # deliberately ignores VK_*_DRIVER_FILES there. Register only this fixture
+    # for the duration of the native test, then restore its exact old value.
+    # The shipped application never changes registry/driver installation.
+    if not ctypes.windll.shell32.IsUserAnAdmin():
+        yield;return
+    import winreg
+    name=str(sdk/'vulkan/vk_swiftshader_icd.json')
+    key_path=r'SOFTWARE\Khronos\Vulkan\Drivers'
+    access=winreg.KEY_QUERY_VALUE|winreg.KEY_SET_VALUE|winreg.KEY_WOW64_64KEY
+    with winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE,key_path,0,access)as key:
+        try:old=winreg.QueryValueEx(key,name)
+        except FileNotFoundError:old=None
+        winreg.SetValueEx(key,name,0,winreg.REG_DWORD,0)
+        print('Elevated disposable QA runner: temporarily register the fixture ICD; VK_DRIVER_FILES is ignored by the official loader.',flush=True)
+        try:yield
+        finally:
+            if old is None:winreg.DeleteValue(key,name)
+            else:winreg.SetValueEx(key,name,0,old[1],old[0])
 
 def check_vulkan(sdk,check):
     # Force only this isolated fixture onto the shipped software ICD. The real
