@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real Windows native ABI/toolchain checks; synthetic inputs, no player ROMs."""
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
-import argparse,contextlib,ctypes,hashlib,json,os,platform,struct,sys,shutil
+import argparse,contextlib,ctypes,hashlib,json,os,platform,struct,sys,shutil,subprocess
 from pathlib import Path
 from native_workspace import manager,lock_file
 
@@ -119,9 +119,12 @@ def check_3ds_guest(sdk,work,qa,bridge,check):
     body[0x1E0:0x200]=hashlib.sha256(body[0x1C00:]).digest()
     rom=work/'own-arm11.fixture';rom.write_bytes(body)
     env=dict(os.environ,CC=str(sdk/'compiler/bin/clang.exe'),RETRO_3DS_BUILD_JOBS='2',PATH=os.pathsep.join([str(sdk/'compiler/bin'),str(sdk/'python'),os.environ.get('PATH','')]))
-    result=qa.qa_run([str(sdk/'python/python.exe'),'-X','utf8',str(ROOT/'tools/pokemon_x_backend.py'),
-        '--root',str(work/'launcher-backend'),'--runtime-root',str(sdk),'--edition','x','import',str(rom),'--play-after-import'],
-        env=env,check=True,timeout=180,capture_output=True,text=True)
+    try:
+        result=qa.qa_run([str(sdk/'python/python.exe'),'-X','utf8',str(ROOT/'tools/pokemon_x_backend.py'),
+            '--root',str(work/'launcher-backend'),'--runtime-root',str(sdk),'--edition','x','import',str(rom),'--play-after-import'],
+            env=env,check=True,timeout=180,capture_output=True,text=True)
+    except subprocess.CalledProcessError as error:
+        print((error.stdout or '')[-12000:]);print((error.stderr or '')[-12000:]);raise
     documents=[json.loads(line)for line in result.stdout.splitlines()if line.startswith('{')]
     sessions=[row['native_session']for row in documents if'native_session'in row]
     check(len(sessions)==1,'The real Windows launcher helper completes import, native compilation and session preparation for the self-authored ARM11 fixture')
