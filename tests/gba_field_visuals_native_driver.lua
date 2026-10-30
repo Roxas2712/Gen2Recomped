@@ -62,6 +62,7 @@ return function(game)
  U.wait(24);shot('native-map-popup-clear')
  world.poisonFlash=8;shot('native-map-popup-poison-pulse')
  U.wait(24);shot('native-map-popup-after-poison')
+ assert(report.nativeCoordinatesMatched,'Actual native battler frames differ from cartridge coordinates')
  report.drawPreservesSaveRng=true;report.status='pass';persist()
  print('PASS_NATIVE_GBA_FIELD_VISUAL_CAPTURE '..edition);love.event.quit(0)
 end

@@ -1,10 +1,15 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
--- RS draws a 64x64 frame around GetBattlerSpriteFinal_Y, not opaque feet.
+-- GBA battlers use a 64x64 frame around GetBattlerSpriteFinal_Y.
+-- Opaque feet and terrain silhouettes are not native sprite anchors.
 local M={}
 function M.place(battle,battler,img,scale,fieldOffset)
   local data=battle.data;local c=data and data.constants
   local profile=c and c.gen3RsHealthbox
-  if not profile or(profile.version~='ruby'and profile.version~='sapphire')then return end
+  local native=c and c.gen3BattleHud and c.gen3BattleHud.native
+  local rs=profile and(profile.version=='ruby'or profile.version=='sapphire')
+  local other=native and native.format==1 and(native.version=='emerald'
+    or native.version=='firered'or native.version=='leafgreen')
+  if not rs and not other then return end
   local species=battler.species or(battler.mon and battler.mon.species)
   local def=species and data.pokemon and data.pokemon[species]
   if not def or img:getWidth()~=64 or img:getHeight()~=64 then return end
