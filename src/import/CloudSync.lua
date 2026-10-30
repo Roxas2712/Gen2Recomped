@@ -206,10 +206,10 @@ function C.saveState(st, kind)
     -- atomic: a lost link table makes the next sync treat every slot as new
     local okS, Safety = pcall(require, "src.core.SaveSafety")
     if okS then
-      Safety.atomicWrite(SaveData.persistenceFs(), stateFile(kind), SaveSerializer.encode(st),
+      return Safety.atomicWrite(SaveData.persistenceFs(), stateFile(kind), SaveSerializer.encode(st),
         { bak = stateFile(kind) .. ".bak", decode = Safety.decodeAny })
     else
-      SaveData.persistenceFs().write(stateFile(kind), SaveSerializer.encode(st))
+      return SaveData.persistenceFs().write(stateFile(kind), SaveSerializer.encode(st))
     end
   end
 end
@@ -267,6 +267,9 @@ local function rotateCloud(store, version, cloudId)
 end
 
 local function localBytes(version, slotId)
+  -- LOVE's account-scoped filesystem handles Unicode Windows profile paths.
+  -- Raw CRT io.open can silently miss an existing save in such a directory.
+  if SaveData.readSlotBytes then return SaveData.readSlotBytes(version,slotId) end
   local path = SaveData.slotDiskPath(version, slotId)
   return path and readAll(path) or nil
 end
@@ -328,7 +331,8 @@ function C.syncSlot(target, st, version, slotId, pushOnly)
   local store = asStore(target)
   st.links[version] = st.links[version] or {}
   local link = st.links[version][slotId]
-  local bytes = localBytes(version, slotId)
+  local bytes,readProblem = localBytes(version, slotId)
+  if not bytes and readProblem then return nil,readProblem end
   -- AN UNREADABLE LOCAL FILE IS NEVER UPLOADED.  It used to count as "local
   -- changed" and replace the cloud copy (rotating the good ones out after two
   -- syncs).  The slot is left for Tools -> Restore a Save.
@@ -431,7 +435,7 @@ local function syncSuspend(store,version,slot,pushOnly)
   local result,why=require('src.storage.SuspendStore').sync(store,version,id,pushOnly)
   return result,why
 end
-function C.syncVersions(target, versions)
+function C.syncVersions(target, versions, onNormal)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
@@ -440,39 +444,54 @@ function C.syncVersions(target, versions)
   local tally = { uploaded = 0, downloaded = 0, ["kept both"] = 0, new = 0, failed = 0 }
   for _, v in ipairs(versions) do
     for _, s in ipairs(SaveData.listSlots(v) or {}) do
-      local what = C.syncSlot(store, st, v, s.id)
+      local ok,what,problem = pcall(C.syncSlot,store,st,v,s.id)
+      if not ok then problem=what;what=nil end
       if what and tally[what] then tally[what] = tally[what] + 1
-      elseif not what then tally.failed = tally.failed + 1 end
+      elseif not what then
+        tally.failed = tally.failed + 1
+        tally.problem=tally.problem or problem
+      end
+      local saved,why=C.saveState(st,key)
+      if saved==false then return nil,why end
     end
     local count,why=C.pullNew(store, st, v);if not count then return nil,why end
     tally.new = tally.new + count
+  end
+  if onNormal then onNormal(tally) end
+  if tally.failed>0 then return tally end
+  for _,v in ipairs(versions) do
     if store.kind=='retro' then
       for _,slot in ipairs(SaveData.listSlots(v) or {}) do
-        local ok,err=syncSuspend(store,v,slot.id)
-        if not ok then tally.failed=tally.failed+1;tally.suspendNotice=err end
+        local ran,ok,err=pcall(syncSuspend,store,v,slot.id)
+        if not ran then err=ok;ok=nil end
+        if not ok then tally.suspendFailed=(tally.suspendFailed or 0)+1;tally.suspendNotice=err end
       end
     end
   end
-  C.saveState(st, key)
+  local saved,why=C.saveState(st,key);if saved==false then return nil,why end
   return tally
 end
 
-function C.syncOne(target, version, slotId, pushOnly)
+function C.syncOne(target, version, slotId, pushOnly, onNormal, normalOnly)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store = asStore(target)
   if not store then return nil, "no sync folder chosen" end
   local key=stateKey(store)
   local st = C.loadState(key)
   local what, why = C.syncSlot(store, st, version, slotId, pushOnly)
-  C.saveState(st, key)
+  local saved,problem=C.saveState(st, key)
+  if saved==false then return nil,problem end
   if what then
-    local ok,err=syncSuspend(store,version,slotId,pushOnly)
-    if not ok then return nil,'Normal save synced; suspend needs attention: '..tostring(err) end
+    if onNormal then onNormal(what) end
+    if normalOnly then return what end
+    local ran,ok,err=pcall(syncSuspend,store,version,slotId,pushOnly)
+    if not ran then err=ok;ok=nil end
+    if not ok then return {normal=what,suspendNotice=err,suspendFailed=1} end
   end
   return what, why
 end
 
-function C.restoreVersions(target,versions)
+function C.restoreVersions(target,versions,onNormal)
   local permitted,why=require('src.storage.AccountStorage').storeCheck(target);if not permitted then return nil,why end
   local store=asStore(target);if not store then return nil,'No cloud account connected.' end
   local key=stateKey(store);local st=C.loadState(key);local result={new=0}
@@ -504,15 +523,20 @@ function C.restoreVersions(target,versions)
     end
     local count,problem=C.pullNew(store,st,version);if not count then return nil,problem end
     result.new=result.new+count
-    C.saveState(st,key)
+    local saved,why=C.saveState(st,key);if saved==false then return nil,why end
+  end
+  if onNormal then onNormal(result) end
+  for _,version in ipairs(versions)do
     if store.kind=='retro' then
       for _,slot in ipairs(SaveData.listSlots(version) or {}) do
-        local ok,err=syncSuspend(store,version,slot.id)
-        if not ok then return nil,'Normal saves restored; suspend needs attention: '..tostring(err) end
+        local ran,ok,err=pcall(syncSuspend,store,version,slot.id)
+        if not ran then err=ok;ok=nil end
+        if not ok then result.suspendFailed=(result.suspendFailed or 0)+1;result.suspendNotice=err end
       end
     end
   end
-  C.saveState(st,key);return result
+  local saved,why=C.saveState(st,key);if saved==false then return nil,why end
+  return result
 end
 
 function C.describe(t)

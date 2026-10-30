@@ -130,15 +130,22 @@ end
 
 local function isIOS() return love and love.system and love.system.getOS and love.system.getOS() == "iOS" end
 
+local function isWindows() return love and love.system and love.system.getOS and love.system.getOS()=='Windows' end
 function H.available()
   if love and love.system and type(love.system.httpRequest) == "function" then return true end
-  if isIOS() and luaHttps() then return true end
+  if (isIOS() or isWindows()) and luaHttps() then return true end
   local ok, HostShell = pcall(require, "src.core.HostShell")
   return ok and HostShell.haveCurl and HostShell.haveCurl() or false
 end
 
 function H.request(method, url, opts)
   opts = opts or {}
+  if opts.sensitive then
+    if type(url)~='string' or not url:match('^https://[^%s]+$') or type(method)~='string' or not method:match('^[A-Z]+$') then return nil,'Invalid secure request.' end
+    for k,v in pairs(opts.headers or {})do
+      if tostring(k):find('[%c:]') or tostring(v):find('[%c]')then return nil,'Invalid request header.' end
+    end
+  end
   local co=coroutine.running()
   if co and H.async[co] then
     return coroutine.yield({kind='http',method=method,url=url,opts=opts})
@@ -146,7 +153,8 @@ function H.request(method, url, opts)
   if love and love.system and type(love.system.httpRequest) == "function" then
     return viaBridge(method, url, opts)
   end
-  if isIOS() and luaHttps() then return viaLuaHttps(method, url, opts) end
+  -- Windows native HTTPS avoids cmd.exe quoting and CRT/Unicode temp paths.
+  if (isIOS() or isWindows()) and luaHttps() then return viaLuaHttps(method, url, opts) end
   local status, body
   if opts.sensitive then status,body=viaPrivateCurl(method,url,opts)
   else status,body=viaCurl(method,url,opts) end

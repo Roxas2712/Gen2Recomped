@@ -1106,6 +1106,13 @@ end
 -- Inspect a slot before migrations or mod validation can alter its contents.
 -- The usual recovery reader can inspect complete backups, but this neither
 -- writes progress, selects a slot nor invokes game/mod code.
+function SaveData.readSlotBytes(version, slotId)
+  if not knownVersion(version) or type(slotId) ~= 'string' or not slotId:match('^slot%d+$') then return nil,'Unknown save slot.' end
+  local fs=persistFs(nil);local name=slotNames(version,slotId)
+  local bytes=fs.read(name)
+  if not bytes and fs.getInfo(name) then return nil,'The local save could not be read. Check folder access and retry.' end
+  return bytes
+end
 function SaveData.peekSlot(version, slotId)
   if not knownVersion(version) or type(slotId) ~= "string" or not slotId:match("^slot%d+$") then return nil, "Unknown save slot." end
   local ok, save, state = pcall(decodeSlot, persistFs(nil), version, slotId)
@@ -2744,7 +2751,7 @@ end
 -- Enforce the app's storage policy at persistence boundaries, including
 -- imports, autosaves, history restores and cloud writes. Options stay local.
 for _,name in ipairs({'save','writeSlot','commitSave','createSlot','deleteSlot','renameSlot','setActiveSlot',
-  'load','peekSlot','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
+  'load','peekSlot','readSlotBytes','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
   local original=SaveData[name]
   SaveData[name]=function(...)
     local ok,why=require('src.storage.AccountStorage').saveCheck()

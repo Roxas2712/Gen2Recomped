@@ -42,6 +42,7 @@ syntax = ['src/link/ArenaReplay.lua','src/ui/PlayerRole.lua','src/cloud/AccountB
           'src/mods/Api3.lua', 'src/mods/PlaythroughStorage.lua', 'src/import/BankInterchangeWorkspace.lua']
 syntax.extend(['src/ui/CenterLobby.lua','src/link/Nearby.lua','src/link/LocalLink.lua','src/link/Net.lua','src/ui/StartMenu.lua','src/world/OverworldController.lua'])
 syntax.extend(['src/translation/Service.lua','src/translation/CommunityCatalog.lua','src/translation/AccountErrors.lua','src/translation/worker.lua'])
+syntax.extend(['src/import/ImportReview.lua'])
 source = '\n'.join('assert(loadfile(' + json.dumps(path) + '))' for path in syntax)
 if not os.environ.get('RETRO_QA_LUA_LIBRARY') or shutil.which('luajit'):
     qa_run([*runtime, '-e', source], cwd=root, check=True)
@@ -53,7 +54,7 @@ window_frame window_frame_async portable_input_hooks touch_orientation_bug633
 save_resume resume_workspace save_resume_capture save_resume_slot save_history_workspace launcher_audio_handoff bank_exchange'''.split()
 suites.extend(['friends_menu','friend_trade','friend_play','remote_players','arena_shop','cloud_net','relay_rejection','native_preview','account_storage','account_profiles','bank_interop',
                'api3_storage_transactions','api3_playthrough_storage','bank_portrait','api3_compat','mod_catalogue','mod_access','mod_preflight','launcher_presentation','cartridge_batch','launcher_cobblemon','cartridge_cloud','wonder_reward','game_cache','device_session','gift_codes','gift_editor','presence','tournaments','league','arena_battle_proof'])
-suites.append('arena_replay')
+suites.extend(['arena_replay','import_review','cloud_save_feedback','windows_cloud_http'])
 suites.append('nds_party_codec')
 suites.append('bank_verification')
 suites.append('origin_records')

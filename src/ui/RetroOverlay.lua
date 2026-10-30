@@ -48,25 +48,32 @@ local function save(game)
   Sync.set('local',Versions.get(),Saves.activeSlot(Versions.get()))
   return true
 end
-local function transfer(version,slot)
+local function transfer(version,slot,exact)
   local why
-  O.retry={version=version,slot=slot}
+  O.retry={version=version,slot=slot,exact=exact}
+  O.cloudProgress=nil
+  local auth=require('src.cloud.RetroCloud');O.cloudScope=auth.accountId and auth.accountId()
   O.job,why=Task.new(function()
     local store,err=require('src.cloud.RetroCloud').open();if not store then return nil,err end
-    return require('src.import.CloudSync').syncOne(store,version,slot,true)
+    return require('src.import.CloudSync').syncOne(store,version,slot,true,function(normal)O.cloudProgress=normal end,not exact)
   end)
   Sync.set(O.job and 'uploading' or 'error',version,slot,why)
-  O.notice=O.job and 'Uploading normal save and portable suspend…' or tostring(why)
+  O.notice=O.job and 'Saving your progress to the cloud…' or tostring(why)
 end
 function O.action(id)
   local game=O.game;if not game then return end
   if O.job then
-    if id=='cancel' then O.job:cancel();O.job=nil;O.notice='Upload stopped. Your local save is kept.';Sync.set('cancelled',O.retry and O.retry.version,O.retry and O.retry.slot) end
+    if id=='cancel' then
+      O.job:cancel();O.job=nil
+      if O.cloudProgress then Sync.result({normal=O.cloudProgress,suspendNotice='Extra transfer cancelled. Local saves are preserved.'},nil,O.retry and O.retry.version,O.retry and O.retry.slot)
+      else Sync.set('cancelled',O.retry and O.retry.version,O.retry and O.retry.slot) end
+      O.cloudProgress=nil;O.notice=Sync.notice(Sync.get())
+    end
     return
   end
   if (id=='centerLobby'or O.page=='centerLobby')and require('src.ui.CenterLobby').action(O,id)then return end
   if (id=='friends' or O.page=='friends') and require('src.ui.FriendsMenu').action(O,id) then return end
-  if id=='retryCloud' and O.retry then transfer(O.retry.version,O.retry.slot);return end
+  if id=='retryCloud' and O.retry then transfer(O.retry.version,O.retry.slot,O.retry.exact);return end
   if id=='resume' then O.close();return end
   if id=='home' or id=='saves' or id=='options' then
     O.page=id;O.scroll=0;O.selected=1;O.rects={};O.notice=nil
@@ -111,7 +118,7 @@ function O.action(id)
     Sync.set('local',Versions.get(),Saves.activeSlot(Versions.get()))
     if id=='suspend' then O.notice='Portable suspend saved locally. Continue resumes it with this exact engine build.';return end
     local version=Versions.get();local slot=Saves.activeSlot(version)
-    transfer(version,slot)
+    transfer(version,slot,true)
     return
   end
   if id=='folder' then
@@ -151,8 +158,13 @@ function O.update(game)
     local result=O.job:poll()
     if result then
       O.job=nil
-      local entry=Sync.result(result.kind=='done' and result.first,result.error or result.second,O.retry and O.retry.version,O.retry and O.retry.slot)
-      O.notice=Sync.describe(entry)..(entry.detail and (' · '..L(entry.detail)) or '')
+      local payload=result.kind=='done' and result.first
+      local auth=require('src.cloud.RetroCloud');local scope=auth.accountId and auth.accountId()
+      if not payload and O.cloudProgress and scope==O.cloudScope then
+        payload={normal=O.cloudProgress,suspendNotice=result.error or result.second}
+      end
+      local entry=Sync.result(payload,result.error or result.second,O.retry and O.retry.version,O.retry and O.retry.slot)
+      O.notice=Sync.notice(entry);O.cloudProgress=nil
       if entry.state=='available' then O.retry=nil end
     end
   end
@@ -184,10 +196,10 @@ local function actions()
     return rows
   end
   local rows={{id='save',label='Save game progress'},
+    {id='cloud',label='Save & upload to cloud',note='Normal game progress. Your local copy is kept.'},
+    {id='export',label='Export battery .sav'},{id='library',label='Choose another game'},
     {id='suspend',label='Save portable suspend · Beta',note='Gen 1–3 · Mods need a portable suspend adapter · Includes the running battle'},
-    {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'},
-    {id='export',label='Export battery .sav'},{id='cloud',label='Save & upload to cloud'},
-    {id='library',label='Choose another game'}}
+    {id='suspendCloud',label='Suspend & upload to cloud',note='Sign in on another device, restore cloud saves, then Continue · Same engine build and imported game data required'}}
   if O.retry then table.insert(rows,1,{id='retryCloud',label='Retry cloud upload',note='Uploads the saved copy again. Your local progress stays intact.'}) end
   if O.exportPath then rows[#rows+1]={id='folder',label='Open exports'} end
   return rows

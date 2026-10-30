@@ -299,8 +299,11 @@ function M.install(RI)
   return update(self,dt,...)
  end
  local function buttons(self)self._xyButtons={}end
- function RI:_xyImport(path,detect)
+ function RI:_xyImport(path,detect,reviewed)
   if self._xyJob or self._xyPlayer or self._xyCheck or self._xyPicker then return end
+  local data=load(self)or {};local row=data[self._xyEdition or 'x']
+  local existing=detect and ((data.x and data.x.imported)or(data.y and data.y.imported))or(row and row.imported)
+  if not reviewed and require('src.import.ImportReview').request(self,self._xyEdition or 'x',function()self:_xyImport(path,detect,true)end,existing)then return end
   stopPreview(self);self._xyPreviewFailed=nil;self._xyOpen=true;self.section='games';self.pageScroll=0
   local args={path};if detect then args[#args+1]='--detect-edition' end
   local runtime=require('src.import.PokemonXYBackend').runtime()

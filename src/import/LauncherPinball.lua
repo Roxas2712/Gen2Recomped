@@ -27,8 +27,9 @@ end
 function M.available()return M.session()~=nil end
 function M.install(RI)
  local U=RI._ui
- function RI:_pinImport(path)
+ function RI:_pinImport(path,reviewed)
   if self._pinJob or self._pinPlayer or self._pinPicker then return end
+  if not reviewed and require('src.import.ImportReview').request(self,'pinballrs',function()self:_pinImport(path,true)end,M.available())then return end
   local root=sourceRoot();if not root then self._pinNotice='Pinball import tools are unavailable.';return end
   self._pinImportChannel=love.thread.newChannel()
   self._pinJob=love.thread.newThread('src/pinball/import_worker.lua')

@@ -4,6 +4,18 @@ local Json=require('src.link.Json')
 local Serializer=require('src.core.SaveSerializer')
 local R={FILE='cloud_retro.lua',API='https://pokexpert.de/api/cloud/v1'}
 local revoked={}
+local function failure(code,detail)
+  local messages={
+    [401]='Your cloud session expired. Sign in again; local saves are kept.',
+    [403]='This account or device cannot sync. Open My account to check its access.',
+    [413]='This cloud upload exceeds the size limit. Your local save is kept.',
+    [429]='Too many cloud requests. Wait a moment, then retry.',
+    [507]='Your cloud storage is full. Free some cloud space, then retry.',
+  }
+  if messages[code] then return messages[code] end
+  if not code then return type(detail)=='string' and detail:sub(1,300) or 'No connection to the cloud. Check your internet connection and retry.' end
+  return 'The cloud service could not complete this request (HTTP '..tostring(code)..'). Retry shortly.'
+end
 local function load()
   if not (love and love.filesystem and love.filesystem.read) then return nil end
   local bytes=love.filesystem.read(R.FILE)
@@ -113,7 +125,7 @@ function R.open()
   local accountId,email=R.accountId(),R.account()
   local status,doc=document('GET','/objects',nil,token)
   if status~=200 or not (doc and type(doc.objects)=='table') then
-    return nil,'Cloud listing failed ('..tostring(status or 'offline')..').'
+    return nil,failure(status)
   end
   local revisions={}
   for _,object in ipairs(doc.objects) do
@@ -135,7 +147,7 @@ function R.open()
   function store.read(path)
     local code,body=request('GET','/objects/'..path,nil,token)
     if code==404 then revisions[path]=nil;return nil end
-    if code~=200 then error('Cloud read failed ('..tostring(code or 'offline')..'). Local saves are preserved.',0) end
+    if code~=200 then error(failure(code,body),0) end
     return body
   end
   function store.write(path,bytes)
@@ -145,7 +157,7 @@ function R.open()
     local code,result=document('PUT','/objects/'..path,bytes,token,headers)
     if code==200 and result and result.revision then revisions[path]=result.revision;return true end
     return false,code==412 and 'Changed on another device. Sync again; both copies are preserved.'
-      or 'Cloud write failed ('..tostring(code or 'offline')..').'
+      or failure(code)
   end
   return store
 end

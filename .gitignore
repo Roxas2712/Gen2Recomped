@@ -214,3 +214,5 @@ mobile/ios/bundle_id.local
 !/tests/pinball_launcher_test.lua
 !/tests/pinball_channel_lifetime.lua
 !/tests/pinball_worker_priority.lua
+
+!/tests/drivers/legacy_cloud_ux.lua
