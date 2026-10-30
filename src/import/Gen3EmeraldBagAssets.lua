@@ -42,7 +42,7 @@ function M.extract(x)
   arrows=c:strip('arrows',c:lz('list_menu.o:sScrollIndicator_Gfx'),16,16,2,c:pal('sRedInterface_Pal',16)),
   swap=c:strip('swap',c:lz('gSwapLineGfx'),16,16,2,c:pal('gSwapLinePal',16,nil,0,true)),
   ball=c:strip('ball',c:raw('item_menu_icons.o:sRotatingBall_Gfx'),16,16,1,
-   c:pal('item_menu_icons.o:sRotatingBall_Pal',16,nil,0,true))}
+   c:pal('item_menu_icons.o:sRotatingBall_Pal',16))}
  local palette={};for i=0,15 do palette[i]=male[16+i]end
  c:png('hm.png',16,16,K.bakeSprite(c:raw('gBagMenuHMIcon_Gfx'),16,16,0,4),palette,true)
  c:png('select.png',24,16,K.bakeSprite(c:raw('sRegisteredSelect_Gfx'),24,16,0,4),palette,true)
