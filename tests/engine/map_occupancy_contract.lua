@@ -40,11 +40,11 @@ for _,mode in ipairs({'absent','allow','deny','truthy','throws','mutates'})do
 end
 require('src.core.GameVersion').set('red')
 local run=T.sdk.loadMods({'mods/dock_policy'},{data=T.fixtures.fresh(),fs=T.sdk.memfs({
-  ['mods/dock_policy/manifest.json']=[[{"id":"dock_policy","name":"Dock policy","version":"1.0.0","api":2,"entry":"main.lua"}]],
+  ['mods/dock_policy/manifest.json']=[[{"id":"dock_policy","name":"Dock policy","version":"1.0.0","api":2,"callback_format":"unified","entry":"main.lua"}]],
   ['mods/dock_policy/main.lua']=[[
     local mod=...
     mod.hooks:wrap("map.occupancy_allowed",function(next,game,context)
-      mod.exports.context=context
+      mod.exports.mapId=context.mapId
       return true
     end)
   ]],
@@ -58,7 +58,7 @@ local field={player={cellX=1,cellY=2},map={renderer={rebuild=function()end},
 story.VERMILION_DOCK.onEnter(host,field)
 T.eq(dialogs,0,'unchanged public policy actually suppresses ejection')
 T.check(blocks>0,'public policy still erases departed ship')
-T.eq(run.loader.exports.dock_policy.context.mapId,'VERMILION_DOCK','public policy observes actual story context')
+T.eq(run.loader.exports.dock_policy.mapId,'VERMILION_DOCK','public Unified policy observes actual story context')
 run.release()
 package.loaded['src.render.TextBox']=originalText
 T.finish('story map occupancy policy')
