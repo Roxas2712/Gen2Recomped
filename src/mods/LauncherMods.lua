@@ -41,6 +41,7 @@ local CacheFs = require("src.import.CacheFs")
 
 local LoadOrder = require("src.mods.LoadOrder")
 local LauncherMods = {}
+LauncherMods.NX_MAX_ZIP_BYTES = 64 * 1024 * 1024
 
 -- ------- pure status derivation
 
@@ -879,26 +880,46 @@ end
 -- love.filesystem read; a love DroppedFile is opened the way RomImporter
 -- ingests dropped ROMs.
 local function readArchive(source)
+  -- A console ZIP is read into memory before PHYSFS can mount it. Reject a
+  -- known oversized input before allocating its body; unknown-size reads use
+  -- a one-byte overflow probe. Desktop import limits remain unchanged.
+  local limit=require('src.core.Platform').isNX() and LauncherMods.NX_MAX_ZIP_BYTES or nil
+  local tooLarge='This Switch build accepts mod ZIPs up to 64 MiB. Use a smaller release archive.'
+  local function checked(data,err)
+    if limit and type(data)=='string' and #data>limit then return nil,tooLarge end
+    return data,err
+  end
   local t = type(source)
   if (t == "userdata" or t == "table") and type(source.open) == "function" then
     local ok = source:open("r")
     if not ok then return nil, "could not open the dropped file" end
-    local data = source:read(source:getSize())
+    local size=source:getSize()
+    if limit and type(size)=='number' and size>limit then source:close();return nil,tooLarge end
+    local data = source:read(limit and math.min(tonumber(size) or limit+1,limit+1) or size)
     source:close()
     if not data then return nil, "the dropped file could not be read" end
-    return data
+    return checked(data)
   end
   if t == "string" then
     local f = io.open(source, "rb")
     if f then
-      local data = f:read("*a")
+      if limit and f.seek then
+        local size=f:seek('end')
+        if size and size>limit then f:close();return nil,tooLarge end
+        if not f:seek('set',0) then f:close();return nil,'could not rewind the archive' end
+      end
+      local data = f:read(limit and limit+1 or "*a")
       f:close()
       if not data then return nil, "could not read " .. source end
-      return data
+      return checked(data)
     end
     if love and love.filesystem then
-      local data = love.filesystem.read(source)
-      if data then return data end
+      local fs=love.filesystem
+      local info=limit and fs.getInfo and fs.getInfo(source,'file')
+      if info and type(info.size)=='number' and info.size>limit then return nil,tooLarge end
+      local data
+      if limit then data=fs.read(source,limit+1) else data=fs.read(source) end
+      if data then return checked(data) end
     end
     return nil, "could not open " .. source
   end
