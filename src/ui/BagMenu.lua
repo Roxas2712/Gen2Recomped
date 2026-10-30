@@ -182,7 +182,7 @@ end
 BagMenu.refreshCount = refreshCount
 
 -- run the use-flow for an item on a chosen target.  `picker` is the party
--- menu when it was opened with keepOpen (HP medicine only): it is still on
+-- menu when it was opened with keepOpen: it is still on
 -- the stack, so every exit that prints has to close it afterwards.  For
 -- every other item the picker popped itself first and closePicker's identity
 -- check makes it a no-op (#252).
@@ -890,6 +890,7 @@ local function pickTargetAndUse(game, battle, id, list, options)
     keepOpen = ((battle or wantsMove) and require("src.core.GameVersion").isGen2())
       or require('src.inventory.Gen3RsMachineUse').fromBag(game,battle,id,list)
       or require('src.ui.Gen3NativeParty').retainStatus(game,battle,id,list)
+      or require('src.inventory.Gen3RsMachineUse').statusFromBag(game,battle,id,list)
       or ((not battle) and (ItemEffects.healsHP(id)
         or (id == "RARE_CANDY" and require("src.core.GameVersion").isFRLG()))),
     onSwitch = function(mon, picker)
