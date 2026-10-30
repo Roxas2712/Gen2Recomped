@@ -77,7 +77,10 @@ function M.textBox(game,text,onDone,opts)
     local Party=require('src.ui.Gen3PartyMenu')
     for i=#game.stack.states,1,-1 do
       local state=game.stack.states[i]
-      if getmetatable(state)==Party and state.keepOpen and state.tmhm
+      -- Medicine also retains the real party through HP fill and result
+      -- acknowledgment. Its message must replace that party's prompt, using
+      -- the same native window/font as teaching and mail feedback.
+      if getmetatable(state)==Party and state.keepOpen
          and state.rsNative and not state.battle then party=state;break end
     end
   end

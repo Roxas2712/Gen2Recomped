@@ -336,6 +336,9 @@ function ShopMenu.new(game, stock, onQuit, opts)
       { label = line(game, "sell", Strings("SELL")), keepOpen = true,
         onSelect = function()
           if fireRed then
+            if counter.newSellBag and require('src.ui.Gen3BagSale').available(game)then
+              return ShopMenu.coverWith(game,counter.newSellBag(game))
+            end
             return ShopMenu.coverWith(game,
               counter.new(game, { mode = "sell" }))
           end

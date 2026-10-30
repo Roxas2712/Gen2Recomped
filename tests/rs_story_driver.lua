@@ -121,6 +121,7 @@ return function(game)
   local function snapshot()
     local world=game.overworld;local state={seq=seq,busy=busy,frame=U.frame(),top=screen(game.stack:top()),money=game.save.money,party={},
       inventory={},pcItems={},pcOrder={},flags={},vars={},stack={},music=require('src.core.Music').current()}
+    state.savedGameCount=(game.save.gen3Stats or{})[0]or 0
     state.bike={onBike=game.save.onBike==true,kind=game.save.bikeKind,registeredItem=game.save.registeredItem}
     for i,s in ipairs(game.stack.states or {})do state.stack[i]=screen(s)end
     for i,m in ipairs(game.save.party or {})do

@@ -129,5 +129,31 @@ press('down');T.eq(screen.index,5,'team confirm moves down to separate cancel bu
 press('up');T.eq(screen.index,4,'team cancel moves up to confirm')
 press('down');press('a');T.eq(orderAnswer,nil,'team cancel returns nil through original callback')
 T.eq(pops,1,'team cancel pops once')
+-- A retained medicine picker owns its result window just as the retained
+-- teaching picker does. Keep the host TextBox input and completion callback.
+local Machine=require('src.inventory.Gen3RsMachineUse')
+local nativePages,nativeDraws,done=0,0,0
+screen.keepOpen,screen.pickOnly,screen.tmhm,screen.battle=true,true,nil,nil
+screen.rsNative={machinePages=function(_,pages)nativePages=nativePages+1;return pages end,
+  drawMachineMessage=function(_,box)nativeDraws=nativeDraws+1;T.eq(box.rsMachineParty,screen,'native result belongs to its retained picker')end}
+game.stack.states={screen}
+for _,version in ipairs({'ruby','sapphire'})do
+  V.set(version)
+  local box=Machine.textBox(game,'HP restored.',function()done=done+1 end)
+  T.eq(box.rsMachineParty,screen,version..' medicine result uses the native party window')
+  T.eq(box.maxPixels,176,'party result wraps to its own 22-tile window')
+  box:draw();box:revealPage();box:advance()
+end
+T.eq(nativePages,2,'both editions paginate with native party font metrics')
+T.eq(nativeDraws,2,'both editions use the native party renderer')
+T.eq(done,2,'each acknowledgment preserves the original callback')
+local function legacy(reason)
+  local box=Machine.textBox(game,'Unchanged host text.')
+  T.eq(box.rsMachineParty,nil,reason)
+end
+screen.battle={};legacy('battle text retains its battle owner');screen.battle=nil
+screen.keepOpen=false;legacy('closed target picker does not own a message');screen.keepOpen=true
+local presenter=screen.rsNative;screen.rsNative=nil;legacy('legacy party has no native presenter');screen.rsNative=presenter
+for _,version in ipairs({'emerald','firered','leafgreen'})do V.set(version);legacy(version..' retains its own message renderer')end
 V.set('leafgreen');T.eq(require('src.ui.Gen3RsParty').available(game),false,'LeafGreen retains its own party implementation')
 T.finish('Native RS party readiness, input, item/egg/switch and host callback contracts')

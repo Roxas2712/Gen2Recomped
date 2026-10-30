@@ -100,6 +100,21 @@ These checks establish the reported load/animation contract; they do not claim
 a complete Windows game session, every optional mod feature, or the separately
 reported Kris/Gold player-selection issue.
 
+## Native and legacy player-form values
+
+`Sprites.playerForm(data, save)` accepts native `boy`/`girl` values alongside
+the legacy Gen1 `male`/`female` spellings. Both routes select the same native
+Crystal walking, bicycle, fishing and portrait records. Explicitly registered
+form keys retain priority, including a literal `female` key and cartridge
+forms such as Prism's `p3`. Editions without a player-form table retain their
+existing presentation.
+
+Resolution is read-only. The save keeps its original spelling, names and
+fields through rendering and reload; existing G2R mods keep their native
+values. Mods inspecting `save.player.gender` directly still receive that
+original value and should accept the spellings they support. This contract
+does not change a mod's own string comparisons or install replacement art.
+
 ## Existing compatibility boundaries
 
 - Source encounter edits during legacy event callbacks update the native

@@ -145,15 +145,15 @@ local POCKET_KEYS = { "ITEM", "BALL", "TM_HM", "BERRY", "KEY_ITEM" }
 -- ...AND IT ASKS FOR THE WIDE SURFACE, like the title and the main menu, so
 -- the margins belong to this screen rather than to whatever is behind it.
 function Gen3BagMenu:uiSize()
-  if self.rs then return 240,160 end
+  if self.rs or self.emerald then return 240,160 end
   return gen3Wide().uiSize()
 end
 function Gen3BagMenu:wantsFillScale() return true end
-function Gen3BagMenu:wantsEdgeBleed() return not self.rs end
+function Gen3BagMenu:wantsEdgeBleed() return not(self.rs or self.emerald) end
 
 function Gen3BagMenu:sgbPalettes()
   local P = require("src.render.PaletteFX")
-  local w = self.rs and 240 or select(1, gen3Wide().uiSize())
+  local w = (self.rs or self.emerald)and 240 or select(1, gen3Wide().uiSize())
   return { P.trueColorZone(0, 0, math.ceil(w / 8) - 1,
                            math.ceil(GBA_H / 8) - 1) }
 end
@@ -297,6 +297,7 @@ function Gen3BagMenu.new(game, opts)
   self.rsTutorial = opts.rsTutorial and true or false
   self.rs = not self.pcList and (not self.scriptRows or opts.rsTutorial)
     and require('src.ui.Gen3RsBagView').available(game)
+  self.emerald = require('src.ui.Gen3EmeraldBagView').available(self)
   require('src.ui.Gen3BagPocketMemory').restore(self)
   self:rebuild()
   return self
@@ -342,7 +343,7 @@ function Gen3BagMenu:drawContentFrame(b, frameIndex)
 end
 
 function Gen3BagMenu:listRows()
-  if self.rs then return 8 end
+  if self.rs or self.emerald then return 8 end
   local r = self:screen()
   local n = math.floor(tonumber(r.list and r.list.rows) or FALLBACK.list.rows)
   return math.max(1, n)
@@ -429,6 +430,10 @@ function Gen3BagMenu:close()
   if self.onCancel then self.onCancel() end
 end
 
+function Gen3BagMenu:exit()
+  if self.emeraldView then self.emeraldView:exit();self.emeraldView=nil end
+end
+
 function Gen3BagMenu:selected() return self.rows[self.index] end
 
 function Gen3BagMenu:movePocket(delta)
@@ -440,6 +445,11 @@ function Gen3BagMenu:movePocket(delta)
 end
 
 function Gen3BagMenu:moveCursor(delta)
+  if self.emerald then
+    self.emeraldView=self.emeraldView or require('src.ui.Gen3EmeraldBagView').new(self)
+    if self.emeraldView:moveCursor(delta)then Sound.play(self.game.data,'Press_AB')end
+    return
+  end
   local n = #self.rows
   if n == 0 then return end
   self.message = nil
@@ -502,7 +512,8 @@ end
 local function fillLine(text, name, qty)
   return (tostring(text or "")
     :gsub("{STR_VAR1}", "{VAR1}"):gsub("{STR_VAR2}", "{VAR2}")
-    :gsub("{VAR2}", tostring(qty or 1)):gsub("{VAR1}", name))
+    :gsub("{VAR2}", function() return tostring(qty or 1) end)
+    :gsub("{VAR1}", function() return name end))
 end
 
 -- IS THIS ONE OF THE ITEMS THE PC REFUSES?
@@ -546,7 +557,11 @@ end
 
 -- ...and one it stops for, which is a real box the player dismisses.  Used
 -- for the answers ("Withdrew 5 POTIONs."), which the cartridge waits on.
-function Gen3BagMenu:tell(text)
+function Gen3BagMenu:tell(text, presentation)
+  if self.emerald and self.store == "deposit" then
+    self.game.stack:push(require("src.ui.Gen3EmeraldBagMessage").new(self.game, self, text, presentation))
+    return
+  end
   -- FireRed's deposit flow never leaves the bag for its answer.  ShowBagWindow
   -- overlays sWindowTemplates[9] on the lower-right description area and waits
   -- for A/B there.  Keep that message owned by this state so the bag, item
@@ -566,6 +581,17 @@ function Gen3BagMenu:askQuantity(id, held, prompt, done)
   local game = self.game
   local def = game.data.items and game.data.items[id]
   local name = (def and def.name) or id
+  if self.emerald and self.store == "deposit" then
+    game.stack:push(require("src.ui.Gen3EmeraldDepositQuantity").new(game, self, {
+      max = math.max(1, math.floor(held or 1)),
+      berry = def and def.pocket == "BERRY",
+      prompt = fillLine(prompt, name, held),
+      onDone = function(qty)
+        if qty and qty > 0 then done(qty, name) end
+      end,
+    }))
+    return
+  end
   if self.frlg and self.itemPc and self.store == "deposit" then
     game.stack:push(require("src.ui.Gen3ItemPcQuantity").new(game, self, {
       max = math.max(1, math.floor(held or 1)),
@@ -609,16 +635,18 @@ function Gen3BagMenu:depositItem(id)
   if selection then held=math.min(held,row.qty)end
   local function deposit(qty, name)
     if type(qty)~='number'or qty%1~=0 or qty<1 or qty>held then return end
+    if qty>((game.save.inventory or{})[id]or 0)then return end
     local stored=(game.save.pcItems or{})[id]or 0
     if self:pcFull(id)or stored+qty>999 then
       return self:tell(bagWord(game,'noRoomStore'))
     end
+    local presentation=self.emerald and{rows=self.rows,index=self.index,top=self.top}or nil
     if Bag.remove(game.save,id,qty,game.data,selection)==false then return end
     game.save.pcItems = game.save.pcItems or {}
     game.save.pcItems[id] = (game.save.pcItems[id] or 0) + qty
     self:rebuild()
     Sound.play(game.data, "Withdraw_Deposit")
-    self:tell(fillLine(bagWord(game, "deposited"), name, qty))
+    self:tell(fillLine(bagWord(game, "deposited"), name, qty), presentation)
   end
   -- item_menu.c Task_ChooseHowManyToDeposit skips the quantity UI when there
   -- is exactly one.  That is the common early-game POTION case in the user's
@@ -637,6 +665,8 @@ function Gen3BagMenu:withdrawItem(id)
   local held = pc[id] or 1
   self:askQuantity(id, held, Gen3BagMenu.pcWord(game, "withdrawPrompt"),
     function(qty, name)
+      if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+        or qty<1 or qty>(pc[id]or 0)then return end
       if not Bag.add(game.save, id, qty, game.data) then
         return self:tell(Gen3BagMenu.pcWord(game, "bagFull"))
       end
@@ -659,11 +689,14 @@ function Gen3BagMenu:tossStored(id)
   local pc = game.save.pcItems or {}
   local held = pc[id] or 1
   self:askQuantity(id, held, bagWord(game, "tossHowMany"), function(qty, name)
+    if game.save.pcItems~=pc or type(qty)~='number'or qty%1~=0
+      or qty<1 or qty>(pc[id]or 0)then return end
     local TextBox = require("src.render.TextBox")
     game.stack:push(TextBox.new(game,
       fillLine(bagWord(game, "tossConfirm"), name, qty), nil, {
         choice = function(yes)
           if not yes then return end
+          if game.save.pcItems~=pc or qty>(pc[id]or 0)then return end
           pc[id] = (pc[id] or 0) - qty
           if pc[id] <= 0 then pc[id] = nil end
           self:rebuild()
@@ -685,6 +718,12 @@ function Gen3BagMenu:choose()
   -- way the cartridge's shop flag makes it
   if self.sell then
     if self.onSell then return self.onSell(row.id,self)end
+    if self.frlg and (row.id=='TM_CASE'or row.id=='BERRY_POUCH')then
+      local screen=row.id=='TM_CASE'and'src.ui.Gen3TMCase'or'src.ui.Gen3BerryPouch'
+      self.game.stack:push(require(screen).new(self.game,{sell=true,onCancel=function()self:rebuild()end}))
+      return
+    end
+    if require('src.ui.Gen3BagSale').open(self,row)then return end
     return require("src.ui.Gen3ShopMenu").sellItem(self.game, row.id, {
       bagSlot = row.rsSlot, max = row.qty,
       say = function(text) self:say(text) end,
@@ -747,6 +786,7 @@ function Gen3BagMenu:choose()
     entries = entries.entries,
     columns = entries.columns,
     rsBag = self.rs and self or nil,
+    emeraldBag = self.emerald and self or nil,
     onPick = function(kind) self:act(kind, row.id) end,
   }))
 end
@@ -929,6 +969,7 @@ function Gen3BagMenu:update(dt)
     return
   end
   if self.rs then return require('src.ui.Gen3RsBagInput').update(self,input) end
+  if require('src.ui.Gen3EmeraldBagReorder').update(self,input)then return end
   if input:wasPressed('select') then
     local row = self:selected()
     local version = require('src.core.GameVersion').get()
@@ -1111,6 +1152,10 @@ function Gen3BagMenu:itemIcon(id, forcedIndex)
 end
 
 function Gen3BagMenu:draw()
+  if self.emerald then
+    self.emeraldView=self.emeraldView or require('src.ui.Gen3EmeraldBagView').new(self)
+    return self.emeraldView:draw()
+  end
   if self.rs then
     self.rsView = self.rsView or require('src.ui.Gen3RsBagView').new(self)
     return self.rsView:draw()

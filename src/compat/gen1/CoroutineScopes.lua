@@ -2,6 +2,12 @@
 -- suspended child cannot lend its scope to an unrelated native operation.
 local M={}
 local MAIN={}
+-- Native scripts own their lifetime across fixed-step callbacks. They are not
+-- source-created children borrowing the update callback that first resumes them.
+local nativeRoots=setmetatable({},{__mode='k'})
+function M.createNative(fn)
+  local co=coroutine.create(fn);nativeRoots[co]=true;return co
+end
 -- Retirement crosses phase/attribution registries. A source coroutine that
 -- outlives a borrowed native phase cannot acquire another caller's authority.
 local revoked=setmetatable({},{__mode='k'})
@@ -34,6 +40,9 @@ local function selectFrame(head,key,co)
     if not frame.closed and frame.creator==co then return frame end
     frame=frame[key]
   end
+  -- Keep this coroutine's own open scopes, but never adopt an ambient frame
+  -- from the update/input callback which happens to resume a native script.
+  if nativeRoots[co] then return nil end
   local selected
   frame=head
   while frame do

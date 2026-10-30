@@ -1,0 +1,22 @@
+[
+  {
+    "name": "tests/engine/native_script_root_lifetime.lua",
+    "passed": true
+  },
+  {
+    "name": "tests/engine/native_source_window_helpers.lua",
+    "passed": true
+  },
+  {
+    "name": "tests/engine/native_coroutine_phase_scopes.lua",
+    "passed": true
+  },
+  {
+    "name": "tests/engine/native_game_coroutine_scopes.lua",
+    "passed": true
+  },
+  {
+    "name": "tests/engine/native_effect_coroutine_scopes.lua",
+    "passed": true
+  }
+]

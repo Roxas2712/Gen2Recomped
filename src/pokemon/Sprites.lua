@@ -121,6 +121,9 @@ end
 -- The gender lives on the save, written by the Oak speech's ask_gender step.
 -- Reading it through Game rather than threading a save argument through every
 -- caller keeps the change to this one function.
+-- Legacy Gen1 hosts use male/female for the same choice. Resolve these as
+-- lookup aliases, preserving both explicit cartridge forms and saved values.
+local legacyPlayerGenders = { male = "boy", female = "girl" }
 function Sprites.playerForm(data, save)
   local forms = data and data.field and data.field.playerForms
   if type(forms) ~= "table" then return nil end
@@ -129,7 +132,10 @@ function Sprites.playerForm(data, save)
     save = ok and Game and Game.save or nil
   end
   local gender = save and save.player and save.player.gender
-  return forms[gender] or forms.boy
+  local form = forms[gender]
+  if form then return form end
+  local nativeGender = legacyPlayerGenders[gender]
+  return (nativeGender and forms[nativeGender]) or forms.boy
 end
 
 -- EVERY PLAYER FORM ON A CARTRIDGE WHOSE ART IS ALREADY IN COLOUR.
