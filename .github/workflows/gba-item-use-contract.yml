@@ -27,6 +27,10 @@ jobs:
           luajit tests/engine/gba_native_field_party.lua
           luajit tests/engine/frlg_tm_case_native.lua
           luajit tests/engine/gen3_flash_composite.lua
+          luajit tests/engine/gen3_poison_composite.lua
+          luajit tests/engine/rs_battler_frame_placement.lua
+          luajit tests/engine/emerald_battler_coordinates.lua
+          luajit tests/engine/frlg_double_healthboxes.lua
           luajit tests/engine/gen3_absent_accuracy.lua
           luajit tests/engine/gen3_elevator_entrance.lua
           luajit tests/engine/gen3_multichoice_defaults.lua

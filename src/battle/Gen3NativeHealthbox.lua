@@ -91,6 +91,17 @@ local function context(battle,hud)
   local load=require('compat.gen1-rs.Loader').new('emerald',bindings)
   return{compositor=load('src.core.game3.battle.healthbox'),state=st}
 end
+-- Older Kanto imports contain battler anchors but no healthbox switch
+-- immediates. The same native compositor that paints their boxes supplies
+-- those centres; absence of the optional import must not hide all four.
+function M.center(battle,id)
+  local hud=M.available(battle);if not hud then return end
+  local ctx=battle.nativeHealthbox
+  if not ctx then ctx=context(battle,hud);battle.nativeHealthbox=ctx end
+  ctx.state.double=battle:isDouble()
+  local c=ctx.compositor.center(ctx.state,id)
+  if c then return c.x,c.y end
+end
 function M.draw(battle,battler,x,y,player,safari)
   local hud=M.available(battle)
   if not hud or battle.safari and player and not safari then return false end
@@ -102,6 +113,7 @@ function M.draw(battle,battler,x,y,player,safari)
   if compact and not(hud.images.playerDoubles and hud.images.opponentDoubles)then return false end
   local ctx=battle.nativeHealthbox
   if not ctx then ctx=context(battle,hud);battle.nativeHealthbox=ctx end
+  ctx.state.double=battle:isDouble()
   ctx.state.safari=battle.safari~=nil;ctx.state.safariState=battle.safari
   local gender=require('src.pokemon.DayCare').gender(battle.data,battler.mon)
   local def=battle.data.pokemon[battler.mon.species]

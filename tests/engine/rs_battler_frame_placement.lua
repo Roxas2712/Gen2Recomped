@@ -16,14 +16,17 @@ local actors={ {position=0,isPlayer=true,mon={species='SCEPTILE'}},
  {position=3,isPlayer=false,mon={species='SOLROCK'}} }
 local expected={{0,49},{168,4},{58,70},{120,-3}}
 local before=W.encode(b.data)
-for _,edition in ipairs{'ruby','sapphire'}do
- b.data.constants.gen3RsHealthbox.version=edition
+for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
+ b.data.constants.gen3RsHealthbox=nil
+ if edition=='ruby'or edition=='sapphire'then b.data.constants.gen3RsHealthbox={version=edition}end
+ b.data.constants.gen3BattleHud={native={format=1,version=edition}}
  for i,a in ipairs(actors)do
   local x,y=P.place(b,a,img,1,0);T.eq(x,expected[i][1]);T.eq(y,expected[i][2])
   x,y=P.place(b,a,img,0.5,40);T.eq(x,expected[i][1]+56);T.eq(y,expected[i][2]+16,'scale keeps native frame centre')
  end
 end
-b.data.constants.gen3RsHealthbox.version='ruby';T.eq(W.encode(b.data),before,'placement never edits imported records')
+b.data.constants.gen3RsHealthbox={version='ruby'};b.data.constants.gen3BattleHud=nil
+T.eq(W.encode(b.data),before,'placement never edits imported records')
 b.isDouble=function()return false end
 local x,y=P.place(b,actors[1],img,1,0);T.eq(x,40);T.eq(y,49)
 x,y=P.place(b,actors[2],img,1,0);T.eq(x,144);T.eq(y,4,'single also uses original lift and front offset')
@@ -35,4 +38,13 @@ T.eq(P.place(b,{isPlayer=false},img,1,0),nil,'trainer retains its existing place
 T.eq(P.place(b,actors[1],{getWidth=function()return 128 end,getHeight=function()return 64 end},1,0),nil,'custom image size forwards')
 defs.SCEPTILE.backPicCoords=nil
 T.eq(P.place(b,actors[1],img,1,0),nil,'missing native metadata is never guessed')
-T.finish('RS native sprite frames, original front/back offsets, scaling and edition isolation')
+-- LeafGreen's owned Snorlax frame has yOffset=5 and opaque bottom=59.
+-- Native top is 40+5-32=13, irrespective of that opaque bottom or terrain.
+b.data.constants.gen3RsHealthbox=nil
+b.data.constants.gen3BattleHud={native={format=1,version='leafgreen'}}
+defs.SNORLAX={frontPicCoords={yOffset=5}}
+x,y=P.place(b,{mon={species='SNORLAX'},position=1},img,1,0)
+T.eq(x,144);T.eq(y,13,'Snorlax uses its native frame, not feet measured from the backdrop')
+b.data.constants.gen3BattleHud.native.format=0
+T.eq(P.place(b,{species='SNORLAX'},img,1,0),nil,'unknown native metadata format forwards')
+T.finish('All five GBA native sprite frames, front/back offsets, scaling and fallback isolation')

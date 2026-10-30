@@ -389,6 +389,7 @@ function Renderer:beginFrame(transparent)
   -- fade in from white after a battle) -- covers the window, not just the
   -- 160x144 letterbox
   self.screenVeil = nil
+  self.fieldPoisonAlpha = nil
   self.nativeTransitionVeil = nil
   -- edge-anchored UI regions, re-declared by their elements each frame
   self.uiAnchors = nil
@@ -1681,6 +1682,13 @@ local function endFrame(self, zones, worldZones, privateViewport)
   -- UI canvas: at any zoom above 1x a letterbox-only veil left the
   -- surrounding window untouched, which read as the effect happening inside
   -- a window rather than to the whole screen.  { shade, alpha }.
+  -- Field poison covers the finished world and anchored UI equally. Keep
+  -- transition fades above it and clear this transient request each frame.
+  if self.fieldPoisonAlpha and self.fieldPoisonAlpha > 0 then
+    love.graphics.setColor(0, 0, 0, self.fieldPoisonAlpha)
+    love.graphics.rectangle("fill", 0, 0, ww, wh)
+    love.graphics.setColor(1, 1, 1, 1)
+  end
   local veil = self.screenVeil
   if veil and veil[2] > 0 then
     love.graphics.setColor(veil[1], veil[1], veil[1], veil[2])

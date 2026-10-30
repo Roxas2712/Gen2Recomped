@@ -58,6 +58,14 @@ function M.missing(version)
   local s=ok and type(c)=='table'and c.gen3BattleHud and c.gen3BattleHud.native
   if not M.valid(s,version)then return{'<gba:native-healthbox-font>'}end
   local missing={}
+  if version=='emerald'then
+    local frames=c.gen3BattlerFrames
+    if type(frames)~='table'or frames.format~=1 or frames.version~=version
+      or type(frames.frontTable)~='number'or type(frames.backTable)~='number'
+      or frames.frontTable==frames.backTable then
+      missing[#missing+1]='<emerald:native-front-back-coordinates>'
+    end
+  end
   if version=='leafgreen'then
     local terrain=c.gen3BattleTerrain
     -- The old FireRed table begins 36 bytes into LeafGreen's table and can

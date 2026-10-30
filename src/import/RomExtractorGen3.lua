@@ -12555,7 +12555,8 @@ function RomExtractorGen3:extractDexEntries()
   -- pose pairs sit four bytes later
   local frlg = (self.manifest or {}).frlgItemMenu ~= nil
   local frontCoords = coords
-  if frlg and type(self.rom.data) == "string" then
+  local emerald = self.version == 'emerald'
+  if (frlg or emerald) and type(self.rom.data) == "string" then
     -- The old FireRed manifest label for gMonFrontPicCoords points at the BACK
     -- table.  Do not change the long-standing `picCoords` field here (that is a
     -- separate placement concern), but locate both real tables for tasks that
@@ -12567,12 +12568,20 @@ function RomExtractorGen3:extractDexEntries()
       if not at or self.rom.data:find(bytes, at + 1, true) then return nil end
       return at - 1
     end
-    local front = string.char(0x88,0,0,0, 0x55,16,0,0,
-                              0x66,10,0,0, 0x87,4,0,0)
-    local back = string.char(0x88,0,0,0, 0x64,16,0,0,
-                             0x76,10,0,0, 0x86,10,0,0)
-    frontCoords = coordTable(front) or frontCoords
-    backCoords = coordTable(back) or backCoords
+    local front = emerald and string.char(0x88,0,0,0, 0x45,14,0,0,
+                                          0x56,10,0,0, 0x88,3,0,0)
+      or string.char(0x88,0,0,0, 0x55,16,0,0, 0x66,10,0,0, 0x87,4,0,0)
+    local back = emerald and string.char(0x88,0,0,0, 0x64,16,0,0,
+                                         0x66,9,0,0, 0x87,7,0,0)
+      or string.char(0x88,0,0,0, 0x64,16,0,0, 0x76,10,0,0, 0x86,10,0,0)
+    if emerald then
+      -- Emerald's old front label also names its back table. Do not present
+      -- either exact row when its own signature is absent or ambiguous.
+      frontCoords, backCoords = coordTable(front), coordTable(back)
+    else
+      frontCoords = coordTable(front) or frontCoords
+      backCoords = coordTable(back) or backCoords
+    end
   end
   -- Ruby/Sapphire also carry two description pointers. Their manifest
   -- declares the same 36-byte structure without selecting FRLG UI rules.
@@ -12654,6 +12663,12 @@ function RomExtractorGen3:extractDexEntries()
   end
   -- rewritten so the dex text and egg moves land in the same module
   self:write("pokemon", self._pokemon)
+  if emerald and frontCoords and backCoords then
+    self._constants = self._constants or {}
+    self._constants.gen3BattlerFrames = { format=1, version='emerald',
+      frontTable=frontCoords, backTable=backCoords }
+    self:write('constants', self._constants)
+  end
   Logger.info("Gen3 dex entries: %d species with category, size and text", filled)
 end
 

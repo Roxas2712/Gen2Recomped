@@ -20151,12 +20151,19 @@ function OverworldState:drawUI()
     self.poisonFlash = self.poisonFlash - 1
     local pulse = math.floor(self.poisonFlash / 4) % 2 == 1
     if pulse then
+      if GameVersion.isGen3() then
+        -- The widened field and its anchored popup are composed outside the
+        -- native UI canvas. Pulse their finished surface together, without
+        -- replacing a transition's independently owned screenVeil.
+        Game.renderer.fieldPoisonAlpha = 0.45
+      else
       -- the whole UI canvas, which is the Game Boy's 160 x 144 only on a
       -- Game Boy (Emerald's is 240 x 160, Black and White's 256 x 192)
       local uw, uh = Game.renderer:uiSize()
       love.graphics.setColor(0, 0, 0, 0.45)
       love.graphics.rectangle("fill", 0, 0, uw or 160, uh or 144)
       love.graphics.setColor(1, 1, 1, 1)
+      end
     end
   end
 end

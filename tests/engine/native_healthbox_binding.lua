@@ -42,6 +42,8 @@ end
 T.eq(M.draw(b,second,169,91,true),true);T.eq(hidden,false)
 T.raises(function()M.draw(b,second,169,91,true)end,'intentional native compositor error')
 T.eq(second.mon.status,'MOD_POISON');T.eq(second.mon.hp,200)
+local cx,cy=M.center(b,2);T.eq(cx,171);T.eq(cy,100)
+T.eq(b.nativeHealthbox.state.double,true,'centre and painter share the actual double-battle context')
 b.safari=true;T.eq(M.draw(b,second,0,0,true),false,'Safari retains its separate controller')
 M.available,Loader.new,Level.visible,Care.gender,Scope.call=oldAvailable,oldLoad,oldLevel,oldGender,oldScope
 T.finish('Native healthbox host ownership, double-battler visibility and status bindings')
