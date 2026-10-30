@@ -39,7 +39,7 @@ jobs:
           luajit tests/engine/launcher_mods_tests.lua
           luajit tests/engine/mod_update_tests.lua
           luajit tests/engine/mod_download.lua
-          luajit tests/engine/nx_mod_archive_preflight.lua
+          luajit tests/engine/installer_streaming.lua
           luajit tests/engine/gen2_lifecycle_callbacks.lua
           luajit tests/engine/session_process_shutdown.lua
   filesystem:

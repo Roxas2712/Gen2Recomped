@@ -74,4 +74,18 @@ do
  T.eq(m.files['mods/native/main.lua'],nil,'no late download can install')
  Download.start=start;m.restore()
 end
-T.finish('native loader compatibility, detached options, guarded recovery, batch and download cancellation')
+do
+ local m=Fake();local Platform=require('src.core.Platform');local nx=Platform.isNX
+ Platform.isNX=function()return true end
+ local reads,closes=0,0
+ local dropped={open=function()return true end,getSize=function()return 64*1024*1024+1 end,
+  read=function()reads=reads+1;error('oversized input must not be read')end,
+  close=function()closes=closes+1;return true end}
+ local ok,why=drain(assert(Mods.beginInstallZip(dropped)))
+ T.eq(ok,nil,'oversized console ZIP refused before allocation')
+ T.check(why:find('64 MiB',1,true),'console limit is explained')
+ T.eq(reads,0,'console preflight does not read oversized input')
+ T.eq(closes,1,'refused console source handle closes')
+ Platform.isNX=nx;m.restore()
+end
+T.finish('native loader compatibility, detached options, guarded recovery, batch, download and console cancellation')
