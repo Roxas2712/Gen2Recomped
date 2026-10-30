@@ -12,7 +12,7 @@ return function(game)
  local P=require('src.pokemon.Pokemon');local S=require('src.core.SaveSerializer')
  local B=require('src.battle.BattleState');local G=require('src.battle.Gen3Battle')
  local report={edition=edition,status='running',preparedFixture=true,continuousStory=false,
-  captures={},placements={},nativeCoordinatesMatched=true}
+  captures={},placements={},healthboxes={},nativeCoordinatesMatched=true}
  local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
  local function press(key,n)game.input:overlayPressed(key);U.wait(1);game.input:overlayReleased(key);U.wait(n or 4)end
  local function shot(name)
@@ -40,6 +40,9 @@ return function(game)
  local function measure(b,tag)
   local c=game.data.constants;local rows=b:isDouble()and c.gen3BattlerCoords.doubles or c.gen3BattlerCoords.singles
   for _,a in b:activeBattlers()do
+   local hx,hy=G.healthboxGeometry(b,a.position)
+   assert(hx and hy,'Native healthbox missing for occupied position '..a.position)
+   report.healthboxes[#report.healthboxes+1]={scene=tag,position=a.position,x=hx,y=hy}
    local img=b:picImage(a.sprite);assert(img:getWidth()==64 and img:getHeight()==64)
    local def=game.data.pokemon[a.mon.species]
    local body;if a.isPlayer then body=def.backPicCoords else body=def.frontPicCoords end

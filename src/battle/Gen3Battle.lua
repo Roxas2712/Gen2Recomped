@@ -1540,6 +1540,10 @@ function Gen3Battle.healthboxGeometry(battle,id)
     local keys={[0]='playerLeft','opponentLeft','playerRight','opponentRight'}
     local c=battle.data.constants.gen3BattlerCoords
     local pos=c and c.healthbox and c.healthbox[keys[id]]
+    if not pos then
+      local x,y=require('src.battle.Gen3NativeHealthbox').center(battle,id)
+      if x and y then pos={x=x,y=y}end
+    end
     if not pos then return nil,'native double healthbox placement unavailable'end
     return pos.x-32+(player and Gen3Battle.extra(battle)or 0),pos.y-16,h
   end
@@ -1658,15 +1662,13 @@ local function drawHUDs(battle, slide)
           if okH and type(got) == "number" then h = got end
         end
         local constants = battle.data and battle.data.constants
-        local coords = constants and constants.gen3BattlerCoords
-        local pos = coords and coords.healthbox and coords.healthbox[row.key]
-        if pos then
+        local px,py=Gen3Battle.healthboxGeometry(battle,row.pos)
+        if px then
           -- ...and in a DOUBLE the same edge rule, per side: playerLeft and
           -- playerRight are the right-hand pair (x 159 and 171 of 240) and
           -- ride the right edge; opponentLeft and opponentRight are the
           -- left-hand pair (44 and 32) and stay put.
-          local edge = row.player and Gen3Battle.extra(battle) or 0
-          local px, py = pos.x - 32 + edge, pos.y - 16+Selection.offset(battle,'hb',b)
+          py=py+Selection.offset(battle,'hb',b)
           drawStatusPanel(battle, b, px, py, row.player)
           -- RS uses the native target sprite blink / healthbox bounce above.
           -- Its two-sprite panel is not the generic 64-pixel outline below.
