@@ -22,6 +22,10 @@ on:
         description: Requalify an unchanged native Windows SDK run
         type: string
         default: ''
+      native_windows_sdk_candidate:
+        description: Retest a compiled candidate, with all native tests required
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -46,3 +50,4 @@ jobs:
       actions: read
     with:
       sdk_run_id: ${{ inputs.native_windows_sdk_run_id }}
+      sdk_candidate: ${{ inputs.native_windows_sdk_candidate }}

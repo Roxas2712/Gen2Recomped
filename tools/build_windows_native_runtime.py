@@ -27,8 +27,10 @@ def extract(file,destination):
             z.extractall(destination)
     else:
         with tarfile.open(file)as t:t.extractall(destination,filter='data')
-def clone(qa,url,path,revision):
+def clone(qa,url,path,revision,exclude=()):
     if not path.exists():qa.qa_run(['git','-c','core.eol=lf','-c','core.autocrlf=false','clone','--filter=blob:none','--no-checkout',url,str(path)],check=True)
+    if exclude:
+        qa.qa_run(['git','sparse-checkout','set','--no-cone','/*',*['!/'+item.strip('/')+'/' for item in exclude]],cwd=path,check=True)
     qa.qa_run(['git','checkout','--detach',revision],cwd=path,check=True)
     actual=qa.qa_run(['git','rev-parse','HEAD'],cwd=path,capture_output=True,text=True,check=True).stdout.strip()
     if actual!=revision:raise ValueError('Source pin mismatch')
@@ -37,6 +39,22 @@ def notices(source,target,prefix):
         destination=target/(prefix+'-'+file.name)
         if file.is_dir():shutil.copytree(file,destination)
         elif file.is_file():shutil.copy2(file,destination)
+def retire_rust_objects(target,sdk):
+    """Only compiled intermediates after copied final binaries and tests agree.
+
+    The corresponding Rust/C/C++ sources, dependency registry, final DLL/EXE
+    and all profiles/ROMs remain intact, matching the normal QA Cargo policy.
+    """
+    for source,installed in [(target/'release/3dsrecomp.exe',sdk/'bin/3dsrecomp.exe'),
+                              (target/'release/ascendant_3ds_bridge.dll',sdk/'lib/ascendant_3ds_bridge.dll')]:
+        if digest(source)!=digest(installed):raise ValueError('Retain Rust objects until final binaries match')
+    removed=0
+    for folder in [target/'release/deps',target/'release/build']:
+        for path in folder.rglob('*'):
+            if path.suffix.lower()not in {'.o','.obj','.rlib','.rmeta','.a','.lib','.pdb','.exp'}or path.is_symlink()or not path.is_file():continue
+            if any(p.lower()in{'src','sources','models','saves','profiles'}for p in path.relative_to(target).parts):continue
+            size=path.stat().st_size;path.unlink();removed+=size
+    print(json.dumps({'retiredQualifiedRustIntermediateBytes':removed}),flush=True)
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True)
     parser.add_argument('--graphics',action='store_true');a=parser.parse_args()
@@ -66,6 +84,7 @@ def main():
         qa.qa_run(['cargo','test','--release','--locked','--manifest-path',str(manifest),'--lib'],env=env,check=True)
     shutil.copy2(work/'cargo-target/release/3dsrecomp.exe',out/'bin/3dsrecomp.exe')
     shutil.copy2(work/'cargo-target/release/ascendant_3ds_bridge.dll',out/'lib/ascendant_3ds_bridge.dll')
+    retire_rust_objects(work/'cargo-target',out)
     gba=work/'gbarecomp';clone(qa,'https://github.com/mstan/gbarecomp.git',gba,pinball_rs.RUNTIME)
     qa.qa_run(['git','submodule','update','--init','--recursive','external/arm-recomp-core','external/recomp-net','external/rbengine'],cwd=gba,check=True)
     pinball_rs.apply_runtime_fixes(gba,qa)
@@ -159,17 +178,17 @@ def build_graphics(qa,work,out,components):
     if len(dll)!=1:raise ValueError('Native Vulkan loader is missing')
     shutil.copy2(dll[0],out/'vulkan/vulkan-1.dll')
     notices(loader,out/'licenses','vulkan-loader')
-    swift=work/'swiftshader';clone(qa,'https://github.com/google/swiftshader.git',swift,components['swiftshader'])
+    swift=work/'swiftshader';clone(qa,'https://github.com/google/swiftshader.git',swift,components['swiftshader'],exclude=['third_party/llvm-16.0'])
     # Runtime dependencies (including the trimmed LLVM backend) are tracked in
     # this pinned checkout. Test/debug/PowerVR/llvm-project submodules are not
     # needed and may exceed the build budget before compilation even starts.
     build=work/'swiftshader-build'
     qa.qa_run(['cmake','-S',str(swift),'-B',str(build),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
-        '-DREACTOR_BACKEND=LLVM','-DSWIFTSHADER_BUILD_TESTS=OFF','-DSWIFTSHADER_BUILD_PVR=OFF',
+        '-DREACTOR_BACKEND=LLVM','-DSWIFTSHADER_LLVM_VERSION=10.0','-DSWIFTSHADER_BUILD_TESTS=OFF','-DSWIFTSHADER_BUILD_PVR=OFF',
         '-DSWIFTSHADER_BUILD_BENCHMARKS=OFF','-DSWIFTSHADER_ENABLE_VULKAN_DEBUGGER=OFF',
         '-DSWIFTSHADER_BUILD_CPPDAP=OFF','-DREACTOR_EMIT_DEBUG_INFO=OFF',
         '-DCMAKE_POLICY_VERSION_MINIMUM=3.5','-DSWIFTSHADER_WARNINGS_AS_ERRORS=OFF'],check=True)
-    qa.qa_run(['cmake','--build',str(build),'--target','vk_swiftshader','--parallel','2'],check=True)
+    qa.qa_run(['cmake','--build',str(build),'--target','vk_swiftshader','--parallel','4'],check=True)
     dll=list(build.rglob('vk_swiftshader.dll'))
     if len(dll)!=1:raise ValueError('Software Vulkan driver is missing')
     shutil.copy2(dll[0],out/'vulkan/vk_swiftshader.dll')

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Reuse an exact public-fork native component, then run fresh native tests.
 
-No component/source identity is inferred from a filename. The successful
-original Actions run and every unpacked byte are checked before reuse.
+No component/source identity is inferred from a filename. Qualified reuse
+requires a successful run. Explicit QA candidates require a successful compile
+step and still have to pass every native test before final packaging.
 Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 """
 import argparse,hashlib,json,sys,zipfile
@@ -11,17 +12,22 @@ from native_workspace import manager
 ROOT=Path(__file__).resolve().parents[1]
 CRITICAL=['tools/pokemon-xy-bridge','tools/pokemon_xy_source_pins.json','tools/windows_native_components.json','tools/pinball-rs-native/windows-io.patch','tools/pinball-rs-native/runtime-fixes.patch']
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--artifact',type=Path,required=True);p.add_argument('--run-id',type=int,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--artifact',type=Path,required=True);p.add_argument('--run-id',type=int,required=True);p.add_argument('--out',type=Path,required=True);p.add_argument('--candidate',action='store_true');a=p.parse_args()
  qa=manager(ROOT);qa.qa_source(ROOT);qa.qa_source(a.artifact);qa.qa_copy(a.out)
  doc=json.loads(qa.qa_run(['gh','api',f'repos/Roxas2712/Gen2Recomped/actions/runs/{a.run_id}'],check=True,capture_output=True,text=True).stdout)
- if doc.get('conclusion')!='success' or doc.get('repository',{}).get('full_name')!='Roxas2712/Gen2Recomped':raise ValueError('Only a successful component run from this public fork can be reused')
+ if doc.get('status')!='completed' or doc.get('repository',{}).get('full_name')!='Roxas2712/Gen2Recomped':raise ValueError('Only a finished component run from this public fork can be reused')
+ if a.candidate:
+  jobs=json.loads(qa.qa_run(['gh','api',f'repos/Roxas2712/Gen2Recomped/actions/runs/{a.run_id}/jobs'],check=True,capture_output=True,text=True).stdout)
+  if not any(step.get('name')=='Build pinned game-data-free native components'and step.get('conclusion')=='success'for job in jobs['jobs']for step in job.get('steps',[])):
+   raise ValueError('The candidate compile step did not succeed; rebuild it')
+ elif doc.get('conclusion')!='success':raise ValueError('Only a successful qualified run can supply a final component')
  revision=doc['head_sha']
  def tree(rev,path):return qa.qa_run(['git','rev-parse',rev+':'+path],cwd=ROOT,check=True,capture_output=True,text=True).stdout.strip()
  expected={path:tree(revision,path)for path in CRITICAL}
  if any(tree('HEAD',path)!=value for path,value in expected.items()):raise ValueError('Native sources changed; rebuild the SDK')
  reports=list(a.artifact.rglob('report.json'))
  if len(reports)>1:raise ValueError('Ambiguous native reports')
- if reports:
+ if reports and not a.candidate:
   report=json.loads(reports[0].read_text(encoding='utf-8-sig'))
   if report.get('passed')is not True or report.get('platform')!='Windows':raise ValueError('The original native component did not pass')
  archives=list(a.artifact.rglob('windows-native-runtime.zip'))

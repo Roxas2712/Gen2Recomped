@@ -6,11 +6,18 @@ on:
         description: Requalify an unchanged already-built native SDK
         type: string
         default: ''
+      sdk_candidate:
+        description: Retest an unqualified candidate whose compile step succeeded
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       sdk_run_id:
         type: string
         default: ''
+      sdk_candidate:
+        type: boolean
+        default: false
 permissions:
   contents: read
   actions: read
@@ -35,6 +42,14 @@ jobs:
           arch: x64
       - uses: actions/cache/restore@v5
         if: ${{ !inputs.sdk_run_id }}
+        id: graphics-cache
+        with:
+          path: |
+            .local/qa/windows-native-sdk-build/swiftshader
+            .local/qa/windows-native-sdk-build/swiftshader-build
+          key: windows-native-swift-v1-${{ env.VCToolsVersion }}-${{ hashFiles('tools/windows_native_components.json') }}
+      - uses: actions/cache/restore@v5
+        if: ${{ !inputs.sdk_run_id }}
         id: rust-cache
         with:
           path: |
@@ -49,7 +64,7 @@ jobs:
       - uses: actions/download-artifact@v8
         if: ${{ inputs.sdk_run_id != '' }}
         with:
-          name: windows-native-games
+          name: ${{ inputs.sdk_candidate && 'windows-native-component-candidate' || 'windows-native-games' }}
           run-id: ${{ inputs.sdk_run_id }}
           github-token: ${{ github.token }}
           path: ${{ runner.temp }}/original-sdk
@@ -58,13 +73,29 @@ jobs:
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tools/requalify_windows_sdk.py --artifact "$env:RUNNER_TEMP/original-sdk" --run-id "${{ inputs.sdk_run_id }}" --out "$env:GITHUB_WORKSPACE/.local/qa/windows-native-sdk/candidate/3ds-runtime"
+        run: |
+          $extra = @()
+          if ("${{ inputs.sdk_candidate }}" -eq 'true') { $extra += '--candidate' }
+          python tools/requalify_windows_sdk.py --artifact "$env:RUNNER_TEMP/original-sdk" --run-id "${{ inputs.sdk_run_id }}" --out "$env:GITHUB_WORKSPACE/.local/qa/windows-native-sdk/candidate/3ds-runtime" @extra
+      - name: Archive the source-bound SDK candidate before native tests
+        shell: pwsh
+        run: Compress-Archive -Path .local/qa/windows-native-sdk/candidate/3ds-runtime -DestinationPath .local/qa/windows-native-sdk/windows-native-runtime.zip -CompressionLevel Fastest
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-native-component-candidate
+          path: .local/qa/windows-native-sdk/windows-native-runtime.zip
+          include-hidden-files: true
+          retention-days: 14
       - name: Native ABI, compiler and isolated save/lock checks
         shell: pwsh
         run: .local/qa/windows-native-sdk/candidate/3ds-runtime/python/python.exe -X utf8 tools/qualify_windows_native.py --sdk .local/qa/windows-native-sdk/candidate/3ds-runtime --out .local/qa/windows-native-sdk/report.json
-      - name: Archive the tested native SDK
-        shell: pwsh
-        run: Compress-Archive -Path .local/qa/windows-native-sdk/candidate/3ds-runtime -DestinationPath .local/qa/windows-native-sdk/windows-native-runtime.zip -CompressionLevel Fastest
+      - uses: actions/cache/save@v5
+        if: ${{ always() && !inputs.sdk_run_id && steps.graphics-cache.outputs.cache-hit != 'true' }}
+        with:
+          path: |
+            .local/qa/windows-native-sdk-build/swiftshader
+            .local/qa/windows-native-sdk-build/swiftshader-build
+          key: ${{ steps.graphics-cache.outputs.cache-primary-key }}
       - uses: actions/cache/save@v5
         if: ${{ always() && !inputs.sdk_run_id && steps.rust-cache.outputs.cache-hit != 'true' }}
         with:
