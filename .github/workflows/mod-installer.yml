@@ -11,6 +11,7 @@ on:
       - 'tests/engine/cancellable_mod_install.lua'
       - 'tests/engine/launcher_community.lua'
       - 'tests/engine/launcher_mod_profiles.lua'
+      - 'tests/engine/rom_pick_error_bug442.lua'
       - 'tests/modkit/install_fs.lua'
       - 'tests/mod_install_runtime/**'
       - 'tests/rom_importer_no_picker_test.lua'
@@ -45,6 +46,7 @@ jobs:
           luajit tests/engine/installer_streaming.lua
           luajit tests/engine/gen2_lifecycle_callbacks.lua
           luajit tests/engine/session_process_shutdown.lua
+          luajit tests/engine/rom_pick_error_bug442.lua
           luajit tests/rom_importer_no_picker_test.lua
           luajit tests/rom_importer_android_mod_pick_test.lua
           luajit tests/parity_picker_pointer_grab.lua
