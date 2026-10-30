@@ -15,3 +15,11 @@ and draws after OASC's physical direction code. No cheat effects are qualified.
 First eye level and outdoor upward Third views pass on the same macOS host.
 The separate five-edition release matrix is retained in the private OASC release.
 A new Windows binary execution is not established by these macOS tests.
+
+Publication integration: merged current fork main b61896bb before publication.
+The two new regression suites and all 211 existing phase/callback/native-effect
+assertions pass on that combined source without module-path overrides. The
+four repaired engine files remain byte-identical to the native-tested fix.
+The earlier native five-edition checks use the documented preview base plus
+these repairs; this is not a new native/full-story test of every intervening
+main change.
