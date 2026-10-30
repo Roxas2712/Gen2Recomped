@@ -4,7 +4,8 @@ local M={ROOT='data/generated/gba/native_emerald_bag/',FONTS='data/generated/gba
 M.labels={count='gText_xVar1',close='gText_CloseBag',returnTo='gText_ReturnToVar1',
  selected='gText_Var1IsSelected',moveWhere='gText_MoveVar1Where',number='gText_NumberItem_TMBerry',hmNumber='gText_NumberItem_HM'}
 M.files={'manifest.lua','bg.png','bg_female.png','indicator.png','indicator_female.png',
- 'bag_male.png','bag_female.png','arrows.png','hm.png','select.png','move_info.png','swap.png'}
+ 'bag_male.png','bag_female.png','arrows.png','hm.png','select.png','move_info.png','swap.png',
+ 'ball.png','switch.png','switch_female.png'}
 M.fonts={'latin_narrow_fg.rgba','latin_narrow_shadow.rgba','latin_narrow_widths.lua'}
 function M.extract(x)
  if x.version~='emerald'then return end
@@ -33,11 +34,15 @@ function M.extract(x)
  local cells=string.char(0x17,0x10,0x2B,0x10)
  local dots,dw,dh=K.bakeText(gfx,cells,2,1,{linear=true,mapWidth=2})
  local indicator=c:layer({key='indicator',opaque=true,variants={{name='',pal=male},{name='female',pal=female}}},dots,dw,dh,male)
+ local erased,ew,eh=K.bakeText(gfx,string.rep(string.char(11,0),15*16),15,16,{linear=true,mapWidth=15})
+ local transition=c:layer({key='switch',opaque=true,variants={{name='',pal=male},{name='female',pal=female}}},erased,ew,eh,male)
  local bagPalette=c:pal('gBagPalette',16,nil,0,true)
  local sprites={male=c:strip('bag_male',c:lz('gBagMaleTiles'),64,64,6,bagPalette),
   female=c:strip('bag_female',c:lz('gBagFemaleTiles'),64,64,6,bagPalette),
   arrows=c:strip('arrows',c:lz('list_menu.o:sScrollIndicator_Gfx'),16,16,2,c:pal('sRedInterface_Pal',16)),
-  swap=c:strip('swap',c:lz('gSwapLineGfx'),16,16,2,c:pal('gSwapLinePal',16,nil,0,true))}
+  swap=c:strip('swap',c:lz('gSwapLineGfx'),16,16,2,c:pal('gSwapLinePal',16,nil,0,true)),
+  ball=c:strip('ball',c:raw('item_menu_icons.o:sRotatingBall_Gfx'),16,16,1,
+   c:pal('item_menu_icons.o:sRotatingBall_Pal',16,nil,0,true))}
  local palette={};for i=0,15 do palette[i]=male[16+i]end
  c:png('hm.png',16,16,K.bakeSprite(c:raw('gBagMenuHMIcon_Gfx'),16,16,0,4),palette,true)
  c:png('select.png',24,16,K.bakeSprite(c:raw('sRegisteredSelect_Gfx'),24,16,0,4),palette,true)
@@ -48,7 +53,7 @@ function M.extract(x)
   local width,height,lo,hi=infoBytes:byte(offset,offset+3);local tile=lo+hi*256
   infoRects[#infoRects+1]={x=tile%16*8,y=math.floor(tile/16)*8,w=width,h=height}
  end
- c:finish({game='emerald',format=1,background=bg,indicator=indicator,sprites=sprites,
+ c:finish({game='emerald',format=1,background=bg,indicator=indicator,sprites=sprites,transition=transition,
   palettes={male=K.palList(male,0,32),female=K.palList(female,0,32)},textIR=words,returnToIR=returns,
   moveInfo={image=infoPath,rects=infoRects,palette=K.palList(infoPalette,0,16)}})
  local V={BUILD='emerald',FONTS={narrow={glyphs=S.off('gFontNarrowLatinGlyphs'),widths=S.off('gFontNarrowLatinGlyphWidths')}},

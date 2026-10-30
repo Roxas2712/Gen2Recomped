@@ -103,6 +103,18 @@ return function(game)
   end
   error('Missing native pocket '..key)
  end
+ -- A pocket transition consumes navigation/actions until its native wipe
+ -- completes, but a fresh horizontal press can chain another transition.
+ for _=1,8 do press('down')end
+ local oldIndex,oldTop=owner.index,owner.top
+ game.input:overlayPressed('right');U.wait(1);game.input:overlayReleased('right')
+ assert(owner.emeraldSwitch and owner.emeraldSwitch.age==0)
+ shot('native-emerald-bag-pocket-switch-closed')
+ game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a')
+ assert(game.stack:top()==owner and owner.emeraldSwitch,'A must not open a stale item during the wipe')
+ U.wait(7);shot('native-emerald-bag-pocket-switch-wipe');U.wait(20)
+ assert(not owner.emeraldSwitch and owner.pockets[owner.pocket].key=='BALL')
+ press('left');assert(owner.index==oldIndex and owner.top==oldTop,'Switch lost ITEMS cursor')
  pocket('BALL');shot('native-emerald-bag-ball-frame')
  pocket('TM_HM');shot('native-emerald-bag-tm-hm-numbers')
  assert(owner.rows[1].id=='TM01'and owner.rows[2].id=='HM01')
@@ -130,6 +142,7 @@ return function(game)
  report.nativeCenteredScroll=true;report.nativeBoundaryClamp=true
  report.nativeReorder=true;report.duplicateStacksPreserved=true
  report.nativeHeldKeyRepeat=true
- report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation'}
+ report.nativePocketTransition=true;report.nativePocketCursorMemory=true
+ report.fullBagVisualParity=false;report.remainingViews={'opening/closing transitions and remaining context-specific appearance audit'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end
