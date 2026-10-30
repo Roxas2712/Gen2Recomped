@@ -95,22 +95,37 @@ for _,version in ipairs({'gold','silver','crystal'})do
  end
  for _,mode in ipairs({{1,'native'},{2,'native'},{2,'unified'},{3,'unified'}})do
   local d=fixture(version);local before=d.field.townMap.landmarks
-  local r=load(d,[[local p=mod.content["landmarks"]
+  local screen=mode[1]>=3 or mode[2]=='unified'
+  local offsets=screen and 'local ox,oy=8,16;' or 'local ox,oy=0,0;'
+  local edges=screen and [[
+   p:register('LANDMARK_EDGE',{name='EDGE',x=-8,y=-16,index=201})
+   p:register('LANDMARK_FAR_EDGE',{name='FAR EDGE',x=247,y=239,index=202})
+   assert(p:get('LANDMARK_EDGE').x==-8 and p:get('LANDMARK_EDGE').y==-16)
+   assert(not pcall(function()p:patch('LANDMARK_EDGE',{x=-9})end))
+   assert(not pcall(function()p:patch('LANDMARK_EDGE',{y=240})end))
+  ]] or ''
+  local r=load(d,offsets..[[local p=mod.content["landmarks"]
    assert(mod:supports('content',"landmarks"));assert(p:supports())
    assert(p:get('LANDMARK_ROUTE_29').name=='LOCAL ROAD')
    local v=p:get('LANDMARK_ROUTE_29');v.name='LEAK'
    for _,row in p:each()do row.x=999 end
-   assert(p:get('LANDMARK_ROUTE_29').x==40)
-   p:patch('LANDMARK_NEW_BARK_TOWN',{name='AUTHORED\nHOME',x=52,y=68})
-   p:register('LANDMARK_EXTRA',{name='AUTHORED EXTRA',x=100,y=104,index=200})
+   assert(p:get('LANDMARK_ROUTE_29').x==40-ox)
+   p:patch('LANDMARK_NEW_BARK_TOWN',{name='AUTHORED\nHOME',x=52-ox,y=68-oy})
+   p:register('LANDMARK_EXTRA',{name='AUTHORED EXTRA',x=100-ox,y=104-oy,index=200})
    p:remove('LANDMARK_ROUTE_29')
-  ]],mode)
+  ]]..edges,mode)
   local label=version..'/'..mode[1]..'/'..mode[2]
   T.eq(#r.errors,0,label..' public landmark records load through real mod API')
   T.eq(d.field.townMap.landmarks[1].name,'AUTHORED\nHOME',label..' native numeric row receives authored text')
   T.eq(d.field.townMap.landmarks[2],nil,label..' removed row cannot survive by fallback')
   T.eq(d.field.townMap.landmarks[200].landmarkId,'LANDMARK_EXTRA',label..' new identity binds actual byte200')
   T.eq(before[1].name,'LOCAL HOME',label..' source native row is not mutated')
+  if screen then
+   T.eq(d.field.townMap.landmarks[201].x,0,label..' negative screen edge becomes OAM zero')
+   T.eq(d.field.townMap.landmarks[201].y,0,label..' negative screen y becomes OAM zero')
+   T.eq(d.field.townMap.landmarks[202].x,255,label..' far screen edge becomes maximum OAM byte')
+   T.eq(d.field.townMap.landmarks[202].y,255,label..' far screen y becomes maximum OAM byte')
+  end
   local g=game(d,'HOME');run(g,'HERE')
   T.eq(g.stringBuffers and g.stringBuffers[3],'AUTHORED HOME',label..' actual current-landmark VM reads authored native name')
   run(g,'THERE');T.eq(g.stringBuffers and g.stringBuffers[3],'AUTHORED EXTRA',label..' actual named-landmark VM reads registered byte')
@@ -223,6 +238,24 @@ do
  finish(r);local clean=load(d)
  T.eq(d.field,nil,'unload retires exclusively owned rows, town and field namespaces')
  finish(clean)
+end
+for _,format in ipairs({'native','unified'})do
+ V.set('crystal');local d=fixture('crystal');local files={}
+ for n,id in ipairs({'earlier','later'})do
+  files['mods/'..id..'/manifest.json']=Json.encode({id=id,name=id,version='1.0.0',api=2,
+   content_format=n==2 and format or 'native',entry='main.lua',priority=n})
+ end
+ files['mods/earlier/main.lua']="local mod=...;mod.content.landmarks:patch('LANDMARK_NEW_BARK_TOWN',{x=100})"
+ files['mods/later/main.lua']="local mod=...;mod.content.landmarks:patch('LANDMARK_NEW_BARK_TOWN',{name='PREFERRED'})"
+ local r=T.sdk.loadMods({'mods/earlier','mods/later'},{data=d,fs=T.sdk.memfs(files)})
+ T.eq(#r.errors,0,format..' landmark mods compose through public loader')
+ r.loader.content.landmarks:preferOwner('LANDMARK_NEW_BARK_TOWN','later')
+ T.eq(r.loader.content.landmarks:get('LANDMARK_NEW_BARK_TOWN').x,20,
+  format..' preferred name patch does not capture another mod coordinate')
+ require('src.mods.LandmarkContent').apply(r.loader,d)
+ T.eq(TownMap.new(game(d,'HOME')).byMap.HOME.px,16,
+  format..' native marker consumes preferred patch with pristine coordinate')
+ finish(r)
 end
 for _,version in ipairs({'red','firered','emerald','heartgold'})do
  V.set(version);local d=fixture('crystal');local before=d.field.townMap.landmarks
