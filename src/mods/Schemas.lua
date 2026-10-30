@@ -159,9 +159,9 @@ checkValue = function(t, value, path, patchMode, errors, top)
   if kind == "map" then
     if type(value) ~= "table" then return fail(errors, path, t.desc, value) end
     for k, v in pairs(value) do
-      if not t.key.check(k) then
-        fail(errors, path .. "." .. tostring(k), "key " .. t.key.desc, k)
-      end
+      -- Composite keys (e.g. string-or-number IDs) are validators too; only
+      -- leaves have .check. Keep their diagnostics on the key boundary.
+      checkValue(t.key, k, path .. ".<key>", false, errors)
       checkValue(t.value, v, path .. "." .. tostring(k), patchMode, errors)
     end
     return
@@ -210,7 +210,7 @@ end
 -- records are a feature -- but a patch key that is only a case/underscore
 -- variant of a schema field is the classic typo and gets rejected with a
 -- suggestion.
-function Schemas.check(spec, registryName, id, value, mode)
+local function checkRecord(spec, registryName, id, value, mode)
   if mode == "remove" or spec == nil then return true end
   -- register and patch are synonyms on a deep registry, so a partial
   -- payload is the normal case there and only override is a full value
@@ -227,7 +227,7 @@ function Schemas.check(spec, registryName, id, value, mode)
   elseif spec.value then
     checkValue(spec.value, value, path, patchMode, errors, true)
     if #errors == 0 and not patchMode and spec.extra then
-      local problem = spec.extra(id, value)
+      local problem = spec.extra(id, value, mode)
       if problem then errors[#errors + 1] = ("%s: %s"):format(path, problem) end
     end
   elseif spec.fields then
@@ -255,7 +255,7 @@ function Schemas.check(spec, registryName, id, value, mode)
         end
       end
       if #errors == 0 and not patchMode and spec.extra then
-        local problem = spec.extra(id, value)
+        local problem = spec.extra(id, value, mode)
         if problem then
           errors[#errors + 1] = ("%s: %s"):format(path, problem)
         end
@@ -264,6 +264,22 @@ function Schemas.check(spec, registryName, id, value, mode)
   end
   if #errors == 0 then return true end
   return nil, table.concat(errors, "; ")
+end
+
+function Schemas.check(spec, registryName, id, value, mode)
+  local ok, result, detail = pcall(checkRecord, spec, registryName, id, value, mode)
+  if ok then return result, detail end
+  return nil, ("%s: schema validation failed: %s"):format(
+    tostring(registryName), type(result) == "string" and result or "invalid validator")
+end
+
+-- Select an additive generation-specific value contract without changing the
+-- shared catalog or the schemas held by another mounted dataset/loader.
+function Schemas.forGeneration(spec, generation)
+  if generation ~= 2 or not spec.gen2Value then return spec end
+  local out = Merge.deepCopy(spec)
+  out.value = out.gen2Value
+  return out
 end
 
 -- ------- cross-reference pass
@@ -446,6 +462,7 @@ R.pokemon = {
     -- The pic stays grounded (feet pinned) at any scale; see docs/modding.md.
     battleScaleFront = f.opt(f.numRange(0.25, 4.0)),
     battleScaleBack = f.opt(f.numRange(0.25, 4.0)),
+    battleTheme = f.opt(f.id("music")),
   },
   example = 'mod.content.pokemon:patch("MEW", { baseStats = { attack = 120 } })',
 }
@@ -1071,16 +1088,20 @@ R.sfx = {
 
 -- base names the species whose header a derived cry borrows, so it resolves
 -- against this same registry (13.9)
+local function cryValue(maximum)
+  return f.union{
+    f.rec{ header = f.any, pitch = f.int(0, maximum), length = f.int(0, maximum) },
+    f.rec{ file = f.path },
+    f.rec{ base = f.id("cries"), pitch = f.opt(f.int(0, maximum)),
+           length = f.opt(f.int(0, maximum)) },
+    f.rec{ chip = chipProgram, pitch = f.opt(f.int(0, maximum)),
+           length = f.opt(f.int(0, maximum)) },
+  }
+end
 R.cries = {
   semantics = "record", target = "audio.cries",
-  value = f.union{
-    f.rec{ header = f.any, pitch = f.int(0, 255), length = f.int(0, 255) },
-    f.rec{ file = f.path },
-    f.rec{ base = f.id("cries"), pitch = f.opt(f.int(0, 255)),
-           length = f.opt(f.int(0, 255)) },
-    f.rec{ chip = chipProgram, pitch = f.opt(f.int(0, 255)),
-           length = f.opt(f.int(0, 255)) },
-  },
+  validateEffectivePatch = true,
+  value = cryValue(255), gen2Value = cryValue(65535),
   example = 'mod.content.cries:patch("PIKACHU", { pitch = 200 })',
 }
 

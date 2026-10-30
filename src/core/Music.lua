@@ -666,8 +666,12 @@ function Music.setSurfing(data, surfing)
 end
 
 -- battle themes; kind = "wild"|"trainer"|"gym"|"final"
-function Music.playBattle(data, kind, trainerId)
+function Music.playBattle(data, kind, trainerId, song)
   local b = data.audio and data.audio.battle
+  if song then
+    Music.play(data, song, nil, { reason = "battle", kind = kind, trainerId = trainerId })
+    return
+  end
   -- a DS battle passes the sequence number itself (Gen4BattleMusic)
   if type(kind) == "number" and songDef(data, kind) then
     Music.play(data, kind, nil, { reason = "battle", kind = kind, trainerId = trainerId })

@@ -737,6 +737,16 @@ M.VERMILION_DOCK = {
         ow.map:setBlock(b.bx, b.by, b.water)
       end
       ow.map.renderer:rebuild()
+      -- A departed ship stays erased even when a mod permits visiting the dock.
+      local Runtime = require("src.mods.Runtime")
+      if Runtime.wantsHook("map.occupancy_allowed") then
+        local player = ow.player or {}
+        local permitted = Runtime.call("map.occupancy_allowed", function() return false end, game, {
+          mapId = "VERMILION_DOCK", reason = "ss_anne_departed",
+          gameVersion = game.save.version, x = player.cellX, y = player.cellY,
+        })
+        if permitted == true then return end
+      end
       local TextBox = require("src.render.TextBox")
       game.stack:push(TextBox.new(game,
         game.data.text._VermilionCitySailor1ShipSetSailText

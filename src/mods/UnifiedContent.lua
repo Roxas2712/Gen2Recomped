@@ -144,6 +144,9 @@ readRecord = function(ctx, kind, id, raw)
     if key ~= "native" and key ~= "id" then out[key] = copy(raw[key]) end
   end
   if kind == "pokemon" then
+    if ctx.gen >= 3 then
+      for _, key in ipairs({ "battleScaleFront", "battleScaleBack", "battleTheme" }) do out[key] = nil end
+    end
     local stats = raw.baseStats or {}
     out.baseStats = { hp = stats.hp, attack = stats.attack, defense = stats.defense, speed = stats.speed,
       special = stats.special or stats.spatk or stats.spAttack,
@@ -215,6 +218,10 @@ local function writeRecord(ctx, kind, id, value, old, mode)
   end
   if not old then out.id = id end
   if kind == "pokemon" then
+    for _, key in ipairs({ "battleScaleFront", "battleScaleBack", "battleTheme" }) do
+      if ctx.gen >= 3 and value[key] ~= nil then unsupported(key .. " has no Gen 3+ representation") end
+    end
+    if value.battleTheme and value.battleTheme ~= DELETE then reference(ctx, "music", value.battleTheme) end
     if value.baseStats and value.baseStats ~= DELETE then
       local stats, native = value.baseStats, {}
       for _, stat in pairs(stats) do check(stat ~= DELETE, "cannot delete a native base stat") end

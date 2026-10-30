@@ -521,6 +521,49 @@ function WorldAPI:queueScript(rows, extra)
   return true
 end
 
+-- API 2 accepts native species IDs and numeric level strings. Share the
+-- existing admission/transition/completion owner with API 3, while retaining
+-- the native vocabulary instead of implicitly opting a Gen2 mod into Unified.
+local function startWildBattle(self, species, level)
+  if not self._wildBattle then
+    local loader = self._loader or self
+    if loader == self then self.hooks = Runtime.hooks end
+    local function current()
+      return self._loader and self._loader:_game(true) or self.game
+    end
+    local function licensed()
+      return current() == self.game and (not self._npcAlive or self._npcAlive())
+    end
+    local native = {
+      resolve = function(game, id, n)
+        if not (game.data and game.data.pokemon and game.data.pokemon[id]) then
+          return nil, "unknown species: " .. tostring(id)
+        end
+        n = tonumber(n)
+        if not n or n ~= n or n < 1 or n > 100 or n % 1 ~= 0 then
+          return nil, "level must be a whole number 1..100"
+        end
+        return { species = id, level = n }
+      end,
+      construct = function(game, plan)
+        return require("src.battle.BattleState").newWild(game, plan.species, plan.level)
+      end,
+    }
+    self._wildBattle = require("src.mods.Api3WildBattle").new(loader, self.modId,
+      current, function() return self end, licensed, require, nil, native)
+  end
+  return self._wildBattle(species, level)
+end
+
+function WorldAPI:startWildBattle(species, level)
+  local owner = Runtime.currentMod
+  Runtime.currentMod = nil
+  local ok, result, detail = pcall(startWildBattle, self, species, level)
+  Runtime.currentMod = owner
+  if not ok then return nil, "world battle operation failed" end
+  return result, detail
+end
+
 -- Public field mutations are kept behind the same free-roam boundary.
 function WorldAPI:canReorderParty() return Actions.canReorderParty(self.game, self:overworld()) end
 function WorldAPI:reorderParty(fromSlot, toSlot) return Actions.reorderParty(self.game, self:overworld(), fromSlot, toSlot) end

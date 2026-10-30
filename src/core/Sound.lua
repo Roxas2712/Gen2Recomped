@@ -1350,6 +1350,10 @@ end
 -- cut a one-shot short (the SFX_STOP_ALL_MUSIC beats around the
 -- elevator shake stop the last collision thud mid-ring)
 function Sound.stop(name)
+  -- The session/legacy contract uses stop() to retire every effect, while
+  -- stop(name) keeps its existing per-cue meaning. Invalidation also cancels
+  -- queued preparation and native cry holders without joining their worker.
+  if name == nil then return Sound.invalidate() end
   name = tostring(name)
   local src = cache[name]
   if src then
