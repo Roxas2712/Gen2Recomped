@@ -12,4 +12,15 @@ function W.stdFrame(tpl)
  return require('src.render.Font').drawStandardBox((tpl.left or tpl.tilemapLeft)-1,(tpl.top or tpl.tilemapTop)-1,
   (tpl.width or tpl.w)+2,(tpl.height or tpl.h)+2)
 end
+function W.fixedStdFrame(tpl)
+ return require('src.ui.game3.chrome').fixedStdFrame(tpl.left or tpl.tilemapLeft,
+  tpl.top or tpl.tilemapTop,tpl.width or tpl.w,tpl.height or tpl.h)
+end
+function W.userFrame(tpl,frameType)
+ return require('src.ui.game3.chrome').userFrame(frameType,tpl.left or tpl.tilemapLeft,
+  tpl.top or tpl.tilemapTop,tpl.width or tpl.w,tpl.height or tpl.h)
+end
+function W.printPx(text,x,y,opts)
+ return require('src.ui.game3.frlg_font').draw(tostring(text or ''),x,y,opts)
+end
 return W

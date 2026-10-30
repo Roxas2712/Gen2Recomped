@@ -125,7 +125,7 @@ function ScriptRunner:run(script, extra)
   if not checkpoint and Runtime.wants("script.started") then
     Runtime.emit("script.started", { ctx = ctx })
   end
-  self.co = coroutine.create(function()
+  self.co = require('src.compat.gen1.CoroutineScopes').createNative(function()
     if checkpoint then self:yield() end
     self:exec(script, ctx, nil, checkpoint and checkpoint.pc)
     if ctx.trainerPreparationCancelled or ctx.scriptCancelled then return end
