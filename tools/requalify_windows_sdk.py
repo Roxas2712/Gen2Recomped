@@ -50,6 +50,19 @@ def main():
    with z.open(row)as source,destination.open('wb')as target:
     while chunk:=source.read(1024**2):target.write(chunk);h.update(chunk)
    if name!='files.json'and h.hexdigest()!=index[name]:raise ValueError('Native component byte mismatch: '+name)
+ # The official Windows loader recognizes a relative driver path containing
+ # a backslash. Its Unix-style './' form reaches LoadLibraryEx as a relative
+ # search path and fails with ERROR_INVALID_PARAMETER. Repair only this known
+ # metadata spelling after verifying every original archive byte. Rehash it
+ # and require all native tests again; the executable components stay exact.
+ icd=a.out/'vulkan/vk_swiftshader_icd.json'
+ if icd.is_file():
+  descriptor=json.loads(icd.read_text())
+  if descriptor.get('ICD',{}).get('library_path')=='./vk_swiftshader.dll':
+   descriptor['ICD']['library_path']='.\\vk_swiftshader.dll'
+   icd.write_text(json.dumps(descriptor)+'\n')
+   index['vulkan/vk_swiftshader_icd.json']=hashlib.sha256(icd.read_bytes()).hexdigest()
+   print('Canonicalized verified Windows ICD relative path; fresh native qualification is required.')
  source=a.out/'source.json'
  if source.exists()and json.loads(source.read_text()).get('trees')!=expected:raise ValueError('Native source provenance differs from the original run')
  source.write_text(json.dumps({'schema':1,'trees':expected},indent=2)+'\n');index['source.json']=hashlib.sha256(source.read_bytes()).hexdigest()

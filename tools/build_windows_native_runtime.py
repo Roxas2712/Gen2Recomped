@@ -194,7 +194,7 @@ def build_graphics(qa,work,out,components):
     dll=build/'vk_swiftshader.dll'
     if not dll.is_file():raise ValueError('Software Vulkan driver is missing at its pinned target output')
     shutil.copy2(dll,out/'vulkan/vk_swiftshader.dll')
-    (out/'vulkan/vk_swiftshader_icd.json').write_text(json.dumps({'file_format_version':'1.0.0','ICD':{'library_path':'./vk_swiftshader.dll','api_version':'1.3.0'}})+'\n')
+    (out/'vulkan/vk_swiftshader_icd.json').write_text(json.dumps({'file_format_version':'1.0.0','ICD':{'library_path':'.\\vk_swiftshader.dll','api_version':'1.3.0'}})+'\n')
     for file in swift.rglob('LICENSE*'):
         if file.is_file():
             target=out/'licenses/swiftshader'/file.relative_to(swift);target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(file,target)
