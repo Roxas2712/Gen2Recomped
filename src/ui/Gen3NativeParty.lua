@@ -197,7 +197,7 @@ function M.message(game,text,done,opts)
  local states=game.stack.states or{}
  for i=#states,1,-1 do
   local s=states[i]
-  if getmetatable(s)==Party and s.keepOpen and s.gbaNative and not s.battle then owner=s;break end
+  if getmetatable(s)==Party and s.gbaNative and not s.battle then owner=s;break end
  end
  if not owner then return end
  local options={};for k,v in pairs(opts or{})do options[k]=v end

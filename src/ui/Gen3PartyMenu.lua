@@ -617,7 +617,8 @@ end
 
 function Gen3PartyMenu:say(text, after)
   local TextBox = require("src.render.TextBox")
-  self.game.stack:push(TextBox.new(self.game, text, after))
+  self.game.stack:push(require('src.ui.Gen3NativeParty').message(self.game,text,after)
+    or TextBox.new(self.game, text, after))
 end
 
 -- USING one, which is the half the cartridge decides at the press rather

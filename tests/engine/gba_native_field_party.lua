@@ -80,6 +80,7 @@ local Party=require('src.ui.Gen3PartyMenu');setmetatable(owner,Party);owner.keep
 game.stack.states={owner};local calls=0
 local box=View.message(game,'Recovered HP.',function()calls=calls+1 end)
 T.eq(box.gbaPartyOwner,owner);T.eq(calls,0);T.eq(box.maxPixels,216)
+owner.keepOpen=false;T.eq(View.message(game,'No held item.').gbaPartyOwner,owner,'ordinary party feedback uses the same native window')
 local marker={gbaPartyOwner=owner};game.stack.states={owner,marker};texts={};frames={};view:body()
 T.eq(#frames,0,'retained result owns the bottom prompt frame')
 game.stack.states={};T.eq(View.message(game,'fallback'),nil)
