@@ -234,6 +234,7 @@ function M:draw(action)
  end)
  if not ok then error(why,0)end
  g.setColor(1,1,1,1);g.draw(self.canvas,0,0)
+ require('src.ui.Gen3EmeraldBagTransition').draw(self.owner)
 end
 function M:exit()
  if self.canvas then self.canvas:release();self.canvas=nil end

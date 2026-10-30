@@ -25,8 +25,17 @@ return function(game)
   assert(raw==S.encode(game.save)and rng==love.math.getRandomState(),'Drawing changed save or RNG')
   assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name;persist()
  end
- local function open()
-  owner=UI.new(game,{onCancel=function()closed=closed+1 end});game.stack:push(owner);U.wait(40)
+ local function open(probe)
+  owner=UI.new(game,{onCancel=function()closed=closed+1 end});game.stack:push(owner)
+  if probe then
+   assert(owner.emeraldFade and owner.emeraldFade.age==0)
+   local pocket=owner.pocket
+   game.input:overlayPressed('right');game.input:overlayPressed('a');U.wait(1)
+   game.input:overlayReleased('right');game.input:overlayReleased('a')
+   assert(game.stack:top()==owner and owner.pocket==pocket and owner.emeraldFade)
+   shot('native-emerald-bag-opening-fade');U.wait(40)
+   assert(not owner.emeraldFade)
+  else U.wait(40)end
   assert(owner.emerald and owner:listRows()==8 and not owner:wantsEdgeBleed())
   local w,h=owner:uiSize();assert(w==240 and h==160)
  end
@@ -36,8 +45,11 @@ return function(game)
   report.clockSeconds=report.clockSeconds+elapsed;a.playTime,b.playTime=0,0
   assert(S.encode(a)==S.encode(b),'Navigation changed more than the accounted play clock')
  end
- open();assert(#owner.rows==1 and owner:selected().close)
- local before=S.encode(game.save);shot('native-emerald-bag-empty-close');press('a')
+ open(true);assert(#owner.rows==1 and owner:selected().close)
+ local before=S.encode(game.save);shot('native-emerald-bag-empty-close')
+ game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a')
+ assert(game.stack:top()==owner and closed==0 and owner.emeraldFade.kind=='close')
+ shot('native-emerald-bag-closing-fade');U.wait(28)
  assert(game.stack:top()==world and closed==1);sameExceptClock(before)
  local items,keys={},{}
  for id,def in pairs(game.data.items)do
@@ -143,6 +155,7 @@ return function(game)
  report.nativeReorder=true;report.duplicateStacksPreserved=true
  report.nativeHeldKeyRepeat=true
  report.nativePocketTransition=true;report.nativePocketCursorMemory=true
- report.fullBagVisualParity=false;report.remainingViews={'opening/closing transitions and remaining context-specific appearance audit'}
+ report.nativeOpenCloseTransition=true
+ report.fullBagVisualParity=false;report.remainingViews={'remaining context-specific appearance and submenu transition audit'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end

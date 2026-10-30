@@ -31,8 +31,10 @@ function M.update(owner,input)
   repeated=view.repeatInput;repeated.keys,repeated.input=keys,input
  end
  if require('src.ui.Gen3EmeraldBagReorder').update(owner,repeated)then return end
- if input:wasPressed('a')then owner:choose()
- elseif input:wasPressed('b')then owner:close()
+ if input:wasPressed('a')then
+  require('src.core.Sound').play(owner.game.data,'Press_AB');owner:choose()
+ elseif input:wasPressed('b')then
+  require('src.core.Sound').play(owner.game.data,'Press_AB');owner:close()
  elseif repeated:wasPressed('up')then owner:moveCursor(-1)
  elseif repeated:wasPressed('down')then owner:moveCursor(1)end
 end

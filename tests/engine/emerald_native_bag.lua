@@ -246,6 +246,37 @@ T.eq(nav.index,1);T.eq(nav.top,1,'removing items clamps retained positions')
 nav.index,nav.top=4,1;nav.scriptRows={close};Pocket.remember(nav);nav.scriptRows=nil
 Pocket.restore(nav);T.eq(nav.index,1,'scripted lists never replace the retained real cursor')
 T.eq(Serial.encode(game.save),navigationSave,'pocket positions are session-local, never save edits')
+-- Opening ignores both actions and pocket changes; closing retains the state
+-- and reports the original stable ID/slot only once after the fade completes.
+local Fade=require('src.ui.Gen3EmeraldBagTransition')
+local popped,cancelled,picked=0,0,0
+local oldPop=game.stack.pop
+game.stack.pop=function()popped=popped+1 end
+local modal=setmetatable({game=game,emerald=true,emeraldView=view,pockets={{key='ITEM'}},pocket=1,
+ index=1,top=1,rows={{id='POTION',rsSlot=7}},onCancel=function()cancelled=cancelled+1 end},UI)
+Fade.open(modal);T.eq(Fade.opacity(modal),1)
+pressed={a=true,right=true,down=true}
+for i=1,22 do UI.update(modal,1/60)end
+T.eq(modal.pocket,1);T.eq(popped,0);T.eq(Fade.opacity(modal),0)
+pressed={};UI.update(modal,1/60);T.eq(modal.emeraldFade,nil)
+UI.close(modal);T.eq(popped,0);T.eq(cancelled,0)
+for i=1,14 do pressed={a=true,b=true,right=true};UI.update(modal,1/60)end
+T.eq(popped,0);T.eq(cancelled,0);T.eq(Fade.opacity(modal),1)
+UI.update(modal,1/60);T.eq(popped,1);T.eq(cancelled,1)
+UI.close(modal);T.eq(popped,1);T.eq(cancelled,1)
+modal.emeraldClosed=nil;modal.pick=true
+modal.onPick=function(id,slot)picked=picked+1;T.eq(id,'POTION');T.eq(slot,7)end
+UI.choose(modal);T.eq(picked,0)
+pressed={};for i=1,15 do UI.update(modal,1/60)end
+T.eq(popped,2);T.eq(picked,1);T.eq(cancelled,1,'a picked item never calls cancellation')
+UI.choose(modal);T.eq(picked,1,'duplicate close requests do not report another pick')
+modal.emeraldClosed=nil;modal.noInput=true;Fade.open(modal)
+T.eq(modal.emeraldFade,nil,'scripted tutorial owns its own timing')
+UI.close(modal);T.eq(popped,3);T.eq(cancelled,2,'scripted closure stays synchronous')
+modal.noInput=nil;modal.emerald=false;UI.close(modal)
+T.eq(popped,4);T.eq(cancelled,3,'other editions retain synchronous closure')
+T.eq(Serial.encode(game.save),navigationSave,'fades and callbacks do not edit save data')
+game.stack.pop=oldPop;pressed={}
 owner.emerald=false;owner.listRows=function()return 8 end;owner.index,owner.top=1,1
 tick();tick({down=true},{down=true},100)
 T.eq(owner.index,2,'legacy presenters retain their own input behavior')
