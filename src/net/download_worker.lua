@@ -41,7 +41,7 @@ while true do
         end)
         if not claimed then return nil, job.cancel:peek() and "cancelled" or "download timed out" end
         local base = love.filesystem.getSaveDirectory() .. "/"
-        return publish(base .. job.stage, base .. job.dest)
+        return publish(base .. job.stage, base .. job.dest, job.deadline)
       end)
       if not checked or not result then err, bytes = tostring(why or result or "could not publish download"), nil end
     end

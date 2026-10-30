@@ -3562,6 +3562,22 @@ function BattleState:gen3MusicKind()
   return nil
 end
 
+-- Theme selection remains separate from the native battle kind (victory cues
+-- and gym/companion rules still need the original role).
+function BattleState:battleTheme()
+  if self.trainer and self.trainer.battleTheme then return self.trainer.battleTheme end
+  if self.kind == "wild" then
+    local enemy = self.enemy
+    local def = enemy and (enemy.def or self.data.pokemon[enemy.mon.species])
+    return def and def.battleTheme
+  end
+end
+
+function BattleState:playBattleTheme()
+  return require("src.core.Music").playBattle(self.data,
+    self.musicKind or self:computeMusicKind(), self.trainer and self.trainer.id, self:battleTheme())
+end
+
 function BattleState:computeMusicKind()
   -- THE DS CARTRIDGES PICK BY TRAINER CLASS (and Kanto, and a few legendary
   -- species) from their own tables -- src/import/Gen4BattleMusic.lua. The
@@ -3930,8 +3946,7 @@ function BattleState:resumeCheckpoint()
   -- The shared native transaction commits music only after verification;
   -- defer it here so a rejecting source validator can roll back cleanly.
   if not require("src.core.CheckpointWorld").busy(self.game) then
-    require("src.core.Music").playBattle(self.data,
-      self.musicKind or self:computeMusicKind())
+    self:playBattleTheme()
   end
 end
 
@@ -3983,7 +3998,7 @@ function BattleState:enter()
   -- (audio/play_battle_music.asm runs before the transition, and
   -- Music.play no-ops on the same song); this covers battles pushed
   -- without a transition (link battles, scripted pushes)
-  Music.playBattle(self.data, self.musicKind)
+  self:playBattleTheme()
   -- intro presentation (SlidePlayerAndEnemySilhouettesOnScreen): both
   -- sides slide in; the trainer pics stay up until the send-outs
   -- BATTLE BG "world" drops this battle's opacity so StateStack keeps drawing

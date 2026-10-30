@@ -57,7 +57,7 @@ end
 -- too (the loader emits mods.loaded straight off its own bus)
 function Catalog.events()
   if not events then
-    eventSites = scan({ "src" }, {
+    eventSites = scan({ "src", "data/scripts" }, {
       'Runtime%.emit%(%s*"([%w%._]+)"',
       'events:emit%(%s*"([%w%._]+)"',
     })
@@ -68,7 +68,7 @@ end
 
 function Catalog.hooks()
   if not hooks then
-    hookSites = scan({ "src" }, {
+    hookSites = scan({ "src", "data/scripts" }, {
       'Runtime%.call%(%s*"([%w%._]+)"',
       'hooks:call%(%s*"([%w%._]+)"',
     })

@@ -3170,7 +3170,9 @@ function OverworldState:pushBattle(battle, opts)
   -- the battle theme starts with the wipe, not after it
   -- (audio/play_battle_music.asm runs before the transition), and it plays
   -- whether or not anything took the transition over
-  if battle and battle.computeMusicKind then
+  if battle and battle.playBattleTheme then
+    battle:playBattleTheme()
+  elseif battle and battle.computeMusicKind then
     require("src.core.Music").playBattle(Game.data, battle:computeMusicKind())
   end
   if self:pushBattleTransition(battle, opts) == false then

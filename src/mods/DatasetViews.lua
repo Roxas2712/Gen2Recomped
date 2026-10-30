@@ -235,7 +235,7 @@ function D.new(fs, req, trust)
       end
       registries = {}
       for name, spec in pairs(Schemas.REGISTRIES) do
-        local shape = Merge.deepCopy(spec)
+        local shape = Merge.deepCopy(Schemas.forGeneration(spec, view.generation))
         if name == "pokemon" and view.generation > 1 then
           for _, key in ipairs({ "spatk", "spdef" }) do
             shape.fields.baseStats.fields[key] = Schemas.f.opt(Schemas.f.int(1, 255))

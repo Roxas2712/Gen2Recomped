@@ -28,6 +28,7 @@ C.hooks = names([[
  render.letterbox render.output render.output_enabled render.viewport render.window render.zones save.new_game save.write screen.render_visible script.command trainer.before_battle trainer.party transition.style
  ui.list_menu ui.naming.grid ui.options.rows ui.party.submenu ui.pc.items ui.start_menu.items
  ui.title_menu.items warp.destination world.follower.spawn world.talk world.tod zoom.range
+ map.occupancy_allowed
 ]])
 C.events = names([[
  clock.day_changed breeding.egg_created egg.hatched happiness.changed pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored
@@ -48,6 +49,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["map.occupancy_allowed"] = { false, "context" },
   ["shiny.roll"] = { "context" },
   ["gender.roll"] = { "context" },
   ["held_item.trigger"] = { "context" },

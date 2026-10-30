@@ -5,7 +5,7 @@ require("love.filesystem")
 require("love.timer")
 require("love.system")
 local publish = require("src.net.DownloadPublish")
-package.loaded["src.net.DownloadPublish"] = function(source, target)
+package.loaded["src.net.DownloadPublish"] = function(source, target, deadline)
   if target:sub(-18) == "/delay-publish.bin" then
     -- A fixed sleep can finish while a hosted runner deschedules main. Hold
     -- this real publication boundary until the caller has observed it.
@@ -16,7 +16,7 @@ package.loaded["src.net.DownloadPublish"] = function(source, target)
       love.timer.sleep(.001)
     end
   end
-  return publish(source, target)
+  return publish(source, target, deadline)
 end
 -- Hold the bounded-queue fixture before the real worker reads cancellation.
 -- A wall-clock HTTP delay can expire while a busy CI host deschedules main.

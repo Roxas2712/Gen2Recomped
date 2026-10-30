@@ -32,6 +32,7 @@ local function inspect(loader)
   end
 end
 local function observe(loader)
+  if not (loader.hooks and type(loader.hooks.wrap) == "function") then return end
   if observers[loader] == loader.hooks then
     return
   end

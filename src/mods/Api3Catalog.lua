@@ -31,6 +31,7 @@ transition.style ui.list_menu ui.naming.grid ui.options.rows
 ui.party.grid_navigation ui.party.submenu ui.pc.items ui.start_menu.items
 ui.title_menu.items warp.destination world.follower.spawn world.talk
 world.tod zoom.range
+map.occupancy_allowed
 ]])
 C.events = names([[
 apricorn.converted assets.transformed battle.ball_thrown battle.battler_switched

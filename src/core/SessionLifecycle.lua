@@ -17,6 +17,40 @@ function SessionLifecycle.registerProcessShutdown(fn)
   processShutdowns[#processShutdowns + 1] = fn
 end
 
+-- A game can end while the launcher and its download/audio workers live on.
+-- Native Game is a shared module identity: retire its owned states without
+-- evicting that module or unmounting another cartridge here.
+function SessionLifecycle.endGameSession(game)
+  local function call(name, method, ...)
+    local module = package.loaded[name]
+    if module and type(module[method]) == "function" then pcall(module[method], ...) end
+  end
+  call("src.core.Music", "stop")
+  call("src.core.Sound", "stop")
+  call("src.core.Sound", "setRate", 1)
+  call("src.core.ChipAudio", "stopMusic")
+  if love and love.audio and love.audio.stop then pcall(love.audio.stop) end
+  call("src.render.SecondScreen", "setEnabled", false)
+  if not game then return end
+  if type(game.reset) == "function" then
+    pcall(game.reset, game)
+  else
+    local stack = game.stack
+    if stack then
+      local selected = {}
+      for i, state in ipairs(stack.states or {}) do selected[i] = state end
+      if type(stack.removeAll) == "function" then
+        pcall(stack.removeAll, stack, selected)
+      elseif type(stack.pop) == "function" then
+        -- Bound work even if a mod's exit callback opens another state.
+        for _ = 1, #selected do pcall(stack.pop, stack) end
+      end
+      if type(stack.clearWorld) == "function" then pcall(stack.clearWorld, stack) end
+    end
+  end
+  game.overworld, game.world, game.phase = nil, nil, "boot"
+end
+
 -- Retire the native loader before changing the read path. It owns the mod
 -- buses, wrapper journal, viewport, jobs and compatibility resource holders.
 -- Using that owner also keeps process services alive for the next cartridge.

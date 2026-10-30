@@ -106,6 +106,40 @@ raises(function() Manifest.validate({ id = "bad", name = "bad", version = "1", e
 raises(function() Registry.new("legacy"):patch(25, {}) end, "id is required")
 
 local savedLove = love; love = nil
+-- Definition-only additions must survive native merge and rollback; opt-in
+-- records must not rewrite the existing native species vocabulary.
+for gen = 1, 2 do
+  local data, keys = fixture(gen)
+  data.audio.songs = { Theme_Probe = { file = "synthetic-theme.ogg" } }
+  local _, loader = run(gen, function(mod)
+    ok(mod.content.pokemon:patch("PIKACHU", {
+      battleScaleFront = 0.5, battleScaleBack = 3, battleTheme = "Theme_Probe",
+    }))
+    local row = mod.content.pokemon:get("PIKACHU")
+    T.eq(row.battleTheme, "Theme_Probe", "unified theme reader follows native record")
+    T.eq(row.battleScaleBack, 3, "unified scale reader follows native record")
+  end, nil, nil, data)
+  T.eq(#loader.errors, 0, "battle metadata accepts existing song and native generation")
+  T.eq(data.pokemon[keys.mon].battleScaleFront, 0.5, "front scale reaches native consumer record")
+  T.eq(data.pokemon[keys.mon].battleTheme, "Theme_Probe", "theme reaches native consumer record")
+  local failedData, failedKeys = fixture(gen)
+  failedData.audio.songs = data.audio.songs
+  local _, failed = run(gen, function(mod)
+    ok(mod.content.pokemon:patch("PIKACHU", { battleTheme = "Theme_Probe" }))
+    error("intentional battle metadata entry failure")
+  end, nil, nil, failedData)
+  T.eq(#failed.errors, 1, "failed entry is attributed once")
+  T.eq(failedData.pokemon[failedKeys.mon].battleTheme, nil, "entry rollback preserves native species definition")
+end
+for gen = 3, 5 do
+  run(gen, function(mod)
+    for _, key in ipairs({ "battleScaleFront", "battleScaleBack", "battleTheme" }) do
+      local value, why = mod.content.pokemon:patch("PIKACHU", { [key] = key == "battleTheme" and "Theme_Probe" or 2 })
+      T.eq(value, nil, "unsupported generation refuses " .. key)
+      T.check(why and why:find("representation"), "unsupported generation explains " .. key)
+    end
+  end)
+end
 for gen = 1, 5 do
   local api, loader, data, keys = run(gen, function(mod)
     T.eq(mod.contentFormat, "unified", "manifest selects unified content in entry")

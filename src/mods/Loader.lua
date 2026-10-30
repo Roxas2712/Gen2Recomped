@@ -796,6 +796,13 @@ function Loader:_contentApi(mod, registry, deprecation)
   end
   local function validate(mode, id, value)
     local ok, err = Schemas.check(registry.spec, registry.name, id, value, mode)
+    -- A partial union record has no discriminator: {pitch=...} must not
+    -- validate as a file-only cry just because `file` is absent in patch mode.
+    if ok and mode == "patch" and registry.spec.validateEffectivePatch
+        and (loader:_generation() == 1 or loader:_generation() == 2) then
+      local effective = Merge.deepMerge(Merge.deepCopy(registry:get(id) or {}), value)
+      ok, err = Schemas.check(registry.spec, registry.name, id, effective, "override")
+    end
     if ok then return end
     if apiLevel >= 2 then error(err, 0) end
     Logger.warn("[%s] %s", modId, err)
@@ -1249,7 +1256,9 @@ function Loader:_api(mod)
     list = function(_, relative) return listIn(relative) end,
     info = function(_, relative) return infoIn(relative) end,
     image = function(_, relative)
-      local full = mod.path .. "/" .. relative
+      local full = within(relative)
+      assert(full and relative ~= "" and not relative:find("%z"), "mod.assets:image needs a path inside this mod")
+      full = ModImports.resolveRead(mod.manifest, relative, loader.fs) or full
       local cached = loader.imageCache[full]
       if cached then return cached end
       assert(love and love.graphics,
@@ -1366,6 +1375,7 @@ function Loader:_api(mod)
     local module = game and engineRequire("src.world.WorldAPI")
     if not module then return nil end
     world = module.new(game, modId, readContext)
+    world._loader = loader
     world._npcAlive = function()
       return loader.mods[modId] == mod and loader.apis[modId] == api
         and loader.exports[modId] ~= nil and isActive(mod)
@@ -1667,6 +1677,8 @@ function Loader:load(data)
   -- every registry folds against the pristine view of its Data target;
   -- resolution is lazy so optional namespaces may appear later
   for _, registry in pairs(self.content) do
+    local catalog = Schemas.REGISTRIES[registry.name]
+    if catalog and catalog.gen2Value then registry.spec = Schemas.forGeneration(catalog, self:_generation()) end
     local target = registry.spec.target
     if target then
       registry.base = function()
