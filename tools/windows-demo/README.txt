@@ -1,4 +1,4 @@
-RETRORECOMPED – WINDOWS-DEMO 20261030.3 (64 BIT)
+RETRORECOMPED – WINDOWS-DEMO 20261030.4 (64 BIT)
 Integration: Roxas2712. Bestehende Autorenrechte bleiben erhalten.
 
 START UND BISHERIGE DATEN
@@ -47,6 +47,12 @@ UMFANG
 Dieses Paket enthält die aktuelle Launcher-/Cloud-Implementierung sowie eine
 zur Engine passende, separat qualifizierte Windows-LuaJIT-Laufzeit. Struktur-
 und Integritätsprüfungen ersetzen keinen Test der fertigen EXE auf deinem PC.
-Optionale native 3DS-/Pinball-Zusatzlaufzeiten aus dem Mac-Paket werden nicht
-als Windows-DLL ausgegeben; dafür sind passende Windows-Komponenten nötig.
-Bestehende private Imports werden deshalb weder entfernt noch neu erzeugt.
+Der Ordner 3ds-runtime enthält die nativen Windows-Laufzeiten für X/Y und
+Pinball R/S einschließlich Python, C/C++-Compiler und Vulkan-Fallback.
+Diesen Ordner neben RetroRecomped.exe lassen. Die erste Vorbereitung eines
+eigenen Imports dauert länger; fertige native Spiele werden danach gecacht.
+Vorhandene ROMs, SRAM, Slots und Zwischenstände bleiben im bisherigen Profil.
+Mac-Bibliotheken sind auf Windows nicht ausführbar; nur der native Programmcode
+wird dort neu vorbereitet. Dafür ist weder Visual Studio noch Python nötig.
+Die technische Windows-Prüfung verwendet künstliche Spielprogramme und Saves.
+Sie bestätigt keinen vollständig gespielten Pokémon-X/Y- oder Pinball-Durchlauf.

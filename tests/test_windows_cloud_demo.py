@@ -1,5 +1,5 @@
 """Archive validation only; does not execute a Windows binary."""
-import importlib.util,io,struct,sys,unittest,zipfile
+import importlib.util,io,struct,sys,unittest,zipfile,tempfile,json,hashlib
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
@@ -28,4 +28,24 @@ class WindowsDemoPackaging(unittest.TestCase):
    for name in names:z.writestr(name,'synthetic code fixture')
   stream.seek(0)
   with zipfile.ZipFile(stream)as z:B.audit_payload(z)
+ def test_native_sdk_requires_native_report_and_matching_source(self):
+  with tempfile.TemporaryDirectory()as folder:
+   base=Path(folder);bundle=base/'bundle';bundle.mkdir();archive=base/'sdk.zip';report=base/'report.json'
+   members={'runtime.json':json.dumps({'game_data_included':False}).encode(),'source.json':json.dumps({'schema':1,'trees':{'tools/bridge':'current-tree'}}).encode(),'bin/own-fixture.exe':b'own fixture'}
+   inventory=json.dumps({name:hashlib.sha256(body).hexdigest()for name,body in members.items()}).encode()
+   with zipfile.ZipFile(archive,'w')as z:
+    for name,body in {**members,'files.json':inventory}.items():z.writestr('3ds-runtime/'+name,body)
+   result={'passed':False,'platform':'Windows','checks':[{'passed':True}],'sdkManifestSha256':hashlib.sha256(inventory).hexdigest()}
+   report.write_text(json.dumps(result))
+   with self.assertRaises(ValueError):B.install_native_sdk(archive,report,bundle,lambda p:'current-tree')
+   result['passed']=True;report.write_text(json.dumps(result))
+   with self.assertRaises(ValueError):B.install_native_sdk(archive,report,bundle,lambda p:'different-tree')
+   summary=B.install_native_sdk(archive,report,bundle,lambda p:'current-tree')
+   self.assertFalse(summary['realCartridgeGameplay']);self.assertEqual((bundle/'3ds-runtime/bin/own-fixture.exe').read_bytes(),b'own fixture')
+ def test_native_sdk_rejects_private_game_files(self):
+  with tempfile.TemporaryDirectory()as folder:
+   base=Path(folder);archive=base/'sdk.zip';report=base/'report.json';bundle=base/'bundle'
+   report.write_text(json.dumps({'passed':True,'platform':'Windows','checks':[{'passed':True}]}))
+   with zipfile.ZipFile(archive,'w')as z:z.writestr('3ds-runtime/private.gba',b'fixture')
+   with self.assertRaises(ValueError):B.install_native_sdk(archive,report,bundle,lambda p:'unused')
 if __name__=='__main__':unittest.main()

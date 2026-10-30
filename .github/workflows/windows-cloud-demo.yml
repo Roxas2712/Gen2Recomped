@@ -6,9 +6,16 @@ on:
         description: Successful native runtime qualification run from this repository
         required: true
         type: string
+      native_run_id:
+        description: Successful Windows native 3DS and Pinball SDK run
+        required: true
+        type: string
   workflow_call:
     inputs:
       runtime_run_id:
+        required: true
+        type: string
+      native_run_id:
         required: true
         type: string
 permissions:
@@ -31,6 +38,12 @@ jobs:
           path: ${{ runner.temp }}/windows-cloud-runtime
       - name: Check packaging guards
         run: python -m unittest discover -s tests -p test_windows_cloud_demo.py -v
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-native-games
+          run-id: ${{ inputs.native_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/windows-native-games
       - name: Fetch byte-pinned official host
         env:
           GH_TOKEN: ${{ github.token }}
@@ -40,6 +53,8 @@ jobs:
           python tools/build_windows_cloud_demo.py
           --runtime "${{ runner.temp }}/love-runtime.zip"
           --component "${{ runner.temp }}/windows-cloud-runtime/component.json"
+          --native-sdk "${{ runner.temp }}/windows-native-games/windows-native-runtime.zip"
+          --native-report "${{ runner.temp }}/windows-native-games/report.json"
           --out "${{ github.workspace }}/.local/qa/windows-cloud-demo-build/candidate"
       - uses: actions/upload-artifact@v7
         with:

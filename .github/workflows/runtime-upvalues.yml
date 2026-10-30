@@ -30,6 +30,10 @@ on:
         description: Build and test the ROM-free Windows 3DS and Pinball SDK
         type: boolean
         default: false
+      native_components_run_id:
+        description: Native Windows 3DS and Pinball SDK used for demo packaging
+        type: string
+        default: ''
   workflow_call:
 permissions:
   contents: read
@@ -262,6 +266,10 @@ jobs:
       actions: read
     with:
       runtime_run_id: ${{ inputs.package_runtime_run_id }}
+      native_run_id: ${{ inputs.native_components_run_id }}
   windows-native-games:
     if: ${{ inputs.native_games_only == true }}
     uses: ./.github/workflows/windows-native-games.yml
+    permissions:
+      contents: read
+      actions: read

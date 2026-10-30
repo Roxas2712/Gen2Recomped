@@ -19,6 +19,7 @@ function M.install()
    assert(love.filesystem.getIdentity():match('^oasc%-windows%-cloud%-qa%-'))
    check(require('https').request~=nil,'Bundled native HTTPS is present')
    check(require('src.cloud.Http').available(),'Account transport is available without external curl')
+   report.nativeRuntime=require('tools.windows-demo.NativeSelfTest').run(check)
    local fs=love.filesystem;local base='profile-fixtures-Ömega'
    assert(fs.createDirectory(base..'/Gen2Recomp/saves/red'))
    assert(fs.createDirectory(base..'/Gen2Recomp/data/generated'))

@@ -125,6 +125,9 @@ def main():
     identity=hashlib.sha256(json.dumps({'artifacts':artifacts,'sources':pins,'components':components},sort_keys=True).encode()).hexdigest()
     (out/'runtime.json').write_text(json.dumps({'schema':1,'bridge_protocol':1,'platform':'windows-x64','id':identity,
         'compilation_id':identity,'artifacts':artifacts,'sources':pins,'components':components,'game_data_included':False},indent=2)+'\n')
+    provenance={p:qa.qa_run(['git','rev-parse','HEAD:'+p],cwd=ROOT,check=True,capture_output=True,text=True).stdout.strip()
+        for p in ['tools/pokemon-xy-bridge','tools/pokemon_xy_source_pins.json','tools/windows_native_components.json','tools/pinball-rs-native/windows-io.patch','tools/pinball-rs-native/runtime-fixes.patch']}
+    (out/'source.json').write_text(json.dumps({'schema':1,'trees':provenance},indent=2)+'\n')
     hashes={p.relative_to(out).as_posix():digest(p)for p in out.rglob('*')if p.is_file()}
     forbidden={'.gb','.gbc','.gba','.nds','.3ds','.cia','.cxi','.sav','.state'}
     if any(Path(name).suffix.lower()in forbidden for name in hashes):raise ValueError('Game/profile data cannot be distributed in the native SDK')

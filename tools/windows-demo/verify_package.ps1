@@ -38,7 +38,7 @@ try {
     $report = Get-Content -Raw -LiteralPath $reports[0].FullName | ConvertFrom-Json
     Copy-Item -LiteralPath $reports[0].FullName -Destination (Join-Path $OutputDirectory 'cloud-selftest.json')
     if ($exitCode -ne 0) { throw "Final EXE diagnostics failed: $exitCode; $($report.error)" }
-    if ($report.passed -ne $true -or $report.platform -ne 'Windows' -or $report.checks.Count -ne 9) { throw 'Native Windows checks did not all pass' }
+    if ($report.passed -ne $true -or $report.platform -ne 'Windows' -or $report.checks.Count -ne 15 -or $report.nativeRuntime.realCartridgeGameplay -ne $false) { throw 'Native Windows checks did not all pass' }
     @{ schema=1; passed=$true; exeSha256=$receipt.fusedExeSha256; sourceRevision=$receipt.sourceRevision;
        checks=$report.checks; scope=$report.scope; playerCloudUploadTested=$false; nativeCartridgeGameplayTested=$false } |
         ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 (Join-Path $OutputDirectory 'native-package-test.json')

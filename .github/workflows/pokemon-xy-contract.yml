@@ -18,6 +18,10 @@ on:
         description: Build and test the Windows native game SDK
         type: boolean
         default: false
+      native_windows_sdk_run_id:
+        description: Requalify an unchanged native Windows SDK run
+        type: string
+        default: ''
 permissions:
   contents: read
 concurrency:
@@ -37,3 +41,8 @@ jobs:
   native-windows-sdk:
     if: ${{ inputs.native_windows_sdk == true }}
     uses: ./.github/workflows/windows-native-games.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      sdk_run_id: ${{ inputs.native_windows_sdk_run_id }}
