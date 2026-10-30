@@ -112,8 +112,15 @@ def check_pinball(sdk,work,qa,check):
     import pinball_windows
     # Self-authored ARM instructions write SRAM and loop. A separate fixture
     # source accepts exactly this hash/size, never a bypass in the shipped ABI.
-    rom=work/'own-arm-code.fixture';body=bytearray(1024)
-    for at,word in [(0,0xEA00002E),(0xC0,0xE59F0008),(0xC4,0xE3A01042),(0xC8,0xE5C01000),(0xCC,0xEAFFFFFE),(0xD0,0x0E000000)]:struct.pack_into('<I',body,at,word)
+    rom=work/'own-arm-code.fixture';body=bytearray(1024);struct.pack_into('<I',body,0,0xEA00002E)
+    # An original square-wave beep plus one SRAM byte; no game soundtrack.
+    writes=[(0x04000084,0x80),(0x04000080,0x77),(0x04000081,0x11),(0x04000062,0x80),(0x04000063,0xF0),(0x04000064,0),(0x04000065,0x84),(0x0E000000,0x42)]
+    pool=0xC0+len(writes)*12+4
+    for i,(address,value)in enumerate(writes):
+        at=0xC0+i*12
+        struct.pack_into('<III',body,at,0xE59F0000|(pool+i*4-at-8),0xE3A01000|value,0xE5C01000)
+        struct.pack_into('<I',body,pool+i*4,address)
+    struct.pack_into('<I',body,pool-4,0xEAFFFFFE)
     rom.write_bytes(body)
     fixture=work/'test-only-source';source=fixture/'tools/pinball-rs-native';source.mkdir(parents=True,exist_ok=True)
     for name in ['presentation.h','presentation.cpp','bridge.cpp']:shutil.copy2(ROOT/'tools/pinball-rs-native'/name,source/name)
@@ -127,6 +134,7 @@ def check_pinball(sdk,work,qa,check):
     native=ctypes.CDLL(str(dll));native.ascendant_pinball_open.argtypes=[ctypes.c_char_p]*3;native.ascendant_pinball_open.restype=ctypes.c_void_p
     native.ascendant_pinball_step.argtypes=[ctypes.c_void_p,ctypes.c_uint16];native.ascendant_pinball_frame.argtypes=[ctypes.c_void_p];native.ascendant_pinball_frame.restype=ctypes.c_uint64
     native.ascendant_pinball_state.argtypes=[ctypes.c_void_p,ctypes.c_char_p,ctypes.c_int];native.ascendant_pinball_close.argtypes=[ctypes.c_void_p]
+    native.ascendant_pinball_audio.argtypes=[ctypes.c_void_p,ctypes.POINTER(ctypes.c_size_t),ctypes.POINTER(ctypes.c_uint32)];native.ascendant_pinball_audio.restype=ctypes.POINTER(ctypes.c_int16)
     native.ascendant_pinball_error.restype=ctypes.c_char_p
     save=work/'synthetic-sram.fixture';original=b'\0'*32768;save.write_bytes(original)
     handle=native.ascendant_pinball_open(str(rom).encode(),str(sdk/runtime['bios']).encode(),str(save).encode())
@@ -136,6 +144,8 @@ def check_pinball(sdk,work,qa,check):
         for _ in range(3):check(native.ascendant_pinball_step(handle,0)==1,'Native synthetic GBA frame advances: '+str(native.ascendant_pinball_error()))
         frame=native.ascendant_pinball_frame(handle)
         check(frame>=3,'Native GBA frame boundaries advance')
+        count=ctypes.c_size_t();rate=ctypes.c_uint32();audio=native.ascendant_pinball_audio(handle,ctypes.byref(count),ctypes.byref(rate))
+        check(bool(audio)and 0<count.value<=8192 and rate.value>=8000 and any(audio[i]!=0 for i in range(count.value)),'Native GBA audio produces non-silent PCM for a self-authored beep')
         check(native.ascendant_pinball_state(handle,str(state).encode(),0)==1,'Native Pinball snapshot writes through a Unicode path')
         check(native.ascendant_pinball_step(handle,0)==1 and native.ascendant_pinball_frame(handle)>frame,'Synthetic guest advances after the snapshot')
         check(native.ascendant_pinball_state(handle,str(state).encode(),1)==1 and native.ascendant_pinball_frame(handle)==frame,'Native snapshot restores the exact synthetic frame')
