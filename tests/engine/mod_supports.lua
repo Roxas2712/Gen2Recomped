@@ -83,8 +83,9 @@ for _, version in ipairs(GameVersion.ORDER) do
   local itemProducer = GameVersion.generation(version) == 1 or GameVersion.generation(version) == 3
   T.check(itemProducer and yes(api, 'hooks', 'item.use') or not itemProducer and no(api, 'hooks', 'item.use'),
     version .. ': item-use availability follows native GB or GBA field producer')
-  T.eq(yes(api, 'events', 'egg.hatched'), GameVersion.generation(version)==2,
-    version .. ': egg hatch observation follows the native Gen2 producer')
+  T.eq(yes(api, 'events', 'egg.hatched'),
+    GameVersion.generation(version)==2 or GameVersion.generation(version)==3,
+    version .. ': egg hatch observation follows the qualified native GB/GBA producer')
   T.check(yes(api, 'events', 'mod.probe.ready') and yes(api, 'events', 'mod.other.ready'),
     version .. ': namespaced user events do not need a producer installed')
   for _, name in ipairs(Catalog.hooks()) do
