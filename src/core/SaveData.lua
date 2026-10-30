@@ -1813,6 +1813,9 @@ function SaveData.commitSave(fs, main, bak, encoded, live, reencode)
   local ok, err = SaveSafety.atomicWrite(fs, main, encoded, { bak = bak, decode = SaveSafety.decodeSave })
   if ok then
     knownBytes[main] = encoded
+    local sync=package.loaded['src.storage.SyncStatus']
+    local version,slot=main:match('^saves/([%w_]+)/([%w_]+)%.lua$')
+    if sync and sync.changed and version and prevBytes~=encoded then sync.changed(version,slot) end
     if type(live) == "table" then loadedWalkerKeys[main] = SaveSafety.walkerKeys(live) end
   end
   return ok, err

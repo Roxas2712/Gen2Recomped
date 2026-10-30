@@ -1,6 +1,7 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
+ ["New progress is saved on this device. Upload it to update your cloud copy."]="Neuer Fortschritt ist auf diesem Gerät gesichert. Lade ihn hoch, um auch die Cloud-Kopie zu aktualisieren.",
  ["Transfer failed."]="Übertragung fehlgeschlagen.",
  ["Extra transfer cancelled. Local saves are preserved."]="Zusatzübertragung abgebrochen. Deine lokalen Spielstände bleiben erhalten.",
  ["Saving your progress to the cloud…"]="Dein Fortschritt wird in der Cloud gesichert …",

@@ -14,6 +14,12 @@ function M.get(version,slot)
   if version then return M.entries[key(version,slot)] end
   return M.latest and M.latest.scope==scope() and M.latest or nil
 end
+function M.changed(version,slot)
+  local entry=M.get(version,slot)or M.get()
+  if entry and (entry.state=='available' or entry.state=='partial')then
+    return M.set('local',version,slot,'New progress is saved on this device. Upload it to update your cloud copy.')
+  end
+end
 function M.result(result,problem,version,slot)
   if not result then
     local both=tostring(problem):lower()

@@ -26,6 +26,8 @@ the visible acknowledgement of an already completed normal-save transfer.
 - The library exposes the actual reason and a direct retry button. Known session,
   access, size, quota and rate-limit responses have actionable messages. The
   reviewed new UI text has German translations.
+- A changed local save invalidates an earlier green cloud badge. Writing identical
+  bytes preserves its acknowledgement; saving new progress requires a new upload.
 - Windows prefers the existing native HTTPS module when available; curl remains
   the compatibility path. Sensitive request validation applies before worker or
   native dispatch. Credentials do not become shell arguments or request files.
