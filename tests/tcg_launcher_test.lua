@@ -13,6 +13,8 @@ RI.new=function()return setmetatable({ready={},tab='gold',section='games'}, {__i
 for _,name in ipairs{'_sbOpenGame','_sbGames','_sbDrawContent','_sbOwns','play','keypressed','mousepressed','gamepadpressed','_sbMousepressed','update','draw','_sbBack','_sbGo','leave','quit'}do
  RI[name]=function()forwarded=forwarded+1;return 'original'end
 end
+RI._beginRomScan=function(self,paths)self.scanned=paths;return true end
+RI.startPath=function()return 'standard'end
 M.install(RI)
 local ui=RI.new()
 ui:_sbOpenGame('tcggbc');ui:_sbOpenGame('tcggbc')
@@ -33,3 +35,14 @@ assert(external.info('tcggbc').generation==2 and external.info('tcggbc').externa
 assert(external.versions('gbc','pokemon')[1]=='tcggbc')
 assert(#external.versions('gb','pokemon')==0 and #external.versions('gbc','hacks')==0)
 print('TCG library grouping and external metadata: PASS')
+
+local originalOpen=io.open
+io.open=function(path,...)
+ if path=='tcg.gbc'then return{seek=function()end,read=function()return'POKECARD'end,close=function()end}end
+ return originalOpen(path,...)
+end
+local picker=RI.new();assert(picker:startPath('red.gb')=='standard');assert(picker:startPath('tcg.gbc')and picker._tcgQueued=='tcg.gbc')
+picker._tcgQueued=nil;assert(picker:_beginRomScan({'red.gb','tcg.gbc'}));assert(#picker.scanned==1 and picker.scanned[1]=='red.gb'and picker._tcgQueued=='tcg.gbc')
+assert(picker:_beginRomScan({'tcg.gbc'}));assert(picker._tcgQueued=='tcg.gbc')
+io.open=originalOpen
+print('TCG direct and mixed-batch import routing: PASS')

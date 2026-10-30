@@ -14,6 +14,10 @@ python3 tools/tcg_gbc.py prepare --rom '/path/to/Pokemon Trading Card Game.gbc'
 python3 tools/tcg_gbc.py status
 ```
 
+The TCG cartridge page, drag-and-drop and the desktop ROM picker route this
+cartridge to its separate build worker. In a mixed batch, RPG imports finish
+before the queued TCG preparation starts.
+
 Requires Python 3, Git, CMake, Ninja, zlib and a C/C++ compiler. Existing pinned
 runtime checkouts can be selected with `--runtime`; `--cmake` and `--ninja`
 select the build tools. Two compile jobs are used. The normal disk reserve is

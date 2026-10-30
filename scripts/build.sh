@@ -115,7 +115,7 @@ if [ -f "$ROOT/scripts/bundled_mods.txt" ]; then
 fi
 # shellcheck disable=SC2086  # BUNDLED_MODS / MANIFESTS are word lists
 (cd "$ROOT" && zip -q -9 -r "$LOVE_FILE" \
-  main.lua conf.lua src compat/gen1-rs data assets $BUNDLED_MODS tools/save-editor tools/map-editor \
+  main.lua conf.lua src compat/gen1-rs data assets tcg-mods/tcg_status $BUNDLED_MODS tools/save-editor tools/map-editor \
   $MANIFESTS \
   -x '*.DS_Store' 'data/generated/*' 'assets/generated/*' '*/generated/*' \
      'mods/*/tests/*' 'mods/*/tools/*' 'mods/*/oxr/*' 'mods/*.zip' \

@@ -12,6 +12,10 @@ function M.session()
  end
 end
 function M.available()return M.session()~=nil end
+local function cartridge(path)
+ local f=type(path)=='string'and io.open(path,'rb');if not f then return false end
+ f:seek('set',0x134);local title=f:read(8);f:close();return title=='POKECARD'
+end
 function M.install(RI)
  local function import(self,path)
   if self._tcgJob or self._tcgPlayer then return end
@@ -119,6 +123,9 @@ function M.install(RI)
  end
  local update=RI.update
  RI.update=function(self,dt,...)
+  if self._tcgQueued and not self._tcgJob and not self._tcgPlayer and not self.scanTask and not self._romQueue and self.workState~='working'then
+   local path=self._tcgQueued;self._tcgQueued=nil;self:_sbOpenGame('tcggbc');import(self,path)
+  end
   if self._tcgJob then
    local raw=self._tcgChannel:pop()
    while raw do
@@ -151,13 +158,34 @@ function M.install(RI)
   if self._tcgOpen then self.tab=self._tcgOldTab or'gold';self._tcgOldTab=nil end
   self._tcgOpen=false;self._tcgEditing=false;return go(self,...)
  end
+ local function separate(self,paths)
+  local regular={}
+  for _,path in ipairs(paths or{})do if cartridge(path)then self._tcgQueued=path else regular[#regular+1]=path end end
+  return regular
+ end
+ local path=RI.startPath
+ if path then RI.startPath=function(self,source,...)
+  if cartridge(source)then self._tcgQueued=source;return true end
+  return path(self,source,...)
+ end end
+ local probe=RI._beginRomProbe
+ if probe then RI._beginRomProbe=function(self,bytes,source,...)
+  if source and(type(bytes)=='string'and bytes:sub(0x135,0x13c)=='POKECARD'or cartridge(source))then self._tcgQueued=source;return true end
+  return probe(self,bytes,source,...)
+ end end
+ local scan=RI._beginRomScan
+ if scan then RI._beginRomScan=function(self,paths,...)
+  local regular=separate(self,paths)
+  if #regular==0 and self._tcgQueued then return true end
+  return scan(self,regular,...)
+ end end
+ local sources=RI._scanRomSources
+ if sources then RI._scanRomSources=function(self,paths,...)return sources(self,separate(self,paths),...)end end
  local dropped=RI.filedropped
  RI.filedropped=function(self,file,...)
-  if not self._tcgPlayer then
-   local path=file and file.getFilename and file:getFilename()
-   local f=path and io.open(path,'rb')
-   if f then f:seek('set',0x134);local title=f:read(8);f:close();if title=='POKECARD'then self:_sbOpenGame('tcggbc');import(self,path);return end end
-  end
+  if self._tcgPlayer then return end
+  local path=file and file.getFilename and file:getFilename()
+  if cartridge(path)then self._tcgQueued=path;return end
   if dropped then return dropped(self,file,...)end
  end
  for _,method in ipairs{'leave','quit'}do local old=RI[method];RI[method]=function(self,...)finish(self);if old then return old(self,...)end end end

@@ -27,7 +27,8 @@ function love.update(dt)
  update(dt);ticks=ticks+1
  if ticks==190 then assert(ui and ui._tcgPlayer,'TCG native player did not open: '..tostring(ui and ui._tcgNotice));assert(#ui._tcgPlayer.mods.mods==1,'TCG example mod did not load: '..tostring(love.filesystem.read('tcg-mods/enabled.json'))..' / '..tostring(#require('src.tcg.Mods').list())..' / '..love.filesystem.getSaveDirectory())end
  if ticks==195 then ui:keypressed('escape')end
- if ticks==225 then assert(ui and not ui._tcgPlayer,'TCG player failed to return to the launcher');ui:_sbBack();ui.section='games';ui.gamesView='cartridges';ui.browseConsole='gbc';ui.browseSeries='pokemon' end
+ if ticks==225 then assert(ui and not ui._tcgPlayer,'TCG player failed to return to the launcher');ui:_sbBack();ui.section='games';ui.gamesView='list';ui.browseConsole='gbc';ui.browseSeries='pokemon' end
+ if ticks==247 then local found=false;for _,tile in ipairs(ui._sb.tiles or{})do if tile.version=='tcggbc'then found=true end end;assert(found and ui.ready.tcggbc,'Prepared TCG card is missing from the GBC library')end
  if ticks==250 then love.event.quit()end
 end
 function love.draw(...)
