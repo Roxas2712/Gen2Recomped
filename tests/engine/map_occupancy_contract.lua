@@ -38,5 +38,27 @@ for _,mode in ipairs({'absent','allow','deny','truthy','throws','mutates'})do
   if mode=='allow'or mode=='mutates'then T.eq(dialog,nil,'exact true permits staying')
   else T.check(dialog~=nil,'default and malformed answers eject');dialog.done();T.eq(warped,'VERMILION_CITY','vanilla ejection destination retained')end
 end
+require('src.core.GameVersion').set('red')
+local run=T.sdk.loadMods({'mods/dock_policy'},{data=T.fixtures.fresh(),fs=T.sdk.memfs({
+  ['mods/dock_policy/manifest.json']=[[{"id":"dock_policy","name":"Dock policy","version":"1.0.0","api":2,"entry":"main.lua"}]],
+  ['mods/dock_policy/main.lua']=[[
+    local mod=...
+    mod.hooks:wrap("map.occupancy_allowed",function(next,game,context)
+      mod.exports.context=context
+      return true
+    end)
+  ]],
+})})
+T.eq(#run.errors,0,'public API2 policy entry loads')
+local dialogs,blocks=0,0
+local host={save={flags={EVENT_SS_ANNE_LEFT=true},version='red'},data={text={}},
+  stack={push=function()dialogs=dialogs+1 end}}
+local field={player={cellX=1,cellY=2},map={renderer={rebuild=function()end},
+  setBlock=function()blocks=blocks+1 end}}
+story.VERMILION_DOCK.onEnter(host,field)
+T.eq(dialogs,0,'unchanged public policy actually suppresses ejection')
+T.check(blocks>0,'public policy still erases departed ship')
+T.eq(run.loader.exports.dock_policy.context.mapId,'VERMILION_DOCK','public policy observes actual story context')
+run.release()
 package.loaded['src.render.TextBox']=originalText
 T.finish('story map occupancy policy')

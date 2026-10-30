@@ -36,6 +36,13 @@ Reference contracts audited at Gen1Recomp `0be34bc76`.
   all effects/queued preparation; `Sound.stop(name)` keeps its existing scope.
 - **A11:** `assets:image` validates/normalizes the same mod-relative paths as
   the other asset readers and resolves declared import aliases before caching.
+- **Hosted follow-up:** the live callback catalog now scans native story
+  programs under `data/scripts`, including the tested public dock-policy mod.
+  On Windows, atomic download publication retries transient OS errors 5/32/33
+  for at most 50 attempts / 250 ms and within the request deadline. Permanent
+  errors fail immediately; the previous destination is never removed first.
+  The production HTTP test keeps reading the old/new complete file during
+  publication; the deadline is forwarded through that test's worker seam.
 
 ## Compatibility boundaries retained
 
