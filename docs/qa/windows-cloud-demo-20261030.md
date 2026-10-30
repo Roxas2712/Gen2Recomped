@@ -68,6 +68,8 @@ python3 tools/build_windows_cloud_demo.py \
 ```
 
 The builder rejects an existing output folder and preserves old packages.
+It always creates a fresh payload from the committed, clean engine inputs;
+external pre-packed payloads cannot bypass the source qualification binding.
 `verification.json` records source revision, runtime/component hashes, archive
 and fused EXE hashes. `windowsDemoExecuted` is false at build time; the separate
 native test report supplies execution evidence if that test passes.

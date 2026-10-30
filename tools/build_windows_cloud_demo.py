@@ -33,20 +33,23 @@ def build(a):
  import qa_storage as qa
  qa._storage=qa.Storage(ROOT);atexit.register(qa._storage.close,collect=False)
  for p in [ROOT,a.runtime,a.component.parent]:qa.qa_source(p)
- if a.payload:qa.qa_source(a.payload)
  out=a.out.resolve();qa.qa_copy(out);qa.qa_limit_output(out,1024*1024*1024)
  if out.exists():raise ValueError('Choose a new output directory; existing builds are preserved')
  if sha(a.runtime)!=RUNTIMES['windows']['sha256']:raise ValueError('Official runtime digest mismatch')
  spec=importlib.util.spec_from_file_location('windows_component',ROOT/'tools/runtime-upvalue-check/component.py')
  component=importlib.util.module_from_spec(spec);spec.loader.exec_module(component)
  revision=qa.qa_run(['git','rev-parse','HEAD'],cwd=ROOT,check=True,capture_output=True,text=True).stdout.strip()
+ def require_clean_engine():
+  status=qa.qa_run(['git','status','--porcelain','--untracked-files=all','--',*component.ENGINE_PATHS],cwd=ROOT,check=True,capture_output=True,text=True).stdout
+  if status:raise ValueError('Engine inputs differ from the committed qualification source; commit them and qualify that source first')
+ require_clean_engine()
  library,notice,manifest=component.verify(a.component,'windows',component.engine_tree(revision,ROOT))
  out.mkdir(parents=True);bundle=out/'RetroRecomped-Windows-Demo';bundle.mkdir()
- if not a.payload:
-  a.payload=out/'source-engine.love'
-  scratch=out/'pack-scratch';scratch.mkdir()
-  qa.qa_run(['bash',str(ROOT/'scripts/pack_love.sh'),'--engine-only','--output',str(a.payload)],cwd=ROOT,
-    env=dict(os.environ,TMPDIR=str(scratch)),check=True)
+ base_payload=out/'source-engine.love'
+ scratch=out/'pack-scratch';scratch.mkdir()
+ qa.qa_run(['bash',str(ROOT/'scripts/pack_love.sh'),'--engine-only','--output',str(base_payload)],cwd=ROOT,
+   env=dict(os.environ,TMPDIR=str(scratch)),check=True)
+ require_clean_engine()
  with zipfile.ZipFile(a.runtime)as z:
   entries=[n for n in z.namelist()if PurePosixPath(n).name==RUNTIMES['windows']['inner']]
   if len(entries)!=1:raise ValueError('Pinned portable runtime ZIP is absent')
@@ -67,7 +70,7 @@ def build(a):
    runtime_hashes[name]=hashlib.sha256(data).hexdigest()
   exe=files['love.exe']
  payload=out/'RetroRecomped-Windows.love'
- with zipfile.ZipFile(a.payload)as old,zipfile.ZipFile(payload,'w',zipfile.ZIP_DEFLATED,compresslevel=6)as z:
+ with zipfile.ZipFile(base_payload)as old,zipfile.ZipFile(payload,'w',zipfile.ZIP_DEFLATED,compresslevel=6)as z:
   for name in old.namelist():
    if name in{'main.lua','conf.lua'}:continue
    z.writestr(name,old.read(name))
@@ -102,7 +105,7 @@ def build(a):
  receipt={'schema':1,'author':'Roxas2712','build':VERSION,'sourceRevision':revision,'platform':'Windows x64',
   'runtimeArtifact':RUNTIMES['windows']['id'],'runtimeSha256':sha(a.runtime),'luaLibrarySha256':sha(library),
   'componentSha256':sha(a.component),'componentEngineTreeVerified':True,'componentEngineSource':manifest.get('engineSource'),
-  'basePayloadSha256':sha(a.payload),'payloadSha256':sha(payload),'fusedExeSha256':sha(target),'runtimeFilesSha256':runtime_hashes,
+  'basePayloadSha256':sha(base_payload),'payloadSha256':sha(payload),'fusedExeSha256':sha(target),'runtimeFilesSha256':runtime_hashes,
   'profilePolicy':'read-only discovery; reuse chosen directory; no legacy migration or copy; portable.txt not bundled',
   'privateRomsSavesCredentialsBundled':False,'windowsDemoExecuted':False,'playerCloudUploadTested':False}
  (bundle/'build.json').write_text(json.dumps(receipt,indent=2)+'\n')
@@ -118,6 +121,5 @@ def build(a):
 if __name__=='__main__':
  p=argparse.ArgumentParser(description=__doc__)
  p.add_argument('--runtime',type=Path,required=True);p.add_argument('--component',type=Path,required=True)
- p.add_argument('--payload',type=Path,help='Optional already packed engine; otherwise use the shared packer')
  p.add_argument('--out',type=Path,required=True)
  build(p.parse_args())
