@@ -57,6 +57,13 @@ return function(game)
  assert(getmetatable(action)==require('src.ui.Gen3ItemMenu')and action.emeraldBag==owner)
  local index=action.index;press('left');assert(action.index==index)
  shot('native-emerald-bag-item-actions');press('b');assert(game.stack:top()==owner)
+ game.input:overlayPressed('down');U.wait(1)
+ assert(owner.index==2);U.wait(39);assert(owner.index==2,'Held input repeated before frame40')
+ U.wait(1);assert(owner.index==3);U.wait(5);assert(owner.index==4)
+ game.input:overlayReleased('down');U.wait(2)
+ shot('native-emerald-bag-held-down-repeat')
+ for _=1,3 do press('up')end
+ assert(owner.index==1 and owner.top==1);sameExceptClock(before)
  for _=1,8 do press('down')end
  assert(owner.index==9 and owner.top==5);shot('native-emerald-bag-scroll-eight-rows')
  for _=1,5 do press('up')end
@@ -69,7 +76,8 @@ return function(game)
  sameExceptClock(before)
  press('select');assert(owner.emeraldSwap and owner.emeraldSwap.from==1)
  shot('native-emerald-bag-reorder-start')
- for _=1,8 do press('down')end
+ game.input:overlayPressed('down');U.wait(71)
+ game.input:overlayReleased('down');U.wait(2)
  assert(owner.index==9 and owner.top==5);shot('native-emerald-bag-reorder-scrolled-line')
  local heldPocket=owner.pocket;press('right');assert(owner.pocket==heldPocket)
  press('b');assert(not owner.emeraldSwap and owner.index==8);sameExceptClock(before)
@@ -121,6 +129,7 @@ return function(game)
  report.drawPreservesSaveRng=true;report.emptyAndLongLists=true;report.maleAndFemaleOwnGraphics=true
  report.nativeCenteredScroll=true;report.nativeBoundaryClamp=true
  report.nativeReorder=true;report.duplicateStacksPreserved=true
- report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation','held-key repeat'}
+ report.nativeHeldKeyRepeat=true
+ report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end

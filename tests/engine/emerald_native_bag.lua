@@ -166,6 +166,51 @@ local prompt;for _,row in ipairs(texts)do if row.text=='Move ITEM 6\nwhere?'then
 T.check(prompt);T.eq(prompt.x,3);T.eq(prompt.y,105)
 T.eq(Serial.encode(game.save),navigationSave,'moving-line rendering never edits any saved value')
 owner.emeraldSwap=nil
+-- Exercise the real bag update route across fixed frames, including the
+-- same repeat boundary while the original insertion line is active.
+setmetatable(owner,UI)
+owner.rows=rows;owner.index,owner.top=1,1;owner.lockPocket=false
+local pressed,held={},{}
+game.input={wasPressed=function(_,key)return pressed[key]end,
+ isDown=function(_,key)return held[key]end}
+local function tick(edges,down,frames)
+ pressed,held=edges or{},down or{}
+ UI.update(owner,1/60)
+ pressed={}
+ for _=2,frames or 1 do UI.update(owner,1/60)end
+end
+tick({down=true},{down=true});T.eq(owner.index,2)
+tick(nil,{down=true},39);T.eq(owner.index,2,'held DOWN waits the full initial delay')
+tick(nil,{down=true});T.eq(owner.index,3,'first repeat occurs after forty frames')
+tick(nil,{down=true},4);T.eq(owner.index,3)
+tick(nil,{down=true});T.eq(owner.index,4,'subsequent repeats are five frames apart')
+tick({up=true},{up=true});T.eq(owner.index,3,'a changed direction responds immediately')
+tick(nil,{up=true},39);T.eq(owner.index,3,'changing direction restarts the delay')
+tick(nil,{up=true});T.eq(owner.index,2)
+tick();tick({down=true},{down=true});T.eq(owner.index,3,'release permits another immediate press')
+local pockets,chosen,closed=0,0,0
+owner.movePocket=function()pockets=pockets+1 end
+owner.choose=function()chosen=chosen+1 end
+owner.close=function()closed=closed+1 end
+owner.rebuild=function()end
+tick({right=true},{right=true},100);T.eq(pockets,1,'held RIGHT never repeats pocket changes')
+tick({left=true},{left=true},100);T.eq(pockets,2)
+tick({a=true},{a=true},100);T.eq(chosen,1,'held A never repeats actions')
+tick({b=true},{b=true},100);T.eq(closed,1,'held B never repeats closure callbacks')
+local oldIndex=owner.index
+tick({a=true,down=true},{a=true,down=true});T.eq(chosen,2)
+T.eq(owner.index,oldIndex,'a fresh action wins over a vertical repeat')
+owner.index,owner.top=1,1;owner.emeraldSwap={from=1,row=rows[1],pocket='ITEM'}
+tick();tick({down=true},{down=true},46)
+T.eq(owner.index,4,'insertion mode uses the same held repeat clock')
+T.check(owner.emeraldSwap)
+tick({b=true,down=true},{b=true,down=true})
+T.eq(owner.emeraldSwap,nil,'cancel wins over a simultaneous repeated direction')
+T.eq(owner.index,3,'cancel retains the native insertion cursor adjustment')
+T.eq(Serial.encode(game.save),navigationSave,'held input never edits saved values')
+owner.emerald=false;owner.listRows=function()return 8 end;owner.index,owner.top=1,1
+tick();tick({down=true},{down=true},100)
+T.eq(owner.index,2,'legacy presenters retain their own input behavior')
 local legacy={rows=rows,index=1,top=1,listRows=function()return 8 end}
 UI.moveCursor(legacy,-1);T.eq(legacy.index,13,'other presenters retain their existing navigation')
 Fs.read=oldRead;love.graphics=oldGraphics;love.filesystem.load=oldLoad;V.set(oldV)

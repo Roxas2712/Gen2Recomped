@@ -8,9 +8,7 @@ function M.update(owner,input)
  if not owner.emerald or require('src.core.GameVersion').get()~='emerald'then return false end
  local state=owner.emeraldSwap
  if state then
-  if input:wasPressed('up')then owner:moveCursor(-1)
-  elseif input:wasPressed('down')then owner:moveCursor(1)
-  elseif input:wasPressed('a')or input:wasPressed('select')or input:wasPressed('b')then
+  if input:wasPressed('a')or input:wasPressed('select')or input:wasPressed('b')then
    local target=owner.index
    if not input:wasPressed('b')then
     Native.moveBefore(owner.game.save,owner.game.data,state.pocket,state.from,target,state.expected)
@@ -18,6 +16,8 @@ function M.update(owner,input)
    owner.emeraldSwap=nil
    if state.from<target then owner.index=math.max(1,target-1)end
    owner:rebuild();play(owner)
+  elseif input:wasPressed('up')then owner:moveCursor(-1)
+  elseif input:wasPressed('down')then owner:moveCursor(1)
   end
   return true
  end
