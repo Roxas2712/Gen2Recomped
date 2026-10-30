@@ -132,9 +132,9 @@ function J:readArchive(source)
     -- Relative picks belong to the mounted data root, not the shell's cwd.
     local relative=not source:match('^[/\\]')and not source:match('^%a:')
     local info=relative and love.filesystem.getInfo(source,'file')
-    if info then size=info.size;input=self:openRead(source)else input=io.open(source,'rb')end
+    if info then size=info.size;input=self:openRead(source)
+    else input,size=require('src.core.NativeFile').openRead(source)end
     if input then
-      if not info and input.seek then size=input:seek('end');assert(input:seek('set',0),'Could not rewind archive.')end
       self:track(input)
     else
       local info=love.filesystem.getInfo(source,'file');size=info and info.size

@@ -17,6 +17,8 @@ Archive reads, package copies, byte-for-byte readback, retained `baseroms/` impo
 and cleanup run in 256 KiB chunks. `stepInstall` uses a soft 6 ms frame budget;
 individual filesystem calls, ZIP mounting and the small commit cannot be preempted.
 Desktop archives are staged to disk, rather than copied wholesale into Lua memory.
+External Windows ZIP paths use the native wide read-only API in bounded chunks,
+so UTF-8 names do not fall through the ANSI `io.open` path.
 Switch retains the 64 MiB compressed archive admission limit.
 
 Before publication, cancelling leaves the current package untouched and removes

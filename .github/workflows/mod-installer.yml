@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - 'src/mods/**'
+      - 'src/core/NativeFile.lua'
       - 'src/import/Launcher*.lua'
       - 'src/import/RomImporter.lua'
       - 'src/import/CacheFs.lua'

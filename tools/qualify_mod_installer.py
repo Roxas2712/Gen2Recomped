@@ -60,7 +60,7 @@ def main():
                         games=['red'] if name == 'wrong_game' else ['crystal'])
         if name == 'wrong_api':
             manifest['api'] = 99
-        path = output / (name + '.zip')
+        path = output / ('Pokémon-日本語-' + name + '.zip')
         with zipfile.ZipFile(path, 'w', zipfile.ZIP_DEFLATED) as archive:
             archive.writestr('release/manifest.json', json.dumps(manifest))
             archive.writestr('release/main.lua', entry)
@@ -89,7 +89,7 @@ def main():
     result.check_returncode()
     match = re.search(r'Native installer: (\d+) checks PASS;', log)
     assert match, 'real installer qualification marker missing'
-    inputs = list((ROOT / 'src/mods').glob('ModInstall*.lua')) + [ROOT / 'src/mods/LauncherMods.lua']
+    inputs = list((ROOT / 'src/mods').glob('ModInstall*.lua')) + [ROOT / 'src/mods/LauncherMods.lua', ROOT / 'src/core/NativeFile.lua']
     report = dict(passed=True, checks=int(match[1]), platform=platform.system(),
                   externalDirectories='External directories: supported' in log,
                   scope='Real ZIP mounting, scoped filesystem writes, cancellation, recovery and native profile IO; no ROM, GPU, network or player profile',
