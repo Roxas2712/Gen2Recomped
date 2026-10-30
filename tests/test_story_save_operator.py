@@ -29,11 +29,21 @@ class Protocol:
         self.receipts = []
         self.recorded = 0
         self.drift_before = {}
+        self.receipt_after = {}
+        self.wait_after = None
 
     def send(self, commands):
         if commands:
             assert len(commands) == 1
             cmd = commands[0]
+            if cmd['op'] == 'wait':
+                assert cmd == dict(op='wait', frames=1)
+                before = copy.deepcopy(self.state)
+                self.sent.append(cmd)
+                self.state = copy.deepcopy(self.wait_after or self.state)
+                self.state.update(seq=len(self.sent), queuedCommands=len(self.sent))
+                self.receipts.append(dict(before=before, input=cmd, after=copy.deepcopy(self.state)))
+                return copy.deepcopy(self.state)
             assert cmd['op'] == 'press' and cmd.get('times', 1) == 1
             expected, after = self.stages[len(self.sent)]
             assert cmd['button'] == expected, (cmd, expected)
@@ -44,13 +54,15 @@ class Protocol:
             self.sent.append(cmd)
             self.state = copy.deepcopy(after)
             self.state.update(seq=len(self.sent), queuedCommands=len(self.sent))
-            self.receipts.append(dict(before=before, input=cmd))
+            self.receipts.append(dict(before=before, input=cmd,
+                after=copy.deepcopy(self.receipt_after.get(len(self.sent) - 1, self.state))))
         return copy.deepcopy(self.state)
 
     def record(self):
         assert self.state['top']['source'] == FIELD
         assert self.state['savedGameCount'] == 5
-        assert any(r['input']['button'] == 'a' and is_save_yes(r['before']) for r in self.receipts)
+        assert any(r['input'].get('button') == 'a' and is_save_yes(r['before']) for r in self.receipts)
+        assert self.receipts[-1]['after']['top']['source'] == FIELD
         self.recorded += 1
         return dict(normalCheckpointSHA256='a' * 64)
 
@@ -75,7 +87,29 @@ class StorySaveOperatorTests(unittest.TestCase):
         self.assertTrue(reply['saved'])
         self.assertEqual(ui.recorded, 1)
         self.assertEqual(reply['sha256'], 'a' * 64)
-        self.assertEqual([c['button'] for c in ui.sent], ['start', 'up', 'a', 'a', 'up', 'a', 'a', 'a'])
+        self.assertEqual([c['button'] for c in ui.sent if c['op'] == 'press'], ['start', 'up', 'a', 'a', 'up', 'a', 'a', 'a'])
+        self.assertEqual(ui.sent[-1], dict(op='wait', frames=1))
+
+    def test_saved_message_closes_between_receipt_and_poll_without_another_button(self):
+        ui = generic()
+        ui.receipt_after[7] = frame(dict(source=RS_SAVE, nativeSaveKind='rs', phase='saved'), count=5)
+        self.assertTrue(save_via_ui(ui.send, ui.record)['saved'])
+        self.assertEqual(ui.recorded, 1)
+        self.assertEqual(len([c for c in ui.sent if c['op'] == 'press']), 8)
+        self.assertEqual(ui.receipts[-2]['after']['top']['phase'], 'saved')
+        self.assertEqual(ui.receipts[-1]['input'], dict(op='wait', frames=1))
+
+    def test_field_receipt_refuses_counter_drift_or_new_ui(self):
+        for changed in (dict(count=6), dict(scriptRunning=True), dict(busy=True),
+                        dict(top=dict(source=TEXT))):
+            with self.subTest(changed=changed):
+                ui = generic()
+                top = changed.get('top', dict(source=FIELD))
+                extra = {k: v for k, v in changed.items() if k != 'top'}
+                extra.setdefault('count', 5)
+                ui.wait_after = frame(top, **extra)
+                self.assertFalse(save_via_ui(ui.send, ui.record)['saved'])
+                self.assertEqual(ui.recorded, 0)
 
     def test_native_rs_confirm_and_overwrite_remain_two_distinct_receipts(self):
         def native(phase, index=1, count=4):

@@ -56,6 +56,12 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
             # The UI may reach YES between client observations. Only the
             # driver's actual before-input receipts can prove that boundary;
             # record() rechecks those instead of trusting this polled view.
+            # The saved message can close between the driver's after-input
+            # receipt and this observation. Record a real no-button frame in
+            # the field before asking the unchanged checkpoint guard to run.
+            state = send([dict(op='wait', frames=1)])
+            if not idle() or not field() or state.get('savedGameCount') != initial_count + 1:
+                return result('SAVE closure did not produce an idle field receipt')
             receipt = record()
             sha = receipt.get('normalCheckpointSHA256')
             assert isinstance(sha, str) and len(sha) == 64, 'Checkpoint guard did not record save bytes'
