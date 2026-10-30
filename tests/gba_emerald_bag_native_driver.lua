@@ -49,7 +49,7 @@ return function(game)
  local before=S.encode(game.save);shot('native-emerald-bag-empty-close')
  game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a')
  assert(game.stack:top()==owner and closed==0 and owner.emeraldFade.kind=='close')
- U.wait(4);shot('native-emerald-bag-closing-fade');U.wait(24)
+ shot('native-emerald-bag-closing-fade');U.wait(28)
  assert(game.stack:top()==world and closed==1);sameExceptClock(before)
  local items,keys={},{}
  for id,def in pairs(game.data.items)do
