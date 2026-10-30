@@ -98,7 +98,11 @@ function M.install(RI)
   if self._tcgPlayer then return self._tcgPlayer:keypressed(k)end
   if self._tcgOpen and self.section=='games'and not self._accountOverlay then
    if self._tcgEditing then
-    if k=='return'or k=='escape'then self._tcgEditing=false elseif k=='backspace'then self._tcgAddress=(self._tcgAddress or '127.0.0.1:8766'):sub(1,-2)end;return
+    if k=='return'or k=='escape'then self._tcgEditing=false;self._tcgSelectAll=false
+    elseif k=='backspace'then self._tcgAddress=self._tcgSelectAll and ''or(self._tcgAddress or '127.0.0.1:8766'):sub(1,-2);self._tcgSelectAll=false
+    elseif k=='a'and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui')then self._tcgSelectAll=true
+    elseif k=='v'and love.keyboard and love.keyboard.isDown('lctrl','rctrl','lgui','rgui')then self:textinput(love.system.getClipboardText())end
+    return
    elseif k=='return'then return start(self)end
   end
   return key(self,k,...)
@@ -108,7 +112,8 @@ function M.install(RI)
  end
  local text=RI.textinput
  RI.textinput=function(self,value,...)
-  if self._tcgOpen and self._tcgEditing then
+  if self._tcgOpen and self._tcgEditing and not self._accountOverlay then
+   if self._tcgSelectAll then self._tcgAddress='';self._tcgSelectAll=false end
    self._tcgAddress=((self._tcgAddress or '127.0.0.1:8766')..value:gsub('[^%w%.:%-]','')):sub(1,259);return
   end
   if text then return text(self,value,...)end
@@ -116,9 +121,10 @@ function M.install(RI)
  local mouse=RI._sbMousepressed
  RI._sbMousepressed=function(self,x,y,...)
   if self._tcgOpen and self.section=='games'then
-   for _,row in ipairs(self._tcgButtons or{})do if row.rect and RI._ui.inside(row.rect,x,y)then self._tcgEditing=row.action=='edit';if row.action=='mod'then local ok,why=pcall(require('src.tcg.Mods').toggle,row.id);self._tcgMods=nil;if not ok then self._tcgNotice=tostring(why)end
+   for _,row in ipairs(self._tcgButtons or{})do if row.rect and RI._ui.inside(row.rect,x,y)then self._tcgEditing=row.action=='edit';self._tcgSelectAll=self._tcgEditing;if row.action=='mod'then local ok,why=pcall(require('src.tcg.Mods').toggle,row.id);self._tcgMods=nil;if not ok then self._tcgNotice=tostring(why)end
      elseif row.action=='import'then choose(self)elseif not self._tcgEditing then start(self,row.action~='solo'and row.action or nil)end;return true end end
   end
+  self._tcgEditing=false;self._tcgSelectAll=false
   return mouse(self,x,y,...)
  end
  local update=RI.update

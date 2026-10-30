@@ -46,3 +46,9 @@ picker._tcgQueued=nil;assert(picker:_beginRomScan({'red.gb','tcg.gbc'}));assert(
 assert(picker:_beginRomScan({'tcg.gbc'}));assert(picker._tcgQueued=='tcg.gbc')
 io.open=originalOpen
 print('TCG direct and mixed-batch import routing: PASS')
+
+local address=RI.new();address:_sbOpenGame('tcggbc');address._tcgEditing=true;address._tcgSelectAll=true
+address:textinput('192.168.0.20:8766');assert(address._tcgAddress=='192.168.0.20:8766','Typing must replace the selected default endpoint')
+address:keypressed('backspace');assert(address._tcgAddress=='192.168.0.20:876')
+address._tcgSelectAll=true;address:keypressed('backspace');assert(address._tcgAddress=='')
+print('TCG endpoint selection and editing: PASS')
