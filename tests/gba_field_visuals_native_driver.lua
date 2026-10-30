@@ -33,12 +33,17 @@ return function(game)
  game.save.party={P.new(game.data,'BLASTOISE',40),P.new(game.data,'DODUO',20)}
  U.teleport(game,V.isFRLG()and'MAP_G03_N34'or'MAP_G00_N16',10,12,'up')
  local world=game.stack:top()
+ local snorlax,blastoise=game.data.pokemon.SNORLAX,game.data.pokemon.BLASTOISE
+ assert(snorlax.frontPicCoords.yOffset==5,'Native Snorlax front offset was not imported')
+ assert(blastoise.backPicCoords and blastoise.backPicCoords.yOffset==(edition=='emerald'and 8 or 10),
+  'Native Blastoise back offset was not imported')
  local function measure(b,tag)
   local c=game.data.constants;local rows=b:isDouble()and c.gen3BattlerCoords.doubles or c.gen3BattlerCoords.singles
   for _,a in b:activeBattlers()do
    local img=b:picImage(a.sprite);assert(img:getWidth()==64 and img:getHeight()==64)
    local def=game.data.pokemon[a.mon.species]
-   local body=a.isPlayer and def.backPicCoords or def.frontPicCoords
+   local body;if a.isPlayer then body=def.backPicCoords else body=def.frontPicCoords end
+   assert(body,'Native picture-coordinate metadata missing for '..a.mon.species)
    local anchor=rows[a.position+1]
    local expectedX=anchor.x+G.fieldOffset(b)-32
    local expectedY=anchor.y+body.yOffset-(not a.isPlayer and(c.gen3Elevation or{})[a.mon.species]or 0)-32
