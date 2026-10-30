@@ -33,6 +33,15 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
         with:
           arch: x64
+      - uses: actions/cache/restore@v5
+        if: ${{ !inputs.sdk_run_id }}
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .local/qa/windows-native-sdk-build/cargo-target
+          key: windows-native-rust-v1-${{ hashFiles('tools/pokemon-xy-bridge/Cargo.lock','tools/pokemon-xy-bridge/src/**/*.rs','tools/pokemon_xy_source_pins.json','tools/windows_native_components.json') }}
       - name: Build pinned game-data-free native components
         if: ${{ !inputs.sdk_run_id }}
         shell: pwsh
@@ -56,6 +65,14 @@ jobs:
       - name: Archive the tested native SDK
         shell: pwsh
         run: Compress-Archive -Path .local/qa/windows-native-sdk/candidate/3ds-runtime -DestinationPath "$env:RUNNER_TEMP/windows-native-runtime.zip" -CompressionLevel Fastest
+      - uses: actions/cache/save@v5
+        if: ${{ always() && !inputs.sdk_run_id && steps.rust-cache.outputs.cache-hit != 'true' }}
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .local/qa/windows-native-sdk-build/cargo-target
+          key: ${{ steps.rust-cache.outputs.cache-primary-key }}
       - uses: actions/upload-artifact@v7
         if: always()
         with:

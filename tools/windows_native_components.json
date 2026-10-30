@@ -12,5 +12,6 @@
   },
   "rust": "1.95.0",
   "vulkan_loader": "aa6dee8385afe4b2cc0152d086af2184743e16fd",
+  "vulkan_headers": "9fbc2a782ee3f8a4db64e7d991e23da75e893f44",
   "swiftshader": "cddb5c91b23ff70a1f607ea31610aa0d7f4b5ad5"
 }

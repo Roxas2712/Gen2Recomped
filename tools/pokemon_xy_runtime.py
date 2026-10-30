@@ -91,5 +91,5 @@ def environment(root, work):
                RUST_LOG='info,cranelift_jit=warn')
     # Compiler processes use the bundled C toolchain even with a minimal GUI
     # PATH. No shell setup, Homebrew or Xcode installation is required.
-    env['PATH'] = os.pathsep.join([str(root/'bin'),str(root/'compiler/bin'),str(root/'lib'),env.get('PATH','/usr/bin:/bin')])
+    env['PATH'] = os.pathsep.join([str(root/'bin'),str(root/'compiler/bin'),str(root/'lib'),str(root/'python'),str(root.parent),env.get('PATH','/usr/bin:/bin')])
     return env

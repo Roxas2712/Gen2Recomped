@@ -141,7 +141,7 @@ def build_graphics(qa,work,out,components):
     # The loader's pinned known-good file pins its matching public headers.
     good=json.loads((loader/'scripts/known_good.json').read_text())
     header=next(row for row in good['repos']if row['name']=='Vulkan-Headers')
-    headers=work/'vulkan-headers';clone(qa,header['url'],headers,header['commit'])
+    headers=work/'vulkan-headers';clone(qa,header['url'],headers,components['vulkan_headers'])
     qa.qa_run(['cmake','-S',str(headers),'-B',str(work/'headers-build'),'-DCMAKE_INSTALL_PREFIX='+str(work/'headers-install')],check=True)
     qa.qa_run(['cmake','--install',str(work/'headers-build')],check=True)
     qa.qa_run(['cmake','-S',str(loader),'-B',str(work/'loader-build'),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
