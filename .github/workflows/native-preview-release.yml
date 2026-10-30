@@ -1,71 +1,77 @@
-name: RetroRecomped intermediate pre-release
+# One-time desktop build definition; dispatched on this branch only.
+# Engine checkout remains the frozen, already-merged main revision.
+name: Existing desktop preview refresh
 on:
   workflow_dispatch:
     inputs:
       release_id:
-        description: 'Preview identifier (YYYYMMDD.N)'
+        description: 'Existing preview identifier (YYYYMMDD.N)'
         required: true
         type: string
       engine_version:
-        description: 'Engine version stamped into all packages (X.Y.Z)'
+        description: 'Desktop engine version (X.Y.Z)'
         required: true
         type: string
-      notarize_macos:
-        description: 'Require Developer ID signing and Apple notarization (configured secrets required)'
-        type: boolean
-        default: false
+      source_ref:
+        description: 'Frozen main commit (40 hexadecimal characters)'
+        required: true
+        type: string
+      runtime_run:
+        description: 'Successful public Native runtime capacity run for this source'
+        required: true
+        type: string
 permissions:
   contents: read
   actions: read
 concurrency:
-  group: native-preview-publish
+  group: desktop-preview-refresh-${{ inputs.release_id }}
   cancel-in-progress: false
 jobs:
-  contract:
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-      - run: sudo apt-get update && sudo apt-get install -y luajit
-      - run: python3 tools/run_retro_launcher_contract.py
-      - run: python3 tests/game_payload_test.py
-      - run: python3 tests/native_release_test.py
-      - run: python3 -m unittest discover -s tests -p mobile_runtime_component_test.py
-      - run: python3 -m unittest discover -s tests -p test_native_preview.py
-  runtime:
-    needs: contract
-    uses: ./.github/workflows/runtime-upvalues.yml
-  android-runtime:
-    needs: contract
-    uses: ./.github/workflows/android-love-runtime.yml
   build:
-    needs: [contract, runtime]
-    runs-on: macos-15
+    if: github.repository == 'Roxas2712/Gen2Recomped' && !github.event.repository.private
+    runs-on: macos-15-intel
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.source_ref }}
           fetch-depth: 0
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
+      - name: Verify public source, runtime qualification and existing target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RELEASE_ID: ${{ inputs.release_id }}
+          RUNTIME_RUN: ${{ inputs.runtime_run }}
+        shell: python
+        run: |
+          import json, os, re, subprocess
+          repo = 'Roxas2712/Gen2Recomped'
+          def api(path): return json.loads(subprocess.check_output(['gh', 'api', path], text=True))
+          assert not api('repos/' + repo)['private']
+          sha = os.environ['SOURCE_REF']
+          assert re.fullmatch('[0-9a-f]{40}', sha)
+          assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == sha
+          subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], check=True)
+          run = api('repos/' + repo + '/actions/runs/' + os.environ['RUNTIME_RUN'])
+          assert run['head_sha'] == sha and run['conclusion'] == 'success'
+          assert run['path'] == '.github/workflows/runtime-upvalues.yml'
+          release = api('repos/' + repo + '/releases/tags/native-preview-' + os.environ['RELEASE_ID'])
+          assert release['prerelease'] and not release['draft'] and not release.get('immutable', False)
+          print('Frozen main, public qualified runtime and existing mutable preview verified')
       - uses: actions/download-artifact@v8
         with:
           name: qualified-desktop-runtime
+          run-id: ${{ inputs.runtime_run }}
+          github-token: ${{ github.token }}
           path: qualified-runtime
       - name: Verify preview packaging guards
         run: python3 -m unittest discover -s tests -p test_native_preview.py -v
-      - name: Prepare private Apple signing keychain
-        if: inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true'
+      - name: Package only Windows and macOS from the frozen main
         env:
-          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
-          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: python3 tools/macos_distribution.py setup-ci
-      - name: Package committed source with qualified extended runtimes
-        env:
+          GH_TOKEN: ${{ github.token }}
           RELEASE_ID: ${{ inputs.release_id }}
           ENGINE_VERSION: ${{ inputs.engine_version }}
         run: >-
@@ -73,168 +79,12 @@ jobs:
           --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION"
           --windows-runtime-component qualified-runtime/windows/component.json
           --macos-runtime-component qualified-runtime/macos/component.json
-          --out "$RUNNER_TEMP/release"
-      - name: Remove private Apple signing keychain
-        if: always() && (inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true')
-        run: python3 tools/macos_distribution.py cleanup-ci
-      - uses: actions/upload-artifact@v4
+          --out "$RUNNER_TEMP/desktop-refresh"
+      - name: Verify completed desktop checksums
+        run: cd "$RUNNER_TEMP/desktop-refresh" && shasum -a 256 -c SHA256SUMS.txt
+      - uses: actions/upload-artifact@v7
         with:
-          name: native-preview-desktop
-          path: ${{ runner.temp }}/release/*
+          name: desktop-refresh-${{ inputs.release_id }}
+          path: ${{ runner.temp }}/desktop-refresh/*
           if-no-files-found: error
           retention-days: 7
-  ios:
-    name: Required iPhone and iPad device build
-    needs: build
-    runs-on: macos-15
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: latest-stable
-      - uses: actions/download-artifact@v4
-        with:
-          name: native-preview-desktop
-          path: ${{ runner.temp }}/desktop
-      - name: Prepare pinned iOS source and native bridges
-        env:
-          LOVE_SOURCE_REF: 937eb3b21f973607ab080aa26b7ef2a6b3b2b663
-          APPLE_DEPENDENCIES_REF: a5522634f1e581a1ebab73bf3ab4bd7a853b7a3e
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: bash scripts/build_ios.sh --fetch --package-only --game-love "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --version "$ENGINE_VERSION"
-      - name: Build and qualify the iOS extended interpreter
-        run: |
-          git init "$RUNNER_TEMP/luajit"
-          git -C "$RUNNER_TEMP/luajit" remote add origin https://github.com/LuaJIT/LuaJIT.git
-          git -C "$RUNNER_TEMP/luajit" fetch --depth 1 origin a4c064539ea931274d407e1249b4bb575424a0f4
-          git -C "$RUNNER_TEMP/luajit" checkout --detach FETCH_HEAD
-          python3 tools/mobile-runtime-check/build_ios.py --source "$RUNNER_TEMP/luajit" --output "$RUNNER_TEMP/mobile-runtime/ios-vm"
-          python3 tools/mobile-runtime-check/qualify_ios_love.py --build "$RUNNER_TEMP/mobile-runtime/ios-vm" --love-source mobile/ios/love-src --output "$RUNNER_TEMP/mobile-runtime/ios-host"
-          python3 tools/mobile-runtime-check/component.py --platform ios --candidate "$RUNNER_TEMP/mobile-runtime" --output "$RUNNER_TEMP/ios-component"
-      - name: Build unsigned iOS preview with the frozen engine payload
-        env:
-          RELEASE_ID: ${{ inputs.release_id }}
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/package_native_port.py --platform ios --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --runtime-component "$RUNNER_TEMP/ios-component/component.json" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/ios"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: native-preview-ios
-          path: ${{ runner.temp }}/ios/*
-          if-no-files-found: error
-          retention-days: 7
-  android:
-    name: Required Android APK build
-    needs: [build, android-runtime]
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-      - name: Install the pinned NDK
-        shell: bash
-        run: |
-          set -euo pipefail
-          ndk="$(sed -n 's/^NDK_VERSION="\([^"]*\)"/\1/p' scripts/build_android.sh)"
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk"
-      - uses: actions/download-artifact@v4
-        with:
-          name: native-preview-desktop
-          path: ${{ runner.temp }}/desktop
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: android-love-runtime-host-*
-          path: ${{ runner.temp }}/android-components
-      - name: Require all shipping Android ABI host gates
-        run: >-
-          python3 tools/mobile-runtime-check/component.py --platform android
-          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-arm64-v8a"
-          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-armeabi-v7a"
-          --candidate "$RUNNER_TEMP/android-components/android-love-runtime-host-x86_64"
-          --output "$RUNNER_TEMP/android-component"
-      - name: Build and verify the separately identified preview APK
-        env:
-          RELEASE_ID: ${{ inputs.release_id }}
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/package_native_port.py --platform android --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --runtime-component "$RUNNER_TEMP/android-component/component.json" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/android"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: native-preview-android
-          path: ${{ runner.temp }}/android/*
-          if-no-files-found: error
-          retention-days: 7
-  switch:
-    name: Required Nintendo Switch NRO build
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - uses: actions/download-artifact@v4
-        with:
-          name: native-preview-desktop
-          path: ${{ runner.temp }}/desktop
-      - name: Build the separate SD preview with the pinned NX runtime
-        env:
-          RELEASE_ID: ${{ inputs.release_id }}
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-        run: python3 tools/package_native_port.py --platform switch --payload "$RUNNER_TEMP/desktop/Gen2Recomped-NativePreview.love" --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" --out "$RUNNER_TEMP/switch"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: native-preview-switch
-          path: ${{ runner.temp }}/switch/*
-          if-no-files-found: error
-          retention-days: 7
-  publish:
-    needs: [build, ios, android, switch]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: native-preview-*
-          path: release-inputs
-      - name: Require all five platform packages and identical embedded engine bytes
-        env:
-          RELEASE_ID: ${{ inputs.release_id }}
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-          REQUIRE_MACOS_NOTARIZATION: ${{ inputs.notarize_macos || vars.NATIVE_MACOS_NOTARIZE == 'true' }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          options=()
-          if [[ "$REQUIRE_MACOS_NOTARIZATION" == true ]]; then
-            options+=(--require-macos-notarization)
-          fi
-          python3 tools/assemble_native_release.py --inputs release-inputs --out release --release-id "$RELEASE_ID" --engine-version "$ENGINE_VERSION" "${options[@]}"
-      - name: Verify and publish a new immutable pre-release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          RELEASE_ID: ${{ inputs.release_id }}
-          ENGINE_VERSION: ${{ inputs.engine_version }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ "$RELEASE_ID" =~ ^[0-9]{8}\.[0-9]+$ ]]
-          [[ "$ENGINE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
-          cd release
-          sha256sum --check SHA256SUMS.txt
-          gh release create "native-preview-$RELEASE_ID" \
-            --target "$GITHUB_SHA" --prerelease --latest=false \
-            --title "RetroRecomped Preview $RELEASE_ID" \
-            --notes-file README-Testrelease.txt ./*
