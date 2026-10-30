@@ -20,7 +20,7 @@
     "sha256": "997123ef4ce8896204ab912d5b54f19372c487ff9835bcefafa2fca23b8953c2",
     "source_url": "https://archive.mesa3d.org/mesa-26.2.5.tar.xz",
     "source_sha256": "794b3d1729075dae7ebd47c7283b7ca0cdb5dec668f7f11cc0a5d82f6138a0a5",
-    "llvm_license_url": "https://raw.githubusercontent.com/llvm/llvm-project/f2c432f21b5e6f96157b1720857b472dc487fa49/llvm/LICENSE.TXT",
+    "llvm_license_url": "https://raw.githubusercontent.com/llvm/llvm-project/7a941dfb2877a0b8cf30323fefa85ad019e0b0f5/llvm/LICENSE.TXT",
     "llvm_license_sha256": "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee",
     "distribution_license_url": "https://raw.githubusercontent.com/pal1000/mesa-dist-win/f488445397c538b65b25f5db31b8c5569c51a724/LICENSE",
     "distribution_license_sha256": "9cd0121dc070f0ac65c1fc266bee74bdbbc22cea4210ae72ae0c1f076448d4cc",
