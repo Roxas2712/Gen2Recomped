@@ -29,8 +29,9 @@ The bootstrap hands control to the engine's original frame loop exactly once.
 - German audit: **1,081 strings in 27 views, none missing**.
 - Profile regression: **16 checks passed**, filesystem fixtures only.
 - Updated bootstrap regression: **22 checks passed**, event-loop fixtures only.
-- Packaging guards: **3 tests passed**, unsafe paths, PE architecture and
-  private-data rejection. These do not execute a Windows binary.
+- Packaging guards: **4 tests**, unsafe paths, PE architecture, private-data
+  rejection and a valid synthetic diagnostic payload. These do not execute
+  a Windows binary.
 - **9 real local HTTPS scenarios passed** against the existing Laravel server
   with isolated accounts, SQLite storage and separate device profiles. HTTP,
   TLS, authentication and persistence are real; the headless queue scheduler
@@ -86,9 +87,23 @@ now under `tests/drivers/cloud_save_http.lua`; the dedicated HTTPS starter
 still runs every one of its nine real server scenarios. The full standalone
 Windows qualification must pass again; no failing check was marked successful.
 
-Native Windows qualification and final package execution are pending at this
-report revision. Record their run URLs, results and final archive digest here
-after completion. A clean Windows CI host still does not reproduce the
+Native Windows qualification [run 41105676336](https://github.com/Roxas2712/Gen2Recomped/actions/runs/41105676336)
+passed on Windows AMD64: **1,019 engine suites for each of stock/extended**, both
+closure/C API variants, and the actual LÖVE host/thread/FFI checks. Source
+`b63cb28e98fad618b34ba9be84739cb6b0e30152` stayed unchanged during the run.
+The component verifier checks its exact engine trees against the later package
+source; later packaging-only commits do not silently qualify different engine
+code. The relocated real HTTPS integration starter also passed all nine cases
+again.
+
+First package run `41110385151` stopped before writing a payload because its
+generic runner-temporary output was not a known managed QA copy layout. The
+workflow now uses `.local/qa/windows-cloud-demo-build/candidate`; reserve and
+source gates remain enabled.
+
+Final package execution is pending at this report revision. Record its run URL,
+result and archive digest here after completion. A clean Windows CI host still
+does not reproduce the
 reported existing player's “paused” case; confirm with the updated build on
 that PC and inspect logs if it persists. Real two-device account restoration,
 native gameplay and exact modded-battle continuation are separate checks.

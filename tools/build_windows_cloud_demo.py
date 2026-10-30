@@ -81,7 +81,7 @@ def build(a):
   for name in ['Profile.lua','SelfTest.lua']:z.writestr('tools/windows-demo/'+name,(ROOT/'tools/windows-demo'/name).read_bytes())
   z.writestr('tools/windows-demo/main.lua',(ROOT/'tools/windows-demo/main.lua').read_bytes())
   z.writestr('tests/love_stub.lua',(ROOT/'tests/love_stub.lua').read_bytes())
-  for name in TESTS:z.writestr('tests/engine/'+name+'.lua',(ROOT/'tests/engine'/str(name+'.lua')).read_bytes())
+  for name in TESTS:z.writestr('tests/engine/fixture-'+name+'.lua',(ROOT/'tests/engine'/str(name+'.lua')).read_bytes())
  with zipfile.ZipFile(payload)as z:audit_payload(z)
  target=bundle/'RetroRecomped.exe'
  with target.open('wb')as f,payload.open('rb')as source:f.write(exe);shutil.copyfileobj(source,f)

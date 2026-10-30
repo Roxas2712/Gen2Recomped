@@ -47,7 +47,7 @@ function M.install()
    for _,name in ipairs{'windows_demo_profile','cloud_outbox','cloud_setup','cloud_save_feedback'}do
     local original={};for key,value in pairs(package.loaded)do original[key]=value end
     for key in pairs(package.loaded)do if key:match('^src%.')or key=='tests.love_stub'then package.loaded[key]=nil end end
-    local ran,problem=pcall(function()assert(love.filesystem.load('tests/engine/'..name..'.lua'))()end)
+    local ran,problem=pcall(function()assert(love.filesystem.load('tests/engine/fixture-'..name..'.lua'))()end)
     love=realLove
     for key in pairs(package.loaded)do if not original[key]then package.loaded[key]=nil end end
     for key,value in pairs(original)do package.loaded[key]=value end
