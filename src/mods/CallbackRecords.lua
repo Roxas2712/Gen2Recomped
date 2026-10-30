@@ -114,6 +114,7 @@ local idRoles = {
 local recordRoles = {
   mon = "mon",
   pokemon = "mon",
+  mon1 = "mon", mon2 = "mon", mother = "mon", father = "mon", egg = "mon",
   user = "battler",
   target = "battler",
   attacker = "battler",

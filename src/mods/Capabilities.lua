@@ -43,7 +43,7 @@ add("hooks", "123", "encounter.table battle.charge_required battle.caught_marker
 add("hooks", "12", "intro.oak_speech.build")
 add("hooks", "3", "field.weather.sound")
 add("hooks", "1", "map.occupancy_allowed")
-add("hooks", "23", "battle.enemy_switch_or_item")
+add("hooks", "23", "battle.enemy_switch_or_item breeding.compatibility")
 
 add("events", "12345", [[
   world.live_maps_preparing world.live_maps_updated
@@ -63,6 +63,7 @@ add("events", "2345", "pokemon.egg_hatched")
 add("events", "2", "clock.day_changed mail.read mail.written radio.channel phone.call_received apricorn.converted")
 add("events", "2", "breeding.egg_created egg.hatched pokerus.infected roamer.encountered roamer.moved unown.unlocked bug_contest.scored intro.boot.copyright intro.boot.gamefreak intro.boot.movie intro.boot.movie_ended intro.boot.title")
 add("events", "23", "happiness.changed")
+add("events", "23", "breeding.egg_created egg.hatched roamer.encountered roamer.moved")
 add("events", "12345", "checkpoint.restored")
 add("events", "12", [[
   intro.oak_speech.answered intro.oak_speech.finished intro.oak_speech.started

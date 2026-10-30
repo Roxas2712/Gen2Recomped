@@ -385,7 +385,7 @@ local function isDitto(data, mon)
 end
 DayCare.isDitto = isDitto
 
-function DayCare.gen3Score(data, save)
+local function nativeGen3Score(data, save)
   local a, b = DayCare.mon(save, DayCare.MAN), DayCare.mon(save, DayCare.LADY)
   local SC = DayCare.GEN3_SCORES
   if not (a and b) or a.isEgg or b.isEgg then return SC.NONE end
@@ -402,6 +402,20 @@ function DayCare.gen3Score(data, save)
   if ga and gb and not sharesEggGroup(ga, gb) then return SC.NONE end
   if a.species == b.species then return sameOT and SC.MED or SC.MAX end
   return sameOT and SC.LOW or SC.MED
+end
+
+function DayCare.gen3Score(data, save)
+  local Runtime=require('src.mods.Runtime')
+  if not require('src.core.GameVersion').isGen3() or not Runtime.wantsHook('breeding.compatibility') then
+    return nativeGen3Score(data,save)
+  end
+  local context={data=data,mon1=DayCare.mon(save,DayCare.MAN),mon2=DayCare.mon(save,DayCare.LADY),dayCare=true}
+  local value=Runtime.call("breeding.compatibility",function(ctx)
+    return nativeGen3Score(ctx.data,{daycare={breed={{mon=ctx.mon1},{mon=ctx.mon2}}}})
+  end,context)
+  local number=tonumber(value)
+  if not number or number~=number or math.abs(number)==math.huge then return nativeGen3Score(data,save) end
+  return math.max(0,math.min(100,math.floor(number)))
 end
 
 -- Walk the evolution graph backwards to the lowest form; the EGG always
@@ -581,8 +595,9 @@ function DayCare.step(data, save, expPerStep)
   -- Hoenn's pair test IS its compatibility score: _TryProduceOrHatchEgg rolls
   -- against it directly and a zero never produces anything, so there is no
   -- separate "do these two breed" question to ask first.
+  local gen3Score=gen3 and DayCare.gen3Score(data,save)
   if gen3 then
-    if DayCare.gen3Score(data, save) <= 0 then return false end
+    if gen3Score <= 0 then return false end
   elseif not DayCare.pair(data, save) then
     return false
   end
@@ -593,6 +608,7 @@ function DayCare.step(data, save, expPerStep)
   local reading=compatibilityReads[save];compatibilityReads[save]=nil
   local hooked=reading and reading.tier==tier
   local compatibility=hooked and reading.byte or compatibilityBytes[tier]
+  if gen3 then compatibility=gen3Score end
   if vanillaGen2 then
     if tier == 0 or tier == 5 then return false end
     -- First attempt: 150..255 steps. Later attempts: a random byte;
@@ -614,7 +630,7 @@ function DayCare.step(data, save, expPerStep)
 
   -- .check_egg: the roll is against wBreedingCompatibility, so an
   -- indifferent pair simply keeps walking.
-  local odds = gen3 and (DayCare.gen3Score(data, save) / 100)
+  local odds = gen3 and (gen3Score / 100)
                or DayCare.EGG_ODDS[tier]
   if vanillaGen2 and hooked then odds=compatibility/256 end
   if not gen3 and not vanillaGen2 then
@@ -624,7 +640,7 @@ function DayCare.step(data, save, expPerStep)
   if version == "emerald" then
     -- Native integer division and strict comparison include distinct edges
     -- at 20/50/70 percent, and reject the maximum RNG value even at 100.
-    if math.floor(math.random(0,65535) * 100 / 65535) >= DayCare.gen3Score(data,save) then return false end
+    if math.floor(math.random(0,65535) * 100 / 65535) >= gen3Score then return false end
   else
     local roll = vanillaGen2 and math.random(0,255) / 256 or math.random()
     if roll >= (odds or 0) then return false end
@@ -657,7 +673,7 @@ function DayCare.step(data, save, expPerStep)
   -- "an EGG is waiting" announcement, there is no phone call for it.
   DayCare.syncFlags(save)
   local Runtime=require('src.mods.Runtime')
-  if require('src.core.GameVersion').isGen2() and Runtime.wants("breeding.egg_created")then
+  if (require('src.core.GameVersion').isGen2() or gen3) and Runtime.wants("breeding.egg_created")then
     local mother,father=DayCare.parents(data,save)
     Runtime.emit("breeding.egg_created",{egg=egg,mother=mother,father=father,
       compatibility=compatibility,stepsToEgg=breed.stepsToEgg})
