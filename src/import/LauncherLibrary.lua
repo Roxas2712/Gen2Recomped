@@ -19,6 +19,7 @@ local EDITIONS = {
   white = {{223,221,211}, 'WHITE'},
   x = {{93,181,255}, 'X'}, y = {{245,107,139}, 'Y'},
   pinballrs = {{221,111,143}, 'PINBALL R/S'},
+  pinballgbc = {{242,183,76}, 'PINBALL'},
 }
 local CARD_ACCENTS = {
   platinum={{213,222,237},{234,108,100}},

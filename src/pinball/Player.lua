@@ -21,9 +21,12 @@ local function free(v)if v and v.release then v:release()end end
 function M.shutdown()for p in pairs(live)do p:stop();p.thread:wait();p:dispose()end end
 function M.new(session,options)
  options=options or {};serial=serial+1
- local self={session=session,options=options,seats=options.seats==2 and 2 or 1,images={},stats={},notice=Strings("Loading Pinball …"),
+ local frameLimit=options.frameLimit or 18000
+ assert(type(frameLimit)=='number'and frameLimit%1==0 and frameLimit>=600 and frameLimit<=18000,'Invalid Pinball challenge duration')
+ local self={session=session,options=options,seats=options.seats==2 and 2 or 1,images={},portraitViews={},stats={},notice=Strings("Loading Pinball …"),
   settings={filter='pixels',integer=false,audioSeat=1,full_table=false,opponentView=true},font=love.graphics.newFont(16),small=love.graphics.newFont(12)}
- local saved=love.filesystem.read('pinball-display.json')
+ local displayFile=session.guest=='gbc'and'pinball-gbc-display.json'or'pinball-display.json'
+ local saved=love.filesystem.read(displayFile)
  if saved then local ok,v=pcall(Json.decode,saved);if ok and type(v)=='table'then for _,k in ipairs{'filter','integer','audioSeat','full_table','opponentView'}do if v[k]~=nil then self.settings[k]=v[k]end end end end
  self.input=require('src.pinball.Input').new(self.seats,love.joystick.getJoysticks())
  self.channel='ascendant.pinball.'..serial..'.'..love.timer.getTime()
@@ -33,12 +36,12 @@ function M.new(session,options)
  self.thread=love.thread.newThread('src/pinball/worker.lua')
  if options.net then
   self.duel=require('src.pinball.Duel').new(options.net,options.host,{rom=session.rom_sha1,backend=session.backend,
-   content=session.content,field=options.field or 0,frames=18000,seed=0},{view=true,peerView=require('src.pinball.PeerView').available(options.net)})
+   content=session.content,field=options.field or 0,frames=frameLimit,seed=0},{view=true,peerView=require('src.pinball.PeerView').available(options.net)})
  end
  self.thread:start(Json.encode{session=session,channel=self.channel,seats=self.seats,duel=options.duel,
-  field=options.field or 0,frameLimit=18000,broadcastView=options.net~=nil,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus(),visible=not love.window.isVisible or love.window.isVisible()})
+  field=options.field or 0,frameLimit=frameLimit,broadcastView=options.net~=nil,full_table=self.settings.full_table,audioSeat=self.settings.audioSeat,diagnostics=options.diagnostics,foreground=love.window.hasFocus(),visible=not love.window.isVisible or love.window.isVisible()})
  function self:command(msg)if self.thread:isRunning()then self.commands:push(Json.encode(msg))end end
- function self:stop()if self.closing then return end;self.closing=true;FrameCap.setRealtime(self,false);if self.activity then self.activity:release()end;if self.peerView then self.peerView:stop()end;if self.liveView then self.liveView:stop()end;if self.duel then self.duel:close()end;self:command{action='quit'}end
+ function self:stop()if self.closing then return end;self.closing=true;if self.input.stopRumble then self.input:stopRumble()end;FrameCap.setRealtime(self,false);if self.activity then self.activity:release()end;if self.peerView then self.peerView:stop()end;if self.liveView then self.liveView:stop()end;if self.duel then self.duel:close()end;self:command{action='quit'}end
  function self:dispose()
   if self.disposed then return end;self.disposed=true
   FrameCap.setRealtime(self,false);live[self]=nil
@@ -69,6 +72,7 @@ function M.new(session,options)
    event=self.events:pop()
   end
   local err=self.thread:getError();if err then self.error=err;self.closed=true end
+  if self.input.rumble then for i=1,self.seats do self.input:rumble(i,focused and not self.paused and not self.closing and self.stats[i]and self.stats[i].rumble)end end
   local msg
   if self.videoStarted or self.frames:getCount()>=2 then self.videoStarted=true;msg=self.frames:pop()end
   if msg then
@@ -149,23 +153,23 @@ function M.new(session,options)
   for i=1,views do
    local image=self.images[i];local x=(i-1)*(slot+gap)
    if image then
-    local scale=math.min(slot/image:getWidth(),(h-header-footer)/image:getHeight())
-    if self.settings.integer and scale>=1 then scale=math.floor(scale)end
+    local scale,dx,dy,portrait=require('src.pinball.ViewLayout').fit(image:getWidth(),image:getHeight(),slot,h-header-footer,session.guest,self.settings.full_table,self.duel and i==2 and self.portraitViews[i]or false,self.settings.integer)
+    self.portraitViews[i]=portrait
     if self.shader and (self.settings.filter=='lcd'or self.settings.filter=='scanlines')then
      self.shader:send('sourceSize',{image:getWidth(),image:getHeight()});self.shader:send('displayMode',self.settings.filter=='lcd'and 1 or 2);g.setShader(self.shader)
     end
-    g.setColor(1,1,1);g.draw(image,x+(slot-image:getWidth()*scale)/2,header+(h-header-footer-image:getHeight()*scale)/2,0,scale,scale);g.setShader()
+    g.setColor(1,1,1);g.draw(image,x+dx,header+dy,0,scale,scale);g.setShader()
    end
    if not image and self.duel and i==2 then
     g.setColor(.63,.71,.76);g.printf(self.viewFailed and Strings("Opponent view unavailable") or self.duel.viewEnabled and Strings("Preparing opponent view …") or Strings("This friend is using a version without live view."),x+16,h*.5,slot-32,'center')
    end
    if not preview then
-    local title=self.duel and (i==1 and 'DU' or self.options.opponent or 'DEIN FREUND')or self.seats>1 and ('SPIELER '..i)or 'POKÉMON PINBALL · RUBY & SAPPHIRE'
+    local title=self.duel and (i==1 and 'DU' or self.options.opponent or 'DEIN FREUND')or self.seats>1 and ('SPIELER '..i)or(session.guest=='gbc'and'POKÉMON PINBALL · GAME BOY COLOR'or'POKÉMON PINBALL · RUBY & SAPPHIRE')
     g.setColor(.44,.83,.89);g.printf(title,x+12,12,slot-24,'left')
     local points=self.duel and i==2 and self.duel.remoteScore or self.stats[i]and self.stats[i].score
     if points then g.setColor(1,1,1);g.printf(Strings("%.0f points",points),x+12,self.duel and 36 or 12,slot-24,'right')end
     if self.duel and i==2 then
-     local path=self.peerView and not self.peerView.error and self.peerView.path
+     local path=self.peerView and not self.peerView.error and self.peerView.path or options.net.tcpSocket and 'relay' or options.net.enetHost and 'p2p'
      g.setFont(self.small);g.setColor(.63,.71,.76)
      g.print(path=='p2p'and Strings("LIVE · DIRECT") or path=='relay'and 'LIVE · RELAY' or 'LIVE · HTTPS',x+12,64)
      g.setFont(self.font)
@@ -186,7 +190,7 @@ function M.new(session,options)
    if self.paused then
     g.setColor(.02,.03,.05,.94);g.rectangle('fill',w*.15,h*.2,w*.7,h*.6,15,15)
     g.setFont(self.font);g.setColor(.44,.83,.89);g.printf('RECOMPILED ASCENDANT · PINBALL',w*.18,h*.24,w*.64,'center')
-    g.setColor(1,1,1);g.printf(Strings("Esc / Controller Back: resume\nF5: save quick state · F8: load\nF6: full table (Beta) / original\nF9: image filter · F10: pixel scale\nF11: fullscreen · Q: back to library\n\nPlayer 1: arrows · X/Z · Enter · Q/E: L/R\nBackspace: Select · Player 2: WASD / F/G / Tab\nController: shoulders = flippers · triggers = L/R\nLeft stick click = Select · Start = pause\nMouse: left/right flippers · middle launch"),w*.2,h*.32,w*.6,'center')
+    g.setColor(1,1,1);g.printf(session.guest=='gbc'and Strings("Esc / Controller Back: resume\nF5: save quick state · F8: load\nF6: full table (Beta) / original\nF9: image filter · F10: pixel scale\nF11: fullscreen · Q: back to library\n\nPlayer 1: arrows · X/Z · Enter · Backspace: Select\nX: launch · Left/X: flippers\nPlayer 2: WASD / F/G / Tab · F: launch\nController: shoulders = flippers · A = launch\nLeft stick click = Select · Start = pause\nMouse: left/right flippers · middle launch")or Strings("Esc / Controller Back: resume\nF5: save quick state · F8: load\nF6: full table (Beta) / original\nF9: image filter · F10: pixel scale\nF11: fullscreen · Q: back to library\n\nPlayer 1: arrows · X/Z · Enter · Q/E: L/R\nBackspace: Select · Player 2: WASD / F/G / Tab\nController: shoulders = flippers · triggers = L/R\nLeft stick click = Select · Start = pause\nMouse: left/right flippers · middle launch"),w*.2,h*.32,w*.6,'center')
    end
   end
   g.pop()
@@ -204,7 +208,7 @@ function M.new(session,options)
   local changed=false
   if key=='escape'then self:togglePause()
   elseif self.paused and key=='q'then self:stop()
-  elseif key=='f6'then changed=true;self.settings.full_table=not self.settings.full_table;self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and Strings("Full table · Beta: standard fields; menus keep their original view.")or Strings("Original view")
+  elseif key=='f6'then changed=true;self.settings.full_table=not self.settings.full_table;self.portraitViews={};self:command{action='view',full_table=self.settings.full_table};self.notice=self.settings.full_table and Strings("Full table · Beta: standard fields; menus keep their original view.")or Strings("Original view")
   elseif key=='f7'and self.duel then changed=true;self.settings.opponentView=not self.settings.opponentView
   elseif key=='f5'or key=='f8'then self:command{action='state',load=key=='f8'}
   elseif key=='f9'then
@@ -214,7 +218,7 @@ function M.new(session,options)
    for _,img in pairs(self.images)do img:setFilter(self.settings.filter=='smooth'and 'linear'or 'nearest')end
   elseif key=='f10'then changed=true;self.settings.integer=not self.settings.integer
   elseif key=='f11'then love.window.setFullscreen(not love.window.getFullscreen(),'desktop')end
-  if changed then love.filesystem.write('pinball-display.json',Json.encode(self.settings))end
+  if changed then love.filesystem.write(displayFile,Json.encode(self.settings))end
  end
  function self:keyreleased()end
  function self:mousepressed()end

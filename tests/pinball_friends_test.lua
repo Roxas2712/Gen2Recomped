@@ -1,6 +1,7 @@
 -- Synthetic account-service contract; no production credentials or friends.
 -- Exercises the real Friends, CloudNet and Duel modules. By Roxas2712.
 package.path='./?.lua;'..package.path
+local EDITION=os.getenv('PINBALL_TEST_EDITION')or'pinballrs'
 love=require('tests.love_stub')
 local clock,identity,checks=0,'1',0
 love.timer.getTime=function()return clock end
@@ -18,21 +19,21 @@ local function copy(v)return Json.decode(Json.encode(v))end
 local function check(v,m)assert(v,m);checks=checks+1 end
 local devices={'11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222'}
 local id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
-local session={rom_sha1='own-rom-sha1',backend='native-build-bios',content='USA',locale='en'}
+local session={edition=EDITION,guest=EDITION=='pinballgbc'and'gbc'or nil,rom_sha1='own-rom-sha1',backend='native-build-bios',content='USA',locale='en'}
 local invite,entered,streams,closed,duels,starts
 local function reset()
  invite=nil;entered={};streams={['1']={},['2']={}};closed={};duels={};starts={}
  local function doc(who)
   local peer=who=='1'and'2'or'1';local invites={}
   if invite then local i=copy(invite);i.peer=peer;i.incoming=who~='1';i.nickname='QA Friend';invites={i}end
-  return {invites=invites,friends={{account_id=peer,playing={{device=devices[tonumber(peer)],edition='pinballrs',available=true,compatible=true}}}}}
+  return {invites=invites,friends={{account_id=peer,playing={{device=devices[tonumber(peer)],edition=EDITION,available=true,compatible=true}}}}}
  end
  local function request(who,method,path,p)
   check(method=='POST','all friend actions use authenticated POST')
   local peer=who=='1'and'2'or'1'
   if path=='invites'then
    check(who=='1'and p.device==devices[2]and p.mode=='pinball','dedicated Pinball invitation')
-   invite={id=id,host='1',mode='pinball',edition='pinballrs',state='pending',rules=copy(p.rules),fingerprint=p.fingerprint}
+   invite={id=id,host='1',mode='pinball',edition=EDITION,state='pending',rules=copy(p.rules),fingerprint=p.fingerprint}
    return doc(who)
   end
   check(invite and path:sub(1,44)=='invites/'..id,'same invitation throughout')
@@ -82,7 +83,7 @@ local function acceptPair(a,b)
  check(starts['1']==1 and starts['2']==1,'both clients launch exactly once')
  check(duels['1'].state=='lobby'and duels['2'].state=='lobby','real CloudNet carries both native Duel hellos')
 end
-local a,b=reset();check(a:context(true).edition=='pinballrs'and a:context(true).available,'Pinball presence')
+local a,b=reset();check(a:context(true).edition==EDITION and a:context(true).available,'Pinball presence')
 acceptPair(a,b)
 check(duels['1']:ready(string.rep('a',40)),'host native checkpoint');tick(a,b,3)
 check(not duels['1'].started and not duels['2'].started,'wait for both native checkpoints')

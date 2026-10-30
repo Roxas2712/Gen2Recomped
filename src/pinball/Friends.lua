@@ -3,6 +3,7 @@
 local M={};M.__index=M
 local Strings=require('src.core.Strings')
 local function uuid(s)return type(s)=='string'and #s==36 and s:match('^[a-f0-9%-]+$')end
+local function pinballEdition(s)return s=='pinballrs'or s=='pinballgbc'end
 local function accountId(s)return type(s)=='string'and #s<=20 and s:match('^[1-9][0-9]*$')end
 local function now()return love.timer.getTime()end
 local function account(Auth)return Auth.signedIn()and Auth.accountId()or nil end
@@ -18,9 +19,10 @@ function M.new(session,options)
   Net=options.net or require('src.link.CloudNet'),fingerprint=M.fingerprint(session)or false,seen={},state='idle',nextEnter=0},M)
  self.account=account(self.Auth);return self
 end
+function M:edition()return self.session and self.session.edition or self.options.edition or 'pinballrs'end
 function M:context(available)
  if not self.session then return {available=false}end
- return {edition='pinballrs',fingerprint=self.session and self.fingerprint or nil,available=self.session~=nil and available==true and self.state=='idle',
+ return {edition=self:edition(),fingerprint=self.session and self.fingerprint or nil,available=self.session~=nil and available==true and self.state=='idle',
   pinball={protocol=1,field=self.options.field or 0,frames=18000,locale=self.session.locale or 'en'}}
 end
 function M:rules()
@@ -46,7 +48,7 @@ function M:request(purpose,path,payload)
 end
 function M:document()return self.Play.read()end
 function M:invitation(id)
- for _,i in ipairs((self:document()or {}).invites or {})do if i.id==id and i.mode=='pinball'and i.edition=='pinballrs'then return i end end
+ for _,i in ipairs((self:document()or {}).invites or {})do if i.id==id and i.mode=='pinball'and pinballEdition(i.edition)then return i end end
 end
 function M:action(id)
  local op,value=id:match('^pinball:(%a+):([a-f0-9%-]+)$')
@@ -59,16 +61,16 @@ function M:action(id)
    if self.options.prepare then self.options.prepare(nil,value)end
    return true
   end
-  self:request('invite','invites',{account=value,mode='pinball',rules=self:rules(),fingerprint=self.fingerprint})
+  self:request('invite','invites',{account=value,edition=self.session and self.session.edition,mode='pinball',rules=self:rules(),fingerprint=self.fingerprint})
  elseif op=='invite'then
   local found
   for _,friend in ipairs((self:document()or {}).friends or {})do
    for _,device in ipairs(friend.playing or {})do
-    if device.device==value and device.edition=='pinballrs'and device.available and device.compatible then found=true end
+    if device.device==value and device.edition==self:edition()and device.available and device.compatible then found=true end
    end
   end
   if not found or self.state~='idle'then self.notice=Strings("This friend is not ready for this Pinball duel.");return true end
-  self:request('invite','invites',{device=value,mode='pinball',rules=self:rules(),fingerprint=self.fingerprint})
+  self:request('invite','invites',{device=value,edition=self.session and self.session.edition,mode='pinball',rules=self:rules(),fingerprint=self.fingerprint})
  elseif op=='accept'or op=='decline'or op=='cancel'then
   local i=self:invitation(value)
   if not i or (op~='cancel'and(i.state~='pending'or not i.incoming))then self.notice=Strings("This invitation is no longer available.");return true end
@@ -140,7 +142,7 @@ function M:tick(available)
  end
  if self.state~='idle'or not available or self.job then return end
  for _,invite in ipairs((self:document()or {}).invites or {})do
-  if invite.mode=='pinball'and invite.edition=='pinballrs'and invite.state=='accepted'and uuid(invite.id)and not self.seen[invite.id]then
+  if invite.mode=='pinball'and invite.edition==self:edition()and invite.state=='accepted'and uuid(invite.id)and not self.seen[invite.id]then
    self.seen[invite.id]=true
    if not self:compatible(invite.rules)then self.notice=Strings("The accepted invitation does not match the language, game version or build.");return end
    local host,peer=tostring(invite.host),tostring(invite.peer)
@@ -149,16 +151,16 @@ function M:tick(available)
   end
  end
 end
-local function title(i)return(i.rules and i.rules.field==1 and'SAPPHIRE'or'RUBY')..' · '..tostring(i.nickname or Strings("Friend"))end
+local function title(i,session)return(i.rules and i.rules.field==1 and(i.edition=='pinballgbc'and'BLUE'or'SAPPHIRE')or(i.edition=='pinballgbc'and'RED'or'RUBY'))..' · '..tostring(i.nickname or Strings("Friend"))end
 function M:rows(peer)
  local rows={};local function add(id,label,note)rows[#rows+1]={id=id,label=label,note=note}end
  for _,i in ipairs((self:document()or {}).invites or {})do
-  if not peer and i.mode=='pinball'and i.edition=='pinballrs'and uuid(i.id)then
+  if not peer and i.mode=='pinball'and pinballEdition(i.edition)and uuid(i.id)then
    if i.state=='pending'and i.incoming then
-    if self:compatible(i.rules)then add('pinball:accept:'..i.id,Strings("ACCEPT PINBALL · ")..title(i),Strings("5 minutes · fresh game · regular saves are kept."))
-    else add('pinball:accept:'..i.id,Strings("PREPARE & ACCEPT PINBALL · ")..title(i),Strings("Prepare your matching import to continue this invitation."))end
+    if self:compatible(i.rules)then add('pinball:accept:'..i.id,Strings("ACCEPT PINBALL · ")..title(i,self.session),Strings("5 minutes · fresh game · regular saves are kept."))
+    else add('pinball:accept:'..i.id,Strings("PREPARE & ACCEPT PINBALL · ")..title(i,self.session),Strings("Prepare your matching import to continue this invitation."))end
     add('pinball:decline:'..i.id,Strings("Decline Pinball invitation"))
-   elseif i.state=='pending'or i.state=='accepted'and self.state~='playing'then add('pinball:cancel:'..i.id,Strings("CANCEL PINBALL · ")..title(i),Strings("Waiting for the shared start."))end
+   elseif i.state=='pending'or i.state=='accepted'and self.state~='playing'then add('pinball:cancel:'..i.id,Strings("CANCEL PINBALL · ")..title(i,self.session),Strings("Waiting for the shared start."))end
   end
  end
  if peer then
@@ -166,7 +168,7 @@ function M:rows(peer)
    add('pinball:inviteaccount:'..tostring(peer.account_id),Strings("INVITE TO PINBALL"),Strings("Invite this friend · a missing import can be prepared afterward."))
   end
   for _,d in ipairs(peer.playing or {})do
-   if d.edition=='pinballrs'and uuid(d.device)then
+   if d.edition==self:edition()and uuid(d.device)then
     if d.available and d.compatible and self.state=='idle'then add('pinball:invite:'..d.device,Strings("INVITE TO PINBALL"),Strings("Selected table · 5 minutes · starts after acceptance and both players prepare."))
     else add('noop',Strings("PINBALL · not ready"),Strings("Both players need to open Pinball in the same language and build."))end
    end

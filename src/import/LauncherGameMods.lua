@@ -9,7 +9,7 @@ local Strings=require('src.core.Strings')
 local function L(value)return require('src.translation.Service').launcherLookup(value)end
 function M.current(self)
  if self.section~='games'then return end
- if self._pinOpen then return 'pinballrs'end
+ if self._pinOpen then return self._pinEdition or 'pinballrs'end
  if self._xyOpen then return self._xyEdition end
  if self.gamesView=='game'then return self.tab end
 end

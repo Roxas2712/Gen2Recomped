@@ -8,7 +8,7 @@ function B.root()
  if not fs or not fs.getSource then return end
  local source=fs.getSource();if source and exists(source..'/tools/pinball_rs.py')then return source end
  if not(fs.read and fs.write and fs.createDirectory and fs.getSaveDirectory)then return end
- local paths={'tools/pinball_rs.py','tools/qa_storage.py','tools/qa_legacy_storage.py','tools/qa_love_storage.py',
+ local paths={'tools/pinball_gbc.py','tools/pinball-gbc-native/CMakeLists.txt','tools/pinball-gbc-native/bridge.cpp','tools/pinball-gbc-native/table.cpp','tools/pinball-gbc-native/table.h','tools/pinball_rs.py','tools/qa_storage.py','tools/qa_legacy_storage.py','tools/qa_love_storage.py',
   'tools/qa_preserved.py','tools/qa_release_storage.py','tools/qa_build_storage.py',
   'tools/pinball-rs-native/CMakeLists.txt','tools/pinball-rs-native/bridge.cpp',
   'tools/pinball-rs-native/presentation.cpp','tools/pinball-rs-native/presentation.h',

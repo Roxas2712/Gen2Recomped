@@ -24,10 +24,10 @@ function M.draw(self,RI,x,y,w,session,preview,actions,register)
  end
  -- A solid left surface preserves the title/action contrast in every theme.
  g.setColor(.025,.04,.06,.95);g.rectangle('fill',x,y,math.min(left,w),hero)
- require('src.import.LauncherHardware').cartridge(self,'pinballrs',x+pad+artW/2,y+hero/2,artW,156*s)
+ require('src.import.LauncherHardware').cartridge(self,self._pinEdition or 'pinballrs',x+pad+artW/2,y+hero/2,artW,156*s)
  local tx=x+artW+pad*2;local tw=math.min(w-pad-(tx-x),math.max(190*s,left-(tx-x)-pad))
  text('Pokémon Pinball',tx,y+pad,tw,self.gameNameFont)
- text('Ruby & Sapphire',tx,y+52*s,tw,self.tabLabelFont,P.link)
+ text(self._pinEdition=='pinballgbc'and'Game Boy Color · Red & Blue Fields'or'Ruby & Sapphire',tx,y+52*s,tw,self.tabLabelFont,P.link)
  if session then
   self:_playButton(tx,y+hero-(small and 110 or 62)*s,tw,44*s,'Pokémon Pinball',true,false)
   local r=self.playButtonRect;self.playButtonRect=nil;register(r,actions.play)

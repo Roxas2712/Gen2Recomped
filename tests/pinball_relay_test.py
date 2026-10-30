@@ -10,7 +10,7 @@ module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
 class RelayTest(unittest.IsolatedAsyncioTestCase):
  async def asyncSetUp(self):
   self.relay=module.Relay();self.clients=[]
-  self.server=await asyncio.start_server(self.relay.client,'127.0.0.1',0,limit=4096)
+  self.server=await asyncio.start_server(self.relay.client,'127.0.0.1',0,limit=32768)
   self.port=self.server.sockets[0].getsockname()[1]
  async def asyncTearDown(self):
   for r,w in self.clients:w.close();await w.wait_closed()
@@ -32,6 +32,13 @@ class RelayTest(unittest.IsolatedAsyncioTestCase):
   await self.send(a,msg);self.assertEqual(await self.recv(b),msg)
   b[1].close();await b[1].wait_closed()
   self.assertEqual((await self.recv(a))['type'],'peer_gone')
+ async def test_live_picture_larger_than_four_kib(self):
+  a=await self.client();await self.send(a,{'type':'host'});code=(await self.recv(a))['code']
+  b=await self.client();await self.send(b,{'type':'join','code':code});await self.recv(a);await self.recv(b)
+  msg={'type':'pinball_duel','protocol':1,'kind':'picture','png':'A'*26000,'frame':600}
+  await self.send(a,msg);self.assertEqual(await self.recv(b),msg)
+  await self.send(a,dict(msg,png='A'*27001))
+  self.assertEqual((await self.recv(b))['type'],'peer_gone')
  async def test_unknown_room(self):
   a=await self.client();await self.send(a,{'type':'join','code':'AAAAAA'})
   self.assertEqual((await self.recv(a))['reason'],'not_found')

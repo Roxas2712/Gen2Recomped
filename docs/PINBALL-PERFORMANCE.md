@@ -162,3 +162,19 @@ listening-test certificate. The reference tool is not a shipped runtime.
 See [functional coverage](PINBALL-FEATURE-PARITY.md) and the scoped evidence in
 [the HALT follow-up](qa/pinball-halt-followup.json). Native original menus, SRAM
 reopening and image/RAM replay are checked separately from displayed pacing.
+
+## Fixed full-table framing
+
+The shared player now keeps a fixed portrait scale while full-table mode is
+selected: 192×285 for GBC, 256×388 for GBA. Original-view menus or unsupported
+scenes are centered at that same native-pixel scale, so temporary native
+fallbacks no longer enlarge the half-table viewport and zoom back out. F6 still
+explicitly changes between full-table and fitted original view. A received
+opponent portrait also retains its framing through later original-view frames.
+
+GBC standard-field loading and ball-loss sequences additionally retain the last
+complete world surface and draw their current window overlay on it. The native
+window's eight-pixel status row is isolated from the board; multi-row bonus/menu
+windows remain complete. This avoids both the repeated camera zoom and the
+Diglett/flipper fragments previously copied into the lower HUD strip. It is a
+presentation correction, not a game-timing or physics change.
