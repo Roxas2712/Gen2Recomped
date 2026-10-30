@@ -58,7 +58,7 @@ def main():
    ('auto-offline',0,0,None),('auto-retry',0,0,None),('restore',2,1,'Automatic'),('foreign',1,2,None),('revoked',2,3,None)]
   for index,(mode,who,profile,expected)in enumerate(cases):
    config=out/('case-'+str(index)+'.json');config.write_text(json.dumps(accounts[who]|{'token':('0'*64 if mode=='revoked'else accounts[who]['token']),'mode':mode,'expected':expected,'profile':str(profiles[profile]),'url':url}));config.chmod(0o600)
-   with(out/('case-'+str(index)+'.log')).open('w')as stream:qa.qa_run([os.sys.executable,str(ROOT/'tools/run_lua_check.py'),str(ROOT/'tests/engine/cloud_http_client.lua')],cwd=ROOT,env=env|{'CLOUD_SAVE_QA_CONFIG':str(config)},stdout=stream,stderr=stream,check=True,timeout=90)
+   with(out/('case-'+str(index)+'.log')).open('w')as stream:qa.qa_run([os.sys.executable,str(ROOT/'tools/run_lua_check.py'),str(ROOT/'tests/drivers/cloud_save_http.lua')],cwd=ROOT,env=env|{'CLOUD_SAVE_QA_CONFIG':str(config)},stdout=stream,stderr=stream,check=True,timeout=90)
   result={'passed':True,'checks':len(cases),'kind':'real isolated HTTPS Laravel server; desktop Lua clients; no Windows OS or native gameplay','productionQualified':False}
   (out/'report.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result|{'output':str(out)}),flush=True)
  finally:

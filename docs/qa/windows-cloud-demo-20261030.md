@@ -74,6 +74,14 @@ native test report supplies execution evidence if that test passes.
 
 ## Remaining qualification
 
+First Windows run `41102081370` stopped with 1,019/1,020 standalone engine
+suites passing: the real-HTTPS integration client was incorrectly stored in
+the auto-discovered standalone engine suite folder. It requires the local
+Laravel server/configuration created by its dedicated starter. The client is
+now under `tests/drivers/cloud_save_http.lua`; the dedicated HTTPS starter
+still runs every one of its nine real server scenarios. The full standalone
+Windows qualification must pass again; no failing check was marked successful.
+
 Native Windows qualification and final package execution are pending at this
 report revision. Record their run URLs, results and final archive digest here
 after completion. A clean Windows CI host still does not reproduce the

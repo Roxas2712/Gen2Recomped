@@ -23,7 +23,7 @@ try {
     }
     $process.WaitForExit()
     $process.Refresh()
-    if ($process.ExitCode -ne 0) { throw "Final EXE diagnostics failed: $($process.ExitCode)" }
+    $exitCode = $process.ExitCode
     $roots = @($env:APPDATA, (Join-Path $env:APPDATA 'LOVE'))
     $reports = @($roots | Where-Object { Test-Path -LiteralPath $_ } | ForEach-Object {
         Get-ChildItem -LiteralPath $_ -Directory -Filter 'oasc-windows-cloud-qa-*' | ForEach-Object {
@@ -34,9 +34,10 @@ try {
             }
         }
     })
-    if ($reports.Count -ne 1) { throw 'Expected exactly one fresh isolated diagnostic report' }
+    if ($reports.Count -ne 1) { throw "Expected exactly one fresh isolated diagnostic report (exit $exitCode)" }
     $report = Get-Content -Raw -LiteralPath $reports[0].FullName | ConvertFrom-Json
     Copy-Item -LiteralPath $reports[0].FullName -Destination (Join-Path $OutputDirectory 'cloud-selftest.json')
+    if ($exitCode -ne 0) { throw "Final EXE diagnostics failed: $exitCode; $($report.error)" }
     if ($report.passed -ne $true -or $report.platform -ne 'Windows' -or $report.checks.Count -ne 9) { throw 'Native Windows checks did not all pass' }
     @{ schema=1; passed=$true; exeSha256=$receipt.fusedExeSha256; sourceRevision=$receipt.sourceRevision;
        checks=$report.checks; scope=$report.scope; playerCloudUploadTested=$false; nativeCartridgeGameplayTested=$false } |
