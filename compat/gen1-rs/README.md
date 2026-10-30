@@ -4,7 +4,7 @@ The shared bridge now also hosts Emerald's original movie and Rayquaza title.
 Twelve additional byte-exact reference sources supply Emerald's own symbols,
 song/species enums, scenery and extractors. Including the original RS main
 menu and the healthbox comparison oracle, the provenance inventory now contains
-216 files. Four further byte-exact files supply the native RS credits
+218 files. Four further byte-exact files supply the native RS credits
 controller, scenery selection and exact-edition credits extractor. Four more
 supply Hall of Fame presentation, art decoding and the RS text policy. One more
 supplies the original RS options controller and rendering over host-owned settings. The existing GBA
@@ -191,3 +191,7 @@ original circle/ball/pose artwork, player/rival sheets and closing cards.
 Its loader-local graphics proxy composes the native WIN0 and fade over private
 map views without moving the live world or altering the save. See
 `docs/qa/frlg-original-credits.md`; ordinary complete FR/LG stories remain separate.
+
+Two further byte-exact files supply the original shared Emerald/FRLG party
+chrome extractor and stateless renderer. Host adapters retain party identities,
+selection callbacks, inventory effects and save ownership.
