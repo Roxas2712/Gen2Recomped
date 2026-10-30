@@ -9,6 +9,7 @@ local draws,statuses,releases,frame={}, {},0,nil
 local native={drawMenu=function(labels,index,height)draws[#draws+1]={labels=labels,index=index,height=height}end,
  drawStatus=function(pc)statuses[#statuses+1]=pc._status end}
 Context.new=function(game,opts)
+ T.eq(type(opts.textIR),'table','native PC text dependency is explicitly bound')
  T.eq(opts.ui.frames.dialogueWindow.left,2,'original dialogue left')
  T.eq(opts.ui.frames.dialogueWindow.width,26,'original dialogue width')
  return{canvas={release=function()releases=releases+1 end},load=function(id)

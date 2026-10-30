@@ -14,7 +14,9 @@ function M.decorate(menu,game,mode)
  if not M.available(game)then return menu end
  assert(mode=='player'or mode=='storage'or mode=='root')
  local c=game.data.constants;local root=require('src.import.Gen3EmeraldHallAssets').ROOT
- local context=require('src.ui.Gen3EmeraldSceneContext').new(game,{ui={frames={
+ -- The pinned module also imports its text API. This presenter supplies all
+ -- labels/status strings from the host; its native transaction paths stay idle.
+ local context=require('src.ui.Gen3EmeraldSceneContext').new(game,{textIR={},ui={frames={
   manifest=c.gen3EmeraldHall.manifest,userCount=20,user=root..'frame_%d.rgba',std='user',sign=false,
   dialogue={path=root..'message_box.rgba',layout='message_box',manifestKey='message_box'},
   dialogueWindow={left=2,top=15,width=26,height=4}}},bindings={['src.core.game3.storage']={}}})
