@@ -397,6 +397,7 @@ function Gen3Save.decodeBoxMon(bytes, off)
     contest = { cool = e[7], beauty = e[8], cute = e[9], smart = e[10],
                 tough = e[11], sheen = e[12] },
     ivWord = w(m, 4),
+    ribbons = w(m, 8),
     -- MISC IS FOUR FIELDS AND THIS READ ONE OF THEM, OFF BY A BYTE.
     --
     -- The substruct is pokerus(0), metLocation(1), a packed half-word at
@@ -1370,7 +1371,10 @@ local function boxOrigins(mon, cw)
     isEgg = mon.isEgg, altAbility = mon.altAbility,
   })
   -- a built record's ribbons + fateful mark (src/pokewalker/WalkerEvents.lua)
-  if tonumber(mon.gen3Ribbons or mon.ribbons) then out.ribbons = math.floor(tonumber(mon.gen3Ribbons or mon.ribbons)) % 4294967296 end
+  local Event = require('src.pokemon.Gen3Ownership')
+  if Event.fateful(mon) ~= nil then
+    out.ribbons = Event.ribbonWord(mon)
+  end
   return out
 end
 
@@ -2238,6 +2242,7 @@ local function engineMon(mon, cw, isParty)
   out.abilitySlot = ivs.altAbility and 2 or 1
   out.gen3Ribbons = mon.ribbons or 0
   out.ribbons = out.gen3Ribbons
+  out.modernFatefulEncounter = math.floor(out.ribbons / 2147483648) % 2 == 1
   -- ball 0 is "no ball recorded", which is what an egg and a starting
   -- Pokemon both carry; anything else names one of the twelve
   if origins.ball and origins.ball > 0 then

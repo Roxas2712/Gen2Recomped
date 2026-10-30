@@ -850,6 +850,15 @@ local function realFile(rel)
   return file
 end
 
+-- Additive streaming counterpart of write(), including its cache prefix and
+-- selected portable/custom root. File creation errors remain visible.
+function CacheFs.openWrite(rel)
+  local file = realFile(withPrefix(rel))
+  local ok, why = file:open('w')
+  if not ok then return nil, why end
+  return file
+end
+
 local dataFsCache = nil
 
 -- The filesystem the launcher's own trees should use.  Shaped like

@@ -116,7 +116,10 @@ function M.run(root, backend, version)
                   metLocation = 17,
                   metGame = 3,
                   status = "PAR",
-                  fatefulEncounter = true,
+                  -- The pinned reference preserves this legacy alias independently.
+                  -- Compare coherent identity here; contradictory legacy/modern
+                  -- inputs have their native precedence checks in gen3_event_link.
+                  fatefulEncounter = investment == 2,
                   modernFatefulEncounter = investment == 2 and true or nil,
                 }
                 if not native then
@@ -137,6 +140,14 @@ function M.run(root, backend, version)
                 T.check(restored ~= nil, "native party packet decodes: " .. tostring(why))
                 assert(restored, why)
                 T.eq(require("src.link.Json").encode(mon), before, "codec does not mutate sender")
+                local event = investment == 2
+                local ribbons = 123456 + (event and 2147483648 or 0)
+                T.eq(packed.fatefulEncounter, event, "wire legacy event alias agrees with modern identity")
+                T.eq(packed.modernFatefulEncounter, event, "wire modern event flag survives")
+                T.eq(packed.ribbons, ribbons, "wire event bit preserves lower ribbons")
+                T.eq(restored.fatefulEncounter, event, "received legacy event alias agrees")
+                T.eq(restored.modernFatefulEncounter, event, "received modern event flag survives")
+                T.eq(restored.ribbons, ribbons, "received event bit preserves lower ribbons")
                 local stats, ivOut, evOut = {}, {}, {}
                 for i, k in ipairs(KEYS) do
                   stats[i] = native and restored[SOURCE[i]] or restored.stats[k]

@@ -1295,6 +1295,7 @@ function Loader:_api(mod)
   -- Capture the host selected for this API, as with generation/gameVersion.
   -- Probing must not instantiate mod.world/mod.game or register callbacks.
   function api:supports(surface, name)
+    if surface=='features'and(mod.manifest.api or 1)<3 then return false,'optional features require API 3'end
     return Capabilities.supports(surface, name, hostId)
   end
   engineRequire('src.mods.Localization').install(loader, mod, api, engineCall)
@@ -1385,6 +1386,11 @@ function Loader:_api(mod)
   end
   if (mod.manifest.api or 1) >= 3 then
     engineRequire("src.mods.Api3").install(api, loader, readContext, overviewContext, engineRequire, engineCall)
+    api.features={gen1=engineCall(engineRequire('src.features.Gen1Compatibility').forHost,
+      function()
+        if loader.mods[modId]~=mod or loader.apis[modId]~=api or loader.exports[modId]==nil or not isActive(mod)then return nil end
+        return loader:_game(true)
+      end,loader.baseData,loader,modId)}
   end
   -- Data interchange is additive for API 2: KASC and other native mods can
   -- use the Bank without changing their callback/content formats or storage.
@@ -1481,6 +1487,8 @@ function Loader:_rollback(modId)
   -- Restore failed wrappers before any native cleanup iterates registries or
   -- calls a module the failed entry may have replaced.
   ModSeams.unwindOwner(modId)
+  local gen1Features=package.loaded['src.features.Gen1Compatibility']
+  if gen1Features then gen1Features.retire(self,modId)end
   require('src.mods.Steps').retire(self,modId)
   local facade=package.loaded['src.core.Game3']
   if facade and facade._retireMod then facade._retireMod(modId)end
@@ -1639,6 +1647,8 @@ function Loader:load(data)
   if paletteContext and paletteContext.clearGen2Context then paletteContext.clearGen2Context()end
   local clock = package.loaded["src.core.Gen2Clock"]
   if clock then clock.resetObservations() end
+  local gen1Features=package.loaded['src.features.Gen1Compatibility']
+  if gen1Features then gen1Features.retire(self)end
   require('src.mods.Steps').retire(self)
   Job.releaseAll(self)
   InputControl.closeAll()
@@ -2072,6 +2082,8 @@ function Loader.teardown()
   require("src.compat.gen2.Decorations").useRegistry(nil)
   require("src.compat.gen2.Phone").useRegistry(nil)
   require("src.compat.gen2.Evolution").useRegistry(nil)
+  local gen1Features=package.loaded['src.features.Gen1Compatibility']
+  if gen1Features then gen1Features.unloadAll()end
   require('src.mods.Steps').unloadAll()
   Net.unloadAll()
   Job.unloadAll()

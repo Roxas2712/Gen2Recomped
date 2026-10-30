@@ -31,6 +31,8 @@ local U = {
     genderRatio = f.opt(f.int(0, 255)), eggCycles = f.opt(f.int(0, 255)),
     spriteFront = f.opt(f.path), spriteBack = f.opt(f.path), frontSize = f.opt(f.int(1, 7)),
     trueColor = f.opt(f.bool),
+    battleScaleFront = f.opt(f.numRange(0.25, 4)),
+    battleScaleBack = f.opt(f.numRange(0.25, 4)),
   } },
   moves = { fields = {
     id = id, name = f.str, type = id, power = f.int(0, 255), accuracy = f.int(0, 100),

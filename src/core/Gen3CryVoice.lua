@@ -34,8 +34,9 @@ local function sample(pcm,pos)
  if a>=128 then a=a-256 end;if b>=128 then b=b-256 end
  return (a+(b-a)*(pos-i))/128
 end
-function V.render(pcm,rate,params,options)
+function V.render(pcm,rate,params,options,cancelled)
  options=options or {};local outRate=options.outRate or 44100
+ if cancelled and cancelled()then return nil end
  local b=(params.pitch+128)%65536;if b>=32768 then b=b-65536 end
  local key=math.floor(b/256)%128;local tune=math.floor(b/2)%128
  local tunes={tune};if params.chorus%256~=0 then
@@ -56,6 +57,10 @@ function V.render(pcm,rate,params,options)
  local sd=love.sound.newSoundData(math.max(1,count),outRate,16,channels)
  local reverse=params.reverse or options.reverse;local peak=0
  for i=0,count-1 do
+  if cancelled and i%1024==0 and cancelled()then
+   if sd.release then sd:release()end
+   return nil
+  end
   local frame=math.floor(i*V.frameRate/outRate)
   local e=frame<params.length and 255 or(tail[frame-params.length+1]or 0)
   local l,r=V.gains(params.volume,options.pan,e);local sum=0

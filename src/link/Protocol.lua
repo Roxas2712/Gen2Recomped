@@ -257,6 +257,7 @@ function TradeSession.new(data, party, opts)
     subset = opts.subset or false,
     strict = opts.strict or false,
     peerName = opts.peerName,
+    codec = opts.codec,
     stage = opts.subset and "waitRecords" or "waitParty",
     sendIndices = nil,
     eligible = nil,
@@ -286,7 +287,7 @@ end
 
 function TradeSession:partyMessage()
   return { type = "party",
-           mons = Protocol.packParty(self.party, self.sendIndices) }
+           mons = (self.codec or Protocol).packParty(self.party, self.sendIndices) }
 end
 
 function TradeSession:_negotiate(theirRecords)
@@ -318,7 +319,7 @@ function TradeSession:handle(msg)
   elseif msg.type == "party" then
     self.theirParty = {}
     for _, packed in ipairs(msg.mons or {}) do
-      local mon, why = Protocol.unpackMon(self.data, packed,
+      local mon, why = (self.codec or Protocol).unpackMon(self.data, packed,
                                           { strict = self.strict })
       if mon then
         table.insert(self.theirParty, mon)

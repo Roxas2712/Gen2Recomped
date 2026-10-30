@@ -98,11 +98,22 @@ function G.fixedUpdate(view,...)return forward(view,'_step',...)end
 bases.fixedUpdate=G.fixedUpdate
 function G.reset(view)
   local e=entry(view)
+  if e.worldFeature then e.worldFeature:release();e.worldFeature=nil end
   local runtime=package.loaded['src.core.game3.runtime'];if runtime and runtime.release then runtime.release()end
   if e.session then Views.release(e.session);e.session=nil end
   e.overrides={};e.overridden={};e.bootEpoch={}
 end
 bases.reset=G.reset
+function G.worldSession(view)
+  local e=entry(view)
+  if e.worldFeature and e.worldFeature:valid()then return e.worldFeature end
+  local why;e.worldFeature,why=require('src.features.Gen1WorldSession').new(e.owner)
+  return e.worldFeature,why
+end
+function G.loadMap(view,id,options)
+  local feature,why=G.worldSession(view);if not feature then return nil,why end
+  return feature:load(id,options)
+end
 function G._handleBootAction(view,action)
   local e=entry(view);local lease=type(action)=='table'and bootLeases[action]
   if not lease or lease.view~=view or lease.epoch~=e.bootEpoch or action.action~=lease.kind then
@@ -221,7 +232,10 @@ function G._pointer(name,owner,native,...)
   return G._dispatch(name,owner,body,...)
 end
 function G.release()
-  for view,e in pairs(entries)do e.retired=true;if e.session then Views.release(e.session)end end
+  for view,e in pairs(entries)do
+    e.retired=true;if e.session then Views.release(e.session)end
+    if e.worldFeature then e.worldFeature:release();e.worldFeature=nil end
+  end
   owners=setmetatable({},{__mode='k'})
   callbackOwners={}
   actorCallbackOwners={}

@@ -96,9 +96,9 @@ local function renderFx(job)
     if spec.kind == "chip" then
       return ChipSynth.renderEffectData(input, spec.header, spec.options,cancelled)
     elseif spec.kind == "m4a" then
-      return synthFor("m4a").renderEffect(input, spec.header)
+      return synthFor("m4a").renderEffect(input, spec.header, spec.options, cancelled)
     elseif spec.kind == "cry" then
-      return synthFor("m4a").renderCry(input, spec.index)
+      return synthFor("m4a").renderCry(input, spec.index, spec.options, cancelled)
     end
     error("unknown effect job")
   end)

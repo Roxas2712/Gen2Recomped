@@ -585,6 +585,12 @@ over yourself if you want to carry existing progress across the switch.
 
 ## Modding
 
+API-3 mods can explicitly select [additional Gen1 compatibility features](docs/GEN1-COMPATIBILITY-FEATURES.md):
+detached GSC battle simulation, native Game3 world sessions, Save-5 conversion,
+and Link-3 wire/trade helpers. The [optional cable lobby and private relay](docs/GEN1-CABLE-RELAY.md)
+add durable trade recovery and common-rule cross-engine battles. Capability queries describe each supported host.
+
+
 The game ships a native mod platform: content registries, events and hooks,
 per-mod saves and options, and an in-game manager. Start with
 [docs/modding.md](docs/modding.md) and

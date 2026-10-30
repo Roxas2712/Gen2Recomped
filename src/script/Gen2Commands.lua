@@ -1691,10 +1691,8 @@ end
 
 -- showemote emote, object, frames -- the alert bubble that fires just before
 -- the Cherrygrove rival and the Route 29 catching tutorial run at you
-local EMOTES = { [0] = "shock", "question", "happy", "sad", "heart", "bolt", "sleep", "fish" }
-
 function Commands.g2_emote(ctx, index, emote, frames)
-  local bubble = EMOTES[emote or 0] or "shock"
+  local bubble = require('src.world.Gen2FieldEmotes').kind(ctx.game and ctx.game.data, emote)
   local target = isPlayerId(index) and "player" or select(3, objectByIndex(ctx, index))
   if not target then return end
   Commands.emote(ctx, target, bubble, frames or 15)

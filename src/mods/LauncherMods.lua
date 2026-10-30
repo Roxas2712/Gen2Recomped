@@ -38,6 +38,7 @@ local Semver = require("src.mods.Semver")
 local Version = require("src.core.Version")
 local SaveData = require("src.core.SaveData")
 local CacheFs = require("src.import.CacheFs")
+local StreamFiles = require("src.import.StreamFiles")
 
 local LoadOrder = require("src.mods.LoadOrder")
 local LauncherMods = {}
@@ -940,9 +941,7 @@ local function copyTree(src, dst)
       local ok, err = copyTree(s, d)
       if not ok then return nil, err end
     else
-      local data = fs.read(s)
-      if data == nil then return nil, "could not read " .. name end
-      local ok, err = CacheFs.write(d, data)
+      local ok, err = StreamFiles.copy(fs, CacheFs, s, d)
       if not ok then return nil, "could not write " .. name .. ": " .. tostring(err) end
     end
   end
@@ -957,7 +956,7 @@ local function sameFiles(src,dst)
     local info=fs.getInfo(from)
     if info and info.type=='directory' then
       if not sameFiles(from,to) then return false end
-    elseif fs.read(from)~=fs.read(to) then return false end
+    elseif not StreamFiles.same(fs,from,to) then return false end
     expected[name]=true
   end
   for _,name in ipairs(fs.getDirectoryItems(dst)) do if not expected[name] then return false end end

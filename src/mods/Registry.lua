@@ -105,8 +105,9 @@ local function fold(self, value, opList, id)
       -- deep registries treat register and patch alike; scalar payloads
       -- (a lone top-level value) replace outright
       if type(entry.value) == "table" then
+        local semantics = self.spec.keySemantics and self.spec.keySemantics[id] or self.spec.semantics
         value = Merge.deepMerge(Merge.deepCopy(value == nil and {} or value),
-          entry.value, self.spec.semantics)
+          entry.value, semantics)
         -- Adapter-produced list patches include empty replacements. Native
         -- patch semantics keep {} as a dictionary/no-op, so this internal
         -- path list explicitly distinguishes clearing a list from omitting it.

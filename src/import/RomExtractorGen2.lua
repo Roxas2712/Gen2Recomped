@@ -11179,6 +11179,17 @@ function RomExtractorGen2:gen2RawSheet(symbolName, tilesWide, tilesHigh, file,
            width = tilesWide * 8, height = tilesHigh * 8 }
 end
 
+function RomExtractorGen2:gen2FieldEmotes()
+  local Emotes = require('src.world.Gen2FieldEmotes')
+  local out = {order=copy(Emotes.ORDER)}
+  for _, kind in ipairs(Emotes.ORDER) do
+    local label = kind:sub(1,1):upper() .. kind:sub(2) .. 'Emote'
+    local sheet = self:gen2RawSheet(label, 2, 2, 'emotes/' .. kind .. '.png')
+    if sheet then out[kind] = sheet.path end
+  end
+  return out
+end
+
 -- 1bpp tile: one byte per row, set bits are the darkest shade (that is what
 -- FarCopyBytesDouble makes of them by writing the byte to both planes).
 local function gen2Tile1bpp(raw, offset)
@@ -14514,6 +14525,8 @@ function RomExtractorGen2:extractField()
     -- animation at all.  HealMachineAnim.HealMachineGFX is 2 raw 2bpp tiles
     -- stacked vertically, which is exactly the 8x16 sheet fxHeal quads up.
     src.overworldFx = src.overworldFx or {}
+    src.emotes = src.emotes or {}
+    for key, value in pairs(self:gen2FieldEmotes()) do src.emotes[key] = value end
     local healLayout = copy(GEN2_HEAL_MACHINE_LAYOUT)
     -- The machine does NOT wear a MapObjectPals entry.  HealMachineAnim.
     -- LoadPalettes (04:$6434) copies its own four colours over OBJ palette 6

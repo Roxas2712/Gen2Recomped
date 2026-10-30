@@ -188,7 +188,7 @@ L.checkpcitem = function(ir, s) emit(s, { "g3_check_pc_item", ir[2], ir[3] }) en
 L.checkitemtype = function(ir, s) emit(s, { "g3_check_item_type", ir[2] }) end
 L.getpokenewsactive = function(_, s) emit(s, { "g3_pokenews_active" }) end
 L.checkmonobedience = function(_, s) emit(s, { "g3_check_obedience" }) end
-L.checkmodernfatefulencounter = function(_, s) emit(s, { "g3_check_fateful" }) end
+L.checkmodernfatefulencounter = function(ir, s) emit(s, { "g3_check_fateful", ir[2] }) end
 L.erasebox = function(_, s) emit(s, { "g3_erase_box" }) end
 
 -- recorded

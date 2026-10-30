@@ -188,6 +188,19 @@ do
   local view = assert(f.exports.open("gold"))
   T.eq(view.content.pokemon:get("MEW"), nil, "contradictory native generation metadata rejected")
 end
+do
+  local f=fixture('gold')
+  setMon(f,function(mon)mon.battleScaleFront=0.75;mon.battleScaleBack=2.5 end)
+  f.files[f.prefix..'data/generated/field.lua']=Writer.encode({emotes={shock='assets/generated/emotes/shock.png'}})
+  local view=assert(f.exports.open('gold'))
+  local mon=assert(view.content.pokemon:get('MEW'))
+  T.eq(mon.battleScaleFront,0.75,'readonly dataset exposes portable front scale')
+  T.eq(mon.battleScaleBack,2.5,'readonly dataset exposes portable back scale')
+  local emotes=assert(view.content.field:get('emotes'))
+  T.eq(emotes.shock,'assets/generated/emotes/shock.png','readonly dataset exposes imported emote metadata')
+  emotes.shock='changed.png'
+  T.eq(view.content.field:get('emotes').shock,'assets/generated/emotes/shock.png','dataset emotes stay detached')
+end
 Version.set(saved[1])
 Runtime.events, Runtime.hooks, Runtime.errors, Runtime.currentMod = saved[2], saved[3], saved[4], saved[5]
 love = saved[6]

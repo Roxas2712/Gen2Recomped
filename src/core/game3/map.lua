@@ -1,11 +1,12 @@
--- Read-side compatibility entry point over the real native GBA map owner.
--- Simulation loads, player/script ownership and resource warmers are not
--- implemented by aliases to differently shaped native functions.
+-- Compatibility entry point over the real native GBA map owner.
+-- Optional loads and warming use the versioned world-session feature; native
+-- player, script and resource services retain their ownership.
 local Runtime=require('src.compat.gen1.MapRuntime')
 local Graph=require('src.compat.gen1.MapGraph')
 local Version=require('src.core.GameVersion')
 local Map={WORLD_HOPS=2,WARM_MARGIN_SCREENS=1}
 local context,gameOwner,edition,cache
+local featureSession
 local function rawGame(game)
   local facade=package.loaded['src.core.Game3']
   return type(facade)=='table'and facade.native and facade.native(game)or game
@@ -18,16 +19,40 @@ local function getContext(game)
   game=rawGame(game or currentGame() or gameOwner)
   local id=Version.get();local info=Version.info(id)
   if not game or not info or info.generation~=3 then
+    if featureSession then featureSession:release();featureSession=nil end
     if context then context:release()end
     context,gameOwner,edition,cache=nil,nil,nil,nil
     return nil,'no native GBA session'
   end
   if game~=gameOwner or id~=edition then
+    if featureSession then featureSession:release();featureSession=nil end
     if context then context:release()end
     gameOwner,edition,cache=game,id,nil
     context=Runtime.new(function()return gameOwner end,function()return edition end)
   end
   return context
+end
+local function feature(game)
+  local runtime,why=getContext(game);if not runtime then return nil,why end
+  if featureSession and featureSession:valid()then return featureSession end
+  featureSession,why=require('src.features.Gen1WorldSession').new(gameOwner)
+  return featureSession,why
+end
+function Map.load(mod,game,id,options)
+  local session,why=feature(game);if not session then return nil,why end
+  return session:load(id,options)
+end
+function Map.warmNow(game,id)
+  local session,why=feature(game);if not session then return nil,why end
+  return session:warmNow(id)
+end
+function Map.stepWarm(game)
+  local session,why=feature(game);if not session then return nil,why end
+  for _,row in ipairs(Map.neighborList)do
+    local ok,reason=session:enqueueWarm(row.map or row.mapId)
+    if not ok then return nil,reason end
+  end
+  return session:stepWarm()
 end
 function Map.currentDef()
   local runtime,why=getContext();if not runtime then return nil,why end
@@ -101,6 +126,7 @@ function Map.warmRect(margin)
 end
 Map.warmNear=Graph.near
 function Map.release()
+  if featureSession then featureSession:release();featureSession=nil end
   if context then context:release()end
   context,gameOwner,edition,cache=nil,nil,nil,nil
 end

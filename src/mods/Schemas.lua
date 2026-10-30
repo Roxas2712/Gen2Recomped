@@ -1245,7 +1245,13 @@ R.constants = {
 -- consumers move off their literals.
 R.field = {
   semantics = "deep", target = "field",
+  -- Byte-to-bubble ordering is a replacement list, unlike additive field rows.
+  keySemantics = {emotes="record"},
   keys = {
+    emotes = f.rec{
+      shock = f.opt(f.path), question = f.opt(f.path), happy = f.opt(f.path),
+      sad = f.opt(f.path), heart = f.opt(f.path), bolt = f.opt(f.path),
+      sleep = f.opt(f.path), fish = f.opt(f.path), order = f.opt(f.list(f.str)) },
     ledges = f.list(f.rec{
       facing = f.enum{ "up", "down", "left", "right" },
       input = f.enum{ "up", "down", "left", "right" },
