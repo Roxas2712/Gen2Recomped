@@ -21,6 +21,8 @@ try {
         $process.Kill()
         throw 'Final EXE diagnostics timed out'
     }
+    $process.WaitForExit()
+    $process.Refresh()
     if ($process.ExitCode -ne 0) { throw "Final EXE diagnostics failed: $($process.ExitCode)" }
     $roots = @($env:APPDATA, (Join-Path $env:APPDATA 'LOVE'))
     $reports = @($roots | Where-Object { Test-Path -LiteralPath $_ } | ForEach-Object {
@@ -34,8 +36,8 @@ try {
     })
     if ($reports.Count -ne 1) { throw 'Expected exactly one fresh isolated diagnostic report' }
     $report = Get-Content -Raw -LiteralPath $reports[0].FullName | ConvertFrom-Json
-    if ($report.passed -ne $true -or $report.platform -ne 'Windows' -or $report.checks.Count -ne 9) { throw 'Native Windows checks did not all pass' }
     Copy-Item -LiteralPath $reports[0].FullName -Destination (Join-Path $OutputDirectory 'cloud-selftest.json')
+    if ($report.passed -ne $true -or $report.platform -ne 'Windows' -or $report.checks.Count -ne 9) { throw 'Native Windows checks did not all pass' }
     @{ schema=1; passed=$true; exeSha256=$receipt.fusedExeSha256; sourceRevision=$receipt.sourceRevision;
        checks=$report.checks; scope=$report.scope; playerCloudUploadTested=$false; nativeCartridgeGameplayTested=$false } |
         ConvertTo-Json -Depth 10 | Set-Content -Encoding utf8 (Join-Path $OutputDirectory 'native-package-test.json')

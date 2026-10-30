@@ -22,6 +22,10 @@ on:
         description: Qualify only the Windows preview dependency
         type: boolean
         default: false
+      package_runtime_run_id:
+        description: Package and test the Windows demo using an already qualified runtime run
+        type: string
+        default: ''
   workflow_call:
 permissions:
   contents: read
@@ -30,7 +34,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   qualify:
-    if: ${{ inputs.windows_only != true }}
+    if: ${{ inputs.windows_only != true && !inputs.package_runtime_run_id }}
     strategy:
       fail-fast: false
       matrix:
@@ -161,7 +165,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   windows-preview:
-    if: ${{ inputs.windows_only == true }}
+    if: ${{ inputs.windows_only == true && !inputs.package_runtime_run_id }}
     runs-on: windows-2025
     timeout-minutes: 90
     steps:
@@ -246,3 +250,11 @@ jobs:
           path: ${{ runner.temp }}/windows-cloud-runtime/
           if-no-files-found: error
           retention-days: 14
+  windows-demo-package:
+    if: ${{ inputs.package_runtime_run_id != '' }}
+    uses: ./.github/workflows/windows-cloud-demo.yml
+    permissions:
+      contents: read
+      actions: read
+    with:
+      runtime_run_id: ${{ inputs.package_runtime_run_id }}
