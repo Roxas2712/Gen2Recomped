@@ -210,6 +210,23 @@ function M.swap(save,data,first,second)
   slots[first.index],slots[second.index]=b,a
   commit(c,save,bag);return true,true
 end
+-- Emerald inserts a physical slot before the chosen row (including CLOSE).
+-- The complete observed pocket must still match: duplicate stable IDs alone
+-- cannot identify a selected stack after an intervening inventory change.
+function M.moveBefore(save,data,pocket,from,to,expected)
+  local c=context(data,save);if not c or c.version~='emerald'then return false end
+  local rows=M.rows(save,data,pocket)
+  local Serial=require('src.core.SaveSerializer')
+  if not rows or type(expected)~='string'or Serial.encode(rows)~=expected
+    or not integer(from)or not integer(to)or from<1 or from>#rows or to<1 or to>#rows+1 then return true,false end
+  local target=to>from and to-1 or to
+  if target==from then return true,false end
+  local bag=project(c,save);local native=HOST[pocket]or pocket
+  if not bag or c.policy.sortById[native]then return true,false end
+  local slots=bag.pockets[native]
+  table.insert(slots,target,table.remove(slots,from))
+  commit(c,save,bag);return true,true
+end
 function M.giveHeld(save,data,mon,id,selection)
   local c=context(data,save);if not c or not c.byId[id]then return false end
   local bag=project(c,save);local previous=mon.item

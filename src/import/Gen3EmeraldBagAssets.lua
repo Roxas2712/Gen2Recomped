@@ -2,9 +2,9 @@
 -- Original Emerald list graphics and narrow font from the selected cartridge.
 local M={ROOT='data/generated/gba/native_emerald_bag/',FONTS='data/generated/gba/credits_rse/fonts/'}
 M.labels={count='gText_xVar1',close='gText_CloseBag',returnTo='gText_ReturnToVar1',
- selected='gText_Var1IsSelected',number='gText_NumberItem_TMBerry',hmNumber='gText_NumberItem_HM'}
+ selected='gText_Var1IsSelected',moveWhere='gText_MoveVar1Where',number='gText_NumberItem_TMBerry',hmNumber='gText_NumberItem_HM'}
 M.files={'manifest.lua','bg.png','bg_female.png','indicator.png','indicator_female.png',
- 'bag_male.png','bag_female.png','arrows.png','hm.png','select.png','move_info.png'}
+ 'bag_male.png','bag_female.png','arrows.png','hm.png','select.png','move_info.png','swap.png'}
 M.fonts={'latin_narrow_fg.rgba','latin_narrow_shadow.rgba','latin_narrow_widths.lua'}
 function M.extract(x)
  if x.version~='emerald'then return end
@@ -36,7 +36,8 @@ function M.extract(x)
  local bagPalette=c:pal('gBagPalette',16,nil,0,true)
  local sprites={male=c:strip('bag_male',c:lz('gBagMaleTiles'),64,64,6,bagPalette),
   female=c:strip('bag_female',c:lz('gBagFemaleTiles'),64,64,6,bagPalette),
-  arrows=c:strip('arrows',c:lz('list_menu.o:sScrollIndicator_Gfx'),16,16,2,c:pal('sRedInterface_Pal',16))}
+  arrows=c:strip('arrows',c:lz('list_menu.o:sScrollIndicator_Gfx'),16,16,2,c:pal('sRedInterface_Pal',16)),
+  swap=c:strip('swap',c:lz('gSwapLineGfx'),16,16,2,c:pal('gSwapLinePal',16,nil,0,true))}
  local palette={};for i=0,15 do palette[i]=male[16+i]end
  c:png('hm.png',16,16,K.bakeSprite(c:raw('gBagMenuHMIcon_Gfx'),16,16,0,4),palette,true)
  c:png('select.png',24,16,K.bakeSprite(c:raw('sRegisteredSelect_Gfx'),24,16,0,4),palette,true)

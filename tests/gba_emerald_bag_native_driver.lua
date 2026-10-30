@@ -66,6 +66,28 @@ return function(game)
  shot('native-emerald-bag-clamped-close')
  for _=1,20 do press('up')end
  assert(owner.index==1 and owner.top==1);shot('native-emerald-bag-clamped-first-item')
+ sameExceptClock(before)
+ press('select');assert(owner.emeraldSwap and owner.emeraldSwap.from==1)
+ shot('native-emerald-bag-reorder-start')
+ for _=1,8 do press('down')end
+ assert(owner.index==9 and owner.top==5);shot('native-emerald-bag-reorder-scrolled-line')
+ local heldPocket=owner.pocket;press('right');assert(owner.pocket==heldPocket)
+ press('b');assert(not owner.emeraldSwap and owner.index==8);sameExceptClock(before)
+ for _=1,20 do press('up')end
+ press('select');for _=1,20 do press('down')end
+ assert(owner:selected().close);shot('native-emerald-bag-reorder-before-close')
+ press('a');assert(not owner.emeraldSwap and owner.index==12 and owner.rows[12].id==items[1])
+ shot('native-emerald-bag-reordered-to-end')
+ press('select');for _=1,20 do press('up')end;press('select')
+ assert(owner.index==1 and owner.rows[1].id==items[1]);sameExceptClock(before)
+ -- Two partial stacks with the same stable ID must remain separate when moved.
+ assert(Bag.add(game.save,items[1],99,game.data));owner:rebuild()
+ for _=1,20 do press('down')end;press('up')
+ assert(owner:selected().id==items[1]and owner:selected().qty==1)
+ press('select');for _=1,20 do press('up')end;press('a')
+ assert(owner.rows[1].id==items[1]and owner.rows[1].qty==1 and owner.rows[2].qty==99)
+ assert(game.save.inventory[items[1]]==100);shot('native-emerald-bag-reordered-duplicate-stack')
+ before=S.encode(game.save)
  local function pocket(key)
   for _=1,#owner.pockets do
    if owner.pockets[owner.pocket].key==key then return end
@@ -82,7 +104,9 @@ return function(game)
  press('a');action=game.stack:top();assert(action.emeraldBag==owner and#action.entries==6)
  shot('native-emerald-bag-berry-actions');press('b');assert(game.stack:top()==owner)
  pocket('KEY_ITEM');assert(owner:selected().id==keys[1]);sameExceptClock(before)
- press('select');assert(game.save.registeredItem==keys[1]);shot('native-emerald-bag-registered-select')
+ press('select');assert(owner.emeraldSwap and not game.save.registeredItem);press('b')
+ press('a');press('right');press('a')
+ assert(game.save.registeredItem==keys[1]);shot('native-emerald-bag-registered-action')
  press('a');action=game.stack:top();assert(action.emeraldBag==owner)
  shot('native-emerald-bag-deselect-actions');press('b');assert(game.stack:top()==owner)
  before=S.encode(game.save);press('b');assert(game.stack:top()==world and closed==2);sameExceptClock(before)
@@ -92,9 +116,11 @@ return function(game)
  assert(game.stack:top()==world and closed==3 and owner.emeraldView==nil);sameExceptClock(before)
  assert(game:writeSave()==true);local disk=assert(IO.load('emerald'))
  assert(S.encode(disk.inventory)==S.encode(game.save.inventory)and disk.registeredItem==keys[1]and disk.player.gender=='girl')
+ assert(S.encode(disk.gen3RsBagSlots)==S.encode(game.save.gen3RsBagSlots),'Disk round trip lost reordered partial stacks')
  report.status='pass';report.ordinaryBagInputs=true;report.actualDiskRoundTrip=true
  report.drawPreservesSaveRng=true;report.emptyAndLongLists=true;report.maleAndFemaleOwnGraphics=true
  report.nativeCenteredScroll=true;report.nativeBoundaryClamp=true
- report.fullBagVisualParity=false;report.remainingViews={'PC quantity flow','pocket switch animation','native reorder behavior','held-key repeat'}
+ report.nativeReorder=true;report.duplicateStacksPreserved=true
+ report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation','held-key repeat'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end

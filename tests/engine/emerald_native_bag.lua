@@ -55,10 +55,11 @@ function owner:selected()return self.rows[self.index]end
 function owner:itemIcon(_,forced)forcedIcon=forced end
 local top=owner;game.stack={top=function()return top end}
 local manifest={background={png='bg',variants={female='female-bg'}},indicator={png='indicator',variants={female='female-indicator'}},
- sprites={male={png='male-bag'},female={png='female-bag'},arrows={png='arrows',w=16,h=16}},
+ sprites={male={png='male-bag'},female={png='female-bag'},arrows={png='arrows',w=16,h=16},swap={png='swap'}},
  palettes={male={},female={}},textIR={close=IR.fromAscii('CLOSE BAG'),count=IR.fromAscii('x{STR_VAR_1}'),
  number=IR.fromAscii('{STR_VAR_1} {STR_VAR_2}'),hmNumber=IR.fromAscii('H{STR_VAR_1} {STR_VAR_2}'),
- returnTo=IR.fromAscii('Return to {STR_VAR_1}.'),selected=IR.fromAscii('{STR_VAR_1} is selected.')},
+ returnTo=IR.fromAscii('Return to {STR_VAR_1}.'),selected=IR.fromAscii('{STR_VAR_1} is selected.'),
+ moveWhere=IR.fromAscii('Move {STR_VAR_1}\nwhere?')},
  returnToIR={[0]=IR.fromAscii('field')}}
 for i=1,32 do manifest.palettes.male[i]=i;manifest.palettes.female[i]=i end
 local view=setmetatable({owner=owner,game=game,manifest=manifest,quads={},images={},
@@ -155,6 +156,16 @@ T.eq(owner.index,1);T.eq(owner.top,1);T.eq(owner.rows,rows,'navigation preserves
 T.eq(Serial.encode(game.save),navigationSave,'scrolling preserves all saved values')
 owner.rows={close};owner.index,owner.top=1,1
 UI.moveCursor(owner,1);UI.moveCursor(owner,-1);T.eq(owner.index,1);T.eq(owner.top,1)
+owner.rows=rows;owner.index,owner.top=9,5
+owner.emeraldSwap={from=6,row=rows[6]};draws={};glyphs={};texts={};owner.lockPocket=false
+view:drawNative();T.eq(glyphs[1].y,33,'gray cursor stays at the original slot')
+local lines={};for _,draw in ipairs(draws)do if draw[1].path=='swap'then lines[#lines+1]=draw end end
+T.eq(#lines,8);T.eq(lines[1][3],120);T.eq(lines[1][4],81)
+T.eq(lines[8][3],224);T.eq(lines[8][4],81)
+local prompt;for _,row in ipairs(texts)do if row.text=='Move ITEM 6\nwhere?'then prompt=row end end
+T.check(prompt);T.eq(prompt.x,3);T.eq(prompt.y,105)
+T.eq(Serial.encode(game.save),navigationSave,'moving-line rendering never edits any saved value')
+owner.emeraldSwap=nil
 local legacy={rows=rows,index=1,top=1,listRows=function()return 8 end}
 UI.moveCursor(legacy,-1);T.eq(legacy.index,13,'other presenters retain their existing navigation')
 Fs.read=oldRead;love.graphics=oldGraphics;love.filesystem.load=oldLoad;V.set(oldV)
