@@ -65,11 +65,9 @@ function M.new(getGame, getEdition)
       return Identity.lookup(edition,id)
     end
   end
-  function handle:definition(id)
-    local game,why=session();if not game then return nil,why end
-    local native,def,canonical=resolve(id);if not native then return nil,def end
-    local prior=maps[canonical]
-    if prior then return prior end
+  -- Keep closure creation in the cold builder. Cached observations still
+  -- validate the current session and identity, without closing new upvalues.
+  local function buildDefinition(native,def,canonical)
     local pair=pairBinding and pairBinding:descriptor(def.tileset)
     if not pair or type(pair.tileset)~='string'then return nil,'source tileset pair identity unavailable' end
     local kind=mapTypes[def.mapType] or tonumber(def.mapType) or 0
@@ -127,6 +125,13 @@ function M.new(getGame, getEdition)
     end})
     known[view]=generation;maps[canonical]=view
     return view
+  end
+  function handle:definition(id)
+    local game,why=session();if not game then return nil,why end
+    local native,def,canonical=resolve(id);if not native then return nil,def end
+    local prior=maps[canonical]
+    if prior then return prior end
+    return buildDefinition(native,def,canonical)
   end
   function handle:layout(id,def,generation)
     local game,why=session();if not game then return nil,why end
