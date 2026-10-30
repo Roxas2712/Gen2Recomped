@@ -129,6 +129,7 @@ return function(game)
  report.drawPreservesSaveRng=true;report.emptyAndLongLists=true;report.maleAndFemaleOwnGraphics=true
  report.nativeCenteredScroll=true;report.nativeBoundaryClamp=true
  report.nativeReorder=true;report.duplicateStacksPreserved=true
- report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation','held-key repeat'}
+ report.nativeHeldKeyRepeat=true
+ report.fullBagVisualParity=false;report.remainingViews={'pocket switch animation'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end
