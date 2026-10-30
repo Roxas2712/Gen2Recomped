@@ -107,28 +107,45 @@ void GBCTable::draw_hud(GBContext*live,std::vector<uint8_t>&out) {
     }
     for(unsigned i=0;i<W*H;i++)out[i*4+3]=255;
 }
+bool GBCTable::retain(GBContext*live,std::vector<uint8_t>&out,bool loading) {
+    // A transition invalidates camera/VRAM pairing before the LCD turns off.
+    // Never publish the original half-table as a fallback, even on the very
+    // first loading frame. Preserve the entire completed picture during DMA.
+    if(loading&&!last_picture.empty())out=last_picture;
+    else {
+        if(last_board.empty())out.assign(W*H*4,0);else out=last_board;
+        if(!loading)draw_hud(live,out);
+        for(unsigned i=0;i<W*H;i++)out[i*4+3]=255;
+    }
+    last_picture=out;return true;
+}
 bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     const unsigned stage=ram(live,0xd4ac);
     const bool standard=ram(live,0xd8f1)==4&&stage<=5&&!(stage&2);
-    if(!standard){last_board.clear();last_field=~0u;return false;}
-    if(last_field!=(stage&4)){last_board.clear();last_field=stage&4;}
-    // Loading/ball-loss sequences retain the already composed world. Their
-    // live window UI is composited separately at native scale. Switching to
-    // the original half here produced the repeated full-table zoom sequences.
-    if(ram(live,0xd8f2)!=2||!(live->io[0x40]&128)) {
-        if(last_board.empty())return false;
-        out=last_board;draw_hud(live,out);return true;
-    }
+    if(!standard){reset_layout();return false;}
+    if(last_field!=(stage&4)){reset_layout();last_field=stage&4;}
+    // FieldVerticalTransition changes wCurrentStage, zeros hBGP and waits a
+    // VBlank BEFORE loading the other half's tiles. LCDC alone is too late:
+    // the new stage id can still be paired with the old half's live VRAM.
+    // CGB's initial fade can legitimately leave the DMG palette at zero.
+    // Use it as a transition latch only after a complete stage was rendered.
+    const bool changed=sampled_stage!=~0u&&sampled_stage!=stage&&!last_board.empty();
+    sampled_stage=stage;
+    if(changed)stage_loading=true;
+    const bool loading=changed||(stage_loading&&!live->hram[0x23])||!(live->hram[0x1e]&128)||!(live->io[0x40]&128);
+    if(!loading)stage_loading=false;
+    if(loading){transition_holds++;return retain(live,out,true);}
+    if(ram(live,0xd8f2)!=2)return retain(live,out,false);
     if(!scratch) {
         scratch=gb_context_create(&live->config);
-        if(!scratch)return false;
+        if(!scratch){failures++;failure_holds++;return retain(live,out,true);}
         scratch->hardware_mode_pref=GB_HARDWARE_MODE_CGB;scratch->mbc_type=live->mbc_type;
-        if(!gb_context_load_rom(scratch,live->rom,live->rom_size))return false;
+        if(!gb_context_load_rom(scratch,live->rom,live->rom_size)){failures++;failure_holds++;return retain(live,out,true);}
     }
     uint8_t*blob=nullptr;size_t size=0;
-    if(!gb_snapshot_serialize(live,&blob,&size)){failures++;return false;}
+    if(!gb_snapshot_serialize(live,&blob,&size)){failures++;failure_holds++;return retain(live,out,true);}
     bool restored=gb_snapshot_deserialize(scratch,blob,size);std::free(blob);
-    if(!restored){if(failures++==0)std::fprintf(stderr,"[GBC table] scratch snapshot rejected\n");return false;}
+    if(!restored){if(failures++==0)std::fprintf(stderr,"[GBC table] scratch snapshot rejected\n");failure_holds++;return retain(live,out,true);}
     const unsigned other=stage^1;
     ram(scratch,0xd4ac)=other;
     ram(scratch,0xd548)=0; // one ball only: the canonical live half owns it
@@ -141,7 +158,7 @@ bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     gb_write8(scratch,0xff40,scratch->io[0x40]&127);
     if(!call(scratch,3,0x66c2)||!call(scratch,0,0x0916)||!call(scratch,2,0x44b7)) {
         if(failures++==0)std::fprintf(stderr,"[GBC table] scratch graphics call failed at %02x:%04x sp=%04x\n",scratch->rom_bank,scratch->pc,scratch->sp);
-        return false;
+        failure_holds++;return retain(live,out,true);
     }
     // LoadStageData writes the selected half's CGB palette directly to the
     // PPU. wPaletteData is a fade backup, not its current palette: copying it
@@ -149,6 +166,6 @@ bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     out.assign(W*H*4,0);
     draw_half(scratch,out,(other&1)?136:0,false);
     draw_half(live,out,(stage&1)?136:0,true);
-    last_board=out;draw_hud(live,out);
+    last_board=out;draw_hud(live,out);last_picture=out;
     return true;
 }

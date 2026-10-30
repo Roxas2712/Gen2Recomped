@@ -40,6 +40,7 @@ def worker(args):
     assert ctx,lib.pinball_gbc_error()
     baseline=lib.pinball_gbc_open(str(args.rom).encode())if args.full_table else None
     if args.full_table:assert lib.ascendant_pinball_view(ctx,1)
+    transitions=[];transition_failures=[];previous_board=None;previous_transition=None;pending_stage=False;capture_until=-1
     snapshots={};states=[];expanded_seen=False;fixed_frames=0;pcm_frames=0;audible=False;start=time.perf_counter()
     try:
         for frame in range(args.frames):
@@ -61,11 +62,30 @@ def worker(args):
                 width,height=C.c_uint32(),C.c_uint32();lib.ascendant_pinball_picture(ctx,C.byref(width),C.byref(height))
                 main=lib.ascendant_pinball_read(ctx,0xd8f1,1);stage=lib.ascendant_pinball_read(ctx,0xd4ac,1)
                 standard=main==4 and stage<=5 and not(stage&2)
-                if not standard:expanded_seen=False
+                if not standard:expanded_seen=False;previous_board=None;previous_transition=None;pending_stage=False
                 if standard and width.value==192:expanded_seen=True
                 if standard and expanded_seen:
                     assert (width.value,height.value)==(192,285),'Standard-field sequence must not zoom back into the half table'
                     fixed_frames+=1
+                if args.transitions and standard and expanded_seen:
+                    read=lambda a:lib.ascendant_pinball_read(ctx,a,1)
+                    signature=(stage,read(0xffa3),read(0xff40)&128,read(0xd8f2))
+                    picture=lib.ascendant_pinball_picture(ctx,C.byref(width),C.byref(height))
+                    rgba=C.string_at(picture,width.value*height.value*4)
+                    board=hashlib.sha256(rgba[:192*272*4]).hexdigest()
+                    if previous_transition is not None and signature!=previous_transition:
+                        transitions.append({'frame':frame+1,'from':previous_transition,'to':signature})
+                        capture_until=frame+3
+                    if previous_transition and signature[0]!=previous_transition[0]:pending_stage=True
+                    if signature[1]and signature[2]:pending_stage=False
+                    if pending_stage and signature[1]==0 and previous_board and read(0xffa6)>=134 and board!=previous_board:
+                        transition_failures.append({'frame':frame+1,'stage':stage,'signature':signature,'reason':'Board pixels changed while cartridge graphics were loading'})
+                        capture_until=frame+3
+                    if frame<=capture_until:
+                        png(args.output/('transition-'+str(frame+1)+'.png'),rgba,width.value,height.value)
+                        original=C.string_at(lib.pinball_gbc_picture(ctx),160*144*4)
+                        png(args.output/('transition-original-'+str(frame+1)+'.png'),original)
+                    previous_board=board;previous_transition=signature
             count=C.c_size_t();samples=lib.pinball_gbc_audio(ctx,C.byref(count));pcm_frames+=count.value
             if count.value:audible=audible or any(C.string_at(samples,count.value*4))
             if frame%300==299:
@@ -105,20 +125,21 @@ def worker(args):
         again=(C.c_uint8*8192)();assert lib.pinball_gbc_ram(ctx,again,8192,0)
         assert bytes(ram)==bytes(again)
         assert not lib.pinball_gbc_ram(ctx,again,8191,1)
-        report={'field':args.field,'requested_frames':args.frames,'guest_frames':lib.pinball_gbc_counter(ctx,0),
+        report={'library_sha256':hashlib.sha256(args.library.read_bytes()).hexdigest(),'field':args.field,'requested_frames':args.frames,'guest_frames':lib.pinball_gbc_counter(ctx,0),
             'elapsed_seconds':time.perf_counter()-start,'interpreter_instructions':lib.pinball_gbc_counter(ctx,1),
             'dispatch_fallbacks':lib.pinball_gbc_counter(ctx,2),'interpreter_cycles':lib.pinball_gbc_counter(ctx,3),
             'cpu_cycles':lib.pinball_gbc_counter(ctx,4),'pcm_frames':pcm_frames,'audible':audible,
-            'fixed_full_table_frames':fixed_frames,'states':states,'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),
+            'transitions':transitions,'transition_pixel_failures':transition_failures,'fixed_full_table_frames':fixed_frames,'states':states,'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),'transition_holds':lib.pinball_gbc_counter(ctx,7),'failure_holds':lib.pinball_gbc_counter(ctx,8),
             'quick_state_roundtrip':True,'battery_roundtrip':True,'player_saves_opened':False,'boot':'HLE'}
         assert pcm_frames>0 and audible
         assert max(s['colors']for s in snapshots.values())>8,'Expected color graphics'
         if args.full_table:
             assert any(s['width']==192 and s['height']==285 for s in snapshots.values()),'Full-table composition must activate'
             assert report['composition_failures']==0,'Scratch graphics routine failed'
-        report['passed']=True
+        report['passed']=not transition_failures
         (args.output/'result.json').write_text(json.dumps(report,indent=2)+'\n')
         print(json.dumps(report))
+        assert not transition_failures,'Full-table pixels must remain complete throughout stage graphics loading'
     finally:
         lib.pinball_gbc_close(ctx)
         if baseline:lib.pinball_gbc_close(baseline)
@@ -129,6 +150,7 @@ def main():
     p.add_argument('--frames',type=int,default=1800);p.add_argument('--output',type=Path,default=ROOT/'.local/qa/pinball-gbc/qualification')
     p.add_argument('--field',choices=['red','blue'],default='red')
     p.add_argument('--full-table',action='store_true')
+    p.add_argument('--transitions',action='store_true',help='Check pixels and capture stage graphics-loading boundaries')
     p.add_argument('--worker',action='store_true');args=p.parse_args()
     if args.worker:return worker(args)
     sys.path.insert(0,str(Path.home()/'.local/lib/origami-qa-storage/active-tools'))

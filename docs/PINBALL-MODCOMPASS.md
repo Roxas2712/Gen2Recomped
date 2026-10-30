@@ -198,3 +198,34 @@ The GBC native network runner additionally qualifies real localhost ENet and
 private TCP relay score/picture delivery, including flushing the final score
 after a client has reached its local result. Neither test replaces a deployed
 GBC service test with two authenticated accounts.
+
+### Public GBC edition extension and configuration templates
+
+The original, account-free GBC validator now lives in
+[`operations/modcompass/pinball-gbc`](../operations/modcompass/pinball-gbc/README.md).
+It validates Red/Blue, English, the exact ROM/content/native-runtime identity,
+fixed five-minute rules and the client-compatible fingerprint. It is an edition
+extension; the deployed server must retain its existing friend/device/privacy,
+reservation, ordered-message, final-score and peer-ticket authorization checks.
+Its current adapter insertion points cannot be qualified without that server.
+
+The same folder contains deliberately unconfigured deployment and two-account
+examples, as requested. No private server source, credentials or live accounts
+are included. Placeholder, duplicate-account, wrong-origin and newline-token
+fixtures are rejected before native clients or authenticated requests start.
+The public HTTPS runner accepts `--edition pinballgbc --field 0|1`; it preserves
+GBC display settings and reports the edition explicitly. `--peer-mode off`
+forces the actual authenticated HTTPS picture path; the existing direct, relay
+and failover modes remain available with the separately prepared peer runtime.
+`--functional-only` explicitly separates functional gameplay qualification from
+the unchanged strict steady-audio goal. A placeholder fixture is never a
+successful live test. No live GBC invitation/entry run or server deployment was
+performed for this extension; only the public unauthenticated policy endpoint
+was confirmed reachable.
+
+```sh
+python3 tools/qualify_modcompass_pinball_gbc.py --php /path/to/php
+python3 tools/qualify_pinball_public.py --edition pinballgbc --field 0 \
+  --fixture /private/qa-accounts.json --love /path/to/love.app/Contents/MacOS/love \
+  --peer-mode off --label gbc-live-red
+```

@@ -178,3 +178,27 @@ window's eight-pixel status row is isolated from the board; multi-row bonus/menu
 windows remain complete. This avoids both the repeated camera zoom and the
 Diglett/flipper fragments previously copied into the lower HUD strip. It is a
 presentation correction, not a game-timing or physics change.
+
+## Stage-load content guard
+
+Fixed dimensions alone did not prevent an incorrect whole portrait: the GBC
+cartridge changes its stage identifier before clearing palettes and waiting for
+VBlank, while VRAM can still contain the previous half. Reinterpreting that
+VRAM with the new stage identifier briefly duplicated the top or bottom half.
+The follow-up captures reproduce this even though the image remained 192×285.
+
+The host now latches the stage change immediately, including a boundary before
+the palette-clear instruction. It preserves the last complete picture through
+the scheduled LCD-off/palette-clear/load sequence and resumes composition after
+the loaded half becomes ready. The initial CGB fade is handled separately: its
+legitimate zero DMG palette does not blank a newly started game. A temporary
+composition error also retains the complete picture, while incrementing an
+explicit failure counter. No fallback half-table is published in a standard
+field, including the first loading frame.
+
+`qualify_pinball_gbc.py --full-table --transitions` now checks board pixels at
+those boundaries and captures both the complete host picture and original
+viewport. Canonical RAM is still compared against a second original-view game.
+The ROM-free native regression additionally covers the stage-id change before
+palette clearing, the ensuing loading frame and the first opaque loading
+canvas. These checks address content validity, not just image dimensions.

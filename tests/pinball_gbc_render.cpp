@@ -47,6 +47,19 @@ struct GBCTableRenderTest {
    const bool window=x>=16&&x<176&&y>=237;
    require(window?pixel(x,y,0,255,0):pixel(x,y,0,0,0),"Bonus window must remain complete on the fixed full-table canvas");
   }
+  // Reproduce the cartridge boundary: new stage id, LCD still on, hBGP
+  // already zero, and live VRAM still holding the old half. Keep every pixel.
+  c->wram[0x18f1]=4;c->wram[0x18f2]=2;c->wram[0x14ac]=1;
+  c->io[0x40]=0xe7;c->hram[0x1e]=0xe7;c->hram[0x23]=0xe4;
+  GBCTable view;view.last_field=0;view.sampled_stage=0;view.last_board.assign(192*285*4,73);view.last_picture=view.last_board;
+  const auto expected=view.last_picture;
+  require(view.compose(c,out)&&out==expected,"New stage id must not display old-half VRAM while LCD is still on");
+  c->hram[0x23]=0;
+  require(view.compose(c,out)&&out==expected,"Palette-cleared loading phase must keep the completed full table");
+  require(view.transition_holds==2&&view.failures==0,"Transition must hold before attempting scratch graphics");
+  GBCTable first;c->io[0x40]=0;
+  require(first.compose(c,out)&&out.size()==192*285*4,"First loading frame must not fall back to a half table");
+  for(unsigned i=0;i<192*285;i++)require(out[i*4]==0&&out[i*4+3]==255,"Initial full-table loading canvas must be opaque");
   gb_context_destroy(c);
   std::puts("GBC surface: current OAM, OBJ/BG priority, STAT tile bank and 2496 HUD pixels passed (no ROM)");
  }

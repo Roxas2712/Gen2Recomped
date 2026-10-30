@@ -4,6 +4,7 @@ local Json=require('src.link.Json')
 local fixturePath=assert(os.getenv('PINBALL_HTTP_CONFIG'))
 local f=assert(io.open(fixturePath,'rb'));local config=Json.decode(f:read('*a'));f:close()
 assert(config.url:match('^https://localhost:%d+/api/cloud/v1/play/$')or config.publicQualification==true and config.url=='https://pokexpert.de/api/cloud/v1/play/','explicit isolated HTTPS qualification only')
+if config.peer_mode=='off'then package.loaded['src.pinball.PeerView']={available=function()return false end}end
 local started=love.timer.getTime();local doc,job,nextPresence,player,friends,net= nil,nil,0
 local preparedFromMissing=false;local invited=false;local pendingAccept;local result,finishedAt,completionWait,captured,minimized,reported
 local updateGaps={};local priorUpdate;local activityStatus;local steadyRestarts;local steadyStart;local capturedAt;local minimizedAt
@@ -21,7 +22,7 @@ function Play.request(method,path,payload)
  return Json.decode(body)
 end
 local function client(session)
- return Friends.new(session,{auth=Auth,task=Task,net=CloudNet,play=Play,field=config.field,
+ return Friends.new(session,{auth=Auth,task=Task,net=CloudNet,play=Play,field=config.field,edition=config.session.edition,
   prepare=function(invite)
    assert(invite and not session,'only the initially missing private import is activated here')
    preparedFromMissing=true;pendingAccept=invite.id;friends=client(config.session);doc=nil;nextPresence=0
@@ -44,7 +45,7 @@ local function report(ok,why)
  reported=true
  local value={passed=ok,error=why,seat=config.seat,transport=config.publicQualification and 'actual public HTTPS' or 'actual local HTTPS',native=player~=nil,
   prepared_from_missing=preparedFromMissing,result=result,seconds=love.timer.getTime()-started,
-  checkpoint=player and player.checkpoint,stats=player and player.stats[1],duel=player and player.duel and {
+  edition=config.session.edition or 'pinballrs',field=config.field,checkpoint=player and player.checkpoint,stats=player and player.stats[1],duel=player and player.duel and {
    state=player.duel.state,localScore=player.duel.localScore,remoteScore=player.duel.remoteScore,
    localFrame=player.duel.localFrame,remoteFrame=player.duel.remoteFrame},wire_drained=net and net.finished or false,
   activity=activityStatus,update_gaps=updateGaps,

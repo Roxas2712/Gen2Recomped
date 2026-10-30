@@ -42,8 +42,8 @@ The received opponent picture is shown alongside the player's own game, at up
 to six updates per second. Each client selects its own original/full-table view.
 
 The `pinballgbc` edition is distinct from `pinballrs` throughout presence and
-invitations. The public repository contains the ModCompass client and service
-contract, not the complete server. GBC synthetic contract tests and real native
+invitations. The public repository contains the ModCompass client, GBC edition validator,
+configuration templates and service contract, not the complete server. GBC synthetic contract tests and real native
 localhost transports do not qualify deployment or live GBC friend invitations.
 See [the service contract](PINBALL-MODCOMPASS.md); its earlier production
 qualification concerns the GBA edition only.
@@ -88,7 +88,8 @@ only the authored eight-pixel text row on opaque black padding. No copy of the
 small viewport, Diglett or flipper fragments can enter this strip.
 
 The full-table frame stays fixed during standard-field loading, camera changes
-and ball loss. Temporary loading uses the last complete world surface; live
+and ball loss. A stage-id/palette/LCD loading guard retains the last complete
+picture before the next half’s VRAM is ready; live
 bonus-count/menu window tiles are overlaid separately at their native size.
 There is no automatic zoom back into the original half-table viewport. Menus
 and unsupported bonus fields retain their complete original picture inside a
@@ -122,7 +123,7 @@ code/data. No public binary release is included.
 
 ```sh
 python3 tools/qualify_pinball_gbc.py --library /private/libascendant_pinball_gbc.dylib \
-  --rom '/path/to/Pokemon Pinball.gbc' --frames 3600 --field red --full-table
+  --rom '/path/to/Pokemon Pinball.gbc' --frames 7200 --field red --full-table --transitions
 python3 tools/qualify_pinball_friends.py --love /path/to/love --edition pinballgbc
 python3 tools/qualify_pinball_gbc_network.py --love /path/to/love --mode enet
 python3 tools/qualify_pinball_gbc_network.py --love /path/to/love --mode relay --field 1

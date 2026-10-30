@@ -1,0 +1,9 @@
+{
+  "qa_only": true,
+  "marker": "REPLACE_WITH_32_RANDOM_HEX_CHARACTERS",
+  "url": "https://pokexpert.de/api/cloud/v1/play/",
+  "accounts": [
+    {"account": "REPLACE_WITH_QA_ACCOUNT_1", "token": "REPLACE_WITH_QA_TOKEN_1"},
+    {"account": "REPLACE_WITH_QA_ACCOUNT_2", "token": "REPLACE_WITH_QA_TOKEN_2"}
+  ]
+}
