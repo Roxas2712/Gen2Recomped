@@ -33,8 +33,18 @@ return function(game)
  local Commands=require('src.script.Gen3Commands');local resumes,yields=0,0
  local ctx={game=game,save=game.save,runner={resume=function()resumes=resumes+1 end,
   yield=function()yields=yields+1 end}}
- Commands.SPECIALS[265](ctx);local root=game.stack:top()
- assert(root.emeraldPcPresenter and #root.items==3);shot('emerald-center-pc-root')
+ local Presenter=require('src.ui.Gen3EmeraldPcMenu');local decorate=Presenter.decorate
+ local decorateError
+ Presenter.decorate=function(...)
+  local ok,value=pcall(decorate,...)
+  if not ok then decorateError=tostring(value);error(value,0)end
+  return value
+ end
+ Commands.SPECIALS[265](ctx);Presenter.decorate=decorate;local root=game.stack:top()
+ assert(root.emeraldPcPresenter and #root.items==3,J.encode({available=Presenter.available(game),
+  native=root.emeraldPcPresenter~=nil,rows=root.items and #root.items,error=decorateError,
+  yields=yields,resumes=resumes,result=game.save.gen3Vars and game.save.gen3Vars[Commands.VAR_RESULT]}))
+ shot('emerald-center-pc-root')
  press('down');press('a');assert(game.stack:top()==world and game.save.gen3Vars[Commands.VAR_RESULT]==1)
  assert(resumes==1 and yields==1,'Root must resume its script owner exactly once')
  game.save.options.gen3Frame=20
