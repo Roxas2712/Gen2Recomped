@@ -119,6 +119,7 @@ if args.story_save_source:
     prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
     for path in (prior,prior_profile):qa_source(path)
     recovered_source_proof=None
+    failed_tail_proof=None
     assert sv['cartridgeSHA1']==hashlib.sha1(args.rom.read_bytes()).hexdigest()
     if args.edition in ('ruby','sapphire'):
         from rs_story_checkpoint import qualify
@@ -139,8 +140,14 @@ if args.story_save_source:
             recovered_source_proof=verify_frozen_sources(prior/'engine',prior/'frozen-files.json')
             source_unchanged=True
         assert source_unchanged and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
-        assert sv['status']=='pass'or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')in
+        failed_tail=(sv['status']=='fail'and type(sv.get('exitCode'))is int and sv['exitCode']>0
+                     and not sv.get('stoppedOwnChildReason')and sv.get('unexpectedImporterRun')is False)
+        assert sv['status']=='pass'or failed_tail or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')in
             ('native QA timeout','absolute resource-slot deadline'))
+        if failed_tail:
+            from story_frozen_sources import verify_saved_prefix
+            failed_tail_proof=verify_saved_prefix(json.loads((prior/'story-commands.json').read_text()),sr,
+                json.loads((prior/'story-state.json').read_text()),checkpoint)
         if interrupted:
             from story_frozen_sources import verify_processed_queue
             verify_processed_queue(json.loads((prior/'story-commands.json').read_text()),sr,
@@ -176,6 +183,7 @@ if args.story_save_source:
            'priorRunCompleted':sv['status']=='pass',
            'runtimeUpgrade':True,'personalSave':False}
     if recovered_source_proof:story['interruptedSourceProof']=recovered_source_proof
+    if failed_tail_proof:story['failedTailRecovery']=failed_tail_proof
 stamp=datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')
 identity='oasc-edition-qa-'+args.edition+'-'+stamp
 out=ROOT/'.local/qa'/('gen2recomp-qa-'+args.edition+'-'+stamp);engine=out/'engine'

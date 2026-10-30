@@ -5,7 +5,8 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from tools.story_frozen_sources import REQUIRED, verify_frozen_sources, verify_processed_queue
+from tools.story_frozen_sources import REQUIRED, verify_frozen_sources, verify_processed_queue, verify_saved_prefix
+from copy import deepcopy
 
 
 class FrozenStorySourceTests(unittest.TestCase):
@@ -92,6 +93,76 @@ class StoryQueueTests(unittest.TestCase):
         for inputs,report,state in cases:
             with self.subTest(inputs=inputs,report=report,state=state):
                 with self.assertRaises(AssertionError):verify_processed_queue(inputs,report,state)
+
+
+class SavedPrefixTests(unittest.TestCase):
+    def fresh(self):
+        start={'source':'src/ui/Gen3StartMenu.lua'}
+        yes={'source':'src/ui/ChoiceBox.lua','index':1}
+        saved={'seq':3,'busy':False,'scriptRunning':False,'savedGameCount':54,
+               'top':{'source':'src/world/OverworldController.lua'}}
+        queue=[{'op':'press','button':'a'},{'op':'press','button':'a'},
+               {'op':'wait','frames':120},{'op':'step','dir':'down'},
+               {'op':'battle-attack','slot':2}]
+        rows=[{'seq':i+1,'input':deepcopy(command),'before':{'top':deepcopy(start),'stack':[deepcopy(start)]},'after':{}}
+              for i,command in enumerate(queue[:4])]
+        rows[1]['before']={'top':yes,'stack':[start,yes]}
+        rows[2]['after']=deepcopy(saved)
+        checkpoint={'saveMenuCommandRange':[1,3],'saveConfirmedSeq':2,'snapshotAfterSaveCommand':deepcopy(saved)}
+        report={'commands':rows,'status':'running'}
+        state={'seq':4,'busy':True,'savedGameCount':54}
+        return queue,report,state,checkpoint
+
+    def test_later_crash_recovers_only_the_saved_prefix_without_rewriting_evidence(self):
+        args=self.fresh();before=deepcopy(args)
+        proof=verify_saved_prefix(*args)
+        self.assertTrue(proof['checkpointOnly'])
+        self.assertFalse(proof['priorRunCompleted'])
+        self.assertEqual(proof['savedThroughSeq'],3)
+        self.assertEqual(proof['discardedCompletedCommands'],1)
+        self.assertEqual(proof['discardedPendingCommands'],1)
+        self.assertEqual(args,before)
+
+    def test_no_pending_input_or_crash_immediately_after_save_is_also_explicit(self):
+        for keep in [3,4]:
+            args=list(self.fresh());args[0]=args[0][:keep];args[1]['commands']=args[1]['commands'][:keep]
+            args[2].update(seq=keep,busy=False)
+            proof=verify_saved_prefix(*args)
+            self.assertEqual(proof['discardedCompletedCommands'],keep-3)
+            self.assertEqual(proof['discardedPendingCommands'],0)
+
+    def test_missing_or_reordered_saved_receipts_are_rejected(self):
+        for mutate in [lambda q,r,s,c:r['commands'][0].update(seq=2),
+                       lambda q,r,s,c:r['commands'][0].update(input={'op':'wait'}),
+                       lambda q,r,s,c:c.update(saveMenuCommandRange=[1,5]),
+                       lambda q,r,s,c:c.update(saveMenuCommandRange=[0,3]),
+                       lambda q,r,s,c:c.update(saveMenuCommandRange=[True,3])]:
+            args=self.fresh();mutate(*args)
+            with self.assertRaises(AssertionError):verify_saved_prefix(*args)
+
+    def test_unqualified_later_save_and_unacknowledged_state_are_rejected(self):
+        for changes in [{'savedGameCount':55},{'seq':5},{'busy':None}]:
+            args=self.fresh();args[2].update(changes)
+            with self.assertRaises(AssertionError):verify_saved_prefix(*args)
+
+    def test_saved_snapshot_and_idle_field_are_required(self):
+        for mutate in [lambda d:d.update(busy=True),lambda d:d.update(scriptRunning=True),
+                       lambda d:d.update(top={'source':'src/battle/BattleState.lua'}),
+                       lambda d:d.update(savedGameCount=53)]:
+            args=self.fresh();mutate(args[3]['snapshotAfterSaveCommand'])
+            with self.assertRaises(AssertionError):verify_saved_prefix(*args)
+
+    def test_actual_yes_inside_the_save_menu_is_required(self):
+        for mutate in [lambda q,r,s,c:c.update(saveConfirmedSeq=4),
+                       lambda q,r,s,c:r['commands'][1]['before']['top'].update(index=2),
+                       lambda q,r,s,c:r['commands'][1]['before'].update(stack=[]),
+                       lambda q,r,s,c:r['commands'][0]['before'].update(top={'source':'src/world/OverworldController.lua'})]:
+            args=self.fresh();mutate(*args)
+            with self.assertRaises(AssertionError):verify_saved_prefix(*args)
+
+    def test_a_completed_report_is_not_relabelled_as_crash_recovery(self):
+        args=self.fresh();args[1]['status']='pass'
+        with self.assertRaises(AssertionError):verify_saved_prefix(*args)
 
 
 if __name__=='__main__':unittest.main()

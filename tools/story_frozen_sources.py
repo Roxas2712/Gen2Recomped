@@ -31,6 +31,39 @@ def verify_processed_queue(queue, report, state):
             and report['status']=='pass'), 'Interrupted story has unprocessed input'
 
 
+def verify_saved_prefix(queue, report, state, checkpoint):
+    """Recover only a completed normal SAVE before a later native crash.
+
+    Unlike deadline recovery, a crashing command may still be pending. Its
+    tail is explicitly discarded; the failed run never becomes a passing run.
+    The caller must separately prove frozen sources, ownership and save bytes.
+    """
+    rows=report['commands']
+    assert isinstance(queue,list) and isinstance(rows,list), 'Invalid story input trace'
+    assert report['status']=='running', 'Crash recovery requires an unfinished native report'
+    assert len(rows)<=len(queue), 'Story input trace exceeds its queue'
+    for i,row in enumerate(rows,1):
+        assert row['seq']==i and row['input']==queue[i-1], 'Story queue and input receipt differ'
+    assert state['seq']==len(rows) and isinstance(state['busy'],bool), 'Crash state differs from completed receipts'
+    first,last=checkpoint['saveMenuCommandRange']
+    assert type(first)is int and type(last)is int and 1<=first<=last<=len(rows), 'Incomplete saved prefix'
+    saved=checkpoint['snapshotAfterSaveCommand']
+    assert rows[first-1]['before']['top']['source']=='src/ui/Gen3StartMenu.lua', 'Saved prefix did not start in SAVE menu'
+    assert rows[last-1]['after']==saved, 'Checkpoint differs from completed saved receipt'
+    assert saved['top']['source']=='src/world/OverworldController.lua' and saved['busy']is False, 'Checkpoint is not idle field'
+    assert not saved.get('scriptRunning'), 'Checkpoint still has an active script'
+    assert state['savedGameCount']==saved['savedGameCount'], 'Later unqualified SAVE cannot be discarded'
+    confirmed=checkpoint['saveConfirmedSeq']
+    assert type(confirmed)is int and first<=confirmed<=last, 'SAVE confirmation is outside its completed prefix'
+    yes=rows[confirmed-1]
+    assert (yes['input'].get('button')=='a' and yes['before']['top'].get('source')=='src/ui/ChoiceBox.lua'
+            and yes['before']['top'].get('index')==1
+            and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in yes['before']['stack'])), 'Saved prefix lacks its actual SAVE YES'
+    return {'method':'completed-normal-save-prefix-before-native-crash','checkpointOnly':True,
+            'savedThroughSeq':last,'discardedCompletedCommands':len(rows)-last,
+            'discardedPendingCommands':len(queue)-len(rows),'priorRunCompleted':False}
+
+
 def verify_frozen_sources(engine, manifest):
     engine, manifest = Path(engine), Path(manifest)
     assert not engine.is_symlink() and engine.is_dir(), 'Missing original frozen host'
