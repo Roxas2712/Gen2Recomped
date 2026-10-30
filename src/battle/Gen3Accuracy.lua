@@ -79,7 +79,10 @@ function A.check(battle, move, user, target, accuracyRaw)
   local base = tonumber(move.accuracy) or 100
   if effect == 152 and sky == "SUN" then
     base = 50
-  elseif accuracyRaw ~= nil then
+  -- The shared effect dispatcher uses false for an absent effect record.
+  -- Its optional accuracy override is therefore nil or false when unused;
+  -- a numeric zero remains a real override (and is truthy in Lua).
+  elseif accuracyRaw then
     base = accuracyRaw * 100 / 255
   end
   local calc = math.floor(STAGE[buff] * base / 100)
