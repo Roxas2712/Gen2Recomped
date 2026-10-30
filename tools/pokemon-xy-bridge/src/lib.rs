@@ -59,7 +59,9 @@ pub unsafe extern "C" fn ascendant_3ds_open(json:*const libc::c_char)->*mut Brid
   if !(1..=8).contains(&request.resolution){return Err("Resolution out of range".into());}
   std::fs::create_dir_all(&request.data).map_err(|e|e.to_string())?;
   if let Some(parent)=request.session_lock.parent(){std::fs::create_dir_all(parent).map_err(|e|e.to_string())?;}
-  let lease=OpenOptions::new().create(true).append(true).open(&request.session_lock).map_err(|e|e.to_string())?;
+  // Windows LockFileEx requires read or non-append write access. An append-
+  // only handle fails even when nobody holds the session lock.
+  let lease=OpenOptions::new().create(true).read(true).append(true).open(&request.session_lock).map_err(|e|e.to_string())?;
   lease.try_lock().map_err(|_|"Eine andere 3DS-Sitzung ist noch aktiv. Bitte dort zuerst beenden.".to_owned())?;
   let config=Config{data_dir:Some(request.data),recompiled:Some(request.library),hardware_renderer:true,resolution:request.resolution,language:request.language,slider_3d:if request.stereo=="off"{0.0}else{request.depth_3d.min(100) as f32/100.0},texture_packs:request.texture_packs,..Config::default()};
   let system=zakuro_core::loader::load(request.rom,config).map_err(|e|e.to_string())?;
@@ -172,6 +174,14 @@ pub unsafe extern "C" fn ascendant_3ds_assess(seconds:*const f64,length:usize,ha
 #[cfg(test)]
 mod device_tests {
  use super::*;
+ #[test]fn session_lease_is_acquirable_exclusive_and_released(){
+  let path=std::env::temp_dir().join(format!("retro-3ds-own-lock-{}-{}",std::process::id(),std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()));
+  let first=OpenOptions::new().create(true).read(true).append(true).open(&path).unwrap();
+  first.try_lock().unwrap();
+  let second=OpenOptions::new().read(true).append(true).open(&path).unwrap();
+  assert!(second.try_lock().is_err());drop(first);
+  second.try_lock().unwrap();drop(second);std::fs::remove_file(path).unwrap();
+ }
  fn assess(samples:&[f64],scale:u32)->Assessment{let mut out=Assessment::default();unsafe{assert!(ascendant_3ds_assess(samples.as_ptr(),samples.len(),true,true,scale,&mut out));}out}
  #[test]fn qualified_startup_is_full_emulation_speed(){let out=assess(&vec![0.012;360],3);assert_eq!(out.status,2);assert!((out.fps-83.333333).abs()<0.001);}
  #[test]fn slow_profile_requests_lower_resolution_before_weak(){assert_eq!(assess(&vec![0.020;360],3).status,3);assert_eq!(assess(&vec![0.020;360],1).status,4);}
