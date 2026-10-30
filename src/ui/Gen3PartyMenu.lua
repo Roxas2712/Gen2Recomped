@@ -174,6 +174,7 @@ function Gen3PartyMenu.new(game, opts)
     if self.rsLayout==nil and self.battle and self.battle.isDouble and self.battle:isDouble() then self.rsLayout=1 end
     self.rsNative=require('src.ui.Gen3RsParty').new(self)
   end
+  if require('src.ui.Gen3NativeParty').forHost(self)then self.gbaNative=require('src.ui.Gen3NativeParty').new(self)end
   if not self.words then
     Logger.warn("gen3 party: this dataset carries no action words -- falling "
                 .. "back to the engine's own")
@@ -192,6 +193,10 @@ end
 
 -- slots 1..6, then the CANCEL button as slot #party+1
 function Gen3PartyMenu:slots() return #self:party() + 1 end
+
+function Gen3PartyMenu:exit()
+  if self.gbaNative then self.gbaNative:exit();self.gbaNative=nil end
+end
 
 -- ...ONCE.  A field move now closes this screen BEFORE its presentation
 -- plays (see useFieldMove), and the three actions that serve one each close it
@@ -1616,6 +1621,7 @@ function Gen3PartyMenu:drawMember(mon, panel, selected, inset)
 end
 
 function Gen3PartyMenu:draw()
+  if self.gbaNative then return self.gbaNative:draw()end
   if self.rsNative then return self.rsNative:draw()end
   local inset = math.max(0, math.floor((16 - Font.glyphHeight()) / 2))
   local rec = self:record()

@@ -889,6 +889,7 @@ local function pickTargetAndUse(game, battle, id, list, options)
     -- route also retains its own target until its native use flow completes.
     keepOpen = ((battle or wantsMove) and require("src.core.GameVersion").isGen2())
       or require('src.inventory.Gen3RsMachineUse').fromBag(game,battle,id,list)
+      or require('src.ui.Gen3NativeParty').retainStatus(game,battle,id,list)
       or ((not battle) and (ItemEffects.healsHP(id)
         or (id == "RARE_CANDY" and require("src.core.GameVersion").isFRLG()))),
     onSwitch = function(mon, picker)

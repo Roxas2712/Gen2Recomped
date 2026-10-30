@@ -59610,6 +59610,7 @@ function RomExtractorGen3:run()
   require('src.import.Gen3BagSaleAssets').extract(self)
   require('src.import.Gen3EmeraldBagAssets').extract(self)
   require('src.import.Gen3EmeraldItemPcAssets').extract(self)
+  require('src.import.Gen3NativePartyAssets').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
   -- Script and late UI stages can add prose after the initial scan. Snapshot

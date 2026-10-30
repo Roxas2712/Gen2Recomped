@@ -71,6 +71,8 @@ function M.learnedOptions(game)
   end}}
 end
 function M.textBox(game,text,onDone,opts)
+  local native=require('src.ui.Gen3NativeParty').message(game,text,onDone,opts)
+  if native then return native end
   local TextBox=require('src.render.TextBox')
   local party
   if M.active()then
