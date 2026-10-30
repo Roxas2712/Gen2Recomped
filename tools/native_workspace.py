@@ -35,7 +35,9 @@ class WindowsStorage:
                     dirs[:]=[d for d in dirs if not(Path(folder)/d).is_symlink()]
                     for name in files:
                         item=Path(folder)/name
-                        if not item.is_symlink():total+=item.stat().st_size
+                        try:
+                            if not item.is_symlink():total+=item.stat().st_size
+                        except FileNotFoundError:pass  # A compiler committed/retired its temporary output.
                     if total>limit:break
             if total>limit:raise RuntimeError('Native build storage limit exceeded. Sources, ROMs and saves were preserved: '+str(path))
     def close(self,**_):pass

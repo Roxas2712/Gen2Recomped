@@ -13,6 +13,11 @@ on:
       - tests/engine/launcher_sequence.lua
       - .github/workflows/pokemon-xy-contract.yml
   workflow_dispatch:
+    inputs:
+      native_windows_sdk:
+        description: Build and test the Windows native game SDK
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -20,6 +25,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   headless:
+    if: ${{ inputs.native_windows_sdk != true }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,3 +34,6 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y luajit lua5.4
       - name: Check imports, mods, language and presentation without game data
         run: python3 tools/run_pokemon_xy_contract.py
+  native-windows-sdk:
+    if: ${{ inputs.native_windows_sdk == true }}
+    uses: ./.github/workflows/windows-native-games.yml

@@ -19,5 +19,5 @@ uint32_t ascendant_pinball_read(void*,uint32_t,uint32_t);
 int ascendant_pinball_close(void*);
 ]]
 local M={ffi=ffi}
-function M.load(path)return ffi.load(assert(path,'Pinball runtime has not been prepared.'))end
+function M.load(path)return require('src.core.NativeLibrary').load(assert(path,'Pinball runtime has not been prepared.'))end
 return M

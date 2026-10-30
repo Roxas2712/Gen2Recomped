@@ -1,7 +1,7 @@
 -- GBA Pinball library card and shared-window launch, by Roxas2712.
 local M={};local Json=require('src.link.Json');local Strings=require('src.core.Strings')
-local function read(path)if not path then return end;local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
-local function exists(path)if type(path)~='string'then return false end;local f=io.open(path,'rb');if not f then return false end;f:close();return true end
+local function read(path)if not path then return end;if love.system and love.system.getOS()=='Windows'then return require('src.core.NativeFile').read(path)end;local f=io.open(path,'rb');if not f then return end;local b=f:read('*a');f:close();return b end
+local function exists(path)if type(path)~='string'then return false end;return require('src.import.PokemonXYBackend').exists(path)end
 local function sourceRoot()
  return require('src.pinball.Backend').root()
 end
@@ -35,6 +35,7 @@ function M.install(RI)
   self._pinJob=love.thread.newThread('src/pinball/import_worker.lua')
   self._pinNotice='Preparing your Pinball game …'
   self._pinJob:start({root=root,python=require('src.pinball.Backend').python(),path=path,
+   runtime_root=require('src.import.PokemonXYBackend').runtime(),
    cmake=os.getenv('ASCENDANT_PINBALL_CMAKE'),ninja=os.getenv('ASCENDANT_PINBALL_NINJA')},self._pinImportChannel)
  end
  function RI:_pinChooseImport()

@@ -23,5 +23,5 @@ ffi.cdef[[
  size_t ascendant_3ds_layout(uint32_t,uint32_t,uint32_t,uint32_t,bool,bool,AscendantPlace*,size_t);
 ]]
 local M={ffi=ffi}
-function M.load(path)return ffi.load(path)end
+function M.load(path)return require('src.core.NativeLibrary').load(path)end
 return M

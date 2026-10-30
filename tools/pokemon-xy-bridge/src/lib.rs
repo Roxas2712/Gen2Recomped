@@ -49,8 +49,12 @@ pub unsafe extern "C" fn ascendant_3ds_open(json:*const libc::c_char)->*mut Brid
   }
   if let Some(path)=&request.driver_manifest {
    if !path.is_file(){return Err("Bundled graphics driver is missing".into());}
-   std::env::set_var("VK_DRIVER_FILES",path);
-   std::env::set_var("VK_ICD_FILENAMES",path);
+   if cfg!(windows) {
+    std::env::set_var("VK_ADD_DRIVER_FILES",path);
+   }else{
+    std::env::set_var("VK_DRIVER_FILES",path);
+    std::env::set_var("VK_ICD_FILENAMES",path);
+   }
   }
   if !(1..=8).contains(&request.resolution){return Err("Resolution out of range".into());}
   std::fs::create_dir_all(&request.data).map_err(|e|e.to_string())?;

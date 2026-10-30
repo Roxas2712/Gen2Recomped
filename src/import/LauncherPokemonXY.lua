@@ -4,6 +4,7 @@ local M={}
 local Json=require('src.link.Json')
 local Strings=require('src.core.Strings')
 local function read(path)
+ if love.system and love.system.getOS()=='Windows'then return require('src.core.NativeFile').read(path)end
  local f=io.open(path,'rb');if not f then return end
  local s=f:read('*a');f:close();return s
 end
@@ -50,7 +51,7 @@ function M.install(RI)
   local root,why=sourceRoot();if not root then self._xyNotice=Strings(why);return end
   local runtime=require('src.import.PokemonXYBackend').runtime()
   local f=io.open('/opt/homebrew/bin/python3','rb')
-  local python=os.getenv('POKEMON_XY_PYTHON') or (runtime and runtime..'/python/bin/python3.12') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
+  local python=os.getenv('POKEMON_XY_PYTHON') or require('src.import.PokemonXYBackend').file('python') or (f and '/opt/homebrew/bin/python3' or 'python3');if f then f:close() end
   local channel=love.thread.getChannel('pokemon.xy.result');channel:clear()
   self._xyJob=love.thread.newThread('src/import/pokemon_xy_worker.lua')
   self._xyNoticeIsError=false
@@ -66,8 +67,8 @@ function M.install(RI)
    if self._xyData then
     local runtime=require('src.import.PokemonXYBackend').runtime()
     local meta=runtime and decode(read(runtime..'/runtime.json'))
-    local bridge=runtime and runtime..'/lib/libascendant_3ds_bridge.dylib' or root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib'
-    local function exists(path)local f=type(path)=='string' and io.open(path,'rb');if f then f:close();return true end;return false end
+    local bridge=require('src.import.PokemonXYBackend').file('bridge') or root..'/.local/pokemon-x/bin/libascendant_3ds_bridge.dylib'
+    local exists=require('src.import.PokemonXYBackend').exists
     for _,version in ipairs{'x','y'}do
      local row=self._xyData[version]
      if row then

@@ -74,7 +74,12 @@ def main():
     p.add_argument('--cmake',default='cmake')
     p.add_argument('--ninja',default='ninja')
     p.add_argument('--worker-protocol',action='store_true')
+    p.add_argument('--runtime-root',type=Path,help='Bundled Windows native SDK')
     args=p.parse_args()
+    if os.name=='nt' and args.action!='status':
+        if not args.runtime_root:raise ValueError('The bundled Windows native runtime is required to prepare Pinball.')
+        import pinball_windows
+        return pinball_windows.main(ROOT,args,sys.modules[__name__])
     work=ROOT/'.local/pinball-rs'
     config=work/'library.json'
     if args.action=='status':
