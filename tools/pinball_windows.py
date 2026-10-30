@@ -78,17 +78,17 @@ def compile_guest(root,sdk,runtime,rom,region,build,final,qa):
     def compile_one(pair):
         index,file=pair;obj=build/('native-'+str(index)+'.o');log=build/('compile-'+str(index)+'.log')
         with log.open('w',encoding='utf-8')as stream:
-            qa.qa_run([compiler,*flags,'-c',str(file),'-o',str(obj)],env=env,stdout=stream,stderr=stream,check=True)
+            qa.qa_run([compiler,*flags,'-c',str(file),'-o',obj.name],cwd=build,env=env,stdout=stream,stderr=stream,check=True)
         print(json.dumps({'progress':'Compiling Pinball native code','completed':index+1,'total':len(sources)}),flush=True)
         return obj
     with concurrent.futures.ThreadPoolExecutor(max_workers=2)as pool:objects=list(pool.map(compile_one,enumerate(sources)))
     pending=final.with_suffix('.pending.dll')
-    command=[compiler,'-shared','-static','-Wl,--export-all-symbols','-o',str(pending),*[str(p)for p in objects],
+    command=[compiler,'-shared','-static','-Wl,--export-all-symbols','-o',pending.name,*[p.name for p in objects],
         '-Wl,--start-group',*[str(sdk/p)for p in runtime['libraries']],'-Wl,--end-group',
         '-lws2_32','-lcomdlg32','-lole32','-luuid','-ladvapi32','-lshell32','-lwinmm']
     log=build/'link.log'
     try:
-        with log.open('w',encoding='utf-8')as stream:qa.qa_run(command,env=env,stdout=stream,stderr=stream,check=True)
+        with log.open('w',encoding='utf-8')as stream:qa.qa_run(command,cwd=build,env=env,stdout=stream,stderr=stream,check=True)
     except subprocess.CalledProcessError as error:
         raise RuntimeError('Native Pinball linking failed:\n'+log.read_text(encoding='utf-8',errors='replace')[-12000:])from error
     # The previous working library remains intact after an interrupted linker.

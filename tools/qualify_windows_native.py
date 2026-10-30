@@ -36,7 +36,7 @@ def main():
         env=dict(os.environ,PATH=str(sdk/'compiler/bin')+os.pathsep+os.environ.get('PATH',''))
         source=work/'compiler-fixture.c';source.write_text('__declspec(dllexport) int native_sdk_answer(void) { return 42; }\n')
         library=work/'compiler-fixture.dll'
-        qa.qa_run([str(sdk/'compiler/bin/clang.exe'),'-shared','-O2',str(source),'-o',str(library)],env=env,check=True)
+        qa.qa_run([str(sdk/'compiler/bin/clang.exe'),'-shared','-O2',source.name,'-o',library.name],cwd=work,env=env,check=True)
         dll=ctypes.CDLL(str(library));dll.native_sdk_answer.restype=ctypes.c_int
         check(dll.native_sdk_answer()==42,'Bundled C compiler creates a loadable Windows DLL in a Unicode path')
         rom=work/'synthetic-gba.fixture';body=bytearray(1024);struct.pack_into('<I',body,0xC0,0xEAFFFFFE);rom.write_bytes(body)

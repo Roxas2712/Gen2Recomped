@@ -41,7 +41,7 @@ function M.run(check)
  -- Clang, including its linker children. Starting Clang directly from the
  -- legacy LOVE host gives those children the host's ANSI code page instead.
  pipe=assert(Process.argv({assert(Backend.file('python')),'-X','utf8','-c',
-  'import os,pathlib,subprocess,sys;cc,src,dst=map(pathlib.Path,sys.argv[1:]);assert src.is_file() and dst.parent.is_dir(),"Native fixture paths are missing";os.environ["PATH"]=str(cc.parent)+os.pathsep+os.environ.get("PATH","");sys.exit(subprocess.run([str(cc),"-v","-shared","-O2",str(src),"-o",str(dst)]).returncode)',
+  'import os,pathlib,subprocess,sys;cc,src,dst=map(pathlib.Path,sys.argv[1:]);assert src.is_file() and dst.parent==src.parent and dst.parent.is_dir(),"Native fixture paths are missing";os.environ["PATH"]=str(cc.parent)+os.pathsep+os.environ.get("PATH","");sys.exit(subprocess.run([str(cc),"-shared","-O2",src.name,"-o",dst.name],cwd=src.parent).returncode)',
   sdk..'/compiler/bin/clang.exe',cfile,dll},true))
  lines={};for line in pipe:lines()do lines[#lines+1]=line end
  assert(pipe:close(),table.concat(lines,'\n'))
