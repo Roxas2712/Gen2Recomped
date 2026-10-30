@@ -32,6 +32,11 @@ def clone(qa,url,path,revision):
     qa.qa_run(['git','checkout','--detach',revision],cwd=path,check=True)
     actual=qa.qa_run(['git','rev-parse','HEAD'],cwd=path,capture_output=True,text=True,check=True).stdout.strip()
     if actual!=revision:raise ValueError('Source pin mismatch')
+def notices(source,target,prefix):
+    for file in source.glob('LICENSE*'):
+        destination=target/(prefix+'-'+file.name)
+        if file.is_dir():shutil.copytree(file,destination)
+        elif file.is_file():shutil.copy2(file,destination)
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--out',type=Path,required=True)
     parser.add_argument('--graphics',action='store_true');a=parser.parse_args()
@@ -118,7 +123,7 @@ def main():
                 if file.is_file()and file.stat().st_size<1024**2:shutil.copy2(file,dest/file.name)
     (out/'licenses/rust-components.json').write_text(json.dumps(records,indent=2)+'\n')
     for name in ['zakuro','3dsrecomp']:
-        for file in (xy/name).glob('LICENSE*'):shutil.copy2(file,out/'licenses'/(name+'-'+file.name))
+        notices(xy/name,out/'licenses',name)
     shutil.copy2(ROOT/'LICENSE-ROXAS2712.md',out/'licenses/LICENSE-ROXAS2712.md')
     artifacts={name:digest(out/path)for name,path in {'compiler':'bin/3dsrecomp.exe','cc':'compiler/bin/clang.exe',
         'bridge':'lib/ascendant_3ds_bridge.dll','python':'python/python.exe'}.items()}
@@ -150,7 +155,7 @@ def build_graphics(qa,work,out,components):
     dll=list((work/'loader-build').rglob('vulkan-1.dll'))
     if len(dll)!=1:raise ValueError('Native Vulkan loader is missing')
     shutil.copy2(dll[0],out/'vulkan/vulkan-1.dll')
-    for file in loader.glob('LICENSE*'):shutil.copy2(file,out/'licenses'/('vulkan-loader-'+file.name))
+    notices(loader,out/'licenses','vulkan-loader')
     swift=work/'swiftshader';clone(qa,'https://github.com/google/swiftshader.git',swift,components['swiftshader'])
     qa.qa_run(['git','submodule','update','--init','--recursive'],cwd=swift,check=True)
     build=work/'swiftshader-build'
