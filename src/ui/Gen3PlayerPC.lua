@@ -406,6 +406,7 @@ local function itemStorage(game, onCancel)
   -- placed on the GBA's own 240x160, not the Game Boy's centred 160x144
   function sub:uiSize() return 240, 160 end
   sub.gen3PlayerPC = true
+  require('src.ui.Gen3EmeraldPcMenu').decorate(sub,game,'storage')
   game.stack:push(sub)
 end
 
@@ -538,6 +539,7 @@ function Gen3PlayerPC.new(game, opts)
   })
   function menu:uiSize() return 240, 160 end
   menu.gen3PlayerPC = true
+  require('src.ui.Gen3EmeraldPcMenu').decorate(menu,game,'player')
   return menu
 end
 

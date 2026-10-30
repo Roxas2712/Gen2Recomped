@@ -30,6 +30,18 @@ return function(game)
   assert(raw==S.encode(game.save)and rng==love.math.getRandomState())
   assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name;persist()
  end
+ local Commands=require('src.script.Gen3Commands');local resumes,yields=0,0
+ local ctx={game=game,save=game.save,runner={resume=function()resumes=resumes+1 end,
+  yield=function()yields=yields+1 end}}
+ Commands.SPECIALS[265](ctx);local root=game.stack:top()
+ assert(root.emeraldPcPresenter and #root.items==3);shot('emerald-center-pc-root')
+ press('down');press('a');assert(game.stack:top()==world and game.save.gen3Vars[Commands.VAR_RESULT]==1)
+ assert(resumes==1 and yields==1,'Root must resume its script owner exactly once')
+ game.save.options.gen3Frame=20
+ Commands.SPECIALS[265](ctx);shot('emerald-center-pc-last-frame');press('b')
+ assert(game.stack:top()==world and game.save.gen3Vars[Commands.VAR_RESULT]==Commands.MULTI_B_PRESSED)
+ assert(resumes==2 and yields==2,'Root B must preserve the raw cartridge cancel result')
+ game.save.options.gen3Frame=1
  game.stack:push(require('src.ui.Gen3PlayerPC').new(game,{order='bedroom'}));U.wait(20)
  shot('emerald-player-pc-menu')
  press('a');local menu=game.stack:top();shot('emerald-item-storage-menu')
