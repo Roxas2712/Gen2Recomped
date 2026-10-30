@@ -60,7 +60,7 @@ return function(game)
     if s.trainer then r.trainer=fields(s.trainer,{'name','class','id','index'})end
     return r
   end
-  local function snapshot()
+  local function snapshot(persistReport)
     local world=game.overworld;local state={seq=seq,busy=busy,frame=U.frame(),top=screen(game.stack:top()),party={},
       inventory={},flags={},vars={},stack={}}
     state.savedGameCount=(game.save.gen3Stats or{})[0]or 0
@@ -102,7 +102,9 @@ return function(game)
         lastMap=map.id;report.maps[#report.maps+1]={id=map.id,x=world.player.cellX,y=world.player.cellY,frame=U.frame()}
       end
     end
-    write('story-state.json',state);write('result.json',report)
+    write('story-state.json',state)
+    -- Keep idle heartbeats small; completed input receipts flush the full ledger.
+    if persistReport~=false then write('result.json',report)end
     return state
   end
   local inputLog
@@ -154,9 +156,9 @@ return function(game)
     local f=io.open(out..'/story-commands.json','r');local commands
     if f then local raw=f:read('*a');f:close();commands=J.decode(raw)end
     local command=commands and commands[seq+1]
-    if not command then U.wait(60);snapshot()
+    if not command then U.wait(60);snapshot(false)
     else
-      busy=true;snapshot();local record={seq=seq+1,input=command,before=snapshot(),outcome='done',ordinaryInputs={}}
+      busy=true;snapshot(false);local record={seq=seq+1,input=command,before=snapshot(false),outcome='done',ordinaryInputs={}}
       inputLog=record.ordinaryInputs
       if command.op=='press'then
         for _=1,math.min(tonumber(command.times)or 1,200)do press(assert(command.button),command.wait or 12)end
@@ -180,7 +182,7 @@ return function(game)
       elseif command.op=='advance'then
         for _=1,math.min(command.frames or 600,12000)do
           if freeField()then break end
-          press('a',command.wait or 12);snapshot()
+          press('a',command.wait or 12);snapshot(false)
         end
       elseif command.op=='battle-attack'then record.outcome=require('tests.drivers.story_battle').attack(game,U,press,assert(tonumber(command.slot)))
       elseif command.op=='shot'then shot(assert(command.name))
@@ -203,7 +205,7 @@ return function(game)
         report.continuousOpeningToBrock=true;report.status='pass';seq=seq+1;busy=false;snapshot()
         print('PASS_LEAFGREEN_CONTINUOUS_OPENING');love.event.quit(0);return
       else error('Unsupported ordinary-input story command: '..tostring(command.op))end
-      inputLog=nil;seq=seq+1;busy=false;record.after=snapshot();report.commands[#report.commands+1]=record;write('result.json',report)
+      inputLog=nil;seq=seq+1;busy=false;record.after=snapshot(false);report.commands[#report.commands+1]=record;write('result.json',report)
     end
   end
 end
