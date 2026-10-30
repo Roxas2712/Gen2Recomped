@@ -71,8 +71,10 @@ or patch download is required. See the
 > repository, the people behind it can change its content at any time. This
 > GitHub repository is the only official source for gen2recomp.
 
-This project does not include a ROM, emulate the Game Boy, GBA or DS,
-transpile assembly, or download a disassembly. A canonical cartridge dump of
+The core RPG implementation does not include a ROM, emulate the Game Boy, GBA
+or DS, transpile assembly, or download a disassembly. Optional cartridge
+backends such as TCG have separate execution and private-build contracts in
+their linked guides. A canonical cartridge dump of
 one of the [supported games](#supported-games) is the only game content input.
 
 The ROM is verified, used during import, and then released from memory. It is
@@ -94,6 +96,10 @@ into a folder the launcher scans instead. See
 [Downloads](#downloads--which-file-do-i-want) for the exact path per device.
 
 ### Supported games
+
+**Pokémon Trading Card Game (GBC)** has an optional hybrid recompiled backend
+with direct online Link Duels and infrared card sending/receiving. See
+[local preparation, controls and qualification scope](docs/TCG-GBC.md).
 
 Only specific canonical dumps are accepted. The importer verifies SHA-1 before
 creating any game data; a dump it does not accept is named (game, region,

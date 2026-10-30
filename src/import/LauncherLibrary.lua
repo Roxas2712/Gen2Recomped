@@ -18,6 +18,7 @@ local EDITIONS = {
   soulsilver = {{173,195,220}, 'SOUL SILVER'}, black = {{159,165,186}, 'BLACK'},
   white = {{223,221,211}, 'WHITE'},
   x = {{93,181,255}, 'X'}, y = {{245,107,139}, 'Y'},
+  tcggbc = {{95,167,209}, 'TCG'},
   pinballrs = {{221,111,143}, 'PINBALL R/S'},
 }
 local CARD_ACCENTS = {
