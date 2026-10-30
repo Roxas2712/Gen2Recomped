@@ -300,7 +300,10 @@ function Gen3BagMenu.new(game, opts)
   self.emerald = require('src.ui.Gen3EmeraldBagView').available(self)
   require('src.ui.Gen3BagPocketMemory').restore(self)
   self:rebuild()
-  if self.emerald then require('src.ui.Gen3EmeraldBagPocket').restore(self)end
+  if self.emerald then
+    require('src.ui.Gen3EmeraldBagPocket').restore(self)
+    require('src.ui.Gen3EmeraldBagTransition').open(self)
+  end
   return self
 end
 
@@ -427,6 +430,11 @@ function Gen3BagMenu:rebuild()
 end
 
 function Gen3BagMenu:close()
+  if self.emerald and require('src.ui.Gen3EmeraldBagTransition').close(self,function()
+    require('src.ui.Gen3EmeraldBagPocket').remember(self)
+    self.game.stack:pop()
+    if self.onCancel then self.onCancel()end
+  end)then return end
   if self.emerald then require('src.ui.Gen3EmeraldBagPocket').remember(self)end
   self.game.stack:pop()
   if self.onCancel then self.onCancel() end
@@ -735,6 +743,11 @@ function Gen3BagMenu:choose()
   -- a bag opened to ANSWER A QUESTION hands the answer back and closes; it
   -- does not offer to use or toss what was picked
   if self.pick then
+    if self.emerald and require('src.ui.Gen3EmeraldBagTransition').close(self,function()
+      require('src.ui.Gen3EmeraldBagPocket').remember(self)
+      self.game.stack:pop()
+      if self.onPick then self.onPick(row.id,row.rsSlot)end
+    end)then return end
     self.game.stack:pop()
     if self.onPick then self.onPick(row.id,row.rsSlot) end
     return
@@ -960,6 +973,7 @@ end
 function Gen3BagMenu:update(dt)
   -- the cursor blinks, so the screen counts frames (see drawRows)
   self.tick = (self.tick or 0) + 1
+  if self.emerald and require('src.ui.Gen3EmeraldBagTransition').update(self)then return end
   if self.script then self.script(self) end
   if self.noInput then return end
   local input = self.game.input
