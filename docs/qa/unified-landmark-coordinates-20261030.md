@@ -24,3 +24,11 @@ The tests use synthetic imported data and real native consumers, with graphics
 IO observed through the existing test boundary. No installed mod, ROM, player
 profile or Gen1 instance is changed. Read-only cross-edition dataset projection
 and visual/device qualification are separate follow-ups, not certified here.
+
+Hosted follow-up: a macOS setup failed with DNS resolution while fetching the
+public LÖVE runtime, before any engine test started. The setup now uses a
+separate acquisition helper with three bounded attempts for transient
+network/server/truncated-ZIP failures, validates ZIP contents, and publishes
+only a completed archive. Permanent HTTP/certificate failures remain failures.
+Six ROM-free Python tests cover this policy and preservation/cleanup. Actual
+engine test failures are never retried by this helper.

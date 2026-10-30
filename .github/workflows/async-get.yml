@@ -27,7 +27,8 @@ jobs:
       - name: Exercise real worker requests against a local server
         shell: python
         run: |
-          import os, pathlib, shutil, subprocess, urllib.request, zipfile
+          import os, pathlib, shutil, subprocess, sys, zipfile
+          subprocess.run([sys.executable, '-m', 'unittest', 'discover', '-s', 'tests', '-p', 'ci_runtime_download_test.py'], check=True)
           host = os.environ['RUNNER_OS']
           if host == 'Linux':
               executable = shutil.which('love')
@@ -36,7 +37,7 @@ jobs:
               target = pathlib.Path(os.environ['RUNNER_TEMP']) / 'love-get-check'
               target.mkdir()
               archive = target / 'runtime.zip'
-              urllib.request.urlretrieve(f'https://github.com/love2d/love/releases/download/11.5/love-11.5-{suffix}.zip', archive)
+              subprocess.run([sys.executable, 'tools/ci_runtime_download.py', f'https://github.com/love2d/love/releases/download/11.5/love-11.5-{suffix}.zip', str(archive)], check=True)
               with zipfile.ZipFile(archive) as z: z.extractall(target)
               executable = next(target.rglob('love.app/Contents/MacOS/love')) if host == 'macOS' else next(target.rglob('lovec.exe'))
               if host == 'macOS': executable.chmod(0o755)
