@@ -164,7 +164,12 @@ function Storage.install(RI)
   local play=RI.play
   RI.play=function(self,...)
     -- A discarded launcher cannot continue a coroutine into a running game.
-    if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
+    if self._storageTask then
+      self._storageTask:cancel();self._storageTask=nil
+      if self._storageProgress then Sync.result({sync=self._storageProgress.sync,warnings={'Extra transfer cancelled. Local saves are preserved.'}})
+      else Sync.set('cancelled') end
+      self._storageProgress=nil
+    end
     return play(self,...)
   end
   local update=RI.update
