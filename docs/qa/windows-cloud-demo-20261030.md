@@ -151,3 +151,22 @@ commit `9fbc2a782ee3f8a4db64e7d991e23da75e893f44`; the new run must pass before
 release. Native qualification additionally exercises self-authored ARM11/ARM
 programs, Vulkan device creation, exact snapshot restore and SRAM replacement.
 Those checks never imply a played Pokémon session or a player cloud upload.
+
+The updated Windows engine qualification
+[41124257857](https://github.com/Roxas2712/Gen2Recomped/actions/runs/41124257857)
+passed on source `7e03e6bde59ca3f3974be76ca1621ee96fb9b7ba`:
+**1,020 standalone engine suites per stock/extended runtime**, closure and C API
+checks, followed by the actual LÖVE host/thread/FFI checks. The qualified extended
+library SHA-256 is
+`a85544b2f7e877b4b0795ac69d4523aad43e657186a4aaa06c531c5c3974ae6f`.
+The Windows component artifact is `13010804640`; source-tree equality remains
+mandatory for the final package.
+
+SDK run `41125854544` built Vulkan but stopped copying its `LICENSES` directory;
+notice directories are now retained recursively. Run `41127460663` correctly
+stopped at the 4-GiB workspace budget while fetching unused PowerVR examples.
+The builder now excludes test/example/debug submodules and avoids a duplicate
+compiler extraction. It keeps the 4-GiB limit and 20-GiB reserve. These failures
+are build evidence, not passing SDK qualification. The final report must also
+pass native execution/snapshot/SRAM/PCM checks and the actual launcher backend
+import/compile/prepare CLI using self-authored fixtures.
