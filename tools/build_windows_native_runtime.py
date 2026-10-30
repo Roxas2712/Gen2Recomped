@@ -46,13 +46,16 @@ def main():
     qa=manager(ROOT);qa.qa_source(ROOT);qa.qa_copy(out)
     work=ROOT/'.local/qa/windows-native-sdk-build';work.mkdir(parents=True,exist_ok=True);qa.qa_cache(work)
     components=json.loads((ROOT/'tools/windows_native_components.json').read_text())
+    out.mkdir(parents=True)
     for name in ['compiler','python']:
         row=components[name];archive=work/(name+'.archive');download(row['url'],archive,row['sha256'])
-        unpack=work/(name+'-unpacked')
-        if not unpack.exists():extract(archive,unpack)
-    out.mkdir(parents=True)
-    shutil.copytree(next((work/'compiler-unpacked').iterdir()),out/'compiler')
-    shutil.copytree(work/'python-unpacked/python',out/'python')
+        # Extract once into the owned candidate. Moving its top-level folder
+        # avoids a second gigabyte of compiler bytes in the build workspace.
+        unpack=out/('.unpack-'+name);extract(archive,unpack)
+        source=next(unpack.iterdir())if name=='compiler'else unpack/'python'
+        source.rename(out/name)
+        try:unpack.rmdir()
+        except OSError:pass
     for folder in ['bin','lib','licenses','gbarecomp-libs','vulkan']:(out/folder).mkdir()
     xy=ROOT/'.local/pokemon-x';pins=xy_sources(ROOT,xy,qa)
     env=dict(os.environ,RUSTUP_TOOLCHAIN=components['rust'],CARGO_TARGET_DIR=str(work/'cargo-target'),CARGO_BUILD_JOBS='2',CARGO_INCREMENTAL='0',CARGO_PROFILE_RELEASE_DEBUG='0')
@@ -85,7 +88,7 @@ def main():
     free=work/'bios-generated'
     qa.qa_run([str(generator),'--bios',str(bios),'--out',str(free)],check=True)
     qa.qa_run(base+['-DGBARECOMP_GENERATED_BIOS_DIR='+str(free)],check=True)
-    targets=['gbarecomp_runtime','gbarecomp_debug','gbarecomp_gba','gbarecomp_armv4t','gbarecomp_recompile_core']
+    targets=['gbarecomp_runtime','gbarecomp_debug','gbarecomp_gba','gbarecomp_armv4t','gbarecomp_recompile_core','gbarecomp_heal_gate']
     qa.qa_run(['cmake','--build',str(native),'--target',*targets,'--parallel','2'],check=True)
     shutil.copy2(generator,out/'bin/gba_recompile.exe')
     libraries=[]
@@ -157,10 +160,15 @@ def build_graphics(qa,work,out,components):
     shutil.copy2(dll[0],out/'vulkan/vulkan-1.dll')
     notices(loader,out/'licenses','vulkan-loader')
     swift=work/'swiftshader';clone(qa,'https://github.com/google/swiftshader.git',swift,components['swiftshader'])
-    qa.qa_run(['git','submodule','update','--init','--recursive'],cwd=swift,check=True)
+    # Runtime dependencies (including the trimmed LLVM backend) are tracked in
+    # this pinned checkout. Test/debug/PowerVR/llvm-project submodules are not
+    # needed and may exceed the build budget before compilation even starts.
     build=work/'swiftshader-build'
     qa.qa_run(['cmake','-S',str(swift),'-B',str(build),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
-        '-DSWIFTSHADER_BUILD_TESTS=OFF','-DSWIFTSHADER_BUILD_VULKAN=ON','-DSWIFTSHADER_WARNINGS_AS_ERRORS=OFF'],check=True)
+        '-DREACTOR_BACKEND=LLVM','-DSWIFTSHADER_BUILD_TESTS=OFF','-DSWIFTSHADER_BUILD_PVR=OFF',
+        '-DSWIFTSHADER_BUILD_BENCHMARKS=OFF','-DSWIFTSHADER_ENABLE_VULKAN_DEBUGGER=OFF',
+        '-DSWIFTSHADER_BUILD_CPPDAP=OFF','-DREACTOR_EMIT_DEBUG_INFO=OFF',
+        '-DCMAKE_POLICY_VERSION_MINIMUM=3.5','-DSWIFTSHADER_WARNINGS_AS_ERRORS=OFF'],check=True)
     qa.qa_run(['cmake','--build',str(build),'--target','vk_swiftshader','--parallel','2'],check=True)
     dll=list(build.rglob('vk_swiftshader.dll'))
     if len(dll)!=1:raise ValueError('Software Vulkan driver is missing')
