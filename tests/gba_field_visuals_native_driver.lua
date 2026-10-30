@@ -58,6 +58,10 @@ return function(game)
  b:makeWildDouble(P.new(game.data,'HAUNTER',30));game.stack:push(b);settle(b)
  measure(b,'native-double-grounded-and-floating');game.stack:pop();U.wait(5)
  assert(game.stack:top()==world)
+ -- Emerald's fresh opening suppresses area names until the introduction
+ -- finishes. This separate prepared route fixture represents that later
+ -- field state; it never changes the ordinary campaign checkpoint.
+ if edition=='emerald'then game.save.flags.FLAG_G3_4000=nil end
  world.signLandmark=nil;world:updateMapNameSign();assert(world.mapNameSign,'Prepared map has no native popup')
  U.wait(24);shot('native-map-popup-clear')
  world.poisonFlash=8;shot('native-map-popup-poison-pulse')
