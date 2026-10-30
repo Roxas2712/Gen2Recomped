@@ -108,13 +108,30 @@ function M.api(loader,mod,native,generation)
  local available=generation==2
  local reason=not available and 'unsupported: landmarks has no native target in this dataset' or nil
  local registry=loader.content.landmarks
+ local screen=(mod.manifest.api or 1)>=3 or mod.manifest.content_format=='unified'
+ local projectedSpec={fields=copy(registry.spec.fields)}
+ if screen then
+  projectedSpec.fields.x=Schemas.f.int(-8,247)
+  projectedSpec.fields.y=Schemas.f.int(-16,239)
+ end
+ local function project(value,write)
+  local result=copy(value)
+  if type(result)=='table' and screen then
+   for key,offset in pairs({x=8,y=16})do
+    if result[key]~=nil and result[key]~=Merge.DELETE then
+     result[key]=result[key]+(write and offset or -offset)
+    end
+   end
+  end
+  return result
+ end
  local out={available=available,supports=function()return available,reason end}
- function out:get(id)if not available then return nil,reason end;return copy(native:get(id))end
+ function out:get(id)if not available then return nil,reason end;return project(native:get(id))end
  function out:has(id)return self:get(id)~=nil end
  function out:each()
   if not available then return function()end end
   local nextRow=native:each()
-  return function()local id,value=nextRow();return id,copy(value)end
+  return function()local id,value=nextRow();return id,project(value)end
  end
  for _,verb in ipairs({'register','override','patch','remove'})do
   out[verb]=function(_,id,value)
@@ -123,10 +140,11 @@ function M.api(loader,mod,native,generation)
    if verb=='remove'then return native:remove(id)end
    finite(value);assert(type(value)=='table' and value~=Merge.DELETE,'landmarks: expected record')
    for key in pairs(value)do assert(registry.spec.fields[key],'landmarks: unknown field '..tostring(key))end
-   local payload=copy(value)
+   local valid,detail=Schemas.check(projectedSpec,'landmarks',id,value,verb);assert(valid,detail)
+   local payload=project(value,true)
    local effective=verb=='patch' and Merge.deepMerge(copy(registry:get(id)or{}),payload,'record')or payload
    record(registry,id,effective)
-   native[verb](native,id,effective)
+   native[verb](native,id,payload)
    return out:get(id)
   end
  end
