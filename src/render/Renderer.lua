@@ -379,6 +379,7 @@ function Renderer:beginFrame(transparent)
   -- warp-fade overlay from Transition (issue #121); cleared each frame so
   -- a popped transition cannot leave a sticky black veil
   self.worldFadeAlpha = nil
+  self.worldFlashWindow = nil
   -- battle-transition wipe, drawn over the whole surface (BattleTransition)
   self.battleWipe = nil
   -- whole-window weather, drawn under the UI (see endFrame); re-declared by
@@ -565,6 +566,17 @@ function Renderer:endUprightPass()
   PaletteFX.setPass("world")
   love.graphics.pop()
   love.graphics.setCanvas(self.worldCanvas)
+end
+
+-- Flash is a window over BG and OBJ. RGBA sprite replays and upright actors
+-- are composited after the world canvas, so its mask must follow those too.
+-- Independent captures retain their own inline window and never queue here.
+-- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
+function Renderer:setWorldFlashWindow(radius, w, h, cx, cy)
+  if not self.worldActive or self.worldOverride
+      or love.graphics.getCanvas() ~= self.worldCanvas then return false end
+  self.worldFlashWindow = {radius=radius,w=w,h=h,cx=cx,cy=cy}
+  return true
 end
 
 -- Perspective mesh shader for tilt mode.  The mesh already carries CPU-
@@ -1425,6 +1437,16 @@ local function endFrame(self, zones, worldZones, privateViewport)
       love.graphics.setScissor(0, 0, ww, wh)
       love.graphics.draw(self.uprightCanvas, wox - M * sx, woy - M * sy, 0, sx, sy)
       love.graphics.setScissor()
+    end
+    local flash = self.worldFlashWindow
+    if flash then
+      local cx, cy = flash.cx, flash.cy
+      if projected then cx, cy = Tilt.groundPoint(cx, cy, flash.w, flash.h) end
+      love.graphics.push()
+      love.graphics.translate(wox, woy)
+      love.graphics.scale(sx, sy)
+      require('src.world.Gen3Flash').drawMask(flash.radius, flash.w, flash.h, cx, cy)
+      love.graphics.pop()
     end
     -- Screen-space warp fade (Transition) over the full world composite so
     -- survey zoom / tilt edges darken with the center, not only the 160x144

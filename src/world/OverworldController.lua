@@ -19985,7 +19985,12 @@ function OverworldState:drawGen3Flash(cam, vw, vh)
   local cx = math.floor(self.player.px - cam.x + 8)
   local cy = math.floor(self.player.py - cam.y + 8)
   local circle = Gen3Flash.circle(Game, vw, vh, cx, cy)
-  if circle then Gen3Flash.drawMask(circle.radius, vw, vh, cx, cy) end
+  if circle then
+    local renderer = Game.renderer
+    local deferred = renderer and type(renderer.setWorldFlashWindow)=='function'
+      and renderer:setWorldFlashWindow(circle.radius, vw, vh, cx, cy)
+    if not deferred then Gen3Flash.drawMask(circle.radius, vw, vh, cx, cy) end
+  end
 end
 
 -- Emerald's healing machine: the monitor over the machine's screen and one
