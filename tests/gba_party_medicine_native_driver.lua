@@ -19,7 +19,7 @@ return function(game)
  end
  local first,second=game.save.party[1],game.save.party[2]
  first.hp=first.stats.hp-15;second.status='PAR'
- game.save.inventory={POTION=3};game.save.gen3RsBagSlots=nil;game.save.bagOrder={'POTION'}
+ game.save.inventory={POTION=3,PARLYZ_HEAL=2};game.save.gen3RsBagSlots=nil;game.save.bagOrder={'POTION','PARLYZ_HEAL'}
  local report={edition=edition,status='running',preparedFixture=true,continuousStory=false,
   baselineCapture=true,visualParityAccepted=false,captures={}}
  local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
@@ -32,8 +32,11 @@ return function(game)
  end
  local party=Party.new(game,{});game.stack:push(party);U.wait(90)
  report.nativePartyPresenter=party.rsNative~=nil or party.gbaNative~=nil
+ assert(party.gbaNative,'Native field party presenter missing')
  shot('party-six-members-lead');press('right');assert(party.index==2)
- shot('party-status-second-member');press('b');assert(game.stack:top()==world)
+ shot('party-status-second-member');press('a');assert(party.submenu)
+ shot('party-native-actions');press('b');assert(not party.submenu)
+ press('b');assert(game.stack:top()==world)
  local bag=Bag.new(game,{});game.stack:push(bag);U.wait(90)
  assert(bag:selected().id=='POTION');press('a');press('a',90)
  local picker=game.stack:top();assert(getmetatable(picker)==Party and picker.keepOpen)
@@ -41,6 +44,14 @@ return function(game)
  assert(first.hp==first.stats.hp and second.status=='PAR'and game.save.inventory.POTION==2)
  assert(getmetatable(game.stack:top())==require('src.render.TextBox'))
  shot('party-medicine-result');press('a',60);assert(game.stack:top()==bag)
+ -- Status medicine must retain the same picker through its own native result.
+ while bag:selected().id~='PARLYZ_HEAL'do press('down')end
+ press('a');press('a',90);picker=game.stack:top()
+ assert(getmetatable(picker)==Party and picker.keepOpen and picker.gbaNative)
+ press('right');assert(picker.index==2);press('a',180)
+ assert(second.status==nil and game.save.inventory.PARLYZ_HEAL==1)
+ assert(game.stack:top().gbaPartyOwner==picker)
+ shot('party-paralysis-second-result');press('a',60);assert(game.stack:top()==bag)
  press('b',60);assert(game.stack:top()==world)
  report.status='pass';report.functionalMedicinePass=true;report.drawPreservesSaveRng=true
  persist();print('PASS_GBA_PARTY_BASELINE_CAPTURE '..edition);love.event.quit(0)

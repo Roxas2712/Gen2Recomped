@@ -131,7 +131,9 @@ function M:body()
  end
  local top=self.game.stack:top();if top and top.gbaPartyOwner==owner then return end
  if owner.submenu then
-  W.stdFrame(W.template(1,17,17,2));F.draw(self.text('action'),10,138,{colors=F.COLOR.NORMAL})
+  local mon=party[owner.index];local def=mon and self.game.data.pokemon[mon.species]or{}
+  local name=mon and(mon.nickname or def.name or mon.species)or''
+  W.stdFrame(W.template(1,17,17,2));F.draw(self.text('action',{stringVars={name}}),10,138,{colors=F.COLOR.NORMAL})
   local n=#owner.submenu;local y=19-n*2;W.stdFrame(W.template(19,y,10,n*2))
   for i,row in ipairs(owner.submenu)do
    local py=y*8+(i-1)*16+2

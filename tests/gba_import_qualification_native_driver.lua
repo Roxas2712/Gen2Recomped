@@ -19,6 +19,7 @@ return function(game)
  assert(itemCount>0)
  if version=='emerald'or version=='firered'or version=='leafgreen'then
   assert(require('src.import.Gen3BagSaleAssets').valid(game.data.constants.gen3BagSale,version))
+  assert(require('src.import.Gen3NativePartyAssets').valid(game.data.constants.gen3NativeParty,version))
  end
  if version=='emerald'then
   assert(require('src.import.Gen3EmeraldBagAssets').valid(game.data.constants.gen3EmeraldBag,version))
