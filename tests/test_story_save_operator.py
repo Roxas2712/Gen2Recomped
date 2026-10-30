@@ -111,8 +111,67 @@ class StorySaveOperatorTests(unittest.TestCase):
                 extra = {k: v for k, v in changed.items() if k != 'top'}
                 extra.setdefault('count', 5)
                 ui.wait_after = frame(top, **extra)
-                self.assertFalse(save_via_ui(ui.send, ui.record)['saved'])
+                ticks = iter(range(1000))
+                self.assertFalse(save_via_ui(ui.send, ui.record,
+                    clock=lambda: next(ticks), max_seconds=50)['saved'])
                 self.assertEqual(ui.recorded, 0)
+
+    def test_delayed_no_button_field_receipt_is_polled_without_more_input(self):
+        for busy in (True, False):
+            with self.subTest(busy=busy):
+                ui = generic()
+                closure = False
+                polls = []
+                def send(commands):
+                    nonlocal closure
+                    state = ui.send(commands)
+                    if commands == [dict(op='wait', frames=1)]:
+                        closure = True
+                    elif closure and not commands:
+                        polls.append(commands)
+                    if closure and len(polls) < 3:
+                        state.update(seq=state['seq'] - 1, busy=busy)
+                    return state
+                ticks = iter(range(1000))
+                reply = save_via_ui(send, ui.record,
+                    clock=lambda: next(ticks), max_seconds=50)
+                self.assertTrue(reply['saved'])
+                self.assertEqual(ui.recorded, 1)
+                self.assertEqual(len(polls), 3)
+                self.assertEqual(len(ui.sent), 9)
+                self.assertEqual(ui.sent[-1], dict(op='wait', frames=1))
+
+    def test_pending_closure_stops_on_new_ui_or_counter_drift(self):
+        for changed in (dict(savedGameCount=6), dict(scriptRunning=True),
+                        dict(top=dict(source=TEXT))):
+            with self.subTest(changed=changed):
+                ui = generic()
+                def send(commands):
+                    state = ui.send(commands)
+                    if commands == [dict(op='wait', frames=1)]:
+                        state.update(seq=state['seq'] - 1, busy=True, **changed)
+                    return state
+                self.assertFalse(save_via_ui(send, ui.record)['saved'])
+                self.assertEqual(ui.recorded, 0)
+                self.assertEqual(len(ui.sent), 9)
+
+    def test_pending_closure_times_out_without_checkpoint_or_more_buttons(self):
+        ui = generic()
+        closure = False
+        def send(commands):
+            nonlocal closure
+            state = ui.send(commands)
+            if commands == [dict(op='wait', frames=1)]:
+                closure = True
+            if closure:
+                state.update(seq=state['seq'] - 1, busy=True)
+            return state
+        ticks = iter(range(1000))
+        reply = save_via_ui(send, ui.record,
+            clock=lambda: next(ticks), max_seconds=50)
+        self.assertFalse(reply['saved'])
+        self.assertEqual(ui.recorded, 0)
+        self.assertEqual(len(ui.sent), 9)
 
     def test_native_rs_confirm_and_overwrite_remain_two_distinct_receipts(self):
         def native(phase, index=1, count=4):

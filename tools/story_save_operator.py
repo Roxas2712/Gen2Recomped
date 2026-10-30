@@ -60,6 +60,14 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
             # receipt and this observation. Record a real no-button frame in
             # the field before asking the unchanged checkpoint guard to run.
             state = send([dict(op='wait', frames=1)])
+            # A short client wait can observe the preceding field snapshot
+            # while that no-button command is still pending. Poll its receipt;
+            # never queue another button or bypass the unchanged trace guard.
+            while not idle():
+                if (clock() >= deadline or not field()
+                        or state.get('savedGameCount') != initial_count + 1):
+                    return result('SAVE closure did not produce an idle field receipt')
+                state = send([])
             if not idle() or not field() or state.get('savedGameCount') != initial_count + 1:
                 return result('SAVE closure did not produce an idle field receipt')
             receipt = record()
