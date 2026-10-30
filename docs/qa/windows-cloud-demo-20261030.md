@@ -139,7 +139,7 @@ imports and player folders are not migrated or deleted. Source trees and each
 SDK byte are bound to the native report before packaging.
 
 Local extension regressions: 46 X/Y Python tests, 3 Windows metadata/cache tests,
-6 packaging guards,
+7 packaging guards,
 67 Lua native export signature checks and 23 file-error/cleanup checks passed.
 Nine existing X/Y, Pinball and friend/CloudNet suites passed (532 checks).
 These are headless contracts, not native Windows gameplay.
@@ -170,3 +170,23 @@ compiler extraction. It keeps the 4-GiB limit and 20-GiB reserve. These failures
 are build evidence, not passing SDK qualification. The final report must also
 pass native execution/snapshot/SRAM/PCM checks and the actual launcher backend
 import/compile/prepare CLI using self-authored fixtures.
+
+Subsequent native Windows tests identified and corrected three platform issues:
+the 3DS session lease needs read access for `LockFileEx`, the Vulkan ICD needs
+Windows relative-path syntax, and the software driver must support the
+renderer's push descriptors. SwiftShader was rejected by the actual renderer;
+the candidate uses the byte-pinned Mesa/Lavapipe 26.2.5 x64 driver instead.
+Mesa's corresponding source archive and Mesa/LLVM/distributor licence notices
+are included. The normal hardware driver remains preferred. No driver is
+installed or registered by the application. Only the elevated disposable CI
+fixture temporarily registers its own ICD value and restores that value when
+finished, since the official loader ignores environment overrides when elevated.
+
+The Windows SDK build also runs a positive/exclusive/released session-lock
+regression. The launcher EXE reserves at least 16 MiB of stack, as requested by
+the upstream GBA runtime; setting a DLL stack reserve cannot configure its host.
+The seven packaging tests include preservation of larger existing host reserves
+and rejection of truncated PE headers. Local Windows metadata (3 tests), safe
+compiled-intermediate retirement (2 tests), and package checks (7 tests) passed
+again after these changes. Final native execution and EXE reports remain the
+release gate, not these portable tests.
