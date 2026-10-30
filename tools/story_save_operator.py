@@ -102,7 +102,12 @@ def save_via_ui(send, record, *, clock=time.monotonic, max_seconds=45):
                 state = press('up')
                 continue
             state = press('a')
-        elif source == TEXT or (native_rs and top.get('phase') in ('saving_msg', 'saving', 'saved')):
+        elif native_rs and top.get('phase') in ('saving_msg', 'saving', 'saved'):
+            # RS writes and closes its result on a timer. An A press queued
+            # from this observation could arrive after closure and talk to an
+            # NPC. Advance time without a button until the field is observed.
+            state = send([dict(op='wait', frames=60)])
+        elif source == TEXT:
             state = press('a')
         else:
             return result('Unexpected SAVE screen; operator attention required')

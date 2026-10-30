@@ -36,7 +36,7 @@ class Protocol:
         if commands:
             assert len(commands) == 1
             cmd = commands[0]
-            if cmd['op'] == 'wait':
+            if cmd['op'] == 'wait' and cmd.get('frames') == 1:
                 assert cmd == dict(op='wait', frames=1)
                 before = copy.deepcopy(self.state)
                 self.sent.append(cmd)
@@ -44,9 +44,12 @@ class Protocol:
                 self.state.update(seq=len(self.sent), queuedCommands=len(self.sent))
                 self.receipts.append(dict(before=before, input=cmd, after=copy.deepcopy(self.state)))
                 return copy.deepcopy(self.state)
-            assert cmd['op'] == 'press' and cmd.get('times', 1) == 1
             expected, after = self.stages[len(self.sent)]
-            assert cmd['button'] == expected, (cmd, expected)
+            if expected == 'wait':
+                assert cmd == dict(op='wait', frames=60), cmd
+            else:
+                assert cmd['op'] == 'press' and cmd.get('times', 1) == 1
+                assert cmd['button'] == expected, (cmd, expected)
             if len(self.sent) in self.drift_before:
                 self.state = copy.deepcopy(self.drift_before[len(self.sent)])
                 self.state.update(seq=len(self.sent), queuedCommands=len(self.sent))
@@ -117,12 +120,27 @@ class StorySaveOperatorTests(unittest.TestCase):
         ui = Protocol([
             ('start', frame(menu())), ('a', native('confirm', 2)),
             ('up', native('confirm')), ('a', native('overwrite')),
-            ('a', native('saving_msg')), ('a', native('saving')),
-            ('a', native('saved', count=5)), ('a', frame(dict(source=FIELD), count=5)),
+            ('a', native('saving_msg')), ('wait', native('saving')),
+            ('wait', native('saved', count=5)), ('wait', frame(dict(source=FIELD), count=5)),
         ])
         self.assertTrue(save_via_ui(ui.send, ui.record)['saved'])
         phases = [r['before']['top'].get('phase') for r in ui.receipts if is_save_yes(r['before'])]
         self.assertEqual(phases, ['confirm', 'overwrite'])
+        self.assertEqual(ui.recorded, 1)
+
+    def test_native_saved_timer_cannot_queue_a_press_into_a_nearby_npc(self):
+        def native(phase, count=4):
+            return frame(dict(source=RS_SAVE, nativeSaveKind='rs', phase=phase, index=1), count=count)
+        ui = Protocol([
+            ('start', frame(menu())), ('a', native('confirm')),
+            ('a', native('overwrite')), ('a', native('saved', count=5)),
+            ('wait', frame(dict(source=FIELD), count=5)),
+        ])
+        ui.drift_before[4] = frame(dict(source=FIELD), count=5)
+        self.assertTrue(save_via_ui(ui.send, ui.record)['saved'])
+        self.assertEqual([c.get('button') for c in ui.sent if c['op'] == 'press'], ['start', 'a', 'a', 'a'])
+        self.assertEqual(ui.receipts[-2]['before']['top']['source'], FIELD)
+        self.assertEqual(ui.receipts[-2]['input'], dict(op='wait', frames=60))
         self.assertEqual(ui.recorded, 1)
 
     def test_yes_reached_between_observations_uses_the_actual_input_receipt(self):
