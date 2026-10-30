@@ -24,7 +24,12 @@
 #include <cstring>
 #include <unordered_set>
 #include <chrono>
-#ifdef __APPLE__
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__APPLE__)
 #include <mach/mach.h>
 #include <pthread.h>
 #else
@@ -53,7 +58,12 @@ std::vector<uint8_t> bytes(const char* path) {
  return result;
 }
 double thread_seconds() {
-#ifdef __APPLE__
+#ifdef _WIN32
+ FILETIME created{},exited{},kernel{},user{};
+ if(!GetThreadTimes(GetCurrentThread(),&created,&exited,&kernel,&user))return 0;
+ const auto ticks=[](FILETIME value){return (uint64_t(value.dwHighDateTime)<<32)|value.dwLowDateTime;};
+ return (ticks(kernel)+ticks(user))*1e-7;
+#elif defined(__APPLE__)
  thread_basic_info_data_t info{};mach_msg_type_number_t count=THREAD_BASIC_INFO_COUNT;
  if(thread_info(pthread_mach_thread_np(pthread_self()),THREAD_BASIC_INFO,reinterpret_cast<thread_info_t>(&info),&count)!=KERN_SUCCESS)return 0;
  return info.user_time.seconds+info.system_time.seconds+(info.user_time.microseconds+info.system_time.microseconds)*1e-6;
