@@ -5,6 +5,7 @@ return function(game)
   local V=require('src.core.GameVersion');local version=V.get()
   assert(V.isGen3())
   local rs=version=='ruby'or version=='sapphire'
+  local emerald=version=='emerald'
   if V.isFRLG()then
     assert(require('src.import.Gen3BagRegistrationAssets').valid(game.data.constants.gen3BagScreen.registered,version),
       'Native registered-item badge is missing')
@@ -58,9 +59,10 @@ return function(game)
   shot('native-key-quest-actions');press('b');assert(game.stack:top()==owner)
   if not rs then
     press('select');assert(game.save.registeredItem==nil)
+    if emerald then assert(owner.emeraldSwap);press('b');assert(not owner.emeraldSwap)end
   end
   select(registrable)
-  if rs then
+  if rs or emerald then
     press('a');local menu=game.stack:top()
     local target;for i,row in ipairs(menu.entries)do if row.kind=='register'then target=i end end
     assert(target);press('right');assert(menu.index==target);press('a')
@@ -70,6 +72,10 @@ return function(game)
     press('select');assert(owner.rsSwap==owner.index and game.save.registeredItem==registrable)
     press('b');assert(owner.rsSwap==nil and game.save.registeredItem==registrable)
     report.rsSelectStartsReorder=true
+  elseif emerald then
+    press('select');assert(owner.emeraldSwap and game.save.registeredItem==registrable)
+    press('b');assert(not owner.emeraldSwap and game.save.registeredItem==registrable)
+    report.emeraldSelectStartsReorder=true
   end
   shot('native-key-registered-badge');press('a');action=game.stack:top()
   local deselect=false
@@ -83,7 +89,9 @@ return function(game)
   assert(game:writeSave()==true);local loaded=assert(IO.load(version))
   assert(loaded.registeredItem==registrable,'Actual disk save lost registered stable ID')
   assert(S.encode(loaded.inventory)==S.encode(game.save.inventory))
-  if not rs then press('select');assert(game.save.registeredItem==nil);shot('native-key-select-cleared')end
+  if emerald then
+    press('a');press('right');press('a');assert(game.save.registeredItem==nil);shot('native-key-action-cleared')
+  elseif not rs then press('select');assert(game.save.registeredItem==nil);shot('native-key-select-cleared')end
   assert(game.save.inventory[registrable]==1 and game.save.inventory[quest]==1)
   press('b');assert(game.stack:top()==world)
   report.status='pass';report.actualDiskRoundTrip=true;report.ordinaryBagInputs=true

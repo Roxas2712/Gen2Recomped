@@ -151,11 +151,12 @@ function M:drawNative(action)
  local rows=presentation and presentation.rows or owner.rows
  local index=presentation and presentation.index or owner.index
  local first=presentation and presentation.top or owner.top
+ local swap=owner.emeraldSwap
  for i=0,7 do
   local row=rows[first+i];if not row then break end
   local y=17+i*16
-  if first+i==index then
-   font.drawGlyph(font.CHAR_SELECTOR_ARROW,112,y,{colors=selected
+  if first+i==(swap and swap.from or index)then
+   font.drawGlyph(font.CHAR_SELECTOR_ARROW,112,y,{colors=(selected or swap)
     and{fg=color(19),shadow=color(22),bg={0,0,0,0}}or normal})
   end
   local text,hm=self:label(row,pocket.key)
@@ -171,10 +172,19 @@ function M:drawNative(action)
    end
   end
  end
- local row=rows[index];local count=(self.game.data.constants.gen3ItemIcons or{}).count
+ if swap then
+  local entry=assert(man.sprites.swap);local image=self:image(entry.png);local sw,sh=image:getDimensions()
+  for i=0,7 do
+   g.setColor(1,1,1,1)
+   g.draw(image,self:quad(entry.png,0,i==0 and 0 or 16,16,16,sw,sh),
+    120+i*16-(i==7 and 8 or 0),17+(index-first)*16,0,1,1,8,8)
+  end
+ end
+ local row=swap and swap.row or rows[index];local count=(self.game.data.constants.gen3ItemIcons or{}).count
  local icon,quad=owner:itemIcon(row and row.id or nil,row and row.close and count and count-1 or nil)
  if icon then g.setColor(1,1,1,1);g.draw(icon,quad,8,72)end
  local desc=owner.message or(row and row.description)
+ if swap then desc=self:text('moveWhere',{row.label})end
  if action and row and not row.close then desc=self:text('selected',{row.label})end
  if row and row.close and not desc then
   local loc=owner.battle and 1 or owner.sell and 3 or owner.store=='deposit'and 6 or 0
@@ -187,7 +197,7 @@ function M:drawNative(action)
  if action then self:drawActions(action)end
  if not selected then
   local tick=owner.tick or 0
-  if not owner.lockPocket then self:drawArrow('left',28,16,tick);self:drawArrow('right',100,16,tick)end
+  if not owner.lockPocket and not swap then self:drawArrow('left',28,16,tick);self:drawArrow('right',100,16,tick)end
   if owner.top>1 then self:drawArrow('up',172,12,tick)end
   if owner.top+7<#owner.rows then self:drawArrow('down',172,148,tick)end
  end

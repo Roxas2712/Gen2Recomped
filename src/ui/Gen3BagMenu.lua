@@ -969,6 +969,7 @@ function Gen3BagMenu:update(dt)
     return
   end
   if self.rs then return require('src.ui.Gen3RsBagInput').update(self,input) end
+  if require('src.ui.Gen3EmeraldBagReorder').update(self,input)then return end
   if input:wasPressed('select') then
     local row = self:selected()
     local version = require('src.core.GameVersion').get()
