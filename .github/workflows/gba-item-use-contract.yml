@@ -28,6 +28,8 @@ jobs:
           luajit tests/engine/frlg_tm_case_native.lua
           luajit tests/engine/gen3_flash_composite.lua
           luajit tests/engine/gen3_absent_accuracy.lua
+          luajit tests/engine/gen3_elevator_entrance.lua
+          luajit tests/engine/gen3_multichoice_defaults.lua
           luajit tests/engine/gba_key_item_registration.lua
           luajit tests/engine/gba_save_result.lua
           luajit tests/engine/frlg_bag_registration_assets.lua

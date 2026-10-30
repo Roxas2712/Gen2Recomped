@@ -3098,6 +3098,8 @@ local function askChoices(ctx, options, opts)
   local pushed=pcall(function()
     local menu=Menu.new(game, items,
                                 { tx = 0, ty = 0, tw = tw,
+                                  index = (tonumber(opts.default) or 0) + 1,
+                                  cancelable = cancel ~= nil,
                                   th = #items * 2 + 2, onCancel = cancel })
     if opts.pcRoot then require('src.ui.Gen3EmeraldPcMenu').decorate(menu,game,'root')end
     game.stack:push(menu)
