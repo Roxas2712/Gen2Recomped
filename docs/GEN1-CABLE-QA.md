@@ -31,6 +31,10 @@ journal against the actual SQLite relay. A second phase runs the Gen1 companion
 with the pinned source kernel against the native controller, reconnects it
 mid-battle, compares verified results and checks that battle never writes the
 adventure save. The socket client explicitly asserts its harness has no failures.
+The headless native `writeSave`/profile-filesystem boundaries are injected
+fixtures; no actual player profile is written. Sockets, the relay process and
+its SQLite commit/restart are real. The checks establish transaction ordering
+and ownership at that boundary, not a packaged desktop save/GPU qualification.
 Relay cases cover crash/restart, hashed seat-token recovery, immutable message
 keys, matching/mismatching decisions and forged client commits.
 

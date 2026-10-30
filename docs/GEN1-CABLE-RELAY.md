@@ -126,7 +126,9 @@ identity, evolution learning receipts, source mechanics/isolation and UI input.
 Independent suites never run in parallel; clients of one network case exchange
 messages within that single serial integration test.
 
-These are ROM-free/headless checks. They do not establish two packaged desktop
+The native save/profile filesystem boundary is injected in these headless
+fixtures; the sockets and SQLite relay are real. Actual player profiles are
+untouched. These are ROM-free/headless checks. They do not establish two packaged desktop
 applications' GPU/audio presentation, public Internet hosting, USB devices or
 all native source cartridge mechanics. The private relay is provided as a tool;
 it has not been installed as an always-running NAS service.
