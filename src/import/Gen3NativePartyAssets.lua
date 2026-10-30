@@ -13,13 +13,22 @@ function M.labels(version)
   cancel=version=='emerald'and'gText_Cancel2'or'gText_Cancel7',
   confirm=version=='emerald'and'gText_Confirm2'or'gText_PartyMenu_OK'}
 end
+function M.context(version)
+ local Loader=require('compat.gen1-rs.Loader')
+ local gv={current=version,get=function()return version end}
+ local bindings={['src.core.GameVersion']=gv,__package={loaded={}}}
+ local load=Loader.new(version,bindings)
+ if version=='emerald'then return load,{game=version},load('src.import.gba.syms').of(version)end
+ local V=load('src.import.gba.versions_frlg');V.select(version)
+ -- The shared extractor imports versions before using explicit keys. FR/LG
+ -- have their own address table, not an RS/E symbol-table entry.
+ bindings['src.import.gba.versions']=V
+ return Loader.new(version,bindings),{game=version,keys=V}
+end
 function M.extract(x)
  local version=x.version;if not supported[version]then return end
  x:beginStage('Original field party chrome')
- local Loader=require('compat.gen1-rs.Loader');local load=Loader.new(version)
- local options={game=version};local S
- if version=='emerald'then S=load('src.import.gba.syms').of(version)
- else local V=load('src.import.gba.versions_frlg');V.select(version);options.keys=V end
+ local load,options,S=M.context(version)
  local rom={id=version};function rom:get(at)return x.rom:u8(at)end
  local Fs=require('src.import.CacheFs')
  local cache={write=function(_,path,bytes)

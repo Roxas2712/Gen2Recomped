@@ -4,6 +4,13 @@ local T=require('tests.modkit');local Assets=require('src.import.Gen3NativeParty
 local View=require('src.ui.Gen3NativeParty');local V=require('src.core.GameVersion')
 local Fs=require('src.import.CacheFs');local Writer=require('src.import.LuaWriter')
 local oldRead,oldExists=Fs.read,Fs.exists
+local oldLoad=love.filesystem.load;love.filesystem.load=loadfile
+for _,version in ipairs{'emerald','firered','leafgreen'}do
+ local load,options=Assets.context(version)
+ T.eq(type(load('src.import.gba.party_chrome_extract').run),'function','extractor loads with edition-specific dependencies')
+ if version~='emerald'then T.eq(type(options.keys.PARTY_MENU_BG_GFX),'number')end
+end
+love.filesystem.load=oldLoad
 local game={data={constants={},items={CURE={type='medicine'}},pokemon={TEST={name='BULBASAUR',dex=1}}},
  save={player={name='TEST'},options={}}}
 for _,version in ipairs{'emerald','firered','leafgreen'}do
@@ -15,6 +22,11 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
  Fs.read=function(p)return files[p]end;Fs.exists=function(p)return files[p]~=nil end
  V.set(version);game.data.constants.gen3NativeParty=spec
  T.eq(Assets.valid(spec,version),true);T.eq(View.available(game),true);T.eq(#Assets.missing(version),0)
+ local bag=setmetatable({},require('src.ui.Gen3BagMenu'));game.data.items.CURE={key='ANTIDOTE',name='Custom cure'}
+ T.eq(View.retainStatus(game,nil,'CURE',bag),true,'native status target uses stable item identity')
+ T.eq(View.retainStatus(game,{},'CURE',bag),false,'battle retains its own target route')
+ T.eq(View.retainStatus(game,nil,'CURE',{}),false,'legacy lists do not retain a native target')
+ T.eq(View.retainStatus(game,nil,'MISSING',bag),false)
  for i,path in ipairs(spec.resources)do
   spec.resources[i]='foreign';T.eq(Assets.valid(spec,version),false);spec.resources[i]=path
   files[path]=nil;T.eq(#Assets.missing(version),1);files[path]='fixture'

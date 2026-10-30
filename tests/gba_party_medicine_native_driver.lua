@@ -45,13 +45,20 @@ return function(game)
  assert(getmetatable(game.stack:top())==require('src.render.TextBox'))
  shot('party-medicine-result');press('a',60);assert(game.stack:top()==bag)
  -- Status medicine must retain the same picker through its own native result.
- while bag:selected().id~='PARLYZ_HEAL'do press('down')end
+ for _=1,#bag.rows do if bag:selected().id=='PARLYZ_HEAL'then break end;press('down')end
+ assert(bag:selected().id=='PARLYZ_HEAL','Status medicine row missing')
  press('a');press('a',90);picker=game.stack:top()
  assert(getmetatable(picker)==Party and picker.keepOpen and picker.gbaNative)
  press('right');assert(picker.index==2);press('a',180)
  assert(second.status==nil and game.save.inventory.PARLYZ_HEAL==1)
  assert(game.stack:top().gbaPartyOwner==picker)
  shot('party-paralysis-second-result');press('a',60);assert(game.stack:top()==bag)
+ press('a');press('a',90);picker=game.stack:top();press('right');press('a',180)
+ assert(game.save.inventory.PARLYZ_HEAL==1 and second.status==nil)
+ assert(game.stack:top().gbaPartyOwner==picker)
+ shot('party-status-no-effect');press('a',60);assert(game.stack:top()==bag)
+ press('a');press('a',90);assert(getmetatable(game.stack:top())==Party)
+ press('b',60);assert(game.stack:top()==bag and game.save.inventory.PARLYZ_HEAL==1)
  press('b',60);assert(game.stack:top()==world)
  report.status='pass';report.functionalMedicinePass=true;report.drawPreservesSaveRng=true
  persist();print('PASS_GBA_PARTY_BASELINE_CAPTURE '..edition);love.event.quit(0)
