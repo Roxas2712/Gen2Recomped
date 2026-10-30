@@ -189,9 +189,11 @@ def build_graphics(qa,work,out,components):
         '-DSWIFTSHADER_BUILD_CPPDAP=OFF','-DREACTOR_EMIT_DEBUG_INFO=OFF',
         '-DCMAKE_POLICY_VERSION_MINIMUM=3.5','-DSWIFTSHADER_WARNINGS_AS_ERRORS=OFF'],check=True)
     qa.qa_run(['cmake','--build',str(build),'--target','vk_swiftshader','--parallel','4'],check=True)
-    dll=list(build.rglob('vk_swiftshader.dll'))
-    if len(dll)!=1:raise ValueError('Software Vulkan driver is missing')
-    shutil.copy2(dll[0],out/'vulkan/vk_swiftshader.dll')
+    # The pinned target writes here and also copies itself into Windows/.
+    # Recursive discovery therefore sees two valid, identical DLLs.
+    dll=build/'vk_swiftshader.dll'
+    if not dll.is_file():raise ValueError('Software Vulkan driver is missing at its pinned target output')
+    shutil.copy2(dll,out/'vulkan/vk_swiftshader.dll')
     (out/'vulkan/vk_swiftshader_icd.json').write_text(json.dumps({'file_format_version':'1.0.0','ICD':{'library_path':'./vk_swiftshader.dll','api_version':'1.3.0'}})+'\n')
     for file in swift.rglob('LICENSE*'):
         if file.is_file():
