@@ -6,9 +6,10 @@ ROOT=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('run',type=Path);p.add_argument('--commands',default='[]')
 p.add_argument('--full',action='store_true');p.add_argument('--wait',type=float,default=12)
-p.add_argument('--interactive',action='store_true',help='Read command arrays or {"checkpoint":true} on one guarded client')
+p.add_argument('--interactive',action='store_true',help='Read command arrays, {"save":true} or {"checkpoint":true} on one guarded client')
 p.add_argument('--train-cave-wins',type=int,default=0,help='Bounded ordinary Fiery Path training; stop on new UI, low HP or status')
 p.add_argument('--checkpoint',action='store_true',help='Record unchanged native save bytes after a completed ordinary SAVE/YES input sequence')
+p.add_argument('--save-via-ui',action='store_true',help='Use single ordinary inputs to SAVE, then record its guarded checkpoint')
 p.add_argument('--live-pid',type=int,help=argparse.SUPPRESS)
 p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS);a=p.parse_args()
 run=a.run.resolve();assert run.parent==ROOT/'.local/qa'and run.name.startswith('gen2recomp-qa-')
@@ -19,6 +20,7 @@ commands=json.loads(a.commands);assert isinstance(commands,list)and all(isinstan
 assert 0<=a.wait<=45
 assert 0<=a.train_cave_wins<=5
 assert not a.train_cave_wins or(edition in('ruby','sapphire')and not commands and not a.interactive and not a.checkpoint)
+assert not a.save_via_ui or(not commands and not a.interactive and not a.checkpoint and not a.train_cave_wins)
 if not a.worker:
     for src in(ROOT,Path(sys.executable)):qa_source(src)
     expected=str(run/'engine/.qa-runtime.app/Contents/MacOS/love')+' '+str(run/'engine')
@@ -28,6 +30,7 @@ if not a.worker:
     cmd=[sys.executable,__file__,str(run),'--commands',a.commands,'--wait',str(a.wait),'--worker','--live-pid',str(live[0])]
     if a.full:cmd+=['--full']
     if a.checkpoint:cmd+=['--checkpoint']
+    if a.save_via_ui:cmd+=['--save-via-ui']
     if a.train_cave_wins:cmd+=['--train-cave-wins',str(a.train_cave_wins)]
     if a.interactive:
         assert not commands,'Interactive commands arrive on stdin'
@@ -109,7 +112,17 @@ def submit(commands,emit=True):
     state['queuedCommands']=len(queue)
     if emit:print(json.dumps(state,ensure_ascii=False),flush=True)
     return state
-if a.train_cave_wins:
+def save_from_ui():
+    from story_save_operator import save_via_ui
+    def record():
+        original=a.checkpoint;a.checkpoint=True
+        try:return submit([],emit=False)
+        finally:a.checkpoint=original
+    return save_via_ui(lambda commands:submit(commands,emit=False),record)
+
+if a.save_via_ui:
+    print(json.dumps(save_from_ui(),ensure_ascii=False),flush=True)
+elif a.train_cave_wins:
     from story_training import train_cave
     print(json.dumps(train_cave(lambda commands:submit(commands,emit=False),a.train_cave_wins),ensure_ascii=False),flush=True)
 elif a.interactive:
@@ -117,7 +130,9 @@ elif a.interactive:
     for line in sys.stdin:
         if line.strip():
             message=json.loads(line)
-            if message=={'checkpoint':True}:
+            if message=={'save':True}:
+                print(json.dumps(save_from_ui(),ensure_ascii=False),flush=True)
+            elif message=={'checkpoint':True}:
                 original=a.checkpoint;a.checkpoint=True
                 try:submit([])
                 finally:a.checkpoint=original

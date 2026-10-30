@@ -63,6 +63,7 @@ return function(game)
   local function snapshot()
     local world=game.overworld;local state={seq=seq,busy=busy,frame=U.frame(),top=screen(game.stack:top()),party={},
       inventory={},flags={},vars={},stack={}}
+    state.savedGameCount=(game.save.gen3Stats or{})[0]or 0
     for i,s in ipairs(game.stack.states or {})do state.stack[i]=screen(s)end
     for i,m in ipairs(game.save.party or {})do
       local p=fields(m,{'species','name','level','hp','status','exp'});p.maxHp=m.stats and m.stats.hp;p.moves={}

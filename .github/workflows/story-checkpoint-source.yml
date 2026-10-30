@@ -6,6 +6,11 @@ on:
       - 'tools/run_story_source_checks.py'
       - 'tools/run_edition_native.py'
       - 'tests/test_story_frozen_sources.py'
+      - 'tools/story_save_operator.py'
+      - 'tools/control_story_native.py'
+      - 'tests/test_story_save_operator.py'
+      - 'tests/leafgreen_story_driver.lua'
+      - 'tests/rs_story_driver.lua'
       - '.github/workflows/story-checkpoint-source.yml'
   workflow_dispatch:
 permissions:
