@@ -63,7 +63,9 @@ def finish(binary, rom_hash, runtime_id):
         header = stream.read(32)
         if platform.system()=='Windows':
             if header[:2]!=b'MZ':raise ValueError('The compiler did not produce a Windows game DLL.')
-            stream.seek(60);offset=struct.unpack('<I',stream.read(4))[0];stream.seek(offset);pe=stream.read(24)
+            stream.seek(60);pointer=stream.read(4)
+            if len(pointer)!=4:raise ValueError('The compiler produced a truncated Windows game DLL.')
+            offset=struct.unpack('<I',pointer)[0];stream.seek(offset);pe=stream.read(24)
             if len(pe)!=24 or pe[:4]!=b'PE\0\0' or struct.unpack_from('<H',pe,4)[0]!=0x8664 or not(struct.unpack_from('<H',pe,22)[0]&0x2000):
                 raise ValueError('The compiler did not produce a Windows x64 game DLL.')
         elif len(header) != 32 or struct.unpack('<IiiI', header[:16]) != (0xfeedfacf, 0x100000c, 0, 6):

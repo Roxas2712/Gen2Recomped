@@ -259,8 +259,8 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
     const auto hud=m->table_view.save_hud();content.insert(content.end(),hud.begin(),hud.end());
     content.insert(content.end(),payload.begin(),payload.end());
     const std::string pending=std::string(path)+".pending";
-    {std::ofstream file(pending,std::ios::binary|std::ios::trunc);if(!file.write(reinterpret_cast<const char*>(content.data()),content.size()))throw std::runtime_error("Quick state could not be written");}
-    std::filesystem::rename(pending,path);
+    {std::ofstream file(std::filesystem::u8path(pending),std::ios::binary|std::ios::trunc);if(!file.write(reinterpret_cast<const char*>(content.data()),content.size()))throw std::runtime_error("Quick state could not be written");}
+    if(!gbarecomp::debug::replace_file_preserving(pending,path,&error))throw std::runtime_error(error);
    }
   }
   capture(*m);return ok;
