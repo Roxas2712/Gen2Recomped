@@ -57,6 +57,27 @@ installed backend before playing. Developer overrides are `POKEMON_XY_ROOT`
 private player data or private intro artwork are included in the runtime.
 Other 3DS platform binaries remain unqualified.
 
+### Windows x64 bundle
+
+The Windows demo builder stages the game-data-free SDK as `3ds-runtime/`
+beside `RetroRecomped.exe`. It contains native PE x64 3dsrecomp/bridge binaries,
+Python 3.12, LLVM-MinGW Clang, a Vulkan loader and an additional SwiftShader ICD.
+The ICD is added alongside system drivers; a capable hardware GPU is preferred.
+There is no end-user Visual Studio, Rust or Python installation step.
+Initial guest compilation uses two compiler jobs and the existing per-ROM
+completion/hash marker. Existing ROM references, settings and player folders
+remain in the selected profile. A Mac-generated dylib cannot be reused as a
+Windows DLL; preparing its native code does not reset the player's data.
+
+`tools/build_windows_native_runtime.py --out <fresh-QA-candidate> --graphics`
+builds the pinned components on Windows. `windows-native-games.yml` runs this
+and the isolated `qualify_windows_native.py` checks. Component reuse requires a
+successful original run, exact file inventory and unchanged native source trees.
+Packaging refuses a missing/failed native report or stale source binding.
+See [the Windows demo evidence](qa/windows-cloud-demo-20261030.md) for actual
+tested scope. ABI, synthetic ARM11/Vulkan/snapshot checks and played Pokémon
+sessions are reported separately; a packaged SDK alone is not gameplay proof.
+
 Maintainer builds use `tools/build_pokemon_xy_runtime.py --fetch-components
 --build --test --out .local/qa/3ds-runtime-package-<run>/source`. Install the
 maintainer Rust 1.95.0 toolchain in `.local/pokemon-x/cargo` and

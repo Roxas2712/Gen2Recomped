@@ -19,10 +19,15 @@ def main():
  def tree(rev,path):return qa.qa_run(['git','rev-parse',rev+':'+path],cwd=ROOT,check=True,capture_output=True,text=True).stdout.strip()
  expected={path:tree(revision,path)for path in CRITICAL}
  if any(tree('HEAD',path)!=value for path,value in expected.items()):raise ValueError('Native sources changed; rebuild the SDK')
- report=json.loads((a.artifact/'report.json').read_text(encoding='utf-8-sig'))
- if report.get('passed')is not True or report.get('platform')!='Windows':raise ValueError('The original native component did not pass')
+ reports=list(a.artifact.rglob('report.json'))
+ if len(reports)>1:raise ValueError('Ambiguous native reports')
+ if reports:
+  report=json.loads(reports[0].read_text(encoding='utf-8-sig'))
+  if report.get('passed')is not True or report.get('platform')!='Windows':raise ValueError('The original native component did not pass')
+ archives=list(a.artifact.rglob('windows-native-runtime.zip'))
+ if len(archives)!=1:raise ValueError('Expected one original native component archive')
  if a.out.exists():raise ValueError('Use a fresh output; existing SDKs are preserved')
- with zipfile.ZipFile(a.artifact/'windows-native-runtime.zip')as z:
+ with zipfile.ZipFile(archives[0])as z:
   entries={}
   for row in z.infolist():
    path=PurePosixPath(row.filename)

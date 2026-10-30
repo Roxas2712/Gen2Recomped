@@ -65,6 +65,8 @@ Build locally after downloading the qualified component:
 python3 tools/build_windows_cloud_demo.py \
   --runtime /path/to/official-love12-win64.zip \
   --component /path/to/windows-cloud-runtime/component.json \
+  --native-sdk /path/to/windows-native-games/windows-native-runtime.zip \
+  --native-report /path/to/windows-native-games/report.json \
   --out .local/qa/windows-cloud-demo-build/candidate
 ```
 
@@ -126,7 +128,26 @@ reported existing player's “paused” case; confirm with the updated build on
 that PC and inspect logs if it persists. Real two-device account restoration,
 native gameplay and exact modded-battle continuation are separate checks.
 
-Optional native 3DS/Pinball libraries in the previous Mac demo are not silently
-represented as available Windows components. Existing imported files remain
-preserved; supported Windows native components are required to run those games.
 No server migration or production deployment is required for this client port.
+
+## Native Windows game extension (20261030.4 candidate)
+
+The candidate now builds native x64 Windows 3DS/Pinball components in the public
+fork. It stages a ROM-free SDK next to the EXE, with a bundled Python/C/C++ import
+toolchain, generic GBA libraries and the free replacement BIOS. Existing ROMs,
+imports and player folders are not migrated or deleted. Source trees and each
+SDK byte are bound to the native report before packaging.
+
+Local extension regressions: 46 X/Y Python tests, 3 Windows metadata/cache tests,
+6 packaging guards,
+67 Lua native export signature checks and 23 file-error/cleanup checks passed.
+Nine existing X/Y, Pinball and friend/CloudNet suites passed (532 checks).
+These are headless contracts, not native Windows gameplay.
+
+Native SDK run `41123957894` passed 56 recompiler unit tests and 10 bridge tests,
+then built the generic GBA components. It stopped at a Vulkan-Headers tag-versus-
+SHA comparison before final SDK qualification. Headers are now pinned to the full
+commit `9fbc2a782ee3f8a4db64e7d991e23da75e893f44`; the new run must pass before
+release. Native qualification additionally exercises self-authored ARM11/ARM
+programs, Vulkan device creation, exact snapshot restore and SRAM replacement.
+Those checks never imply a played Pokémon session or a player cloud upload.
