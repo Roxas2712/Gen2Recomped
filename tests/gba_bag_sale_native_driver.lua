@@ -14,7 +14,11 @@ return function(game)
   assert(UI.available(game));game.save.inventory={};game.save.bagOrder={};game.save.money=1000
   for _,entry in ipairs{{'POTION',frlg and 12 or 150},{'ANTIDOTE',1},{'ORAN_BERRY',999},
     {'MASTER_BALL',1},{'TM01',2},{'HM01',1}}do assert(Bag.add(game.save,entry[1],entry[2],game.data))end
-  if frlg then for _,id in ipairs{'TM_CASE','BERRY_POUCH'}do assert(Bag.add(game.save,id,1,game.data))end end
+  if frlg then
+    for _,entry in ipairs{{'TM39',1},{'HM03',1},{'TM03',1},{'TM_CASE',1},{'BERRY_POUCH',1}}do
+      assert(Bag.add(game.save,entry[1],entry[2],game.data))
+    end
+  end
   U.teleport(game,frlg and'MAP_G04_N00'or'MAP_G01_N01',4,2,'down');U.wait(60)
   local world=game.stack:top();local report={status='running',edition=v,preparedFixture=true,
     continuousStory=false,captures={},cases={},clockSeconds=0}
@@ -83,6 +87,8 @@ return function(game)
   if frlg then
     press('b');assert(game.stack:top()==root);select(root,'TM_CASE');press('a');tm=game.stack:top()
     assert(getmetatable(tm)==require('src.ui.Gen3TMCase')and tm.sell)
+    for i,id in ipairs{'HM01','HM03','TM01','TM03','TM39'}do assert(tm.rows[i].id==id)end
+    assert(tm.rows[6].close);shot('native-sale-tm-case-order')
   else pocket('TM_HM');tm=root end
   select(tm,'TM01');press('a');sale=game.stack:top();assert(sale.mode=='quantity'and sale.max==2)
   shot('native-sale-tm-quantity');press('b')
@@ -95,5 +101,6 @@ return function(game)
   report.status='pass';report.ordinaryShopBagInputs=true;report.actualDiskRoundTrip=true
   report.drawPreservesSaveRng=true;report.cases.selectedStack=true;report.cases.cancelImmutable=true
   report.cases.zeroPriceAndHmRefused=true;report.cases.tmAndBerrySalesReachable=true
+  if frlg then report.cases.nativeMachineOrder=true end
   persist();print('PASS_NATIVE_GBA_BAG_SALE');love.event.quit(0)
 end

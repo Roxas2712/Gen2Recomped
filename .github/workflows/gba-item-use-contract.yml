@@ -25,6 +25,7 @@ jobs:
           luajit tests/engine/gba_field_item_use.lua
           luajit tests/engine/rs_party_contract.lua
           luajit tests/engine/gba_native_field_party.lua
+          luajit tests/engine/frlg_tm_case_native.lua
           luajit tests/engine/gba_key_item_registration.lua
           luajit tests/engine/gba_save_result.lua
           luajit tests/engine/frlg_bag_registration_assets.lua

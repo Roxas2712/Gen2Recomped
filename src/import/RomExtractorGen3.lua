@@ -47248,6 +47248,7 @@ RomExtractorGen3.FRLG_POCKET_ART = {
 function RomExtractorGen3:extractFireRedPocketArt()
   self:beginStage("Gen3 FireRed pocket art")
   if (self.manifest or {}).frlgItemMenu == nil then return end
+  local version=type(self.version)=='table'and self.version.id or self.version
   local A = RomExtractorGen3.FRLG_POCKET_ART
   local rom = self.rom
   local function colours(list)
@@ -47336,21 +47337,13 @@ function RomExtractorGen3:extractFireRedPocketArt()
     end
     save("discs", img)
   end)
-  -- the HM tag: a 16-wide bitmap in the standard menu palette
+  -- Four OBJ tiles in row order; only the top twelve pixel rows are visible.
   pcall(function()
     local pal = colours(rom:bytes(A.STD_PAL, 32))
     pal[6] = { RomGba.bgr555(8 + 8 * 32 + 8 * 1024) }
     pal[7] = { RomGba.bgr555(30 + 16 * 32 + 6 * 1024) }
     local raw = rom:bytes(A.HM, 0x80)
-    local img = ImageWriter.blank(16, 12)
-    for y = 0, 11 do
-      for x = 0, 15 do
-        local byte = raw[y * 8 + math.floor(x / 2) + 1] or 0
-        local v = (x % 2 == 0) and byte % 16 or math.floor(byte / 16)
-        local c = v ~= 0 and pal[v]
-        if c then img:setPixel(x, y, c[1] / 255, c[2] / 255, c[3] / 255, 1) end
-      end
-    end
+    local img = require('src.import.Gen3TMCaseAssets').decodeHmTag(raw,pal)
     save("hm_tag", img)
   end)
   -- the berry pouch
@@ -47366,6 +47359,7 @@ function RomExtractorGen3:extractFireRedPocketArt()
   local function c(t) return { t[1], t[2], t[3] } end
   local constants = self._constants or {}
   constants.gen3FRLGPocketArt = {
+    format=require('src.import.Gen3TMCaseAssets').FORMAT,version=version,
     images = images, types = A.TYPES,
     colors = { white = c(std[1]), dark = c(std[2]), light = c(std[3]) },
     source = "ROM:tm_case.c gTMCase*, berry_pouch.c gBerryPouchSprite*",

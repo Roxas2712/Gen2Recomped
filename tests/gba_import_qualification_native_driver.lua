@@ -30,6 +30,7 @@ return function(game)
  end
  local frlg=version=='firered'or version=='leafgreen'
  if frlg then
+  assert(require('src.import.Gen3TMCaseAssets').valid(game.data.constants.gen3FRLGPocketArt,version))
   assert(require('src.import.Gen3BagRegistrationAssets').valid(game.data.constants.gen3BagScreen.registered,version))
   assert(game.data.constants.gen3FRLGTitle.cry==(version=='firered'and'CHARIZARD'or'VENUSAUR'))
  else
