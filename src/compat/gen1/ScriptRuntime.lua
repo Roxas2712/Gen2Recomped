@@ -35,34 +35,19 @@ function R:release()
   if self.dataset then self.dataset.life.retired=true end
   self.dataset=nil
 end
-function R:current(game,world)
-  local g,why=Native.game(game);if not g then self:release();return nil,why end
-  if not world then local _,w=Native.resolve(g);world=w end
-  if world and not(type(world)=='table'and world.isOverworld and world.player and world.map
-      and g.data and g.data.maps and g.data.maps[world.map.id]==world.map.def)then world=nil end
-  if not(g.data and type(g.data.maps)=='table'and type(g.save)=='table')then
-    self:release();return nil,'native script dataset unavailable'
-  end
-  local c=self.context;local map=world and world.map
-  if c and(c.game~=g or c.world~=world or c.map~=map or c.data~=g.data or c.maps~=g.data.maps
-      or c.save~=g.save or c.loader~=g.mods or c.pool~=g.data.map_scripts or c.edition~=Version.get()
-      or c.life.runner~=(world and world.runner))then self:retireContext();c=nil end
-  local dataset=self.dataset
-  if dataset and(dataset.game~=g or dataset.data~=g.data or dataset.maps~=g.data.maps or dataset.save~=g.save
-      or dataset.loader~=g.mods or dataset.pool~=g.data.map_scripts or dataset.edition~=Version.get())then
-    dataset.life.retired=true;self.dataset=nil;dataset=nil
-  end
-  if not dataset then
-    dataset={game=g,data=g.data,maps=g.data.maps,save=g.save,loader=g.mods,pool=g.data.map_scripts,edition=Version.get()}
+-- Closure-bearing constructors stay off the validated read path.
+local function buildDataset(self,g)
+    local dataset={game=g,data=g.data,maps=g.data.maps,save=g.save,loader=g.mods,pool=g.data.map_scripts,edition=Version.get()}
     local held={};for k,v in pairs(dataset)do held[k]=v end;dataset.life=held
     dataset.bundle,dataset.error=Bundle.new(g.data,dataset.edition,function()
       return not held.retired and held.data==g.data and held.maps==g.data.maps and held.save==g.save
         and held.loader==g.mods and held.pool==g.data.map_scripts and held.edition==Version.get()
     end)
     self.dataset=dataset
-  end
-  if not c then
-    c={game=g,world=world,map=map,data=g.data,maps=g.data.maps,save=g.save,loader=g.mods,pool=g.data.map_scripts,edition=Version.get()}
+  return dataset
+end
+local function buildContext(self,g,world,map,dataset)
+    local c={game=g,world=world,map=map,data=g.data,maps=g.data.maps,save=g.save,loader=g.mods,pool=g.data.map_scripts,edition=Version.get()}
     c.binding=Identity.bind(c.maps,c.edition);c.id=map and c.binding:legacyId(map.id)
     c.backend=assert(Store.new(g))
     local life={game=g,data=c.data,maps=c.maps,save=c.save,loader=c.loader,pool=c.pool,edition=c.edition,
@@ -100,7 +85,27 @@ function R:current(game,world)
     end,{valid=valid,backend=backend})
     c.dataset=dataset;c.bundle,c.bundleError=dataset.bundle,dataset.error
     if world and world.runner and c.bundle then c.vm=self:vm(c)end
+  return c
+end
+function R:current(game,world)
+  local g,why=Native.game(game);if not g then self:release();return nil,why end
+  if not world then local _,w=Native.resolve(g);world=w end
+  if world and not(type(world)=='table'and world.isOverworld and world.player and world.map
+      and g.data and g.data.maps and g.data.maps[world.map.id]==world.map.def)then world=nil end
+  if not(g.data and type(g.data.maps)=='table'and type(g.save)=='table')then
+    self:release();return nil,'native script dataset unavailable'
   end
+  local c=self.context;local map=world and world.map
+  if c and(c.game~=g or c.world~=world or c.map~=map or c.data~=g.data or c.maps~=g.data.maps
+      or c.save~=g.save or c.loader~=g.mods or c.pool~=g.data.map_scripts or c.edition~=Version.get()
+      or c.life.runner~=(world and world.runner))then self:retireContext();c=nil end
+  local dataset=self.dataset
+  if dataset and(dataset.game~=g or dataset.data~=g.data or dataset.maps~=g.data.maps or dataset.save~=g.save
+      or dataset.loader~=g.mods or dataset.pool~=g.data.map_scripts or dataset.edition~=Version.get())then
+    dataset.life.retired=true;self.dataset=nil;dataset=nil
+  end
+  if not dataset then dataset=buildDataset(self,g)end
+  if not c then c=buildContext(self,g,world,map,dataset)end
   return c
 end
 function R:bundle()
