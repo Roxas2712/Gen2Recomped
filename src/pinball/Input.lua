@@ -39,4 +39,11 @@ function M:buttons(seat,keyboard,mouse,focused)
  end
  return buttons
 end
+-- Short bounded pulses follow the cartridge's rumble motor; no pad can remain
+-- vibrating after focus loss, pause, disconnect or host shutdown.
+function M:rumble(seat,active)
+ local pad=self.pads[seat]
+ if pad and pad:isConnected()and pad.setVibration then pcall(pad.setVibration,pad,active and .35 or 0,active and .35 or 0,.08)end
+end
+function M:stopRumble()for seat in pairs(self.pads)do self:rumble(seat,false)end end
 return M

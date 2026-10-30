@@ -34,12 +34,13 @@ def worker(args):
     lib.ascendant_pinball_picture.argtypes=[ptr,C.POINTER(C.c_uint32),C.POINTER(C.c_uint32)];lib.ascendant_pinball_picture.restype=ptr
     lib.ascendant_pinball_checkpoint.argtypes=[ptr];lib.ascendant_pinball_checkpoint.restype=C.c_char_p
     lib.ascendant_pinball_state.argtypes=[ptr,C.c_char_p,C.c_int]
+    lib.ascendant_pinball_read.argtypes=[ptr,C.c_uint32,C.c_uint32];lib.ascendant_pinball_read.restype=C.c_uint32
     assert not lib.pinball_gbc_open(b'/nonexistent/pinball.gbc'),'Missing ROM must be rejected'
     ctx=lib.pinball_gbc_open(str(args.rom).encode())
     assert ctx,lib.pinball_gbc_error()
     baseline=lib.pinball_gbc_open(str(args.rom).encode())if args.full_table else None
     if args.full_table:assert lib.ascendant_pinball_view(ctx,1)
-    snapshots={};pcm_frames=0;audible=False;start=time.perf_counter()
+    snapshots={};states=[];expanded_seen=False;fixed_frames=0;pcm_frames=0;audible=False;start=time.perf_counter()
     try:
         for frame in range(args.frames):
             # Advance intro, title, field selection and launch; then operate
@@ -49,7 +50,6 @@ def worker(args):
             if frame in range(720,725)or frame in range(900,905):buttons&=~1
             if args.field=='blue'and frame in range(840,845):dpad&=~1
             if frame>=1000:
-                if frame%90<30:dpad&=~8
                 if frame%30<15:buttons&=~1
                 else:dpad&=~2
             if args.full_table:
@@ -57,14 +57,42 @@ def worker(args):
                 assert lib.pinball_gbc_step(baseline,dpad,buttons)
                 if frame%60==0:assert lib.ascendant_pinball_checkpoint(ctx)==lib.ascendant_pinball_checkpoint(baseline),'Presentation changed the canonical guest'
             else:assert lib.pinball_gbc_step(ctx,dpad,buttons),lib.pinball_gbc_error()
+            if args.full_table:
+                width,height=C.c_uint32(),C.c_uint32();lib.ascendant_pinball_picture(ctx,C.byref(width),C.byref(height))
+                main=lib.ascendant_pinball_read(ctx,0xd8f1,1);stage=lib.ascendant_pinball_read(ctx,0xd4ac,1)
+                standard=main==4 and stage<=5 and not(stage&2)
+                if not standard:expanded_seen=False
+                if standard and width.value==192:expanded_seen=True
+                if standard and expanded_seen:
+                    assert (width.value,height.value)==(192,285),'Standard-field sequence must not zoom back into the half table'
+                    fixed_frames+=1
             count=C.c_size_t();samples=lib.pinball_gbc_audio(ctx,C.byref(count));pcm_frames+=count.value
             if count.value:audible=audible or any(C.string_at(samples,count.value*4))
-            if frame in {179,359,599,719,899,1199,args.frames-1}:
+            if frame%300==299:
+                read=lambda a:lib.ascendant_pinball_read(ctx,a,1)
+                states.append({'frame':frame+1,'screen':read(0xd8f1),'sub':read(0xd8f2),'stage':read(0xd4ac),'launched':read(0xd4de),'keys':read(0xd948),'score':[read(0xd46a+i)for i in range(6)]})
+            if frame in {179,359,599,719,899,1199,1499,1799,2399,2999,args.frames-1}:
                 width,height=C.c_uint32(),C.c_uint32()
                 picture=lib.ascendant_pinball_picture(ctx,C.byref(width),C.byref(height))
                 rgba=C.string_at(picture,width.value*height.value*4)
                 filename='frame-'+str(frame+1)+'.png';png(args.output/filename,rgba,width.value,height.value)
                 snapshots[filename]={'width':width.value,'height':height.value,'sha256':hashlib.sha256(rgba).hexdigest(),'colors':len(set(rgba[i:i+4]for i in range(0,len(rgba),4)))}
+                if args.full_table and width.value==192:
+                    original=C.string_at(lib.pinball_gbc_picture(ctx),160*144*4)
+                    png(args.output/('original-'+filename),original)
+                    read=lambda a:lib.ascendant_pinball_read(ctx,a,1)
+                    stage=read(0xd4ac);sx=read(0xff43);sy=read(0xff42)
+                    sx=sx if sx<128 else sx-256;sy=sy if sy<128 else sy-256
+                    matched=total=0
+                    for y in range(120):
+                        wy=(stage%2)*136+y+sy
+                        for x in range(160):
+                            wx=x+sx
+                            if not 0<=wx<192 or not 0<=y+sy<136:continue
+                            total+=1
+                            matched+=original[(y*160+x)*4:(y*160+x+1)*4]==rgba[(wy*192+wx)*4:(wy*192+wx+1)*4]
+                    snapshots[filename].update(stage=stage,scroll=[sx,sy],viewport_matching_pixels=matched,viewport_pixels=total)
+
         checkpoint=lib.ascendant_pinball_checkpoint(ctx)
         state=str(args.output/'quick.state').encode()
         assert lib.ascendant_pinball_state(ctx,state,0)
@@ -81,7 +109,7 @@ def worker(args):
             'elapsed_seconds':time.perf_counter()-start,'interpreter_instructions':lib.pinball_gbc_counter(ctx,1),
             'dispatch_fallbacks':lib.pinball_gbc_counter(ctx,2),'interpreter_cycles':lib.pinball_gbc_counter(ctx,3),
             'cpu_cycles':lib.pinball_gbc_counter(ctx,4),'pcm_frames':pcm_frames,'audible':audible,
-            'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),
+            'fixed_full_table_frames':fixed_frames,'states':states,'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),
             'quick_state_roundtrip':True,'battery_roundtrip':True,'player_saves_opened':False,'boot':'HLE'}
         assert pcm_frames>0 and audible
         assert max(s['colors']for s in snapshots.values())>8,'Expected color graphics'

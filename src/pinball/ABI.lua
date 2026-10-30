@@ -14,6 +14,7 @@ uint64_t ascendant_pinball_interpreted(void*);
 int ascendant_pinball_table_stats(void*,uint32_t*,uint32_t*);
 int ascendant_pinball_diagnostics(void*,double*);
 int ascendant_pinball_priority(int);
+int ascendant_pinball_rumble(void*);
 const char* ascendant_pinball_checkpoint(void*);
 uint32_t ascendant_pinball_read(void*,uint32_t,uint32_t);
 int ascendant_pinball_close(void*);

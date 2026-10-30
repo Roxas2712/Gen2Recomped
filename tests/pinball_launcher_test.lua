@@ -99,5 +99,5 @@ local gbcLabels={};for _,r in ipairs(ui._pinButtons)do gbcLabels[r.label]=true e
 check(gbcLabels['DUEL TABLE: RED']and not gbcLabels['DUEL TABLE: RUBY'],'GBC duel labels identify the original fields')
 check(gbcLabels['LOCAL · 2 PLAYERS']and gbcLabels['MODCOMPASS · WITH FRIENDS'],'GBC reuses local and friend duel actions')
 check(ui._pinFriends:context(true).edition=='pinballgbc','GBC presence never advertises the GBA edition')
-ui:_sbOpenGame('pinballrs');check(ui.browseConsole=='gba'and not ui.ready.pinballgbc==false,'switching cartridges keeps independent readiness')
+ui:_sbOpenGame('pinballrs');check(ui.browseConsole=='gba'and ui.ready.pinballgbc,'switching cartridges keeps independent readiness')
 print(checks..' Pinball launcher lifecycle checks passed')

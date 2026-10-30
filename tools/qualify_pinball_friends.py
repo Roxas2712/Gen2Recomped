@@ -30,7 +30,7 @@ def main():
     profiles={}
     if args.love:
         # conf.lua identities are private to this headless test harness.
-        for name in ('pinball_friends_test','pinball_channel_lifetime','pinball_launcher_test','relay_rejection','run_pinball_duel_tests','friend_play','cloud_net','friends_menu','account_workspace','header_account'):
+        for name in ('pinball_friends_test','pinball_channel_lifetime','pinball_launcher_test','relay_rejection','run_pinball_duel_tests','friend_play','cloud_net','friends_menu','account_workspace','header_account','pinball_input_controls'):
             identity='oasc-pinball-qa-friends-'+name
             if sys.platform=='darwin':profile=Path.home()/'Library/Application Support/LOVE'/identity
             elif os.name=='nt':profile=Path(os.environ['APPDATA'])/identity
@@ -40,7 +40,7 @@ def main():
     suites=('tests/pinball_friends_test.lua','tests/pinball_launcher_test.lua','tests/run_pinball_duel_tests.lua','tests/engine/relay_rejection.lua',
             'tests/engine/friend_play.lua','tests/engine/cloud_net.lua','tests/engine/friends_menu.lua',
             'tests/engine/account_workspace.lua')
-    if args.love:suites+=('tests/engine/header_account.lua','tests/pinball_channel_lifetime.lua')
+    if args.love:suites+=('tests/engine/header_account.lua','tests/pinball_channel_lifetime.lua','tests/pinball_input_controls.lua')
     for suite in suites:
         command=[executable,suite]
         if args.love:

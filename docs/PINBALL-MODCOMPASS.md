@@ -179,3 +179,22 @@ python3 tools/qualify_pinball_friends.py --lua /path/to/lua
 # Actual LÖVE LuaJIT runtime, also including launcher input routing:
 python3 tools/qualify_pinball_friends.py --love /path/to/love
 ```
+
+## Original GBC Pinball edition
+
+The public client also supports `edition="pinballgbc"`, protocol 1, Red/Blue
+fields 0/1 and locale `en`. It has its own verified ROM SHA-1, native backend
+identity and content fingerprint; compatibility must require the same edition
+as well as fingerprint. GBA and GBC invitations cannot share a round. Every
+existing participant, device, friendship, privacy, reservation, wire and
+preview bound described above still applies. A service deployment must accept
+this distinct edition through presence, account/device-target invitations,
+entry and transport authorization before live GBC friend play is enabled.
+The earlier public HTTPS/WebRTC/WSS results in this document concern GBA only;
+this addition does not assert GBC server deployment or qualification.
+
+ROM-free client tests accept `--edition pinballgbc` or `--edition pinballrs`.
+The GBC native network runner additionally qualifies real localhost ENet and
+private TCP relay score/picture delivery, including flushing the final score
+after a client has reached its local result. Neither test replaces a deployed
+GBC service test with two authenticated accounts.

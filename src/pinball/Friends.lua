@@ -3,6 +3,7 @@
 local M={};M.__index=M
 local Strings=require('src.core.Strings')
 local function uuid(s)return type(s)=='string'and #s==36 and s:match('^[a-f0-9%-]+$')end
+local function pinballEdition(s)return s=='pinballrs'or s=='pinballgbc'end
 local function accountId(s)return type(s)=='string'and #s<=20 and s:match('^[1-9][0-9]*$')end
 local function now()return love.timer.getTime()end
 local function account(Auth)return Auth.signedIn()and Auth.accountId()or nil end
@@ -18,7 +19,7 @@ function M.new(session,options)
   Net=options.net or require('src.link.CloudNet'),fingerprint=M.fingerprint(session)or false,seen={},state='idle',nextEnter=0},M)
  self.account=account(self.Auth);return self
 end
-function M:edition()return self.session and self.session.edition or 'pinballrs'end
+function M:edition()return self.session and self.session.edition or self.options.edition or 'pinballrs'end
 function M:context(available)
  if not self.session then return {available=false}end
  return {edition=self:edition(),fingerprint=self.session and self.fingerprint or nil,available=self.session~=nil and available==true and self.state=='idle',
@@ -47,7 +48,7 @@ function M:request(purpose,path,payload)
 end
 function M:document()return self.Play.read()end
 function M:invitation(id)
- for _,i in ipairs((self:document()or {}).invites or {})do if i.id==id and i.mode=='pinball'and i.edition==self:edition()then return i end end
+ for _,i in ipairs((self:document()or {}).invites or {})do if i.id==id and i.mode=='pinball'and pinballEdition(i.edition)then return i end end
 end
 function M:action(id)
  local op,value=id:match('^pinball:(%a+):([a-f0-9%-]+)$')
@@ -150,11 +151,11 @@ function M:tick(available)
   end
  end
 end
-local function title(i,session)return(i.rules and i.rules.field==1 and(session and session.guest=='gbc'and'BLUE'or'SAPPHIRE')or(session and session.guest=='gbc'and'RED'or'RUBY'))..' · '..tostring(i.nickname or Strings("Friend"))end
+local function title(i,session)return(i.rules and i.rules.field==1 and(i.edition=='pinballgbc'and'BLUE'or'SAPPHIRE')or(i.edition=='pinballgbc'and'RED'or'RUBY'))..' · '..tostring(i.nickname or Strings("Friend"))end
 function M:rows(peer)
  local rows={};local function add(id,label,note)rows[#rows+1]={id=id,label=label,note=note}end
  for _,i in ipairs((self:document()or {}).invites or {})do
-  if not peer and i.mode=='pinball'and i.edition==self:edition()and uuid(i.id)then
+  if not peer and i.mode=='pinball'and pinballEdition(i.edition)and uuid(i.id)then
    if i.state=='pending'and i.incoming then
     if self:compatible(i.rules)then add('pinball:accept:'..i.id,Strings("ACCEPT PINBALL · ")..title(i,self.session),Strings("5 minutes · fresh game · regular saves are kept."))
     else add('pinball:accept:'..i.id,Strings("PREPARE & ACCEPT PINBALL · ")..title(i,self.session),Strings("Prepare your matching import to continue this invitation."))end

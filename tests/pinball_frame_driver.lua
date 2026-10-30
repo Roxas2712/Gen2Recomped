@@ -44,6 +44,7 @@ end
 Player.new=function(session,options)
  session.player=assert(os.getenv('PINBALL_FRAME_PLAYER'));options.diagnostics=true
  options.field=tonumber(os.getenv('PINBALL_FRAME_FIELD'))or 0
+ if session.guest=='gbc'and options.seats==2 then options.frameLimit=600 end
  local p=new(session,options);love.window.setTitle('Pinball · Bild- und Tontest · separates Profil');player=p;previousFrame=nil;lastTick=nil;lastChanged=nil;repeatRun=0;lastShapes={};p.settings.full_table=os.getenv('PINBALL_FRAME_TABLE')=='1';p:command{action='view',full_table=p.settings.full_table}
  p.probeRound={field=options.field,number=#rounds+1};rounds[#rounds+1]=p.probeRound
  p.input={buttons=function(_,seat)
@@ -51,7 +52,10 @@ Player.new=function(session,options)
   if session.guest=='gbc'then
    if not st then return 0 end
    if st.main==2 or st.main==3 then return n%45<4 and 1 or 0 end
-   if st.main==8 then return n%45<4 and 1 or 0 end
+   if st.main==8 then
+    if n%45>=4 then return 0 end
+    return st.fieldSelection~=options.field and(options.field==1 and 16 or 32)or 1
+   end
    if st.main==4 then return n%120<55 and 1 or n%120<110 and 32 or 0 end
    return 0
   end
@@ -97,7 +101,7 @@ love.update=function(dt)
  local st=p.stats[1]
  if not st then return end
  series.session_display[#series.session_display+1]=dt*1000
- if p.phase=='playing'and not p.countdown and st.main==2 and st.sub==1 then p.probeRound.started=p.probeRound.started or t;started=started or t end
+ if p.phase=='playing'and not p.countdown and (p.session.guest=='gbc'and st.main==4 and st.sub==2 or p.session.guest~='gbc'and st.main==2 and st.sub==1)then p.probeRound.started=p.probeRound.started or t;started=started or t end
  local playing=p.probeRound.started and not p.closing and not p.paused and p.phase=='playing'and not p.countdown
  if playing then
   local warm=t-p.probeRound.started<3 or t<(p.probeFocusWarm or 0)
@@ -148,12 +152,13 @@ love.update=function(dt)
   else lastAudioRestarts=nil end
   lastTick=t
  else lastTick=nil;lastAudioRestarts=nil end
- if p.phase=='finished'or p.probeRound.started and p.seats==1 and(st.main==8 or st.main==2 and st.sub>=2)then
+ if p.phase=='finished'or p.probeRound.started and p.seats==1 and(p.session.guest=='gbc'and st.main~=4 or p.session.guest~='gbc'and(st.main==8 or st.main==2 and st.sub>=2))then
   if not p.probeRestart then
    p.probeRestart=true;p.probeRound.finished=true;p.probeRound.result=p.result
    for seat,value in ipairs(p.stats)do p.probeRound['score'..seat]=value.score;p.probeRound['elapsed'..seat]=value.elapsed or value.frame end
    if p.seats==2 then
-    local expected=p.stats[1].score==p.stats[2].score and 'Unentschieden'or p.stats[1].score>p.stats[2].score and 'Spieler 1 gewinnt'or 'Spieler 2 gewinnt'
+    local Strings=require('src.core.Strings')
+    local expected=p.stats[1].score==p.stats[2].score and Strings('Draw')or p.stats[1].score>p.stats[2].score and Strings('Player 1 wins')or Strings('Player 2 wins')
     assert(p.result==expected,'Incorrect local two-player result')
    end
    p:stop()

@@ -125,13 +125,13 @@ function M.install(RI)
  end
  local function friends(self,session)
   if self._pinFriends then self._pinFriends:close()end
-  self._pinFriends=require('src.pinball.Friends').new(session,{field=self._pinField or 0,locale=self._pinLocale,
+  self._pinFriends=require('src.pinball.Friends').new(session,{field=self._pinField or 0,locale=self._pinLocale,edition=edition(self),
    prepare=function(invite,peer)
     self._pinPendingInvite=invite and invite.id or nil;self._pinPendingPeer=peer
     self._pinPendingAccount=require('src.cloud.RetroCloud').accountId()
     if invite and invite.rules then self._pinLocale=invite.rules.locale end
     require('src.import.AccountWorkspace').close(self)
-    self:_sbOpenGame(edition(self))
+    self:_sbOpenGame(invite and invite.edition or edition(self))
     local required=sessionFor(self,self._pinLocale)
     if required and invite and invite.rules.rom==required.rom_sha1 and invite.rules.backend~=required.backend then
      self._pinNotice=Strings('Both players need the same current app and Pinball version for this duel.')
@@ -206,7 +206,7 @@ function M.install(RI)
   self._pinLocale=love.filesystem.read('pinball-locale.txt')or(self._settings and self:_settings().launcherLanguage)or 'en'
   if not sessionFor(self,self._pinLocale)then self._pinLocale='en'end
   friends(self,sessionFor(self,self._pinLocale))
-  if os.getenv('ASCENDANT_PINBALL_START')or os.getenv('ASCENDANT_PINBALL_GBC_START')=='1'then
+  if os.getenv('ASCENDANT_PINBALL_START')=='1'or os.getenv('ASCENDANT_PINBALL_GBC_START')=='1'then
    if self._xyIntro then self._xyIntro.scene:release();self._xyIntro=nil end
    self._pinAutoStart=true;self._launcherSequence=nil
   end

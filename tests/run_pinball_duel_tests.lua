@@ -59,4 +59,20 @@ a:send{type='pinball_duel',protocol=1,kind='picture',frame=2,width=99999,height=
 y:update();check(y.state=='cancelled'and not y.result,'oversized image dimensions are rejected before decoding')
 x,y=pair(nil,true,false);start(x,y)
 check(not x.viewEnabled and not y.viewEnabled and not x:picture{frame=1,width=240,height=160,png=string.rep('a',60)},'older score-only peers never receive an unsupported picture message')
+-- A buffered transport flushes only from update(), including the final result.
+a,b=Net.loopbackPair()
+for _,net in ipairs{a,b}do
+ local send=net.send;net.pending={}
+ net.send=function(self,message)self.pending[#self.pending+1]=message end
+ net.update=function(self)local pending=self.pending;self.pending={};for _,message in ipairs(pending)do send(self,message)end end
+end
+x,y=Duel.new(a,true,rules),Duel.new(b,false,rules)
+for _=1,8 do x:update();y:update()end
+x:ready(string.rep('a',40));y:ready(string.rep('a',40))
+for _=1,8 do x:update();y:update()end
+check(x.state=='playing'and y.state=='playing','buffered transport starts')
+x:progress(18000,120,true);y:progress(18000,100,true)
+for _=1,8 do x:update();y:update()end
+check(x.state=='finished'and y.state=='finished'and x.result=='win'and y.result=='loss','buffered final scores reach both clients')
+check(#a.pending==0 and #b.pending==0,'finished clients keep flushing transport output')
 print(checks..' Pinball duel checks passed')

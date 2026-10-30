@@ -46,9 +46,10 @@ class Relay:
                 now=time.monotonic()
                 if now-window>=1:window=now;messages=0
                 messages+=1
-                if messages>60 or len(raw)>4096:break
+                if messages>60 or len(raw)>32768:break
                 msg=json.loads(raw)
                 if not isinstance(msg,dict) or msg.get('type')!='pinball_duel' or msg.get('protocol')!=1:break
+                if msg.get('kind')=='picture'and(not isinstance(msg.get('png'),str)or len(msg['png'])>27000):break
                 room=self.rooms.get(code)
                 if not room:break
                 peer=room[1] if room[0] is writer else room[0]
@@ -71,7 +72,7 @@ async def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--bind',default='127.0.0.1');p.add_argument('--port',type=int,default=7781)
     args=p.parse_args();relay=Relay()
-    server=await asyncio.start_server(relay.client,args.bind,args.port,limit=4096)
+    server=await asyncio.start_server(relay.client,args.bind,args.port,limit=32768)
     print('Private Pinball relay listening on %s:%d'%(args.bind,args.port),flush=True)
     async with server:await server.serve_forever()
 

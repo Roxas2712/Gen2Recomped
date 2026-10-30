@@ -12,6 +12,10 @@
 #include <filesystem>
 #include <fstream>
 #include <chrono>
+#include <mutex>
+#ifdef __APPLE__
+#include <pthread.h>
+#endif
 
 namespace {
 struct Player {
@@ -28,7 +32,10 @@ struct Player {
     std::array<double,4> timings{};
     bool composed=false;
 };
-std::string error;
+// The pinned runtime also has process-wide trace/bootstrap helpers. Serialize
+// native calls across worker threads; independent contexts keep all game state.
+std::recursive_mutex runtime_mutex;
+thread_local std::string error;
 void sample(GBContext* ctx, int16_t l, int16_t r) {
     auto* p=static_cast<Player*>(ctx->platform);
     if(p && p->pcm.size()<8192) { p->pcm.push_back(l); p->pcm.push_back(r); }
@@ -44,6 +51,7 @@ void pinball_gbc_mbc5_rumble(GBContext* ctx,uint8_t value) {
 }
 const char* pinball_gbc_error() { return error.c_str(); }
 void* pinball_gbc_open(const char* path) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     error.clear();
     FILE* f=path?std::fopen(path,"rb"):nullptr;
     if(!f) { error="Cannot read the GBC cartridge"; return nullptr; }
@@ -71,6 +79,7 @@ void* pinball_gbc_open(const char* path) {
     return p.release();
 }
 int pinball_gbc_step(void* handle,uint8_t dpad,uint8_t buttons) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto* p=static_cast<Player*>(handle);if(!p)return 0;
     p->keys={dpad,buttons};p->pcm.clear();
     gb_run_frame(p->ctx);
@@ -102,13 +111,26 @@ int pinball_gbc_ram(void* handle,uint8_t* data,size_t size,int write) {
     return 1;
 }
 void pinball_gbc_close(void* handle) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto*p=static_cast<Player*>(handle);if(!p)return;
     p->ctx->platform=nullptr;p->ctx->joypad=nullptr;gb_context_destroy(p->ctx);delete p;
 }
 // Shared Pinball ABI: the existing threaded player, duel protocol, transport,
 // live-view encoder and input/display tools use the same host contract.
+int ascendant_pinball_rumble(void*h){auto*p=static_cast<Player*>(h);return p&&p->rumble;}
+int ascendant_pinball_priority(int active) {
+#ifdef __APPLE__
+    if(active>=0&&pthread_set_qos_class_self_np(active?QOS_CLASS_USER_INTERACTIVE:QOS_CLASS_UTILITY,0)!=0)return 0;
+    qos_class_t current=QOS_CLASS_UNSPECIFIED;
+    if(pthread_get_qos_class_np(pthread_self(),&current,nullptr)!=0)return 0;
+    return static_cast<int>(current);
+#else
+    (void)active;return 0;
+#endif
+}
 const char* ascendant_pinball_error(){return pinball_gbc_error();}
 void* ascendant_pinball_open(const char*rom,const char*,const char*save) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto*p=static_cast<Player*>(pinball_gbc_open(rom));if(!p)return nullptr;
     if(save&&*save) {
         p->path=save;
@@ -121,6 +143,7 @@ void* ascendant_pinball_open(const char*rom,const char*,const char*save) {
     return p;
 }
 int ascendant_pinball_step_present(void*handle,uint16_t keys,int present) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto*p=static_cast<Player*>(handle);if(!p)return 0;
     auto begin=std::chrono::steady_clock::now();
     int ok=pinball_gbc_step(p,uint8_t(~(keys>>4)),uint8_t(~keys));
@@ -131,7 +154,7 @@ int ascendant_pinball_step_present(void*handle,uint16_t keys,int present) {
     return ok;
 }
 int ascendant_pinball_step(void*h,uint16_t keys){return ascendant_pinball_step_present(h,keys,1);}
-int ascendant_pinball_view(void*h,int mode) {auto*p=static_cast<Player*>(h);if(!p)return 0;p->full=mode!=0;p->composed=false;return 1;}
+int ascendant_pinball_view(void*h,int mode) {auto*p=static_cast<Player*>(h);if(!p)return 0;p->full=mode!=0;p->composed=false;p->table.reset_layout();return 1;}
 const uint8_t* ascendant_pinball_picture(void*h,uint32_t*w,uint32_t*height) {
     auto*p=static_cast<Player*>(h);if(!p||!w||!height)return nullptr;
     *w=p->composed?192:160;*height=p->composed?285:144;
@@ -144,10 +167,11 @@ const int16_t* ascendant_pinball_audio(void*h,size_t*count,uint32_t*rate) {
     return p->mono.data();
 }
 int ascendant_pinball_state(void*h,const char*path,int load) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto*p=static_cast<Player*>(h);if(!p||!path)return 0;
     bool ok=load?gb_context_load_state_file(p->ctx,path):gb_context_save_state_file(p->ctx,path);
     if(!ok)error="GBC Pinball quick state rejected or unavailable";
-    if(load&&ok){p->pcm.clear();p->composed=false;}
+    if(load&&ok){p->pcm.clear();p->composed=false;p->table.reset_layout();}
     return ok;
 }
 uint64_t ascendant_pinball_frame(void*h){return pinball_gbc_counter(h,0);}
@@ -182,6 +206,7 @@ int ascendant_pinball_diagnostics(void*h,double*values) {
     if(values)std::copy(p->timings.begin(),p->timings.end(),values);return 1;
 }
 int ascendant_pinball_close(void*h) {
+    std::lock_guard<std::recursive_mutex> lock(runtime_mutex);
     auto*p=static_cast<Player*>(h);if(!p)return 0;
     bool ok=true;
     if(!p->path.empty()) {

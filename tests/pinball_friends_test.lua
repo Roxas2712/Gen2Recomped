@@ -83,7 +83,7 @@ local function acceptPair(a,b)
  check(starts['1']==1 and starts['2']==1,'both clients launch exactly once')
  check(duels['1'].state=='lobby'and duels['2'].state=='lobby','real CloudNet carries both native Duel hellos')
 end
-local a,b=reset();check(a:context(true).edition==EDITIONand a:context(true).available,'Pinball presence')
+local a,b=reset();check(a:context(true).edition==EDITION and a:context(true).available,'Pinball presence')
 acceptPair(a,b)
 check(duels['1']:ready(string.rep('a',40)),'host native checkpoint');tick(a,b,3)
 check(not duels['1'].started and not duels['2'].started,'wait for both native checkpoints')

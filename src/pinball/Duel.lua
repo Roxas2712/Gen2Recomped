@@ -57,7 +57,10 @@ function Duel:progress(frame,points,done)
  self:finishIfBoth();return true
 end
 function Duel:update(dt)
- if self.state=='cancelled' or self.state=='finished' then return end
+ if self.state=='cancelled'then return end
+ -- TCP and CloudNet buffer send(). Keep pumping after the local result so
+ -- the final score and its acknowledgement actually leave this client.
+ if self.state=='finished'then self.net:update();return end
  self.net:update()
  if self.net.error then self:fail(self.net.error);return end
  if self.net.paired and not self.helloSent then self.helloSent=true;self:send('hello',{rules=self.rules,host=self.host,view=self.viewRequested and 2 or nil,peerView=self.peerViewRequested or nil})end
@@ -99,6 +102,7 @@ function Duel:update(dt)
  end
 end
 function Duel:close()
+ if self.state=='finished'then self.net:update()end
  if self.state~='finished' and self.state~='cancelled' then self:send('cancel');self:fail('Duel cancelled.')end
  self.net:close()
 end

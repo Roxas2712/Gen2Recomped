@@ -33,7 +33,8 @@ void color(uint8_t*out,const uint8_t*pal,unsigned index) {
     unsigned v=pal[index*2]|unsigned(pal[index*2+1])<<8;
     out[0]=(v&31)*255/31;out[1]=((v>>5)&31)*255/31;out[2]=((v>>10)&31)*255/31;out[3]=255;
 }
-void half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
+}
+void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
     const auto*ppu=static_cast<GBPPU*>(c->ppu);
     std::array<uint8_t,W*136> ids{},priority{};
     const unsigned lcd=c->hram[0x1e],map=(lcd&8)?0x1c00:0x1800;
@@ -47,11 +48,14 @@ void half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
         ids[y*W+x]=id;priority[y*W+x]=attr&128;
         color(&out[((first+y)*W+x)*4],ppu->bg_palette_ram,(attr&7)*4+id);
     }
-    const uint8_t*oam=canonical?c->oam:c->wram+0x1000;
+    // Software OAM and hSCX/hSCY describe the same freshly drawn frame.
+    // Hardware OAM can still belong to the preceding DMA/camera position.
+    const uint8_t*oam=c->wram+0x1000;
     const int sx=canonical?int(int8_t(c->hram[0x21])):0;
     const int sy=canonical?int(int8_t(c->hram[0x20])):0;
     const unsigned sh=(lcd&4)?16:8;
-    // Reverse order ensures lower OAM index wins the CGB sprite priority.
+    // Resolve one winning object by OAM order before testing BG priority,
+    // matching the GBA compositor correction; hidden objects do not leak through.
     std::array<uint8_t,W*136> occupied{};
     for(int i=0;i<40;i++) {
         const auto*o=oam+i*4;
@@ -71,16 +75,50 @@ void half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
         }
     }
 }
-}
 // The runtime's documented game hook terminates a scratch-only graphics call
 // before fetching its synthetic return PC. Canonical dispatch is untouched.
 extern "C" int game_dispatch_override(GBContext*c,uint16_t pc) {
     if(c==graphics_guest&&pc==0xfffe){c->stopped=1;return 1;}return 0;
 }
 GBCTable::~GBCTable(){if(scratch)gb_context_destroy(scratch);}
+void GBCTable::draw_hud(GBContext*live,std::vector<uint8_t>&out) {
+    // Isolate the authored window layer. Copying framebuffer rows 131..143
+    // also copied the board/flippers whenever the native window slid down.
+    // The full-table HUD stays fixed; no camera pixels enter the black strip.
+    const auto*ppu=static_cast<GBPPU*>(live->ppu);
+    // The cartridge STAT routine toggles LCDC bit 4 for the text window.
+    const unsigned hud_lcd=(live->hram[0x1e]^16)&live->hram[0x2f];
+    const unsigned map=(hud_lcd&64)?0x1c00:0x1800;
+    // Ball-bonus and Save/Cancel are authored multi-row window overlays.
+    // Keep them at native pixel scale on the fixed board, never zoom the camera.
+    const unsigned wy=live->hram[0x26];
+    const unsigned rows=wy<134?std::min(144u,144-wy):8;
+    const unsigned top=wy<134?H-rows:274;
+    for(unsigned y=wy<134?top:272;y<H;y++)for(unsigned x=16;x<176;x++) {
+        auto*dst=&out[(y*W+x)*4];dst[0]=dst[1]=dst[2]=0;dst[3]=255;
+    }
+    for(unsigned y=0;y<rows;y++)for(unsigned x=0;x<160;x++) {
+        const unsigned cell=map+(y/8)*32+x/8,attr=live->vram[0x2000+cell],tile=live->vram[cell];
+        const int base=(hud_lcd&16)?tile*16:0x1000+int(int8_t(tile))*16;
+        const unsigned ty=(attr&64)?7-y%8:y%8,tx=(attr&32)?x%8:7-x%8;
+        const unsigned off=((attr&8)?0x2000:0)+base+ty*2;
+        const unsigned id=((live->vram[off]>>tx)&1)|(((live->vram[off+1]>>tx)&1)<<1);
+        color(&out[((top+y)*W+16+x)*4],ppu->bg_palette_ram,(attr&7)*4+id);
+    }
+    for(unsigned i=0;i<W*H;i++)out[i*4+3]=255;
+}
 bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     const unsigned stage=ram(live,0xd4ac);
-    if(ram(live,0xd8f1)!=4||ram(live,0xd8f2)!=2||stage>5||(stage&2)||!(live->io[0x40]&128))return false;
+    const bool standard=ram(live,0xd8f1)==4&&stage<=5&&!(stage&2);
+    if(!standard){last_board.clear();last_field=~0u;return false;}
+    if(last_field!=(stage&4)){last_board.clear();last_field=stage&4;}
+    // Loading/ball-loss sequences retain the already composed world. Their
+    // live window UI is composited separately at native scale. Switching to
+    // the original half here produced the repeated full-table zoom sequences.
+    if(ram(live,0xd8f2)!=2||!(live->io[0x40]&128)) {
+        if(last_board.empty())return false;
+        out=last_board;draw_hud(live,out);return true;
+    }
     if(!scratch) {
         scratch=gb_context_create(&live->config);
         if(!scratch)return false;
@@ -105,18 +143,12 @@ bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
         if(failures++==0)std::fprintf(stderr,"[GBC table] scratch graphics call failed at %02x:%04x sp=%04x\n",scratch->rom_bank,scratch->pc,scratch->sp);
         return false;
     }
-    // The cartridge's staged palettes retain their original color before a
-    // fade; the live half uses the actual current PPU palettes and animation.
-    auto*sp=static_cast<GBPPU*>(scratch->ppu);
-    std::memcpy(sp->bg_palette_ram,scratch->wram+0x1200,64);
-    std::memcpy(sp->obj_palette_ram,scratch->wram+0x1240,64);
+    // LoadStageData writes the selected half's CGB palette directly to the
+    // PPU. wPaletteData is a fade backup, not its current palette: copying it
+    // here recolored Voltorb, Ditto, Bellsprout and the billboard incorrectly.
     out.assign(W*H*4,0);
-    half(scratch,out,(other&1)?136:0,false);
-    half(live,out,(stage&1)?136:0,true);
-    const auto*frame=gb_get_framebuffer(live);
-    if(frame)for(unsigned y=0;y<13;y++)for(unsigned x=0;x<160;x++) {
-        const unsigned pixel=frame[(131+y)*160+x];auto*dst=&out[((272+y)*W+16+x)*4];
-        dst[0]=pixel>>16;dst[1]=pixel>>8;dst[2]=pixel;dst[3]=255;
-    }
+    draw_half(scratch,out,(other&1)?136:0,false);
+    draw_half(live,out,(stage&1)?136:0,true);
+    last_board=out;draw_hud(live,out);
     return true;
 }
