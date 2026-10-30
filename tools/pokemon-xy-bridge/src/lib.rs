@@ -1,6 +1,6 @@
 //! In-process LÖVE frontend bridge. Integration by Roxas2712.
 //! Zakuro remains a separately licensed dependency (MIT); no game code here.
-use std::{cell::RefCell,ffi::{CStr,CString},fs::{File,OpenOptions},os::fd::AsRawFd,panic::{catch_unwind,AssertUnwindSafe},path::PathBuf,sync::Once};
+use std::{cell::RefCell,ffi::{CStr,CString},fs::{File,OpenOptions},panic::{catch_unwind,AssertUnwindSafe},path::PathBuf,sync::Once};
 use serde::Deserialize;
 mod language_patterns;
 use zakuro_core::{System,Config,FrameOutcome};
@@ -56,7 +56,7 @@ pub unsafe extern "C" fn ascendant_3ds_open(json:*const libc::c_char)->*mut Brid
   std::fs::create_dir_all(&request.data).map_err(|e|e.to_string())?;
   if let Some(parent)=request.session_lock.parent(){std::fs::create_dir_all(parent).map_err(|e|e.to_string())?;}
   let lease=OpenOptions::new().create(true).append(true).open(&request.session_lock).map_err(|e|e.to_string())?;
-  if libc::flock(lease.as_raw_fd(),libc::LOCK_EX|libc::LOCK_NB)!=0{return Err("Eine andere 3DS-Sitzung ist noch aktiv. Bitte dort zuerst beenden.".into());}
+  lease.try_lock().map_err(|_|"Eine andere 3DS-Sitzung ist noch aktiv. Bitte dort zuerst beenden.".to_owned())?;
   let config=Config{data_dir:Some(request.data),recompiled:Some(request.library),hardware_renderer:true,resolution:request.resolution,language:request.language,slider_3d:if request.stereo=="off"{0.0}else{request.depth_3d.min(100) as f32/100.0},texture_packs:request.texture_packs,..Config::default()};
   let system=zakuro_core::loader::load(request.rom,config).map_err(|e|e.to_string())?;
   if ![0x0004000000055D00,0x0004000000055E00].contains(&system.kernel.program_id){return Err("Unsupported title".into());}

@@ -1,0 +1,36 @@
+name: Windows native game SDK
+on:
+  workflow_dispatch:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  native-sdk:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - name: Build pinned game-data-free native components
+        shell: pwsh
+        run: python tools/build_windows_native_runtime.py --out "$env:GITHUB_WORKSPACE/.local/qa/windows-native-sdk/candidate/3ds-runtime" --graphics
+      - name: Native ABI, compiler and isolated save/lock checks
+        shell: pwsh
+        run: .local/qa/windows-native-sdk/candidate/3ds-runtime/python/python.exe tools/qualify_windows_native.py --sdk .local/qa/windows-native-sdk/candidate/3ds-runtime --out .local/qa/windows-native-sdk/report.json
+      - name: Archive the tested native SDK
+        shell: pwsh
+        run: Compress-Archive -Path .local/qa/windows-native-sdk/candidate/3ds-runtime -DestinationPath "$env:RUNNER_TEMP/windows-native-runtime.zip" -CompressionLevel Fastest
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-native-games
+          path: |
+            ${{ runner.temp }}/windows-native-runtime.zip
+            .local/qa/windows-native-sdk/*.json
+          if-no-files-found: error
+          retention-days: 14
