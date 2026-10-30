@@ -3095,10 +3095,13 @@ local function askChoices(ctx, options, opts)
       answer(Gen3Commands.MULTI_B_PRESSED)
     end
   end
-  local pushed = pcall(game.stack.push, game.stack,
-                       Menu.new(game, items,
+  local pushed=pcall(function()
+    local menu=Menu.new(game, items,
                                 { tx = 0, ty = 0, tw = tw,
-                                  th = #items * 2 + 2, onCancel = cancel }))
+                                  th = #items * 2 + 2, onCancel = cancel })
+    if opts.pcRoot then require('src.ui.Gen3EmeraldPcMenu').decorate(menu,game,'root')end
+    game.stack:push(menu)
+  end)
   if not pushed then
     giveUp()
     return
@@ -8130,7 +8133,7 @@ Gen3Commands.SPECIALS[265] = function(ctx)
   for i, row in ipairs(rows) do
     rows[i] = tostring(row):gsub("{PLAYER}", tostring(name or "PLAYER"))
   end
-  askChoices(ctx, rows)
+  askChoices(ctx, rows, {pcRoot=true})
 end
 
 -- AccessHallOfFamePC shares the ordinary script owner and resumes it once.

@@ -4,7 +4,7 @@ function love.errorhandler(err)
 end
 local Fetch, Net, base
 local fileSubmitted,fileCompleted,fileDestinations={},{},{}
-local checks, pulses = 0, 0
+local checks, pulses, maxPollWall = 0, 0, 0
 local function check(ok, message)
   checks = checks + 1
   assert(ok, message)
@@ -14,7 +14,9 @@ local function await(api, handle)
   while true do
     local before = love.timer.getTime()
     local state = api:poll(handle)
-    check(love.timer.getTime() - before < .1, 'poll must not perform transport IO')
+    -- A hosted runner can deschedule this thread for >100ms. The guard
+    -- below rejects actual caller-side IO; keep elapsed wall time as data.
+    maxPollWall=math.max(maxPollWall,love.timer.getTime()-before)
     if state.status ~= 'pending' then return state end
     check(love.timer.getTime() - at < 10, 'request completes within test deadline')
     pulses = pulses + 1; love.timer.sleep(.005)
@@ -42,6 +44,7 @@ function love.load()
   love.thread.getChannel("download-qa-completed"):clear()
   love.thread.getChannel("download-qa-retire-entered"):clear()
   love.thread.getChannel("download-qa-retire-release"):clear()
+  love.thread.getChannel("download-qa-publish-release"):clear()
   local Download=require('src.net.AsyncDownload')
   local download=Download.download
   Download.download=function(url,destination,options)
@@ -50,6 +53,17 @@ function love.load()
     return id,why
   end
   Fetch = require('src.net.Fetch'); Net = require('src.mods.Net')
+  local guard=require('poll_guard').new()
+  for _,key in ipairs{'open','popen'}do guard:watch(io,key,'io.'..key)end
+  guard:watch(os,'execute','os.execute');guard:watch(love.timer,'sleep','timer.sleep')
+  for _,key in ipairs{'read','write','append','load','newFile','newFileData','getInfo',
+    'createDirectory','remove','getDirectoryItems'}do
+    guard:watch(love.filesystem,key,'filesystem.'..key)
+  end
+  guard:watch(require('src.net.BoundedHttp'),'request','HTTP request')
+  guard:watch(require('src.net.DownloadTransport'),'run','file transport')
+  local poll=Fetch.poll
+  Fetch.poll=function(id)return guard:poll(poll,id)end
   base = assert(os.getenv('GET_TEST_URL'))
   local newThread = love.thread.newThread
   love.thread.newThread = function(source, ...)
@@ -238,11 +252,13 @@ function love.run()
         observedPublication=true
         check(not Fetch.cancel(finishing),'cancellation after publication claim is refused without waiting')
         check(state.cancellable==false,'committing request reports cancellation boundary')
+        love.thread.getChannel("download-qa-publish-release"):push(true)
       end
       check(love.timer.getTime()-finishingAt<5,'delayed publication completes')
       love.timer.sleep(.005)
     end
-    check(observedPublication and state.status=='ok','main thread pumps during slow filesystem publication')
+    check(observedPublication,'main thread pumps during slow filesystem publication')
+    check(state.status=='ok','claimed publication completes: '..tostring(state.status)..' '..tostring(state.err))
     check(love.filesystem.read(delayedPath)==expected,'claimed publication completes with exact bytes')
     Fetch.release(finishing)
     local invalidTarget=assert(Fetch.download(base..'/binary','downloads',{size=14}))
@@ -284,7 +300,7 @@ function love.run()
       check(#love.filesystem.getDirectoryItems('net-download/'..child)==0,'shutdown cleans file worker staging data')
     end
     preserved('late cancellation cannot publish after shutdown')
-    print(('async GET and file downloads: %d checks, %d pump ticks PASS'):format(checks,pulses))
+    print(('async GET and file downloads: %d checks, %d pump ticks PASS; max observed poll wall %.6fs'):format(checks,pulses,maxPollWall))
   end, debug.traceback)
   love.thread.getChannel("download-qa-start"):push(true)
   love.thread.getChannel("download-qa-hold"):push(true)

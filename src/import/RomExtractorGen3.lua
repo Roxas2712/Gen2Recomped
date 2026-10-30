@@ -45033,6 +45033,7 @@ function RomExtractorGen3:extractBagScreenFireRed()
   constants.gen3BagScreen = record
   self._constants = constants
   self:write("constants", constants)
+  require('src.import.Gen3BagRegistrationAssets').extract(self)
   Logger.info("Gen3 bag screen (FRLG): %d tiles, list (%d,%d) %dx%d = %d rows, "
                 .. "description (%d,%d) %dx%d", B.TILES, win.list.x, win.list.y,
               win.list.width, win.list.height, record.list.rows,
@@ -59606,6 +59607,9 @@ function RomExtractorGen3:run()
   if self.version~='emerald'then require('src.import.Gen3NativeOptionsAssets').extract(self)end
   require('src.import.Gen3HallPcAssets').extract(self)
   require('src.import.Gen3BagTossAssets').extract(self)
+  require('src.import.Gen3BagSaleAssets').extract(self)
+  require('src.import.Gen3EmeraldBagAssets').extract(self)
+  require('src.import.Gen3EmeraldItemPcAssets').extract(self)
   require('src.import.Gen3StatGrowthAssets').extract(self)
   require('src.import.Gen3SafariAssets').extract(self)
   -- Script and late UI stages can add prose after the initial scan. Snapshot

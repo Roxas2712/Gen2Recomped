@@ -55,20 +55,31 @@ function love.load()
   local image=Assets.image(path)
   check(image:getWidth()==16 and image:getHeight()==16,'real graphics upload accepts prefetched pixels')
   local colors={{240,230,220},{120,110,100},{60,50,40},{10,20,30}}
+  local other={{200,240,220},{40,170,90},{20,100,60},{0,30,10}}
   local FX=require('src.render.PaletteFX');local Tiles=require('src.render.TileRenderer')
   local group=0
   FX.usesGbcPack=function()return true end
-  FX.worldGroupColors=function()return{colors}end
+  FX.worldGroupColors=function()return{colors,other}end
   FX.worldGroupAt=function()return group end
   FX.darkKey=function()return''end
   FX.TILE_ALIASES={MAP={{tile=0,alias=3,group=0}}}
   local ts={id='TS',image=path,tilesPerRow=2}
   local data={maps={MAP={tileset='TS'}},tilesets={TS=ts}}
+  local submit,payload=W.submit
+  W.submit=function(kind,key,value,...)
+    if kind=='gb-assets'and value.kind=='bake'then payload=value end
+    return submit(kind,key,value,...)
+  end
   P.gbAssetPrefetch=false
   local control=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
   Tiles.invalidate();P.gbAssetPrefetch=true
   check(Tiles.prefetchAtlas(data,'MAP',true),'native TileRenderer queues RED++ preparation')
   wait('atlas:'..path..'#gbc:MAP')
+  check(#payload.palettes==1 and #payload.tilePalettes==4 and not payload.colors,
+    'the actual channel payload sends one palette plus numeric tile indices')
+  check(payload.tilePalettes[1]==payload.tilePalettes[4]and payload.aliases[1].palette==1,
+    'repeated tiles and aliases share the compact palette index')
+  W.submit=submit
   local actual=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
   check(actual:getString()==control:getString(),'actual threaded atlas and synchronous native pixels are byte-identical')
   Tiles.invalidate();check(Tiles.prefetchAtlas(data,'MAP',true))
@@ -79,6 +90,30 @@ function love.load()
   local expected=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
   check(edited:getString()==expected:getString(),'in-place palette edits reject stale worker output')
   check(edited:getString()~=control:getString(),'edited colors really reach the renderer')
+  P.gbAssetPrefetch=true;Tiles.invalidate();check(Tiles.prefetchAtlas(data,'MAP',true))
+  wait('atlas:'..path..'#gbc:MAP');group=1
+  local regrouped=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  Tiles.invalidate();P.gbAssetPrefetch=false
+  local regroupedExpected=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  check(regrouped:getString()==regroupedExpected:getString()and regrouped:getString()~=edited:getString(),
+    'changed tile palette assignments reject completed compact output')
+  P.gbAssetPrefetch=true;Tiles.invalidate();check(Tiles.prefetchAtlas(data,'MAP',true))
+  wait('atlas:'..path..'#gbc:MAP');FX.TILE_ALIASES.MAP[1].group=1
+  local realiased=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  Tiles.invalidate();P.gbAssetPrefetch=false
+  local realiasedExpected=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  check(realiased:getString()==realiasedExpected:getString()and realiased:getString()~=regrouped:getString(),
+    'changed alias palettes reject completed compact output')
+  local groupAt=FX.worldGroupAt
+  FX.worldGroupAt=function(_,_,tile)colors[2][1]=5+tile*20;return 0 end
+  P.gbAssetPrefetch=true;Tiles.invalidate();check(Tiles.prefetchAtlas(data,'MAP',true))
+  wait('atlas:'..path..'#gbc:MAP')
+  local dynamic=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  Tiles.invalidate();P.gbAssetPrefetch=false
+  local dynamicExpected=readback(Tiles.gbcAtlasFor(ts,'MAP',data))
+  check(dynamic:getString()==dynamicExpected:getString(),
+    'custom selectors may edit a shared color row between individual tiles')
+  FX.worldGroupAt=groupAt
   P.gbAssetPrefetch=true;Assets.invalidate()
   check(M.status().bytes==0 and M.status().pending==0,'native invalidation retires all speculative state')
   -- Overrides are resolved before submission and have their own cache key.

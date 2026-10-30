@@ -36,11 +36,14 @@ function M.run(payload)
   end
   for tile=0,w*h/64-1 do
     local x,y=tile%payload.perRow*8,math.floor(tile/payload.perRow)*8
-    region(x,y,x,y,payload.colors[tile+1])
+    local colors=payload.palettes and payload.palettes[payload.tilePalettes[tile+1]]
+      or payload.colors and payload.colors[tile+1]
+    region(x,y,x,y,colors)
   end
   for _,a in ipairs(payload.aliases or {})do
     region(a.tile%payload.perRow*8,math.floor(a.tile/payload.perRow)*8,
-      a.alias%payload.perRow*8,math.floor(a.alias/payload.perRow)*8,a.colors)
+      a.alias%payload.perRow*8,math.floor(a.alias/payload.perRow)*8,
+      payload.palettes and payload.palettes[a.palette]or a.colors)
   end
   if src.release then src:release()end
   return out

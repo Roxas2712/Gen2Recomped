@@ -31,6 +31,10 @@ function M.new(game,U,Collision,getInputLog)
   local function pathTo(tx,ty)
     local w=game.overworld;local map=w.map;local q={{w.player.cellX,w.player.cellY,w.player.elevation}};local seen={};local prev={}
     local function key(x,y,z)return x..','..y..','..tostring(z)end
+    local function intermediateWarp(x,y)
+      if (x==tx and y==ty)or(x==q[1][1]and y==q[1][2])then return false end
+      return map.warpAtCell and map:warpAtCell(x,y)~=nil
+    end
     seen[key(q[1][1],q[1][2],q[1][3])]=true
     local head=1
     while q[head]do
@@ -47,11 +51,15 @@ function M.new(game,U,Collision,getInputLog)
         local mover=setmetatable({cellX=p[1],cellY=p[2],elevation=p[3]},{__index=w.player})
         local elevation=map.elevationAfter and map:elevationAfter(p[3],x,y,p[1],p[2])or p[3]
         local entered=map:inBounds(x,y)and Collision.mayEnter(map,w.entities or{},mover,x,y,dir)
+        -- A walkable stair still ends travel on this map. Never plan a route
+        -- through it when the command names a different destination.
+        if entered and intermediateWarp(x,y)then entered=false end
         -- A d-pad tap ends at the conveyor's exit, not its first arrow.
         -- Simulate only read-only collision/rules; actual travel still uses
         -- ordinary input and is recorded one frame/press at a time.
         local forcedSeen={};local incoming=dir
         while entered and not w.player.surfing and map.forcedMovementAt do
+          if x==tx and y==ty and map.warpAtCell and map:warpAtCell(x,y)then break end
           local row=map:forcedMovementAt(x,y);local way=row and row.way
           if not way and map.isIceCell and map:isIceCell(x,y)then way=incoming end
           if not way then break end
@@ -62,6 +70,7 @@ function M.new(game,U,Collision,getInputLog)
           mover=setmetatable({cellX=x,cellY=y,elevation=elevation},{__index=w.player})
           local nx,ny=x+step[1],y+step[2]
           if not map:inBounds(nx,ny)or not Collision.mayEnter(map,w.entities or{},mover,nx,ny,way)then break end
+          if intermediateWarp(nx,ny)then entered=false;break end
           elevation=map.elevationAfter and map:elevationAfter(elevation,nx,ny,x,y)or elevation
           x,y=nx,ny;incoming=way
         end

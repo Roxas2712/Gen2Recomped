@@ -17,8 +17,16 @@ return function(game)
   itemCount=itemCount+1
  end
  assert(itemCount>0)
+ if version=='emerald'or version=='firered'or version=='leafgreen'then
+  assert(require('src.import.Gen3BagSaleAssets').valid(game.data.constants.gen3BagSale,version))
+ end
+ if version=='emerald'then
+  assert(require('src.import.Gen3EmeraldBagAssets').valid(game.data.constants.gen3EmeraldBag,version))
+  assert(require('src.import.Gen3EmeraldItemPcAssets').valid(game.data.constants.gen3EmeraldItemPc,version))
+ end
  local frlg=version=='firered'or version=='leafgreen'
  if frlg then
+  assert(require('src.import.Gen3BagRegistrationAssets').valid(game.data.constants.gen3BagScreen.registered,version))
   assert(game.data.constants.gen3FRLGTitle.cry==(version=='firered'and'CHARIZARD'or'VENUSAUR'))
  else
   assert(game.data.constants[version=='emerald'and'gen3EmeraldPresentation'or'gen3RsPresentation'].version==version)
