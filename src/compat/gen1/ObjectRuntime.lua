@@ -53,14 +53,18 @@ local function live(c)
       or Version.get()~=c.edition or c.binding:legacyId(c.map.id)~=c.id then c.retired=true; return false end
   return true
 end
+local function contains(list,e)
+  for _,actor in ipairs(list or {})do if actor==e then return true end end
+  return false
+end
 local function member(c,e,mapId)
   if not live(c) then return false end
   if mapId==c.map.id then
-    for _,a in ipairs(c.world.npcs or c.world.entities or {}) do if a==e then return true end end
+    return contains(c.world.npcs or c.world.entities,e)
   else
     for _,nb in ipairs(c.world.neighbors or {}) do
       if nb.map and nb.map.id==mapId and c.maps[mapId]==nb.map.def then
-        for _,a in ipairs(nb.peers or {}) do if a==e then return true end end
+        if contains(nb.peers,e)then return true end
       end
     end
     for _,ghost in ipairs(c.world.ghosts or {}) do
@@ -70,14 +74,8 @@ local function member(c,e,mapId)
   end
   return false
 end
-function R:view(c,e,mapId)
-  local class=package.loaded['src.world.NPC']
-  if type(class)~='table' or getmetatable(e)~=class or type(e.def)~='table'
-      or not integer(e.def.index,1,65535) then return nil,'unsupported native object identity' end
-  local id,why=c.binding:legacyId(mapId); if not id then return nil,why end
-  local record=self.views[e]
-  if record and record.context==c and record.mapId==mapId and not record.retired then return record.view end
-  record={context=c,actor=e,mapId=mapId,extras={},definition=copy(e.def)}
+local function buildView(self,c,e,mapId,id,class)
+  local record={context=c,actor=e,mapId=mapId,extras={},definition=copy(e.def)}
   record.definition.localId=e.def.index
   local function valid()
     if record.retired then return false end
@@ -150,6 +148,15 @@ function R:view(c,e,mapId)
   self.views[e]=record
   self.records[record.view]=record
   return record.view
+end
+function R:view(c,e,mapId)
+  local class=package.loaded['src.world.NPC']
+  if type(class)~='table' or getmetatable(e)~=class or type(e.def)~='table'
+      or not integer(e.def.index,1,65535) then return nil,'unsupported native object identity' end
+  local id,why=c.binding:legacyId(mapId); if not id then return nil,why end
+  local record=self.views[e]
+  if record and record.context==c and record.mapId==mapId and not record.retired then return record.view end
+  return buildView(self,c,e,mapId,id,class)
 end
 function R:actor(view)
   local r=view and self.records[view]

@@ -110,6 +110,12 @@ for _,edition in ipairs({'firered','leafgreen','emerald','ruby','sapphire'}) do
   w.npcs={a,b}; w.entities={f.player,a,b}; T.eq(v.px,nil)
   local replacement=Objects.find(1); T.check(replacement~=v,'reinserted actor gets fresh handle')
   T.raises(function() v.hidden=true end,'retired','retired handle cannot affect reinserted actor')
+  local beyondHole=assert(Objects.find(2))
+  w.npcs[1]=nil
+  T.eq(beyondHole.px,nil,'a prefix hole ends ipairs membership even when entities still contains the actor')
+  w.npcs[1]=a
+  T.eq(beyondHole.px,nil,'repairing a prefix hole cannot revive a retired handle')
+  T.check(Objects.find(2)~=beyondHole,'a newly admitted actor receives a fresh handle after the hole is repaired')
   w.neighbors={}; w.ghosts={}; T.eq(gv.px,nil)
   w.neighbors={nb}; w.ghosts={{npc=other,nb=nb,ox=320,oy=-160}}; T.eq(gv.px,nil)
   -- Save, loader, dataset, player, map and generation swaps all retire views.

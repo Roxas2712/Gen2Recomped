@@ -14,6 +14,8 @@ local function currentGame()
   local game=package.loaded['src.core.Game']
   return type(game)=='table'and game or nil
 end
+local function resolveOwner()return gameOwner end
+local function resolveEdition()return edition end
 local function getContext(game)
   game=rawGame(game or currentGame() or gameOwner)
   local id=Version.get();local info=Version.info(id)
@@ -25,7 +27,7 @@ local function getContext(game)
   if game~=gameOwner or id~=edition then
     if context then context:release()end
     gameOwner,edition,cache=game,id,nil
-    context=Runtime.new(function()return gameOwner end,function()return edition end)
+    context=Runtime.new(resolveOwner,resolveEdition)
   end
   return context
 end

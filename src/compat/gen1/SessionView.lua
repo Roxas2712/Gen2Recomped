@@ -11,12 +11,15 @@ local M={}
 local records=setmetatable({},{__mode='k'})
 local stores=setmetatable({},{__mode='k'})
 local function finite(n)return type(n)=='number'and n==n and math.abs(n)<math.huge end
+local function clockComponent(a,b)
+  local n=tonumber(a)or tonumber(b)or 0
+  return finite(n)and n>=0 and n or 0
+end
 function M.seconds(save)
   local value=save and save.playTime
   if type(value)=='table'then
-    local function number(a,b)local n=tonumber(a)or tonumber(b)or 0;return finite(n)and n>=0 and n or 0 end
-    return number(value.hours)*3600+number(value.minutes,value.mins)*60
-      +number(value.seconds,value.secs)+number(value.frames,value.vblanks)/60
+    return clockComponent(value.hours)*3600+clockComponent(value.minutes,value.mins)*60
+      +clockComponent(value.seconds,value.secs)+clockComponent(value.frames,value.vblanks)/60
   end
   local n=tonumber(value);return finite(n)and n>=0 and n or 0
 end
