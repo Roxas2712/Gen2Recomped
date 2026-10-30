@@ -1165,6 +1165,8 @@ local DATA_DERIVED = {
   "cutTreeImg", "cutTreeQuads",
   "rodImg", "rodQuads",
   "smokeImg", "emoteImg", "pikaPic",
+  "emoteOrder", "emoteImages", "_nativeEmoteArt", "grassRustleImage",
+  "jumpShadowImage", "cutGrassImage", "fishingSheet", "fishingSheetFemale",
 }
 
 function OverworldState:enter(mapId, x, y, facing, opts)
@@ -1313,6 +1315,7 @@ function OverworldState:stampClosedDoors()
 end
 
 function OverworldState:setMap(mapId, x, y, facing, opts)
+  if GameVersion.isGen2() then require('src.world.Gen2FieldGraphics').sync(self,Game.data) end
   if RsEncounter.active()then RsEncounter.restart(self)end
   mapId = MapIdentity.runtimeId(Game and Game.data, mapId)
   local fishing = package.loaded['src.world.Gen2Fishing']
@@ -11357,6 +11360,7 @@ function OverworldState:gen2Cut(fx, fy)
       self:startCutTreeAnim(fx, fy, finish)
     else
       self:startDustAnim(fx, fy, finish)
+      self.dustAnim.kind = 'cutGrass'
     end
   end))
   return true
@@ -18268,6 +18272,8 @@ end
 -- flickering (AnimateBoulderDust XORs the OBJ palette every step)
 function OverworldState:_worldFxDust(cam)
   if not self.dustAnim then return end
+  if self.dustAnim.kind == 'cutGrass' and require('src.world.Gen2FieldGraphics').cut(
+    self,Game.data,self.dustAnim,cam) then return end
   local fxDef = Game.data.field.overworldFx
   local smoke = fxDef and fxDef.smoke
   if smoke then
@@ -18552,6 +18558,12 @@ function OverworldState:_worldFxEmote(cam)
   local half = math.floor(((npc.sprite and npc.sprite.tileH) or 16) / 2)
   local ex = npc.px - cam.x
   local ey = npc.py - cam.y - 12 - half
+  local nativeEmote = GameVersion.isGen2() and require('src.world.Gen2FieldGraphics').emote(self,Game.data,self.emote.bubble)
+  if nativeEmote then
+    love.graphics.setColor(1,1,1,1)
+    love.graphics.draw(nativeEmote,ex,ey)
+    return
+  end
   local bubble = Game.data.field.emotionBubbles
   local drawn = false
 
@@ -18902,6 +18914,9 @@ function OverworldState:_worldDrawEntity(e, cam, bgY, freeGround, groundForRise,
     end
     if fogLeft then love.graphics.setColor(1, 1, 1, 1) end
     if field and field.actorsOnly then return end
+    if Game and GameVersion.isGen2() then
+      require('src.world.Gen2FieldGraphics').grass(self,Game.data,e,cam.x,bgY)
+    end
     -- tall grass overdraws the sprite's feet (GB sprite priority);
     -- the overdraw is BG tiles, so it rides the shake offset too
     love.graphics.setColor(1, 1, 1, 1)

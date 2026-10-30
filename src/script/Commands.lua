@@ -1730,6 +1730,7 @@ function Commands.label() end
 -- data.field.emotionBubbles.bubbles; blocks frames (default 60, the
 -- trainer-sight hold).
 local EMOTE_BUBBLES = { shock = 1, question = 2, happy = 3 }
+local GEN2_EMOTE_BUBBLES = {shock=1,question=2,happy=3,sad=4,heart=5,bolt=6,sleep=7,fish=8}
 
 function Commands.emote(ctx, target, bubble, frames)
   local ow = ctx.overworld
@@ -1744,9 +1745,10 @@ function Commands.emote(ctx, target, bubble, frames)
   end
   if not entity then return end
   local runner = ctx.runner
+  local bubbles = require('src.core.GameVersion').isGen2() and GEN2_EMOTE_BUBBLES or EMOTE_BUBBLES
   ow.emote = {
     npc = entity, frames = frames or 60,
-    bubble = EMOTE_BUBBLES[bubble] or (type(bubble) == "number" and bubble) or 1,
+    bubble = bubbles[bubble] or (type(bubble) == "number" and bubble) or 1,
     onDone = function() runner:resume() end,
   }
   runner:yield()
