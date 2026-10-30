@@ -51,6 +51,7 @@ Der Ordner 3ds-runtime enthält die nativen Windows-Laufzeiten für X/Y und
 Pinball R/S einschließlich Python, C/C++-Compiler und Vulkan-Fallback.
 Diesen Ordner neben RetroRecomped.exe lassen. Die erste Vorbereitung eines
 eigenen Imports dauert länger; fertige native Spiele werden danach gecacht.
+Für die native Vorbereitung mindestens 20 GiB freien Speicher behalten.
 Vorhandene ROMs, SRAM, Slots und Zwischenstände bleiben im bisherigen Profil.
 Mac-Bibliotheken sind auf Windows nicht ausführbar; nur der native Programmcode
 wird dort neu vorbereitet. Dafür ist weder Visual Studio noch Python nötig.

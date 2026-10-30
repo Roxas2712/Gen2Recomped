@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real Windows native ABI/toolchain checks; synthetic inputs, no player ROMs."""
 # Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
-import argparse,contextlib,ctypes,hashlib,json,os,platform,struct,sys,shutil,subprocess
+import argparse,contextlib,ctypes,hashlib,json,math,os,platform,struct,sys,shutil,subprocess
 from pathlib import Path
 from native_workspace import manager,lock_file
 
@@ -130,13 +130,15 @@ def check_3ds_guest(sdk,work,qa,bridge,check):
     check(len(sessions)==1,'The real Windows launcher helper completes import, native compilation and session preparation for the self-authored ARM11 fixture')
     request=sessions[0];check(Path(request['library']).is_file(),'The real helper commits a Windows game DLL and completion marker')
     handle=bridge.ascendant_3ds_open(json.dumps(request).encode())
-    check(bool(handle),'Native 3DS core opens the recompiled synthetic guest with the packaged Vulkan backend: '+str(bridge.ascendant_3ds_error()))
+    check(bool(handle),'Native 3DS core opens the recompiled synthetic guest with the packaged Vulkan backend'+(''if handle else ': '+str(bridge.ascendant_3ds_error())))
     bridge.ascendant_3ds_step.argtypes=[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_float,ctypes.c_float,ctypes.c_int,ctypes.c_int,ctypes.c_bool]
     bridge.ascendant_3ds_status.argtypes=[ctypes.c_void_p];bridge.ascendant_3ds_status.restype=ctypes.c_char_p
     bridge.ascendant_3ds_state.argtypes=[ctypes.c_void_p,ctypes.c_char_p,ctypes.c_bool];bridge.ascendant_3ds_state.restype=ctypes.c_bool
     bridge.ascendant_3ds_close.argtypes=[ctypes.c_void_p]
     try:
-        for _ in range(3):check(bridge.ascendant_3ds_step(handle,0,0,0,-1,-1,False)==0,'Native ARM11 synthetic frame advances: '+str(bridge.ascendant_3ds_error()))
+        for _ in range(3):
+            result=bridge.ascendant_3ds_step(handle,0,0,0,-1,-1,False)
+            check(result==0,'Native ARM11 synthetic frame advances'+(''if result==0 else ': '+str(bridge.ascendant_3ds_error())))
         status=json.loads(bridge.ascendant_3ds_status(handle));check(status['frames']>=3 and status['recompiled']>0 and status['hardware'],'Native ARM11 execution uses the compiled guest and Vulkan backend')
         state=str(work/'arm11-snapshot.fixture').encode()
         check(bridge.ascendant_3ds_state(handle,state,False),'Native 3DS synthetic snapshot can be saved')
@@ -173,13 +175,17 @@ def check_pinball(sdk,work,qa,check):
     native.ascendant_pinball_step.argtypes=[ctypes.c_void_p,ctypes.c_uint16];native.ascendant_pinball_frame.argtypes=[ctypes.c_void_p];native.ascendant_pinball_frame.restype=ctypes.c_uint64
     native.ascendant_pinball_state.argtypes=[ctypes.c_void_p,ctypes.c_char_p,ctypes.c_int];native.ascendant_pinball_close.argtypes=[ctypes.c_void_p]
     native.ascendant_pinball_audio.argtypes=[ctypes.c_void_p,ctypes.POINTER(ctypes.c_size_t),ctypes.POINTER(ctypes.c_uint32)];native.ascendant_pinball_audio.restype=ctypes.POINTER(ctypes.c_int16)
+    native.ascendant_pinball_diagnostics.argtypes=[ctypes.c_void_p,ctypes.POINTER(ctypes.c_double)]
     native.ascendant_pinball_error.restype=ctypes.c_char_p
     save=work/'synthetic-sram.fixture';original=b'\0'*32768;save.write_bytes(original)
     handle=native.ascendant_pinball_open(str(rom).encode(),str(sdk/runtime['bios']).encode(),str(save).encode())
     check(bool(handle),'Native Pinball stack opens the self-authored guest with an existing synthetic SRAM')
     state=work/'synthetic-quickstate.fixture'
     try:
+        timings=(ctypes.c_double*4)()
+        check(native.ascendant_pinball_diagnostics(handle,timings)==1,'Native Pinball diagnostic timing can be enabled')
         for _ in range(3):check(native.ascendant_pinball_step(handle,0)==1,'Native synthetic GBA frame advances: '+str(native.ascendant_pinball_error()))
+        check(native.ascendant_pinball_diagnostics(handle,timings)==1 and all(math.isfinite(v)and v>=0 for v in timings)and timings[0]>0,'Native Windows thread CPU and wall-clock diagnostics return finite nonnegative timings')
         frame=native.ascendant_pinball_frame(handle)
         check(frame>=3,'Native GBA frame boundaries advance')
         count=ctypes.c_size_t();rate=ctypes.c_uint32();audio=native.ascendant_pinball_audio(handle,ctypes.byref(count),ctypes.byref(rate))
