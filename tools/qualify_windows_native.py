@@ -54,6 +54,10 @@ def check_vulkan(sdk,check):
     # Force only this isolated fixture onto the shipped software ICD. The real
     # application adds it alongside the user's GPU drivers instead.
     previous=os.environ.get('VK_DRIVER_FILES');os.environ['VK_DRIVER_FILES']=str(sdk/'vulkan/vk_swiftshader_icd.json')
+    previous_debug=os.environ.get('VK_LOADER_DEBUG');os.environ['VK_LOADER_DEBUG']='all'
+    # Resolve the real driver eagerly so missing MSVC dependencies are visible
+    # as an OS error rather than a generic Vulkan incompatible-driver code.
+    driver=ctypes.WinDLL(str(sdk/'vulkan/vk_swiftshader.dll'))
     class App(ctypes.Structure):_fields_=[('kind',ctypes.c_uint32),('next',ctypes.c_void_p),('name',ctypes.c_char_p),('version',ctypes.c_uint32),('engine',ctypes.c_char_p),('engine_version',ctypes.c_uint32),('api',ctypes.c_uint32)]
     class Info(ctypes.Structure):_fields_=[('kind',ctypes.c_uint32),('next',ctypes.c_void_p),('flags',ctypes.c_uint32),('app',ctypes.POINTER(App)),('layers',ctypes.c_uint32),('layer_names',ctypes.c_void_p),('extensions',ctypes.c_uint32),('extension_names',ctypes.c_void_p)]
     instance=ctypes.c_void_p()
@@ -63,12 +67,15 @@ def check_vulkan(sdk,check):
     vk.vkDestroyInstance.argtypes=[ctypes.c_void_p,ctypes.c_void_p]
     try:
         app=App(0,None,b'Own synthetic qualification',1,None,0,(1<<22)|(3<<12));info=Info(1,None,0,ctypes.pointer(app),0,None,0,None)
-        check(vk.vkCreateInstance(ctypes.byref(info),None,ctypes.byref(instance))==0,'Packaged Vulkan loader and software ICD create a native Vulkan 1.3 instance')
+        result=vk.vkCreateInstance(ctypes.byref(info),None,ctypes.byref(instance))
+        check(result==0,'Packaged Vulkan loader and software ICD create a native Vulkan 1.3 instance (VkResult '+str(result)+')')
         count=ctypes.c_uint32();check(vk.vkEnumeratePhysicalDevices(instance,ctypes.byref(count),None)==0 and count.value>0,'Packaged software Vulkan driver exposes a usable device')
     finally:
         if instance.value:vk.vkDestroyInstance(instance,None)
         if previous is None:os.environ.pop('VK_DRIVER_FILES',None)
         else:os.environ['VK_DRIVER_FILES']=previous
+        if previous_debug is None:os.environ.pop('VK_LOADER_DEBUG',None)
+        else:os.environ['VK_LOADER_DEBUG']=previous_debug
 
 def check_3ds_guest(sdk,work,qa,bridge,check):
     # Self-authored NCCH container and two ARM instructions. The supported
