@@ -77,8 +77,14 @@ Display preferences are stored separately from GBA Pinball.
 F6 composes a 192×272 board plus a separate 13-pixel text strip. It renders the
 current half from live graphics and the other half using cartridge graphics
 routines in an isolated snapshot. It does not stitch together camera history,
-advance the canonical game twice or alter physics. Only the current half owns
-the live ball and timer. Both halves use their own loaded CGB palettes.
+advance the canonical game twice or alter physics. Both halves use their own
+loaded CGB palettes; the timer belongs to the active half. One separate world-
+space ball pass spans the full board, using its original cartridge sprite,
+current graphics/palette and canonical position. It is not clipped at the
+136-pixel half boundary. Foreground object priority and real window overlays
+still cover it. Camera-only visibility changes retain its complete pose through
+loading, while deliberate capture/drain hides remain effective. Ball-free
+background caches prevent ghost copies on either half.
 
 The same corrections as the GBA compositor apply: current software OAM stays
 paired with current camera coordinates, one sprite wins before BG priority is
@@ -123,7 +129,7 @@ code/data. No public binary release is included.
 
 ```sh
 python3 tools/qualify_pinball_gbc.py --library /private/libascendant_pinball_gbc.dylib \
-  --rom '/path/to/Pokemon Pinball.gbc' --frames 7200 --field red --full-table --transitions
+  --rom '/path/to/Pokemon Pinball.gbc' --frames 7200 --field red --full-table --transitions --seam-ball
 python3 tools/qualify_pinball_friends.py --love /path/to/love --edition pinballgbc
 python3 tools/qualify_pinball_gbc_network.py --love /path/to/love --mode enet
 python3 tools/qualify_pinball_gbc_network.py --love /path/to/love --mode relay --field 1
@@ -137,6 +143,13 @@ Repeat with `--field blue` and a separate output directory. The network test
 runs two real native clients over localhost with synthetic relay identities;
 it never contacts a production account. The optional native CMake target
 `pinball_gbc_render_test` uses synthetic tiles only and checks sprite priority,
-software OAM, the STAT tile-bank switch and every pixel of the isolated HUD.
+software OAM, the STAT tile-bank switch, isolated HUD pixels, complete ball
+coverage in both seam directions, loading retention and intentional hides.
 Screenshots still require visual review; short automated runs do not establish
 a complete natural playthrough or cross-NAT/device networking.
+
+The seam-ball check captures natural crossings and compares presented ball
+positions with normalized guest coordinates. `--presentation-stride 10` also
+exercises sparse/background presentation while every guest step and original
+PCM production continue. Stage-local coordinate normalization, rather than a
+world-distance heuristic, keeps fast crossings correct in that mode.

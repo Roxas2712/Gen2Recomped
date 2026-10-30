@@ -202,3 +202,30 @@ viewport. Canonical RAM is still compared against a second original-view game.
 The ROM-free native regression additionally covers the stage-id change before
 palette clearing, the ensuing loading frame and the first opaque loading
 canvas. These checks address content validity, not just image dimensions.
+
+
+## Ball continuity across the GBC seam
+
+Per-half OBJ rendering clipped the ball at y=136 before the cartridge switched
+its camera. The cartridge also temporarily removes ball OAM during that switch.
+The ball now renders once in full-board coordinates, from the verified
+cartridge's original sprite pose and current VRAM/palette. Both half renderers
+omit ball pixels but preserve its OAM ordering in a separate foreground mask.
+The full-board pass obeys that mask and the native window overlay, and clips
+only at the board's outer bounds. Camera transfer hides and not-yet-normalized
+local coordinates retain the last valid pose. Genuine non-transfer visibility
+changes remain effective. Background caches contain no ball pixels, so retained
+frames cannot accumulate old or half-clipped copies.
+
+Synthetic raster tests cover every opaque ball pixel crossing the seam in both
+directions, foreground/window occlusion, explicit hides, loading retention and
+ghost prevention. Natural Red and Blue runs each cover 7,200 guest steps: 446 /
+357 seam-presented frames, zero open-corridor missing-ball frames, zero loading
+pixel failures and matching canonical RAM checkpoints. The updated ball pose
+matches normalized guest coordinates in 5,549 / 5,340 presented samples. A
+further 2,400-step Blue run with presentation every tenth frame checks 139
+normalized poses and four seam presentations without mismatch or missing ball.
+The synthetic sparse-presentation case also checks a normalized position more
+than 64 pixels from its previous pose. Updates follow the cartridge's actual
+local-coordinate normalization boundaries.
+These tests preserve the existing limits for unexercised bonus/capture scenes.

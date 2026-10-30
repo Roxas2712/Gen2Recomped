@@ -105,6 +105,11 @@ uint64_t pinball_gbc_counter(void* handle,int kind) {
     if(kind==6)return p->table.failures;
     if(kind==7)return p->table.transition_holds;
     if(kind==8)return p->table.failure_holds;
+    if(kind==9)return p->table.ball_pixels;
+    if(kind==10)return p->table.seam_ball_frames;
+    if(kind==11)return uint32_t(p->table.ball_x);
+    if(kind==12)return uint32_t(p->table.ball_y);
+    if(kind==13)return p->table.ball_visible;
     return p->ctx->cycles;
 }
 int pinball_gbc_ram(void* handle,uint8_t* data,size_t size,int write) {

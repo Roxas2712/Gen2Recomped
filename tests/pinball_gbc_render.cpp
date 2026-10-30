@@ -60,8 +60,42 @@ struct GBCTableRenderTest {
   GBCTable first;c->io[0x40]=0;
   require(first.compose(c,out)&&out.size()==192*285*4,"First loading frame must not fall back to a half table");
   for(unsigned i=0;i<192*285;i++)require(out[i*4]==0&&out[i*4+3]==255,"Initial full-table loading canvas must be opaque");
+  // A complete authored ball crosses y=136 in both directions. It is clipped
+  // only by the whole board, never by either 136-pixel background half.
+  GBCTable::Ball ball;ball.valid=true;ball.has_pose=true;ball.x=64;
+  for(unsigned i=0;i<16*16;i++){ball.pixels[i*4]=255;ball.pixels[i*4+3]=255;}
+  std::vector<uint8_t> blockers(192*272,0);
+  for(int direction : {-1,1})for(int step=0;step<=24;step++) {
+   ball.y=direction==1?120+step:144-step;std::fill(out.begin(),out.end(),0);
+   require(GBCTable::draw_ball(ball,out,blockers,272)==256,"A seam-crossing ball must retain every opaque pixel in either direction");
+  }
+  ball.y=128;blockers[135*192+64]=1;blockers[136*192+64]=1;
+  std::fill(out.begin(),out.end(),0);
+  require(GBCTable::draw_ball(ball,out,blockers,272)==254,"Foreground priority must cover ball pixels on both sides of the seam");
+  std::fill(blockers.begin(),blockers.end(),0);ball.y=120;
+  require(GBCTable::draw_ball(ball,out,blockers,128)==128,"The ball must remain behind a real window overlay");
+  ball.valid=false;require(GBCTable::draw_ball(ball,out,blockers,272)==0,"Intentionally hidden balls must stay hidden");
+  ball.valid=true;ball.y=130;view.ball=ball;view.window_top=272;
+  view.last_picture=expected;view.ball_blockers=blockers;
+  require(view.retain(c,out,true)&&out[(135*192+64)*4]==255&&out[(136*192+64)*4]==255,"Loading must retain one complete ball spanning the join");
+  view.ball.x=80;require(view.retain(c,out,true),"retained scene");
+  require(out[(135*192+64)*4]==73&&out[(135*192+80)*4]==255,"The retained background must not accumulate old ball poses");
+  // Original-game camera hides must not remove the world ball at either
+  // transfer threshold; an intentional hide away from a transfer still wins.
+  view.ball=ball;c->wram[0x14ac]=0;c->wram[0x14b6]=168;c->wram[0x1548]=0;
+  view.ball.stage=0;view.sample_ball(c);require(view.ball.valid,"Downward camera OAM rebuild must preserve the ball");
+  c->wram[0x14ac]=1;c->wram[0x14b6]=0;view.ball.stage=1;
+  view.sample_ball(c);require(view.ball.valid,"Upward camera OAM rebuild must preserve the ball");
+  c->wram[0x14b6]=80;view.sample_ball(c);require(!view.ball.valid,"Intentional non-transfer visibility flag must be respected");
+  // A sparse/background presentation can legitimately move more than 64
+  // world pixels between samples. Only unnormalized local coordinates wait.
+  std::vector<uint8_t> synthetic_rom(0x8000,0);
+  require(gb_context_load_rom(c,synthetic_rom.data(),synthetic_rom.size()),"synthetic cartridge context");
+  c->wram[0x14ac]=0;c->wram[0x14b6]=80;c->wram[0x14b4]=80;c->wram[0x1548]=1;c->wram[0x18f2]=2;
+  view.ball=ball;view.ball.stage=1;view.ball.y=210;
+  view.sample_ball(c);require(view.ball.valid&&view.ball.stage==0&&view.ball.y==57,"Normalized fast crossings must update immediately even after sparse presentation");
   gb_context_destroy(c);
-  std::puts("GBC surface: current OAM, OBJ/BG priority, STAT tile bank and 2496 HUD pixels passed (no ROM)");
+  std::puts("GBC surface: current OAM, OBJ/BG priority, STAT tile bank, 2496 HUD pixels and seamless world-ball coverage passed (no ROM)");
  }
  static void draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical){GBCTable::draw_half(c,out,first,canonical);}
  static void draw_hud(GBContext*c,std::vector<uint8_t>&out){GBCTable::draw_hud(c,out);}

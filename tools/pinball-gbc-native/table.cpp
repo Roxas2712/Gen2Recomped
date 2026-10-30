@@ -34,7 +34,12 @@ void color(uint8_t*out,const uint8_t*pal,unsigned index) {
     out[0]=(v&31)*255/31;out[1]=((v>>5)&31)*255/31;out[2]=((v>>10)&31)*255/31;out[3]=255;
 }
 }
-void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical) {
+bool GBCTable::ball_object(const uint8_t*o) {
+    // These bank-0/palette-0 tiles are reserved for all eight ball poses on
+    // both standard fields, including the cartridge's mini-ball variants.
+    return o[2]>=0x40&&o[2]<0x60&&(o[3]&15)==0;
+}
+void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,bool canonical,uint8_t*blockers) {
     const auto*ppu=static_cast<GBPPU*>(c->ppu);
     std::array<uint8_t,W*136> ids{},priority{};
     const unsigned lcd=c->hram[0x1e],map=(lcd&8)?0x1c00:0x1800;
@@ -46,11 +51,14 @@ void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,boo
         const unsigned off=((attr&8)?0x2000:0)+base+ty*2;
         const unsigned id=((c->vram[off]>>tx)&1)|(((c->vram[off+1]>>tx)&1)<<1);
         ids[y*W+x]=id;priority[y*W+x]=attr&128;
+        if(blockers)blockers[(first+y)*W+x]=id&&(attr&128);
         color(&out[((first+y)*W+x)*4],ppu->bg_palette_ram,(attr&7)*4+id);
     }
     // Software OAM and hSCX/hSCY describe the same freshly drawn frame.
     // Hardware OAM can still belong to the preceding DMA/camera position.
     const uint8_t*oam=c->wram+0x1000;
+    unsigned ball_index=40;
+    for(unsigned i=0;i<40;i++)if(ball_object(oam+i*4)){ball_index=i;break;}
     const int sx=canonical?int(int8_t(c->hram[0x21])):0;
     const int sy=canonical?int(int8_t(c->hram[0x20])):0;
     const unsigned sh=(lcd&4)?16:8;
@@ -59,6 +67,7 @@ void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,boo
     std::array<uint8_t,W*136> occupied{};
     for(int i=0;i<40;i++) {
         const auto*o=oam+i*4;
+        if(ball_object(o))continue; // one world-space ball is drawn after both halves
         int px=int(o[1])-8+sx,py=int(o[0])-16+sy;
         if(o[0]==0||o[0]>=160||o[1]==0||o[1]>=200)continue;
         const unsigned attr=o[3],tile=sh==16?(o[2]&254):o[2];
@@ -70,10 +79,66 @@ void GBCTable::draw_half(GBContext*c,std::vector<uint8_t>&out,unsigned first,boo
             unsigned at=y*W+x;
             if(!id||occupied[at])continue;
             occupied[at]=1;
+            if(blockers&&unsigned(i)<ball_index)blockers[(first+y)*W+x]=1;
             if(ids[at]&&((attr&128)||priority[at]))continue;
             color(&out[((first+y)*W+x)*4],ppu->obj_palette_ram,(attr&7)*4+id);
         }
     }
+}
+void GBCTable::sample_ball(GBContext*c) {
+    const unsigned stage=ram(c,0xd4ac),local=ram(c,0xd4b6);
+    const int local_y=(stage&1)&&local>=240?int(local)-256:int(local);
+    const int world_y=int(stage&1)*136+local_y-23;
+    // The stage id is updated before CheckStageTransition normalizes the
+    // local Y coordinate. Keep the previous pose through that intermediate
+    // return boundary rather than moving the ball an entire half-table.
+    const bool unnormalized=(stage&1)?(local>=168&&local<240):(local<8||local>=240);
+    if(ball.has_pose&&ball.stage!=stage&&unnormalized&&ram(c,0xd8f2)==2)return;
+    // The cartridge clears visibility while rebuilding software OAM, before
+    // changing the stage id. At the authored transfer thresholds this is a
+    // camera hide, not a capture/drain: preserve the cached world-space ball.
+    const bool transfer=(stage&1)?(local<8||local>=240):(local>=168&&local<240);
+    if(!ram(c,0xd548)&&ball.valid&&transfer)return;
+    if(!c->rom||c->rom_size<0x423a){ball.valid=false;return;}
+    ball.valid=ram(c,0xd548)!=0;ball.has_pose=true;ball.stage=stage;
+    ball.x=int(ram(c,0xd4b4))-7;ball.y=world_y;ball.pixels.fill(0);
+    if(!ball.valid)return;
+    const auto*ppu=static_cast<GBPPU*>(c->ppu);
+    const unsigned frame=(ram(c,0xd4c4)>>4)&7;
+    // Read the authored sprite parts from the verified private cartridge;
+    // neither its tile data nor its sprite table is copied into host source.
+    const auto*pose=c->rom+0x41f2+frame*9;
+    for(unsigned part=0;part<2;part++) {
+        const auto*o=pose+part*4;const unsigned attr=o[3],tile=o[2]&254;
+        const int dx=int(int8_t(o[1])),dy=int(int8_t(o[0]))-8;
+        for(unsigned yy=0;yy<16;yy++)for(unsigned xx=0;xx<8;xx++) {
+            int x=dx+xx,y=dy+yy;if(x<0||x>=16||y<0||y>=16)continue;
+            const unsigned ty=(attr&64)?15-yy:yy,tx=(attr&32)?xx:7-xx;
+            const unsigned off=((attr&8)?0x2000:0)+tile*16+ty*2;
+            const unsigned id=((c->vram[off]>>tx)&1)|(((c->vram[off+1]>>tx)&1)<<1);
+            if(id)color(&ball.pixels[(y*16+x)*4],ppu->obj_palette_ram,(attr&7)*4+id);
+        }
+    }
+}
+unsigned GBCTable::draw_ball(const Ball&ball,std::vector<uint8_t>&out,const std::vector<uint8_t>&blockers,unsigned window_top) {
+    if(!ball.valid)return 0;
+    unsigned drawn=0;
+    for(int yy=0;yy<16;yy++)for(int xx=0;xx<16;xx++) {
+        const int x=ball.x+xx,y=ball.y+yy;
+        if(x<0||x>=int(W)||y<0||y>=272||(y>=int(window_top)&&x>=16&&x<176))continue;
+        const auto*pixel=&ball.pixels[(yy*16+xx)*4];
+        if(!pixel[3]||(!blockers.empty()&&blockers[y*W+x]))continue;
+        std::memcpy(&out[(y*W+x)*4],pixel,4);drawn++;
+    }
+    return drawn;
+}
+void GBCTable::finish_ball(std::vector<uint8_t>&out) {
+    // Cache the scene without a ball, preventing old poses or clipped halves
+    // from being retained underneath the next ball during camera transfers.
+    last_picture=out;
+    ball_x=ball.x;ball_y=ball.y;ball_visible=ball.valid;
+    ball_pixels=draw_ball(ball,out,ball_blockers,window_top);
+    if(ball.valid&&ball.y<136&&ball.y+16>136)seam_ball_frames++;
 }
 // The runtime's documented game hook terminates a scratch-only graphics call
 // before fetching its synthetic return PC. Canonical dispatch is untouched.
@@ -114,10 +179,10 @@ bool GBCTable::retain(GBContext*live,std::vector<uint8_t>&out,bool loading) {
     if(loading&&!last_picture.empty())out=last_picture;
     else {
         if(last_board.empty())out.assign(W*H*4,0);else out=last_board;
-        if(!loading)draw_hud(live,out);
+        if(!loading){sample_ball(live);draw_hud(live,out);window_top=live->hram[0x26]<134?H-(144-live->hram[0x26]):272;}
         for(unsigned i=0;i<W*H;i++)out[i*4+3]=255;
     }
-    last_picture=out;return true;
+    finish_ball(out);return true;
 }
 bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     const unsigned stage=ram(live,0xd4ac);
@@ -148,7 +213,8 @@ bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     if(!restored){if(failures++==0)std::fprintf(stderr,"[GBC table] scratch snapshot rejected\n");failure_holds++;return retain(live,out,true);}
     const unsigned other=stage^1;
     ram(scratch,0xd4ac)=other;
-    ram(scratch,0xd548)=0; // one ball only: the canonical live half owns it
+    // Keep the original ball OAM slots to preserve actor ordering in the
+    // occlusion mask. Both halves omit their pixels; the host draws one ball.
     ram(scratch,0xd57d)=0; // the live half owns the authored timer overlay
     // A host snapshot may land during the cartridge's OAM DMA. Scratch
     // rendering has no bus arbitration with the live LCD; stale DMA must not
@@ -163,9 +229,11 @@ bool GBCTable::compose(GBContext*live,std::vector<uint8_t>&out) {
     // LoadStageData writes the selected half's CGB palette directly to the
     // PPU. wPaletteData is a fade backup, not its current palette: copying it
     // here recolored Voltorb, Ditto, Bellsprout and the billboard incorrectly.
-    out.assign(W*H*4,0);
-    draw_half(scratch,out,(other&1)?136:0,false);
-    draw_half(live,out,(stage&1)?136:0,true);
-    last_board=out;draw_hud(live,out);last_picture=out;
+    out.assign(W*H*4,0);ball_blockers.assign(W*272,0);
+    draw_half(scratch,out,(other&1)?136:0,false,ball_blockers.data());
+    draw_half(live,out,(stage&1)?136:0,true,ball_blockers.data());
+    last_board=out;sample_ball(live);draw_hud(live,out);
+    window_top=live->hram[0x26]<134?H-(144-live->hram[0x26]):272;
+    finish_ball(out);
     return true;
 }

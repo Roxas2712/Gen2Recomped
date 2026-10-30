@@ -30,6 +30,7 @@ def worker(args):
     lib.pinball_gbc_ram.argtypes=[ptr,ptr,C.c_size_t,C.c_int]
     lib.pinball_gbc_close.argtypes=[ptr]
     lib.ascendant_pinball_step.argtypes=[ptr,C.c_uint16]
+    lib.ascendant_pinball_step_present.argtypes=[ptr,C.c_uint16,C.c_int]
     lib.ascendant_pinball_view.argtypes=[ptr,C.c_int]
     lib.ascendant_pinball_picture.argtypes=[ptr,C.POINTER(C.c_uint32),C.POINTER(C.c_uint32)];lib.ascendant_pinball_picture.restype=ptr
     lib.ascendant_pinball_checkpoint.argtypes=[ptr];lib.ascendant_pinball_checkpoint.restype=C.c_char_p
@@ -40,6 +41,7 @@ def worker(args):
     assert ctx,lib.pinball_gbc_error()
     baseline=lib.pinball_gbc_open(str(args.rom).encode())if args.full_table else None
     if args.full_table:assert lib.ascendant_pinball_view(ctx,1)
+    seam_samples=[];seam_missing=[];seam_seen=0;pose_checks=0;pose_failures=[];last_present_stage=None
     transitions=[];transition_failures=[];previous_board=None;previous_transition=None;pending_stage=False;capture_until=-1
     snapshots={};states=[];expanded_seen=False;fixed_frames=0;pcm_frames=0;audible=False;start=time.perf_counter()
     try:
@@ -53,8 +55,10 @@ def worker(args):
             if frame>=1000:
                 if frame%30<15:buttons&=~1
                 else:dpad&=~2
+            present=frame%args.presentation_stride==0 or frame==args.frames-1
+            old_holds=lib.pinball_gbc_counter(ctx,7)
             if args.full_table:
-                assert lib.ascendant_pinball_step(ctx,((~dpad&15)<<4)|(~buttons&15)),lib.pinball_gbc_error()
+                assert lib.ascendant_pinball_step_present(ctx,((~dpad&15)<<4)|(~buttons&15),int(present)),lib.pinball_gbc_error()
                 assert lib.pinball_gbc_step(baseline,dpad,buttons)
                 if frame%60==0:assert lib.ascendant_pinball_checkpoint(ctx)==lib.ascendant_pinball_checkpoint(baseline),'Presentation changed the canonical guest'
             else:assert lib.pinball_gbc_step(ctx,dpad,buttons),lib.pinball_gbc_error()
@@ -86,6 +90,40 @@ def worker(args):
                         original=C.string_at(lib.pinball_gbc_picture(ctx),160*144*4)
                         png(args.output/('transition-original-'+str(frame+1)+'.png'),original)
                     previous_board=board;previous_transition=signature
+            if args.seam_ball and args.full_table:
+                seen=lib.pinball_gbc_counter(ctx,10)
+                if seen>seam_seen:
+                    signed=lambda v:v if v<0x80000000 else v-0x100000000
+                    x=signed(lib.pinball_gbc_counter(ctx,11));y=signed(lib.pinball_gbc_counter(ctx,12))
+                    pixels=lib.pinball_gbc_counter(ctx,9)
+                    sample={'frame':frame+1,'x':x,'y':y,'drawn_pixels':pixels,'stage':lib.ascendant_pinball_read(ctx,0xd4ac,1)}
+                    seam_samples.append(sample)
+                    # The central seam corridor is open on both standard fields.
+                    # Covered edge lanes and authored window overlays are separate
+                    # priority cases exercised by the synthetic native regression.
+                    if 64<=x<=112 and lib.ascendant_pinball_read(ctx,0xffa6,1)>=134 and pixels==0:seam_missing.append(sample)
+                    if len(seam_samples)<=160:
+                        width,height=C.c_uint32(),C.c_uint32();picture=lib.ascendant_pinball_picture(ctx,C.byref(width),C.byref(height))
+                        png(args.output/('seam-'+str(frame+1)+'.png'),C.string_at(picture,width.value*height.value*4),width.value,height.value)
+                seam_seen=seen
+                if standard and lib.ascendant_pinball_read(ctx,0xd8f2,1)==2:
+                    stage=lib.ascendant_pinball_read(ctx,0xd4ac,1);local=lib.ascendant_pinball_read(ctx,0xd4b6,1)
+                    local=local-256 if stage%2 and local>=240 else local
+                    raw_y=stage%2*136+local-23;raw_x=lib.ascendant_pinball_read(ctx,0xd4b4,1)-7
+                    if 64<=raw_x<=112 and raw_y<136<raw_y+16 and lib.ascendant_pinball_read(ctx,0xd548,1):
+                        if not lib.pinball_gbc_counter(ctx,13):seam_missing.append({'frame':frame+1,'reason':'Visible canonical ball missing at the join'})
+            if args.seam_ball and args.full_table and present:
+                read=lambda a:lib.ascendant_pinball_read(ctx,a,1)
+                stage=read(0xd4ac);local=read(0xd4b6)
+                pending=(168<=local<240)if stage%2 else(local<8 or local>=240)
+                if standard and read(0xd8f2)==2 and stage==last_present_stage and read(0xd548)and not pending and old_holds==lib.pinball_gbc_counter(ctx,7):
+                    local_y=local-256 if stage%2 and local>=240 else local
+                    expected=[read(0xd4b4)-7,stage%2*136+local_y-23]
+                    signed=lambda v:v if v<0x80000000 else v-0x100000000
+                    actual=[signed(lib.pinball_gbc_counter(ctx,11)),signed(lib.pinball_gbc_counter(ctx,12))]
+                    pose_checks+=1
+                    if actual!=expected:pose_failures.append({'frame':frame+1,'expected':expected,'actual':actual})
+                last_present_stage=stage if standard else None
             count=C.c_size_t();samples=lib.pinball_gbc_audio(ctx,C.byref(count));pcm_frames+=count.value
             if count.value:audible=audible or any(C.string_at(samples,count.value*4))
             if frame%300==299:
@@ -129,16 +167,19 @@ def worker(args):
             'elapsed_seconds':time.perf_counter()-start,'interpreter_instructions':lib.pinball_gbc_counter(ctx,1),
             'dispatch_fallbacks':lib.pinball_gbc_counter(ctx,2),'interpreter_cycles':lib.pinball_gbc_counter(ctx,3),
             'cpu_cycles':lib.pinball_gbc_counter(ctx,4),'pcm_frames':pcm_frames,'audible':audible,
-            'transitions':transitions,'transition_pixel_failures':transition_failures,'fixed_full_table_frames':fixed_frames,'states':states,'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),'transition_holds':lib.pinball_gbc_counter(ctx,7),'failure_holds':lib.pinball_gbc_counter(ctx,8),
+            'presentation_stride':args.presentation_stride,'ball_pose_checks':pose_checks,'ball_pose_failures':pose_failures,'seam_ball_samples':seam_samples,'seam_ball_missing':seam_missing,'transitions':transitions,'transition_pixel_failures':transition_failures,'fixed_full_table_frames':fixed_frames,'states':states,'snapshots':snapshots,'full_table':args.full_table,'presentation_isolation':bool(baseline),'composition_failures':lib.pinball_gbc_counter(ctx,6),'transition_holds':lib.pinball_gbc_counter(ctx,7),'failure_holds':lib.pinball_gbc_counter(ctx,8),
             'quick_state_roundtrip':True,'battery_roundtrip':True,'player_saves_opened':False,'boot':'HLE'}
         assert pcm_frames>0 and audible
         assert max(s['colors']for s in snapshots.values())>8,'Expected color graphics'
         if args.full_table:
             assert any(s['width']==192 and s['height']==285 for s in snapshots.values()),'Full-table composition must activate'
             assert report['composition_failures']==0,'Scratch graphics routine failed'
-        report['passed']=not transition_failures
+        if args.seam_ball:assert seam_samples,'Natural gameplay must exercise the seam'
+        report['passed']=not transition_failures and not seam_missing and not pose_failures
         (args.output/'result.json').write_text(json.dumps(report,indent=2)+'\n')
         print(json.dumps(report))
+        assert not pose_failures,'Presented ball pose does not match normalized guest coordinates'
+        assert not seam_missing,'Ball disappeared in the open seam corridor'
         assert not transition_failures,'Full-table pixels must remain complete throughout stage graphics loading'
     finally:
         lib.pinball_gbc_close(ctx)
@@ -151,6 +192,8 @@ def main():
     p.add_argument('--field',choices=['red','blue'],default='red')
     p.add_argument('--full-table',action='store_true')
     p.add_argument('--transitions',action='store_true',help='Check pixels and capture stage graphics-loading boundaries')
+    p.add_argument('--seam-ball',action='store_true',help='Capture and check natural ball crossings through the full-table seam')
+    p.add_argument('--presentation-stride',type=int,choices=range(1,61),default=1,help='Compose only each Nth frame, preserving every guest step')
     p.add_argument('--worker',action='store_true');args=p.parse_args()
     if args.worker:return worker(args)
     sys.path.insert(0,str(Path.home()/'.local/lib/origami-qa-storage/active-tools'))
