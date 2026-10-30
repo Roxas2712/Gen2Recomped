@@ -16000,6 +16000,8 @@ function OverworldState:takeWarp(warpDef)
   -- still with a line in the log beats handing MapLoader an id that does not
   -- exist, which raises under the player's feet.
   if not destMap then return false end
+  Warp.noteGen3Entrance(Game.data, Game.save, warpDef, destMap, fromMap,
+                        self.player.cellX, self.player.cellY, self.map.def)
   -- GEN 4'S LIFTS REMEMBER THE FLOOR YOU GOT ON AT, and the door you are
   -- taking is the only place that knows it.  Stepping into a lift car
   -- overwrites the special location with the floor being left

@@ -403,6 +403,24 @@ end
 -- record and the remembered outdoor side the resolution used)
 local function warped(mapId, x, y) return mapId, x, y end
 
+-- Gen3 SetupWarp records the source event when its arrival event returns
+-- through MAP_DYNAMIC. The panel's current floor and cancelling straight
+-- back out both read this slot, before any setdynamicwarp script runs.
+function Warp.noteGen3Entrance(data, save, warpDef, destMap, fromMap, x, y, sourceDef)
+  local maps = data and data.maps
+  local dest = maps and maps[destMap]
+  local arrival = dest and dest.warps and warpDef and dest.warps[warpDef.destWarp]
+  if not (save and arrival and arrival.destMap == GEN3_DYNAMIC_MAP) then return false end
+  local source = sourceDef or (maps and maps[fromMap])
+  for i, event in ipairs(source and source.warps or {}) do
+    if event == warpDef then
+      save.gen3DynamicWarp = { map = fromMap, warp = i - 1, x = x, y = y }
+      return true
+    end
+  end
+  return false
+end
+
 -- THE LIFT REMEMBERS THE FLOOR YOU GOT ON AT, and it is the same slot.
 --
 --     if (warpEvent->destWarpID == 0x100) {
