@@ -1,0 +1,68 @@
+name: Windows cloud demo package
+on:
+  workflow_dispatch:
+    inputs:
+      runtime_run_id:
+        description: Successful native runtime qualification run from this repository
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-cloud-runtime
+          run-id: ${{ inputs.runtime_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/windows-cloud-runtime
+      - name: Check packaging guards
+        run: python -m unittest discover -s tests -p test_windows_cloud_demo.py -v
+      - name: Fetch byte-pinned official host
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tools/fetch_love_runtime.py --artifact 12514271124 --output "${{ runner.temp }}/love-runtime.zip"
+      - name: Build against the source-bound native component
+        run: >-
+          python tools/build_windows_cloud_demo.py
+          --runtime "${{ runner.temp }}/love-runtime.zip"
+          --component "${{ runner.temp }}/windows-cloud-runtime/component.json"
+          --out "${{ runner.temp }}/windows-demo"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-cloud-demo
+          path: |
+            ${{ runner.temp }}/windows-demo/*-win64.zip
+            ${{ runner.temp }}/windows-demo/verification.json
+          if-no-files-found: error
+          retention-days: 14
+  native-package-test:
+    needs: package
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/download-artifact@v8
+        with:
+          name: windows-cloud-demo
+          path: ${{ runner.temp }}/windows-demo
+      - name: Run the final EXE with isolated native HTTPS and save diagnostics
+        shell: pwsh
+        run: tools/windows-demo/verify_package.ps1 -PackageDirectory "$env:RUNNER_TEMP/windows-demo" -OutputDirectory "$env:RUNNER_TEMP/windows-demo-test"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-cloud-demo-native-test
+          path: |
+            ${{ runner.temp }}/windows-demo-test/*.json
+            ${{ runner.temp }}/windows-demo-test/*.log
+          if-no-files-found: error
+          retention-days: 14

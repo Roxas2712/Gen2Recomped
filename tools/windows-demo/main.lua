@@ -48,6 +48,7 @@ function love.draw()
  g.setColor(.4,.85,.9);g.printf('Enter / A: Profil öffnen     Pfeile / Steuerkreuz: Auswahl     Esc / B: Beenden',30,h-55,w-60)
 end
 local function move(delta)
+ delta=delta>0 and 1 or delta<0 and -1 or 0
  selected=math.max(1,math.min(#rows,selected+delta));scroll=math.max(0,selected-2)
 end
 function love.keypressed(key)
@@ -63,6 +64,8 @@ end
 function love.mousepressed(x,y,button)
  if button~=1 or x<25 or x>love.graphics.getWidth()-25 or y<150 or y>love.graphics.getHeight()-80 then return end
  local index=scroll+math.floor((y-150)/75)+1
+ local visible=math.max(1,math.floor(math.max(120,love.graphics.getHeight()-230)/75))
+ if index>scroll+visible or(y-150)%75>=66 then return end
  if rows[index]then selected=index;start(rows[index],true)end
 end
 function love.wheelmoved(_,dy)move(-dy)end
