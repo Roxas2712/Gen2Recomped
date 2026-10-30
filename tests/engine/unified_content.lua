@@ -552,5 +552,31 @@ for gen = 1, 3 do
   T.eq(legacyData.ai_classes.AI_NATIVE.item, keys.item, "legacy class item key is unchanged")
 end
 
+-- A list extension is an operation over the surviving earlier owners, not a
+-- snapshot containing the earlier owner's already-expanded list.
+for gen=1,3 do
+ for _,action in ipairs({'prefer','rollback'})do
+  local native=gen==2 and 'SPECIES_025' or 'PIKACHU'
+  local move=gen==2 and 'MOVE_033' or 'TACKLE'
+  local _,loader,data=run(gen,function(mod,host)
+    ok(mod.content.pokemon:patch('PIKACHU',{learnset={__append={{level=20,move='TACKLE'}}}}))
+    if action=='prefer' then host.content.pokemon:preferOwner(native,'probe')
+    else host.content.pokemon:rollback('earlier')end
+  end,'unified',{
+    earlier={format='native',priority=-1,entry=function(mod)
+      mod.content.pokemon:patch(native,{learnset={__append={{level=10,move=move}}}})
+    end},
+  })
+  T.eq(#loader.errors,0,'list extension survives '..action)
+  T.same(data.pokemon[native].learnset,{{level=9,move=move},{level=20,move=move}},
+    action..' does not retain the removed native owner inside the canonical extension')
+  loader.content.pokemon:preferOwner(native,nil)
+  loader.content.pokemon:rollback('probe')
+  local expected={{level=9,move=move}}
+  if action=='prefer' then expected[2]={level=10,move=move}end
+  T.same(loader.content.pokemon:get(native).learnset,expected,'post-merge rollback reads surviving native operations')
+ end
+end
+
 Version.set(original)
 T.finish("unified content")

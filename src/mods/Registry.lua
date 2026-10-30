@@ -23,6 +23,7 @@ function Registry.new(name, spec)
     order = {},    -- ids in first-touch order, for array-rebuilding targets
     seen = {},     -- id -> true, keeps order free of duplicates
     cache = {},    -- id -> { value } memoized fold
+    foldBases = {}, -- pristine touched rows survive merge-time writes to Data
     base = nil,    -- installed by the loader: fn() -> base table or nil
     frozen = false,
   }, Registry)
@@ -40,12 +41,16 @@ local function canonicalId(self, id)
   return id
 end
 
-local function append(self, id, op, value, owner)
+local baseValue
+local function append(self, id, op, value, owner, transform)
   if self.frozen then
     error(self.name .. ": content is frozen after load")
   end
   assert(validId(self, id), self.name .. " id is required")
   id = canonicalId(self, id)
+  if not self.foldBases[id] then
+    self.foldBases[id] = { value = Merge.deepCopy(baseValue(self, id)) }
+  end
   local list = self.ops[id]
   if not list then
     list = {}
@@ -57,7 +62,7 @@ local function append(self, id, op, value, owner)
     self.seen[id] = true
     self.order[#self.order + 1] = id
   end
-  list[#list + 1] = { op = op, value = value, owner = owner }
+  list[#list + 1] = { op = op, value = value, owner = owner, transform = transform }
   self.owners[id] = owner
   self.cache[id] = nil
   return value
@@ -65,7 +70,7 @@ end
 
 -- spec.baseAt lets a registry whose ids do not map one-to-one onto target
 -- keys (battle_anims routes by id prefix) resolve its own pristine value
-local function baseValue(self, id)
+baseValue = function(self, id)
   local base = self.base and self.base()
   if base == nil then return nil end
   if self.spec.baseAt then return self.spec.baseAt(base, id) end
@@ -99,6 +104,8 @@ local function fold(self, value, opList, id)
     -- without this the bare DELETE table would leak into Data as a record
     elseif entry.value == Merge.DELETE then
       value = nil
+    elseif op == "transform" then
+      value = entry.transform(Merge.deepCopy(value), Merge.deepCopy(entry.value))
     elseif op == "override" or (op == "register" and not deep) then
       value = entry.value
     elseif op == "register" or op == "patch" then
@@ -154,6 +161,19 @@ function Registry:patch(id, partial, owner, replaceLists)
   return result
 end
 
+-- The adapter keeps authored intent, so removing/arbitrating another owner
+-- recomputes a list extension against the surviving native record. Probe before
+-- journalling: a rejected conversion must leave no operation or owner claim.
+function Registry:patchTransformed(id, partial, owner, transform)
+  assert(not self.frozen, self.name .. ": content is frozen after load")
+  assert(self.spec.semantics ~= "compose", self.name .. ": transformed patch is record-only")
+  assert(validId(self, id), self.name .. " id is required")
+  assert(partial ~= nil and type(transform) == "function", "invalid transformed patch")
+  local result = transform(Merge.deepCopy(self:get(id)), Merge.deepCopy(partial))
+  append(self, id, "transform", Merge.deepCopy(partial), owner, transform)
+  return result
+end
+
 -- tombstone: consumers treat the id as absent after the merge
 function Registry:remove(id, owner)
   return append(self, id, "remove", nil, owner)
@@ -168,7 +188,10 @@ function Registry:get(id)
   end
   local hit = self.cache[id]
   if hit then return hit.value end
-  local value = fold(self, baseValue(self, id), self.ops[id], id)
+  local original = self.foldBases[id]
+  local value
+  if original then value = original.value else value = baseValue(self, id) end
+  value = fold(self, value, self.ops[id], id)
   self.cache[id] = { value = value }
   return value
 end
@@ -324,6 +347,9 @@ function Registry:each()
     end
   end
   for id in pairs(self.ops) do
+    if not seen[id] then seen[id] = true; ids[#ids + 1] = id end
+  end
+  for id in pairs(self.foldBases) do
     if not seen[id] then ids[#ids + 1] = id end
   end
   local i = 0

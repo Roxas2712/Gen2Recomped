@@ -582,6 +582,36 @@ function U.new(loader, mod, native, gen)
           if verb == "patch" and not old then unsupported("cannot patch absent " .. kind .. " ID: " .. id) end
           check(not registry.frozen, kind .. ": content is frozen after load")
           loader:_journal(kind)
+          if verb == "patch" and (kind == "pokemon" or kind == "moves" or kind == "trainers") then
+            -- Freeze the vocabulary before appending a transform. Resolving a
+            -- species through this same registry while folding it would recurse.
+            -- Values are still converted against the current surviving row.
+            for _, space in ipairs({ "pokemon", "moves", "items" }) do ctx.ids:entries(space) end
+            local intent = copy(value)
+            if intent.native ~= nil then
+              local before = readRecord(ctx, kind, id, old)
+              for key, entry in pairs(intent) do
+                if key ~= "id" and key ~= "native" and equal(entry, before[key]) then intent[key] = nil end
+              end
+            end
+            intent.native = nil
+            for _, key in ipairs(found.keys) do
+              registry:patchTransformed(key, intent, mod.manifest.id, function(current, authored)
+                -- A patch cannot resurrect an incomplete row whose registering
+                -- owner has been removed or set aside.
+                if current == nil then return nil end
+                local converted, paths = writeRecord(ctx, kind, id, authored, current, "patch")
+                local result = Merge.deepMerge(current, converted, registry.spec.semantics)
+                for _, path in ipairs(paths) do
+                  local into, from = result, converted
+                  for i = 1, #path - 1 do into, from = into[path[i]], from[path[i]] end
+                  into[path[#path]] = copy(from[path[#path]])
+                end
+                return result
+              end)
+            end
+            return true
+          end
           for _, key in ipairs(found.keys) do
             if verb == "patch" then registry:patch(key, payload, mod.manifest.id, replacements)
             else
