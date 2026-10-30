@@ -28,7 +28,7 @@ def extract(file,destination):
     else:
         with tarfile.open(file)as t:t.extractall(destination,filter='data')
 def clone(qa,url,path,revision):
-    if not path.exists():qa.qa_run(['git','clone','--filter=blob:none','--no-checkout',url,str(path)],check=True)
+    if not path.exists():qa.qa_run(['git','-c','core.eol=lf','-c','core.autocrlf=false','clone','--filter=blob:none','--no-checkout',url,str(path)],check=True)
     qa.qa_run(['git','checkout','--detach',revision],cwd=path,check=True)
     actual=qa.qa_run(['git','rev-parse','HEAD'],cwd=path,capture_output=True,text=True,check=True).stdout.strip()
     if actual!=revision:raise ValueError('Source pin mismatch')
@@ -61,10 +61,14 @@ def main():
     gba=work/'gbarecomp';clone(qa,'https://github.com/mstan/gbarecomp.git',gba,pinball_rs.RUNTIME)
     qa.qa_run(['git','submodule','update','--init','--recursive','external/arm-recomp-core','external/recomp-net','external/rbengine'],cwd=gba,check=True)
     pinball_rs.apply_runtime_fixes(gba,qa)
+    windows_patch=ROOT/'tools/pinball-rs-native/windows-io.patch'
+    qa.qa_run(['git','apply','--check',str(windows_patch)],cwd=gba,check=True)
+    qa.qa_run(['git','apply',str(windows_patch)],cwd=gba,check=True)
     cc=out/'compiler/bin/clang.exe';cxx=out/'compiler/bin/clang++.exe'
     native=work/'gba-build'
     base=['cmake','-S',str(gba),'-B',str(native),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
           '-DCMAKE_C_COMPILER='+str(cc),'-DCMAKE_CXX_COMPILER='+str(cxx),'-DCMAKE_EXPORT_COMPILE_COMMANDS=ON',
+          '-DCMAKE_EXE_LINKER_FLAGS=-static',
           '-DGBARECOMP_SELFHEAL_RECOMPILE_DEFAULT=OFF','-DGBARECOMP_COMPILER_CACHE=OFF']
     qa.qa_run(base,check=True)
     qa.qa_run(['cmake','--build',str(native),'--target','gba_recompile','--parallel','2'],check=True)
@@ -98,9 +102,11 @@ def main():
             try:relative=path.relative_to(gba)
             except ValueError:continue
             includes.add('gbarecomp/'+relative.as_posix())
+    gba_artifacts={p:digest(out/p)for p in ['bin/gba_recompile.exe','compiler/bin/clang++.exe','bios/gba_bios.bin',*libraries]}
     (out/'pinball-runtime.json').write_text(json.dumps({'schema':1,'platform':'windows-x64','runtime_revision':pinball_rs.RUNTIME,
         'compiler':'compiler/bin/clang++.exe','generator':'bin/gba_recompile.exe','bios':'bios/gba_bios.bin',
-        'libraries':libraries,'includes':sorted(includes),'bios_sha256':pinball_rs.BIOS_SHA256},indent=2)+'\n')
+        'libraries':libraries,'includes':sorted(includes),'artifacts':gba_artifacts,
+        'windows_io_patch_sha256':digest(windows_patch),'bios_sha256':pinball_rs.BIOS_SHA256},indent=2)+'\n')
     if a.graphics:build_graphics(qa,work,out,components)
     packages=qa.qa_run(['cargo','metadata','--locked','--format-version','1','--manifest-path',str(ROOT/'tools/pokemon-xy-bridge/Cargo.toml')],env=env,capture_output=True,text=True,check=True)
     records=[]

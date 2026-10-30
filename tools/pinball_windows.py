@@ -18,6 +18,7 @@ def main(root,args,core):
     for rel in required:
         path=(sdk/rel).resolve()
         if not path.is_relative_to(sdk)or not path.is_file():raise ValueError('The native Pinball SDK is incomplete: '+rel)
+        if runtime.get('artifacts',{}).get(rel)!=sha(path):raise ValueError('The native Pinball SDK file is damaged: '+rel)
     if sha(sdk/runtime['bios'])!=runtime['bios_sha256']:raise ValueError('The bundled replacement BIOS is damaged.')
     selected=args.rom.resolve(strict=True);rom_hash=core.digest(selected)
     if (rom_hash,selected.stat().st_size)not in{(core.USA,8*1024**2),(core.EU,16*1024**2)}:raise ValueError('Use a matching unmodified Pinball cartridge dump.')

@@ -12,7 +12,7 @@ function B.root()
   'tools/qa_preserved.py','tools/qa_release_storage.py','tools/qa_build_storage.py',
   'tools/pinball-rs-native/CMakeLists.txt','tools/pinball-rs-native/bridge.cpp',
   'tools/pinball-rs-native/presentation.cpp','tools/pinball-rs-native/presentation.h',
-  'tools/pinball-rs-native/runtime-fixes.patch','tools/pinball_windows.py','tools/native_workspace.py'}
+  'tools/pinball-rs-native/runtime-fixes.patch','tools/pinball-rs-native/windows-io.patch','tools/pinball_windows.py','tools/native_workspace.py'}
  for _,path in ipairs(paths)do
   local bytes=fs.read(path);if not bytes then return end
   local target='pinball-backend/'..path;fs.createDirectory(target:match('^(.*)/'))

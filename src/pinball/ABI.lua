@@ -1,6 +1,6 @@
 -- Private native cartridge bridge. Contributions by Roxas2712.
 local ffi=require('ffi')
-ffi.cdef[[
+local declarations=[[
 const char* ascendant_pinball_error(void);
 void* ascendant_pinball_open(const char*,const char*,const char*);
 int ascendant_pinball_step(void*,uint16_t);
@@ -18,6 +18,7 @@ const char* ascendant_pinball_checkpoint(void*);
 uint32_t ascendant_pinball_read(void*,uint32_t,uint32_t);
 int ascendant_pinball_close(void*);
 ]]
+ffi.cdef(declarations)
 local M={ffi=ffi}
-function M.load(path)return require('src.core.NativeLibrary').load(assert(path,'Pinball runtime has not been prepared.'))end
+function M.load(path)return require('src.core.NativeLibrary').load(assert(path,'Pinball runtime has not been prepared.'),declarations)end
 return M

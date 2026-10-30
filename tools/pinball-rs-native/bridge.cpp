@@ -9,6 +9,7 @@
 #include "gba_ppu.h"
 #include "sha1.h"
 #include "snapshot.h"
+#include "file_replace.h"
 #include "self_heal.h"
 #include "presentation.h"
 #include <array>
@@ -43,7 +44,7 @@ constexpr const char* cartridge_code="BPPE";
 std::mutex ownership;
 thread_local std::string error;
 std::vector<uint8_t> bytes(const char* path) {
- std::ifstream file(path,std::ios::binary|std::ios::ate);
+ std::ifstream file(std::filesystem::u8path(path),std::ios::binary|std::ios::ate);
  if(!file)throw std::runtime_error("Input file cannot be opened");
  const auto count=file.tellg();
  if(count<0||count>32*1024*1024)throw std::runtime_error("Invalid input size");
@@ -103,8 +104,10 @@ struct Machine {
   if(save.empty()||!bus.save().dirty())return true;
   const auto& content=bus.save().sram_bytes();
   const auto pending=save+".pending";
-  {std::ofstream f(pending,std::ios::binary|std::ios::trunc);if(!f.write(reinterpret_cast<const char*>(content.data()),content.size()))return false;}
-  std::filesystem::rename(pending,save);bus.save().clear_dirty();return true;
+  {std::ofstream f(std::filesystem::u8path(pending),std::ios::binary|std::ios::trunc);if(!f.write(reinterpret_cast<const char*>(content.data()),content.size()))return false;}
+  std::string why;
+  if(!gbarecomp::debug::replace_file_preserving(pending,save,&why))throw std::runtime_error(why);
+  bus.save().clear_dirty();return true;
  }
  gbarecomp::debug::SnapshotContext snapshot() {
   gbarecomp::debug::SnapshotContext context;
@@ -164,7 +167,7 @@ void* ascendant_pinball_open(const char* rom,const char* bios,const char* save) 
   m->bus.io().set_ppu(&m->ppu);m->bus.io().set_bus(&m->bus);m->bus.save().configure_sram(32768);
   if(save&&*save) {
    m->save=save;
-   if(std::filesystem::exists(save)) {
+   if(std::filesystem::exists(std::filesystem::u8path(save))) {
     const auto saved=bytes(save);
     if(saved.size()!=32768||!m->bus.save().load_sram_bytes(saved.data(),saved.size()))throw std::runtime_error("Existing SRAM must be exactly 32768 bytes");
    }

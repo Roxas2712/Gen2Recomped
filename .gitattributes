@@ -43,3 +43,4 @@ assets/language-patches/pt-BR/notices/** -text
 
 # Unified patch context lines intentionally contain a single space.
 tools/patches/*.patch whitespace=-blank-at-eol
+tools/patches/*.patch text eol=lf

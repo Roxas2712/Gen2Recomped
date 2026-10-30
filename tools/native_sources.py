@@ -10,7 +10,7 @@ def xy_sources(root,work,qa):
     for name,pin in pins.items():
         folder=work/name
         if not folder.exists():
-            qa.qa_run(['git','clone','--filter=blob:none','--no-checkout','https://github.com/fearkov/'+name+'.git',str(folder)],check=True)
+            qa.qa_run(['git','-c','core.eol=lf','-c','core.autocrlf=false','clone','--filter=blob:none','--no-checkout','https://github.com/fearkov/'+name+'.git',str(folder)],check=True)
             qa.qa_run(['git','checkout','--detach',pin['revision']],cwd=folder,check=True)
         actual=qa.qa_run(['git','rev-parse','HEAD'],cwd=folder,capture_output=True,text=True,check=True).stdout.strip()
         if actual!=pin['revision']:raise ValueError('Unexpected source revision: '+name)

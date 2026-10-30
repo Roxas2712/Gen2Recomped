@@ -14,6 +14,9 @@ local function windowsBindings()
     void * __stdcall CreateFileW(const uint16_t *, unsigned long, unsigned long, void *, unsigned long, unsigned long, void *);
     int __stdcall GetFileSizeEx(void *, int64_t *);
     int __stdcall ReadFile(void *, void *, unsigned long, unsigned long *, void *);
+    int __stdcall WriteFile(void *,const void *,unsigned long,unsigned long *,void *);
+    int __stdcall FlushFileBuffers(void *);
+    int __stdcall MoveFileExW(const uint16_t *,const uint16_t *,unsigned long);
     int __stdcall CloseHandle(void *);
     unsigned long __stdcall GetLastError(void);
     ]]
@@ -127,6 +130,41 @@ function NativeFile.read(path)
   if not ok then return nil, bytes end
   if not bytes or bytes == '' then return nil, err or 'empty file' end
   return bytes
+end
+
+local writeSerial=0
+function NativeFile.atomicWrite(path,data)
+  if type(path)~='string'or path==''or path:find('%z')or type(data)~='string'then return nil,'invalid native output'end
+  local ffi,api=windowsBindings();if not ffi then return nil,api end
+  local function wide(value)
+    local n=api.MultiByteToWideChar(65001,8,value,#value,nil,0)
+    if n==0 then return nil end
+    local result=ffi.new('uint16_t[?]',n+1)
+    if api.MultiByteToWideChar(65001,8,value,#value,result,n)==0 then return nil end
+    return result
+  end
+  local target=wide(path);if not target then return nil,'invalid UTF-8 output path'end
+  local pending,handle
+  for _=1,100 do
+    writeSerial=writeSerial+1;pending=wide(path..'.pending-'..os.time()..'-'..writeSerial)
+    if not pending then return nil,'invalid UTF-8 recovery path'end
+    handle=api.CreateFileW(pending,0x40000000,0,nil,1,0x80,nil)
+    if handle~=ffi.cast('void *',-1)then break end
+    handle=nil
+  end
+  if not handle then return nil,'Could not create a new recovery file; previous saves were retained.'end
+  local offset=0;local count=ffi.new('unsigned long[1]');local bytes=ffi.cast('const uint8_t*',data)
+  local ok=true
+  while offset<#data do
+    local size=math.min(#data-offset,65536)
+    if api.WriteFile(handle,bytes+offset,size,count,nil)==0 or count[0]==0 then ok=false;break end
+    offset=offset+tonumber(count[0])
+  end
+  if ok then ok=api.FlushFileBuffers(handle)~=0 end
+  local closed=api.CloseHandle(handle)~=0
+  if not ok or not closed then return nil,'Could not commit the recovery file; previous saves were retained.'end
+  if api.MoveFileExW(pending,target,1+8)==0 then return nil,'Could not replace the save; previous data and the recovery file were retained.'end
+  return true
 end
 
 return NativeFile
