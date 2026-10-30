@@ -17,6 +17,11 @@ on:
       - 'tests/native_jobs_runtime/**'
       - 'tools/qualify_native_jobs.py'
   workflow_dispatch:
+    inputs:
+      windows_only:
+        description: Qualify only the Windows preview dependency
+        type: boolean
+        default: false
   workflow_call:
 permissions:
   contents: read
@@ -25,6 +30,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   qualify:
+    if: ${{ inputs.windows_only != true }}
     strategy:
       fail-fast: false
       matrix:
@@ -152,5 +158,91 @@ jobs:
         with:
           name: qualified-desktop-runtime
           path: ${{ runner.temp }}/qualified-runtime/candidate/
+          if-no-files-found: error
+          retention-days: 14
+  windows-preview:
+    if: ${{ inputs.windows_only == true }}
+    runs-on: windows-2022
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: engine
+          ref: ${{ github.sha }}
+      - uses: actions/checkout@v7
+        with:
+          repository: LuaJIT/LuaJIT
+          ref: a4c064539ea931274d407e1249b4bb575424a0f4
+          path: runtime-source
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        if: runner.os == 'Windows'
+        with:
+          arch: x64
+      - name: Verify qualification logging and failure handling
+        shell: bash
+        run: python -m unittest discover -s engine/tests -p test_runtime_qualification.py -v
+      - name: Verify pinned host download contracts
+        shell: bash
+        run: python -m unittest discover -s engine/tests -p 'test_fetch_love_runtime.py'
+      - name: Fetch pinned LOVE12 host artifact
+        if: runner.os == 'Windows'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: >-
+          python engine/tools/fetch_love_runtime.py
+          --artifact "12514271124"
+          --output "${{ runner.temp }}/love-runtime.zip"
+      - name: Build both runtimes and qualify closures, C API and engine
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/qualify.py
+          --luajit-source runtime-source
+          --output "${{ runner.temp }}/runtime-capacity/candidate"
+          --engine-tests
+          --engine-timeout 2400
+      - name: Qualify the actual LOVE12 host, thread VM and FFI
+        if: runner.os == 'Windows'
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/love_abi.py
+          --runtime-archive "${{ runner.temp }}/love-runtime.zip"
+          --qualification "${{ runner.temp }}/runtime-capacity/candidate/report.json"
+          --library "${{ runner.temp }}/runtime-capacity/candidate/artifacts/extended/lua51.dll"
+          --output "${{ runner.temp }}/runtime-love-abi/candidate"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: runtime-capacity-windows-x64
+          path: |
+            ${{ runner.temp }}/runtime-capacity/candidate/report.json
+            ${{ runner.temp }}/runtime-capacity/candidate/*.log
+            ${{ runner.temp }}/runtime-capacity/candidate/artifacts/
+            ${{ runner.temp }}/runtime-love-abi/candidate/report.json
+            ${{ runner.temp }}/runtime-love-abi/candidate/*.log
+            ${{ runner.temp }}/runtime-love-abi/candidate/native-jobs/*.json
+            ${{ runner.temp }}/runtime-love-abi/candidate/native-jobs/*.log
+          if-no-files-found: error
+          retention-days: 14
+      - name: Assemble the two checked Windows reports
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "$env:RUNNER_TEMP/windows-input" -Force | Out-Null
+          Copy-Item -Recurse "$env:RUNNER_TEMP/runtime-capacity/candidate" "$env:RUNNER_TEMP/windows-input/capacity"
+          Copy-Item -Recurse "$env:RUNNER_TEMP/runtime-love-abi/candidate" "$env:RUNNER_TEMP/windows-input/host"
+      - name: Verify the Windows component and exact engine source binding
+        shell: bash
+        run: >-
+          python engine/tools/runtime-upvalue-check/component.py
+          --platform windows
+          --candidate "${{ runner.temp }}/windows-input"
+          --output "${{ runner.temp }}/windows-cloud-runtime"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-cloud-runtime
+          path: ${{ runner.temp }}/windows-cloud-runtime/
           if-no-files-found: error
           retention-days: 14

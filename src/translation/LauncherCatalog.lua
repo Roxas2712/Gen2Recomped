@@ -1,6 +1,7 @@
 -- Reviewed launcher essentials; no network or translation model required.
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 local catalog={ de={
+ ["Your email is confirmed. Your account is waiting for staff approval."]="Deine E-Mail-Adresse ist bestätigt. Dein Konto wartet auf die Freigabe durch das Team.",
  ["Your saves. Your account."]="Deine Spielstände. Dein Konto.",
  ["Local progress was found on this device. Choose whether it belongs to this account. Nothing is deleted or moved."]="Auf diesem Gerät gibt es bereits lokale Spielstände. Wähle, ob sie zu diesem Konto gehören. Es wird nichts gelöscht oder verschoben.",
  ["USE MY GUEST PROGRESS"]="MEINE GAST-SPIELSTÄNDE ÜBERNEHMEN",

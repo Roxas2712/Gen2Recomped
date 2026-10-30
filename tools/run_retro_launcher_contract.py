@@ -57,6 +57,8 @@ suites.extend(['friends_menu','friend_trade','friend_play','remote_players','are
 suites.extend(['arena_replay','import_review','cloud_save_feedback','windows_cloud_http'])
 syntax.extend(['src/storage/CloudOutbox.lua','src/storage/CloudSetup.lua'])
 suites.extend(['cloud_outbox','cloud_setup'])
+syntax.extend(['tools/windows-demo/Profile.lua','tools/windows-demo/main.lua','tools/windows-demo/conf.lua','tools/windows-demo/SelfTest.lua'])
+suites.extend(['windows_demo_profile','windows_demo_boot'])
 suites.append('nds_party_codec')
 suites.append('bank_verification')
 suites.append('origin_records')
