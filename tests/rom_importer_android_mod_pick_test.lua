@@ -9,6 +9,11 @@ local eq = S.eq
 local check = S.check
 
 local RomImporter = require("src.import.RomImporter")
+local owned=require('tests.modkit.install_fs')()
+local function pump(ri)
+  for _=1,1000 do if not ri._localModInstall then return end;ri:_stepModInstall()end
+  error('mobile installer did not terminate')
+end
 
 love.system = love.system or {}
 local saved = {
@@ -53,16 +58,21 @@ end
 pickCalls = {}
 local ri = freshImporter({ red = true, blue = true })
 ri:chooseMod()
+pump(ri)
 eq(#pickCalls, 1, "chooseMod opens the picker when no pending zip exists")
 eq(pickCalls[1], "mod", "chooseMod asks pickFile for a mod")
 
 -- Pending USB zip installs without opening the picker.
 love.filesystem.write("usb_mod.zip", "PK\0fake")
+owned.archives['PK\0fake']={['manifest.json']=require('src.link.Json').encode({id='androidprobe',name='Native Android probe',version='1.0.0',api=2,entry='main.lua'}),
+  ['main.lua']='local mod=...;mod.exports.native=true'}
 pickCalls = {}
 ri = freshImporter({ red = true, blue = true })
 ri:chooseMod()
+check(love.filesystem.getInfo('usb_mod.zip')~=nil,'pending source survives until the installer closes it')
+pump(ri)
 eq(#pickCalls, 0, "chooseMod installs a pending zip without opening the picker")
-eq(ri._installed, "usb_mod.zip", "chooseMod consumed the USB zip")
+eq(owned.files['mods/androidprobe/main.lua'],'local mod=...;mod.exports.native=true','chooseMod installs the pending native package')
 check(love.filesystem.getInfo("usb_mod.zip") == nil,
   "successful install removes the pending zip")
 
@@ -100,5 +110,6 @@ love.system.pickFile = saved.pickFile
 love.filesystem.remove("usb_mod.zip")
 love.filesystem.remove("picked_mod.zip")
 love.filesystem.remove("picked_save.sav")
+owned.restore()
 
 S.finish()

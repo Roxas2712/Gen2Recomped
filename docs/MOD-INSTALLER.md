@@ -34,6 +34,13 @@ Source checkouts and packages outside the chosen writable root are refused befor
 replacement. They remain usable at their existing location. Select/import a ZIP
 into the intended data folder rather than overwriting such a location.
 
+External folder scans require the runtime's native PHYSFS directory bridge. A
+stock distribution LÖVE 11 build which hides those symbols refuses that operation
+and directs the user to choose ZIP files instead. ZIP picks, staging, publication,
+cancellation and recovery still work. The qualification report records
+`externalDirectories` separately; it never counts an unavailable directory bridge
+as a passed folder/custom-root test.
+
 ## Interrupted processes
 
 Bounded data-only JSON receipts live under `mod-install-journal/`. Unique work

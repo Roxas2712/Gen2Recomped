@@ -44,6 +44,7 @@ nextWindow:keypressed('escape')
 T.check(nextWindow._localModInstall.job.cancelled,'Escape requests actual installer cancellation')
 for _=1,2000 do if not nextWindow._localModInstall then break end;nextWindow:update(.01)end
 T.check(nextWindow.modNotice.text:find('cancelled',1,true),'cancel has a visible terminal notice')
+T.eq(nextWindow.modNotice.ok,false,'cancellation is not reported as successful installation')
 T.eq(m.files['mods/owned-1/main.lua'],nil,'cancelled duplicate is never published')
 local clicked=UI.new();clicked:_installMod('owned.zip');clicked:draw()
 local r=clicked._modInstallCancelRect;clicked:mousepressed(r.x+1,r.y+1,1)
@@ -52,6 +53,12 @@ for _=1,2000 do if not clicked._localModInstall then break end;clicked:update(.0
 local pad=UI.new();pad:_installMod('owned.zip');pad:gamepadpressed(nil,'back')
 T.eq(pad._localModInstall.job.cancelled,true,'gamepad Back cancels actual job')
 for _=1,2000 do if not pad._localModInstall then break end;pad:update(.01)end
+local inbox=UI.new();inbox._openModNativePicker=function(self)self.reopened=true end
+inbox:_installModInbox(true,false,true);inbox:keypressed('escape')
+for _=1,2000 do if not inbox._localModInstall then break end;inbox:update(.01)end
+T.eq(inbox.reopened,nil,'cancelled inbox scan never opens a picker afterwards')
+local blocked=UI.new();blocked._profileRecoveryBlocked=true;blocked:_installMod('owned.zip')
+T.eq(blocked._localModInstall,nil,'unresolved recovery blocks another package import')
 m.restore()
 Mods.stepInstall=step
 T.finish('native launcher pumping, input guards, cancellation and deferred mobile ownership')

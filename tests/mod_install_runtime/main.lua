@@ -97,6 +97,18 @@ local function run()
  eq(#fs.getDirectoryItems('mod-install-staging'),0,'no staged archive/file leak')
  eq(#fs.getDirectoryItems('mod-profile-backups'),0,'no profile copy leak')
  eq(Mods.installBusy(),false,'no live installer')
+ local probe=Cache.scopedMount(config.folder,'installer-capability-probe')
+ if not probe then
+  -- Some distribution LOVE 11 builds hide every PHYSFS symbol. Direct ZIP
+  -- selection is still supported; unavailable native mounts must fail closed.
+  local success,why=drain(assert(Mods.beginInstallFolder(config.folder)))
+  eq(success,nil,'unavailable external-directory bridge refuses safely')
+  check(why:find('Select its ZIP files directly',1,true),'capability refusal offers the supported ZIP path')
+  eq(Mods.installBusy(),false,'refused external directory releases job')
+  print('External directories: unavailable; verified safe refusal and direct ZIP installs')
+ else
+ probe()
+ print('External directories: supported')
  job=assert(Mods.beginInstallFolder(config.folder));untilPhase(job,'scanning')
  check(Mods.cancelInstall(job),'folder scan cancellation')
  eq(drain(job),nil,'folder scan cancels before installation')
@@ -116,6 +128,7 @@ local function run()
   eq(#fs.getDirectoryItems('mod-install-journal'),0,'selected root receipt cleanup')
   return true
  end),'alternate root stays mounted until all yielded IO is finished')
+ end
  print('Native installer: '..checks..' checks PASS; real ZIP, filesystem, rollback, cancellation and profile IO')
  love.event.quit(0)
 end

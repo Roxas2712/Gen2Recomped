@@ -91,6 +91,7 @@ def main():
     assert match, 'real installer qualification marker missing'
     inputs = list((ROOT / 'src/mods').glob('ModInstall*.lua')) + [ROOT / 'src/mods/LauncherMods.lua']
     report = dict(passed=True, checks=int(match[1]), platform=platform.system(),
+                  externalDirectories='External directories: supported' in log,
                   scope='Real ZIP mounting, scoped filesystem writes, cancellation, recovery and native profile IO; no ROM, GPU, network or player profile',
                   inputsSha256={str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in inputs})
     (output / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')

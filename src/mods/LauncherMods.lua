@@ -1315,17 +1315,19 @@ local function scanZips(job,directory,oneLevel)
   end
   table.sort(result);return result
 end
-function LauncherMods.beginInstallInbox(first)
+function LauncherMods.beginInstallInbox(first,skip)
+  skip=require('src.mods.Merge').deepCopy(skip or{})
   return require('src.mods.ModInstallJob').new(function(job)
     require('src.mods.ModInstallTransaction').recover(job)
     local sources,seen={},{}
     for _,directory in ipairs({'imports/mods',''})do
       for _,path in ipairs(scanZips(job,directory,false))do
-        if not seen[path]then sources[#sources+1]=path;seen[path]=true end
+        if not seen[path]and not skip[path]then sources[#sources+1]=path;seen[path]=true end
       end
     end
     if first and #sources>1 then sources={sources[1]}end
     job.sourceCount=#sources
+    job.sources=sources
     return installSources(job,sources,{replace=true})
   end)
 end

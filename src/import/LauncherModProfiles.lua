@@ -158,6 +158,7 @@ end
 function M.install(RI)
   function RI:_cancelProfileInstall()return stop(self,'Profile transfer cancelled.')end
   function RI:_communityApplyProfile(plan,manual)
+    if self._profileRecoveryBlocked or self._modInstallRecoveryBlocked then message(self,'Recover the unfinished installation first.',false);return end
     if self._profileApplying or self._communityDownload or self._storageTask then message(self,'Finish the current download or sync first.',false);return end
     if (plan.kind=='conflict' or plan.engineMismatch) and not manual then self._modProfilePlan=plan;message(self,'Cloud mod profile needs review.',false);return end
     local installed=Packages.list()

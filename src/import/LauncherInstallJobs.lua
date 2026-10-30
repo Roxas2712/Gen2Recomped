@@ -18,6 +18,9 @@ local function begin(self,job,why,kind)
  self.workState='working';self.tab='mods';note(self,'Preparing mod installation…',true);return true
 end
 local function available(self)
+ if self._modInstallRecoveryBlocked or self._profileRecoveryBlocked then
+  note(self,'Recover the unfinished installation before importing another package.',false);return false
+ end
  if self.workState=='working' or self._communityDownload or self._profileApplying or Packages.installBusy()then
   note(self,'Finish or cancel the current operation first.',false);return false
  end
@@ -37,14 +40,22 @@ local function finish(self,state,a,b,c)
  end
  if state.job.warning then text=tostring(text)..' '..state.job.warning end
  if state.job.pendingReceipt and not a then self._modInstallRecoveryBlocked=true;self._profileRecoveryBlocked=true end
- note(self,tostring(text or 'Import failed.'),ok)
+ note(self,tostring(text or 'Import failed.'),ok==true)
  if self._refreshMods then pcall(self._refreshMods,self)end
  if state.pick and self._consumeInstalledModPick then self:_consumeInstalledModPick(state.pick[1],state.pick[2],a==true)end
+ if state.singlePick and state.job.sources and state.job.sources[1]and self._consumeInstalledModPick then
+  self:_consumeInstalledModPick(state.job.sources[1],'picked_mod.zip',type(a)=='table'and#a.installed>0 and#a.failed==0)
+ end
  if state.tally and self._pickManyTally then self:_pickManyTally(a==true)end
- if state.again and self._pickManyAgain then self:_pickManyAgain()end
- if state.mobileMany and self._pickManyBegin then self:_pickManyBegin('mod')end
- if state.pickerOnEmpty and (state.job.sourceCount or 0)==0 and self._openModNativePicker then self:_openModNativePicker()end
- if state.kind=='many'and state.job.sourceCount==0 and not state.mobileMany and not state.pickerOnEmpty and self._modInboxHint then self:_modInboxHint()end
+ if state.job.cancelled and self._pickMany and self._pickManyFinish then
+  self:_pickManyFinish();note(self,tostring(text),false)
+ end
+ if not state.job.cancelled and type(a)=='table'then
+  if state.again and self._pickManyAgain then self:_pickManyAgain()end
+  if state.mobileMany and self._pickManyBegin then self:_pickManyBegin('mod')end
+  if state.pickerOnEmpty and state.job.sourceCount==0 and self._openModNativePicker then self:_openModNativePicker()end
+  if state.kind=='many'and state.job.sourceCount==0 and not state.mobileMany and not state.pickerOnEmpty and self._modInboxHint then self:_modInboxHint()end
+ elseif not state.job.cancelled and state.again and a==true and self._pickManyAgain then self:_pickManyAgain()end
 end
 function M.install(RI)
  function RI:_installMod(source,opts)
@@ -58,9 +69,10 @@ function M.install(RI)
  function RI:_installModInbox(first,mobileMany,pickerOnEmpty)
   if not available(self)then return end
   if self.ensureModsInboxDir then self:ensureModsInboxDir()end
-  local job,why=Packages.beginInstallInbox(first)
+  local job,why=Packages.beginInstallInbox(first,self.pickSkip)
   if begin(self,job,why,'many')then
    self._localModInstall.mobileMany=mobileMany;self._localModInstall.pickerOnEmpty=pickerOnEmpty
+   self._localModInstall.singlePick=self.android and first
   end
  end
  function RI:_installModFolder(path)
@@ -94,12 +106,15 @@ function M.install(RI)
   return self
  end
  local update=RI.update
- RI.update=function(self,dt,...)
+ function RI:_stepModInstall()
   local state=self._localModInstall
   if state then
    local status,a,b,c=Packages.stepInstall(state.job)
    if status=='done'then finish(self,state,a,b,c)end
   end
+ end
+ RI.update=function(self,dt,...)
+  self:_stepModInstall()
   return update(self,dt,...)
  end
  local tally,again=RI._pickManyTally,RI._pickManyAgain

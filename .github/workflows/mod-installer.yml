@@ -12,6 +12,8 @@ on:
       - 'tests/engine/launcher_mod_profiles.lua'
       - 'tests/modkit/install_fs.lua'
       - 'tests/mod_install_runtime/**'
+      - 'tests/rom_importer_no_picker_test.lua'
+      - 'tests/rom_importer_android_mod_pick_test.lua'
       - 'tools/qualify_mod_installer.py'
       - '.github/workflows/mod-installer.yml'
 permissions:
@@ -42,6 +44,9 @@ jobs:
           luajit tests/engine/installer_streaming.lua
           luajit tests/engine/gen2_lifecycle_callbacks.lua
           luajit tests/engine/session_process_shutdown.lua
+          luajit tests/rom_importer_no_picker_test.lua
+          luajit tests/rom_importer_android_mod_pick_test.lua
+          luajit tests/parity_picker_pointer_grab.lua
   filesystem:
     if: github.repository == 'Roxas2712/Gen2Recomped' && !github.event.repository.private
     strategy:
