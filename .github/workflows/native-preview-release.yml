@@ -56,7 +56,10 @@ jobs:
           assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() == sha
           subprocess.run(['git', 'merge-base', '--is-ancestor', sha, 'origin/main'], check=True)
           run = api('repos/' + repo + '/actions/runs/' + os.environ['RUNTIME_RUN'])
-          assert run['head_sha'] == sha and run['conclusion'] == 'success'
+          assert run['conclusion'] == 'success'
+          # A merge commit may have a different ID while retaining the exact
+          # qualified source and test tree. Receipts still retain their real SHA.
+          assert subprocess.check_output(['git', 'rev-parse', run['head_sha'] + '^{tree}'], text=True).strip() == subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
           assert run['path'] == '.github/workflows/runtime-upvalues.yml'
           release = api('repos/' + repo + '/releases/tags/native-preview-' + os.environ['RELEASE_ID'])
           assert release['prerelease'] and not release['draft'] and not release.get('immutable', False)
