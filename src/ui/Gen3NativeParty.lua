@@ -14,10 +14,16 @@ function M.retainStatus(game,battle,id,list)
 end
 function M.new(owner)
  local self=setmetatable({owner=owner,game=owner.game,images={},quads={}},M)
+ owner.isOpaque=true;owner.holdsUIAnchors=true
+ owner.wantsEdgeBleed=function()return false end
  local spec=self.game.data.constants.gen3NativeParty;self.version=spec.version
- local ui={party={buttons={cancel='cancel',confirm='confirm'}}}
+ local ui={party={}}
+ if self.version=='emerald'then ui.party.buttons={cancel='cancel',confirm='confirm'}end
  local text={};local load
- function text.ir(key)return assert(spec.textIR[key],'Missing native party label '..key)end
+ function text.ir(key)
+  local role=key=='gFameCheckerText_Cancel'and'cancel'or key=='gText_PartyMenu_OK'and'confirm'or key
+  return assert(spec.textIR[role],'Missing native party label '..key)
+ end
  function text.plain(key,vars)return load('src.core.game3.scripting.text_ir').toAscii(text.ir(key),vars)end
  text.translate=function(value)return value end;text.has=function(key)return spec.textIR[key]~=nil end
  if self.version=='emerald'then

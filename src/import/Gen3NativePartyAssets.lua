@@ -10,7 +10,7 @@ M.files={'bg.rgba','slot_main.rgba','slot_main_selected.rgba','slot_main_multi.r
 function M.labels(version)
  return {level='gText_Lv',choose='gText_ChoosePokemon',use='gText_UseOnWhichPokemon',
   teach='gText_TeachWhichPokemon',give='gText_GiveToWhichPokemon',move='gText_MoveToWhere',action='gText_DoWhatWithPokemon',
-  cancel=version=='emerald'and'gText_Cancel2'or'gText_Cancel7',
+  cancel=version=='emerald'and'gText_Cancel2'or'gFameCheckerText_Cancel',
   confirm=version=='emerald'and'gText_Confirm2'or'gText_PartyMenu_OK'}
 end
 function M.context(version)
@@ -39,7 +39,7 @@ function M.extract(x)
  local IR=load('src.core.game3.scripting.text_ir');local labels=not S and require('src.import.gba.text_labels.'..version)
  local text={}
  for role,name in pairs(M.labels(version))do
-  local at=assert(S and S.off(name)or labels[name],'Missing native party label '..name);local raw={}
+  local at=assert(S and S.off(name)or labels[name]or options.keys.NAMED_TEXTS[name],'Missing native party label '..name);local raw={}
   for i=0,2047 do local b=rom:get(at+i);raw[#raw+1]=b;if b==255 then break end end
   assert(raw[#raw]==255,'Unterminated native party text '..name)
   text[role]=IR.decode(raw,{dialect=version=='emerald'and'rse'or'frlg'})

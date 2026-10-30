@@ -33,6 +33,7 @@ return function(game)
  local party=Party.new(game,{});game.stack:push(party);U.wait(90)
  report.nativePartyPresenter=party.rsNative~=nil or party.gbaNative~=nil
  assert(party.gbaNative,'Native field party presenter missing')
+ assert(party.isOpaque and party.holdsUIAnchors and not party:wantsEdgeBleed(),'Party scene exposes the field outside its viewport')
  shot('party-six-members-lead');press('right');assert(party.index==2)
  shot('party-status-second-member');press('a');assert(party.submenu)
  shot('party-native-actions');press('b');assert(not party.submenu)

@@ -20,6 +20,9 @@ return function(game)
  if version=='emerald'or version=='firered'or version=='leafgreen'then
   assert(require('src.import.Gen3BagSaleAssets').valid(game.data.constants.gen3BagSale,version))
   assert(require('src.import.Gen3NativePartyAssets').valid(game.data.constants.gen3NativeParty,version))
+  local load=require('src.import.Gen3NativePartyAssets').context(version)
+  assert(load('src.core.game3.scripting.text_ir').toAscii(game.data.constants.gen3NativeParty.textIR.cancel):upper()=='CANCEL',
+   'Own-cartridge party CANCEL label is not readable')
  end
  if version=='emerald'then
   assert(require('src.import.Gen3EmeraldBagAssets').valid(game.data.constants.gen3EmeraldBag,version))
