@@ -10,7 +10,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--sdk',type=Path,required=True);p.add_argument('--out',type=Path,required=True);a=p.parse_args()
     if os.name!='nt':p.error('Execute these binaries on Windows x64.')
     sdk=a.sdk.resolve();qa=manager(ROOT);qa.qa_source(sdk);out=a.out.resolve();qa.qa_cache(out.parent)
-    work=out.parent/'native-fixtures-Ömega';work.mkdir(parents=True,exist_ok=True)
+    work=out.parent/'native-fixtures-Ömega %!';work.mkdir(parents=True,exist_ok=True)
     checks=[]
     def check(ok,name):
         if not ok:raise AssertionError(name)
