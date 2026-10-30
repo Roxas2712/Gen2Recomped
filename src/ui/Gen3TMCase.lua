@@ -112,6 +112,20 @@ function Gen3TMCase:rebuild()
       }
     end
   end
+  -- Sort the view, leaving the shared acquisition order and stable item IDs
+  -- intact. FRLG places HMs first, then machines in cartridge number order.
+  local positions={};for i,row in ipairs(rows)do positions[row]=i end
+  local function number(row)
+    local n=tonumber(row.def.machine.number)
+    return n and n==n and n>0 and n<math.huge and n or math.huge
+  end
+  table.sort(rows,function(a,b)
+    local ah,bh=a.def.machine.kind=='HM',b.def.machine.kind=='HM'
+    if ah~=bh then return ah end
+    local an,bn=number(a),number(b)
+    if an~=bn then return an<bn end
+    return positions[a]<positions[b]
+  end)
   rows[#rows + 1] = { close = true, label = Strings("CLOSE") }
   self.rows = rows
   self.index = math.min(self.index or 1, #rows)

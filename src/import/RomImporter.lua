@@ -2104,6 +2104,7 @@ function RomImporter.readyReport(version)
     if #absent==0 then absent=require('src.import.Gen3EmeraldBagAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3EmeraldItemPcAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3NativePartyAssets').missing(version)end
+    if #absent==0 then absent=require('src.import.Gen3TMCaseAssets').missing(version)end
     CacheFs.prefix=savedPrefix
     if #absent>0 then return{ok=false,missing=absent,why='The native GBA healthbox or bag text is incomplete.'}end
   end
