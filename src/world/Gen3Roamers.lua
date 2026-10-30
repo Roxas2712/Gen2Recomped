@@ -35,6 +35,12 @@
 -- `active = 0` and stops every one of the rules above.
 
 local Gen3Roamers = {}
+local Runtime=require('src.mods.Runtime')
+local function moved(slot,previous,reason)
+  if previous~=slot.map and Runtime.wants("roamer.moved") then
+    Runtime.emit("roamer.moved",{index=1,slot=slot,species=slot.species,from=previous,to=slot.map,reason=reason})
+  end
+end
 
 local HISTORY = 3        -- how many maps back the cartridge remembers
 local AVOID = 3          -- ...and which of them it will not hop onto
@@ -132,7 +138,9 @@ function Gen3Roamers.jump(data, save, rng)
   for _ = 1, 64 do
     local pick = placeAt(record, randInt(rng, #record.places) + 1)
     if pick and pick ~= it.map then
+      local previous=it.map
       it.map = pick
+      moved(it,previous,'jump')
       return pick
     end
   end
@@ -167,7 +175,9 @@ function Gen3Roamers.step(data, save, mapId, rng)
   for _ = 1, 64 do
     local pick = row.nextMaps[randInt(rng, #row.nextMaps) + 1]
     if pick and pick ~= avoid then
+      local previous=it.map
       it.map = pick
+      moved(it,previous,'connection')
       return pick, "step"
     end
   end
@@ -186,6 +196,9 @@ function Gen3Roamers.check(data, save, mapId, rng)
   if not Gen3Roamers.at(save, mapId) then return nil end
   local odds = math.floor(tonumber(record.meetOneIn) or 4)
   if odds > 1 and randInt(rng, odds) ~= 0 then return nil end
+  if Runtime.wants("roamer.encountered") then
+    Runtime.emit("roamer.encountered",{index=1,slot=it,species=it.species,level=it.level,mapId=mapId})
+  end
   return it
 end
 

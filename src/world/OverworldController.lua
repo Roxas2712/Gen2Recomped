@@ -13771,7 +13771,7 @@ function OverworldState:hatchEgg(hatched)
   elseif GameVersion.isGen3() and Game.save then
     require("src.pokemon.Gen3GameStats").increment(Game.save, 13)      -- GAME_STAT_HATCHED_EGGS
   end
-  local hatchObserver=GameVersion.isGen2() and Runtime.wants("egg.hatched")
+  local hatchObserver=(GameVersion.isGen2() or GameVersion.isGen3()) and Runtime.wants("egg.hatched")
   local originalEgg,eggSlot
   if hatchObserver then
     originalEgg=require('src.mods.Merge').deepCopy(hatched)

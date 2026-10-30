@@ -49,6 +49,7 @@ C.events = names([[
  world.object_toggled world.stepped world.tick world.tod_changed world.trainer_engaged
 ]])
 local positions = {
+  ["breeding.compatibility"] = { "context" },
   ["map.occupancy_allowed"] = { false, "context" },
   ["shiny.roll"] = { "context" },
   ["gender.roll"] = { "context" },
