@@ -21,6 +21,7 @@ function M.start(owner,dir)
  M.remember(owner)
  owner:movePocket(dir)
  M.restore(owner)
+ owner.message=nil
  owner.emeraldSwitch={from=from,dir=dir,age=0}
  require('src.core.Sound').play(owner.game.data,'Press_AB')
 end
