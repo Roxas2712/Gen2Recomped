@@ -73,24 +73,29 @@ def check_vulkan(sdk,check):
 def check_3ds_guest(sdk,work,qa,bridge,check):
     # Self-authored NCCH container and two ARM instructions. The supported
     # title ID exercises the bridge's ordinary title guard, not Nintendo code.
-    body=bytearray(0x1C00);body[0x100:0x104]=b'NCCH'
+    body=bytearray(0x1E00);body[0x100:0x104]=b'NCCH'
     struct.pack_into('<I',body,0x104,len(body)//512);struct.pack_into('<Q',body,0x118,0x0004000000055D00)
     struct.pack_into('<I',body,0x180,0x400);body[0x18C]=1;body[0x18D]=2;body[0x18F]=6
     struct.pack_into('<III',body,0x1A0,5,9,1)
+    struct.pack_into('<III',body,0x1B0,14,1,1)
     body[0x200:0x208]=b'OwnCode\0';struct.pack_into('<III',body,0x210,0x100000,1,8);struct.pack_into('<I',body,0x21C,0x2000)
     struct.pack_into('<III',body,0x220,0x101000,0,0);struct.pack_into('<III',body,0x230,0x101000,0,0)
     struct.pack_into('<Q',body,0x400,0x0004000000055D00);body[0x40F]=32
     for at in range(0x570,0x5E0,4):struct.pack_into('<I',body,at,0xFFFFFFFF)
     body[0xA00:0xA08]=b'.code\0\0\0';struct.pack_into('<II',body,0xA08,0,0x1000)
     struct.pack_into('<II',body,0xC00,0xE2800001,0xEAFFFFFD)
-    body[0xBE0:0xC00]=hashlib.sha256(body[0xC00:]).digest();body[0x160:0x180]=hashlib.sha256(body[0x200:0x600]).digest()
+    body[0xBE0:0xC00]=hashlib.sha256(body[0xC00:0x1C00]).digest();body[0x160:0x180]=hashlib.sha256(body[0x200:0x600]).digest()
     body[0x1C0:0x1E0]=hashlib.sha256(body[0xA00:0xC00]).digest()
-    rom=work/'own-arm11.fixture';rom.write_bytes(body);generated=work/'arm11-generated'
+    body[0x1E0:0x200]=hashlib.sha256(body[0x1C00:]).digest()
+    rom=work/'own-arm11.fixture';rom.write_bytes(body)
     env=dict(os.environ,CC=str(sdk/'compiler/bin/clang.exe'),RETRO_3DS_BUILD_JOBS='2',PATH=os.pathsep.join([str(sdk/'compiler/bin'),str(sdk/'python'),os.environ.get('PATH','')]))
-    qa.qa_run([str(sdk/'bin/3dsrecomp.exe'),'build',str(rom),str(generated)],env=env,check=True,timeout=180)
-    dlls=list(generated.glob('*.dll'));check(len(dlls)==1,'Native 3DS recompiler builds the self-authored ARM11 fixture into a Windows DLL')
-    request={'rom':str(rom),'library':str(dlls[0]),'data':str(work/'synthetic-3ds-player'),'session_lock':str(work/'synthetic-3ds.lock'),
-        'resolution':1,'language':1,'depth_3d':0,'stereo':'off','texture_packs':False,'vulkan_loader':str(sdk/'vulkan/vulkan-1.dll'),'driver_manifest':str(sdk/'vulkan/vk_swiftshader_icd.json')}
+    result=qa.qa_run([str(sdk/'python/python.exe'),'-X','utf8',str(ROOT/'tools/pokemon_x_backend.py'),
+        '--root',str(work/'launcher-backend'),'--runtime-root',str(sdk),'--edition','x','import',str(rom),'--play-after-import'],
+        env=env,check=True,timeout=180,capture_output=True,text=True)
+    documents=[json.loads(line)for line in result.stdout.splitlines()if line.startswith('{')]
+    sessions=[row['native_session']for row in documents if'native_session'in row]
+    check(len(sessions)==1,'The real Windows launcher helper completes import, native compilation and session preparation for the self-authored ARM11 fixture')
+    request=sessions[0];check(Path(request['library']).is_file(),'The real helper commits a Windows game DLL and completion marker')
     handle=bridge.ascendant_3ds_open(json.dumps(request).encode())
     check(bool(handle),'Native 3DS core opens the recompiled synthetic guest with the packaged Vulkan backend: '+str(bridge.ascendant_3ds_error()))
     bridge.ascendant_3ds_step.argtypes=[ctypes.c_void_p,ctypes.c_uint32,ctypes.c_float,ctypes.c_float,ctypes.c_int,ctypes.c_int,ctypes.c_bool]
