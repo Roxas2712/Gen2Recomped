@@ -61,7 +61,7 @@ Other 3DS platform binaries remain unqualified.
 
 The Windows demo builder stages the game-data-free SDK as `3ds-runtime/`
 beside `RetroRecomped.exe`. It contains native PE x64 3dsrecomp/bridge binaries,
-Python 3.12, LLVM-MinGW Clang, a Vulkan loader and an additional SwiftShader ICD.
+Python 3.12, LLVM-MinGW Clang, a Vulkan loader and an additional Mesa/Lavapipe ICD.
 The ICD is added alongside system drivers; a capable hardware GPU is preferred.
 There is no end-user Visual Studio, Rust or Python installation step.
 Initial guest compilation uses two compiler jobs and the existing per-ROM

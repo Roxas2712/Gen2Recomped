@@ -178,25 +178,16 @@ def build_graphics(qa,work,out,components):
     if len(dll)!=1:raise ValueError('Native Vulkan loader is missing')
     shutil.copy2(dll[0],out/'vulkan/vulkan-1.dll')
     notices(loader,out/'licenses','vulkan-loader')
-    swift=work/'swiftshader';clone(qa,'https://github.com/google/swiftshader.git',swift,components['swiftshader'],exclude=['third_party/llvm-16.0'])
-    # Runtime dependencies (including the trimmed LLVM backend) are tracked in
-    # this pinned checkout. Test/debug/PowerVR/llvm-project submodules are not
-    # needed and may exceed the build budget before compilation even starts.
-    build=work/'swiftshader-build'
-    qa.qa_run(['cmake','-S',str(swift),'-B',str(build),'-G','Ninja','-DCMAKE_BUILD_TYPE=Release',
-        '-DREACTOR_BACKEND=LLVM','-DSWIFTSHADER_LLVM_VERSION=10.0','-DSWIFTSHADER_BUILD_TESTS=OFF','-DSWIFTSHADER_BUILD_PVR=OFF',
-        '-DSWIFTSHADER_BUILD_BENCHMARKS=OFF','-DSWIFTSHADER_ENABLE_VULKAN_DEBUGGER=OFF',
-        '-DSWIFTSHADER_BUILD_CPPDAP=OFF','-DREACTOR_EMIT_DEBUG_INFO=OFF',
-        '-DCMAKE_POLICY_VERSION_MINIMUM=3.5','-DSWIFTSHADER_WARNINGS_AS_ERRORS=OFF'],check=True)
-    qa.qa_run(['cmake','--build',str(build),'--target','vk_swiftshader','--parallel','4'],check=True)
-    # The pinned target writes here and also copies itself into Windows/.
-    # Recursive discovery therefore sees two valid, identical DLLs.
-    dll=build/'vk_swiftshader.dll'
-    if not dll.is_file():raise ValueError('Software Vulkan driver is missing at its pinned target output')
-    shutil.copy2(dll,out/'vulkan/vk_swiftshader.dll')
-    (out/'vulkan/vk_swiftshader_icd.json').write_text(json.dumps({'file_format_version':'1.0.0','ICD':{'library_path':'.\\vk_swiftshader.dll','api_version':'1.3.0'}})+'\n')
-    for file in swift.rglob('LICENSE*'):
-        if file.is_file():
-            target=out/'licenses/swiftshader'/file.relative_to(swift);target.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(file,target)
+    # Lavapipe supports the push descriptors required by the 3DS renderer.
+    # SwiftShader exposes Vulkan 1.3 but lacks that required extension.
+    mesa=components['mesa'];archive=work/'mesa-release.7z'
+    download(mesa['url'],archive,mesa['sha256'])
+    qa.qa_run(['7z','e',str(archive),'x64/vulkan_lvp.dll','x64/lvp_icd.x86_64.json','-o'+str(out/'vulkan'),'-y'],check=True)
+    if not (out/'vulkan/vulkan_lvp.dll').is_file():raise ValueError('Pinned Lavapipe driver is missing')
+    licence=out/'licenses/mesa';licence.mkdir(parents=True)
+    download(mesa['source_url'],licence/'mesa-26.2.5-source.tar.xz',mesa['source_sha256'])
+    download(mesa['license_url'],licence/'Mesa-license.rst',mesa['license_sha256'])
+    download(mesa['llvm_license_url'],licence/'LLVM-LICENSE.txt',mesa['llvm_license_sha256'])
+    download(mesa['distribution_license_url'],licence/'distribution-LICENSE.txt',mesa['distribution_license_sha256'])
 
 if __name__=='__main__':main()

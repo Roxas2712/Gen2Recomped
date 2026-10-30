@@ -44,7 +44,7 @@ function M.run(check)
  check(lib.ascendant_fixture_answer()==42,'Bundled compiler and Unicode GetProcAddress loader work in the final Windows EXE')
  -- Loading alone resolves this DLL's dependencies; Vulkan API execution is
  -- covered by the separate native SDK test, not by an invented API export.
- local driver=require('src.core.NativeLibrary').load(sdk..'/vulkan/vk_swiftshader.dll','')
+ local driver=require('src.core.NativeLibrary').load(sdk..'/vulkan/vulkan_lvp.dll','')
  check(type(driver)=='table','Packaged software Vulkan driver and its dependencies load inside the final Windows host')
  local ffi=require('ffi');local bridge=require('src.import.PokemonXYABI').load(assert(Backend.file('bridge')))
  local places=ffi.new('AscendantPlace[4]')

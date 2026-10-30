@@ -17,8 +17,8 @@ FILES_MAC = {'compiler': 'bin/3dsrecomp', 'cc': 'bin/cc',
          'icd': 'vulkan/MoltenVK_icd.json'}
 FILES_WINDOWS = {'compiler':'bin/3dsrecomp.exe','cc':'compiler/bin/clang.exe',
                  'bridge':'lib/ascendant_3ds_bridge.dll','python':'python/python.exe',
-                 'loader':'vulkan/vulkan-1.dll','driver':'vulkan/vk_swiftshader.dll',
-                 'icd':'vulkan/vk_swiftshader_icd.json'}
+                 'loader':'vulkan/vulkan-1.dll','driver':'vulkan/vulkan_lvp.dll',
+                 'icd':'vulkan/lvp_icd.x86_64.json'}
 FILES = FILES_WINDOWS if platform.system()=='Windows' else FILES_MAC
 
 

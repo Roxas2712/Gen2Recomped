@@ -42,14 +42,6 @@ jobs:
           arch: x64
       - uses: actions/cache/restore@v5
         if: ${{ !inputs.sdk_run_id }}
-        id: graphics-cache
-        with:
-          path: |
-            .local/qa/windows-native-sdk-build/swiftshader
-            .local/qa/windows-native-sdk-build/swiftshader-build
-          key: windows-native-swift-v1-${{ env.VCToolsVersion }}-${{ hashFiles('tools/windows_native_components.json') }}
-      - uses: actions/cache/restore@v5
-        if: ${{ !inputs.sdk_run_id }}
         id: rust-cache
         with:
           path: |
@@ -91,13 +83,6 @@ jobs:
       - name: Native ABI, compiler and isolated save/lock checks
         shell: pwsh
         run: .local/qa/windows-native-sdk/candidate/3ds-runtime/python/python.exe -X utf8 tools/qualify_windows_native.py --sdk .local/qa/windows-native-sdk/candidate/3ds-runtime --out .local/qa/windows-native-sdk/report.json
-      - uses: actions/cache/save@v5
-        if: ${{ always() && !inputs.sdk_run_id && steps.graphics-cache.outputs.cache-hit != 'true' }}
-        with:
-          path: |
-            .local/qa/windows-native-sdk-build/swiftshader
-            .local/qa/windows-native-sdk-build/swiftshader-build
-          key: ${{ steps.graphics-cache.outputs.cache-primary-key }}
       - uses: actions/cache/save@v5
         if: ${{ always() && !inputs.sdk_run_id && steps.rust-cache.outputs.cache-hit != 'true' }}
         with:

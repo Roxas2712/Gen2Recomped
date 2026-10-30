@@ -60,7 +60,7 @@ def elevated_runner_driver(sdk):
     if not ctypes.windll.shell32.IsUserAnAdmin():
         yield;return
     import winreg
-    name=str(sdk/'vulkan/vk_swiftshader_icd.json')
+    name=str(sdk/'vulkan/lvp_icd.x86_64.json')
     key_path=r'SOFTWARE\Khronos\Vulkan\Drivers'
     access=winreg.KEY_QUERY_VALUE|winreg.KEY_SET_VALUE|winreg.KEY_WOW64_64KEY
     with winreg.CreateKeyEx(winreg.HKEY_LOCAL_MACHINE,key_path,0,access)as key:
@@ -76,11 +76,11 @@ def elevated_runner_driver(sdk):
 def check_vulkan(sdk,check):
     # Force only this isolated fixture onto the shipped software ICD. The real
     # application adds it alongside the user's GPU drivers instead.
-    previous=os.environ.get('VK_DRIVER_FILES');os.environ['VK_DRIVER_FILES']=str(sdk/'vulkan/vk_swiftshader_icd.json')
+    previous=os.environ.get('VK_DRIVER_FILES');os.environ['VK_DRIVER_FILES']=str(sdk/'vulkan/lvp_icd.x86_64.json')
     previous_debug=os.environ.get('VK_LOADER_DEBUG');os.environ['VK_LOADER_DEBUG']='all'
     # Resolve the real driver eagerly so missing MSVC dependencies are visible
     # as an OS error rather than a generic Vulkan incompatible-driver code.
-    driver=ctypes.WinDLL(str(sdk/'vulkan/vk_swiftshader.dll'))
+    driver=ctypes.WinDLL(str(sdk/'vulkan/vulkan_lvp.dll'))
     class App(ctypes.Structure):_fields_=[('kind',ctypes.c_uint32),('next',ctypes.c_void_p),('name',ctypes.c_char_p),('version',ctypes.c_uint32),('engine',ctypes.c_char_p),('engine_version',ctypes.c_uint32),('api',ctypes.c_uint32)]
     class Info(ctypes.Structure):_fields_=[('kind',ctypes.c_uint32),('next',ctypes.c_void_p),('flags',ctypes.c_uint32),('app',ctypes.POINTER(App)),('layers',ctypes.c_uint32),('layer_names',ctypes.c_void_p),('extensions',ctypes.c_uint32),('extension_names',ctypes.c_void_p)]
     instance=ctypes.c_void_p()
