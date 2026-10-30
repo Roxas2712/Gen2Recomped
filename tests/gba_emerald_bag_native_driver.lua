@@ -52,12 +52,20 @@ return function(game)
   assert(Bag.add(game.save,entry[1],entry[2],game.data))
  end
  open();before=S.encode(game.save);shot('native-emerald-bag-boy-single-quantities')
+ press('up');assert(owner.index==1 and owner.top==1)
  press('a');local action=game.stack:top()
  assert(getmetatable(action)==require('src.ui.Gen3ItemMenu')and action.emeraldBag==owner)
  local index=action.index;press('left');assert(action.index==index)
  shot('native-emerald-bag-item-actions');press('b');assert(game.stack:top()==owner)
  for _=1,8 do press('down')end
- assert(owner.index==9 and owner.top==2);shot('native-emerald-bag-scroll-eight-rows')
+ assert(owner.index==9 and owner.top==5);shot('native-emerald-bag-scroll-eight-rows')
+ for _=1,5 do press('up')end
+ assert(owner.index==4 and owner.top==1);shot('native-emerald-bag-upward-centered-scroll')
+ for _=1,20 do press('down')end
+ assert(owner.index==13 and owner:selected().close and owner.top==6)
+ shot('native-emerald-bag-clamped-close')
+ for _=1,20 do press('up')end
+ assert(owner.index==1 and owner.top==1);shot('native-emerald-bag-clamped-first-item')
  local function pocket(key)
   for _=1,#owner.pockets do
    if owner.pockets[owner.pocket].key==key then return end
@@ -86,6 +94,7 @@ return function(game)
  assert(S.encode(disk.inventory)==S.encode(game.save.inventory)and disk.registeredItem==keys[1]and disk.player.gender=='girl')
  report.status='pass';report.ordinaryBagInputs=true;report.actualDiskRoundTrip=true
  report.drawPreservesSaveRng=true;report.emptyAndLongLists=true;report.maleAndFemaleOwnGraphics=true
- report.fullBagVisualParity=false;report.remainingViews={'PC quantity flow','pocket switch animation','native scroll and reorder behavior'}
+ report.nativeCenteredScroll=true;report.nativeBoundaryClamp=true
+ report.fullBagVisualParity=false;report.remainingViews={'PC quantity flow','pocket switch animation','native reorder behavior','held-key repeat'}
  persist();print('PASS_NATIVE_EMERALD_BAG_LIST');love.event.quit(0)
 end
