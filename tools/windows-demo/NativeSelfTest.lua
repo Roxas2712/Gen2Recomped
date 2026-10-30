@@ -37,11 +37,16 @@ function M.run(check)
  check(#actual==#args,'CreateProcessW passes Unicode, empty arguments, percent signs, quotes and backslashes literally')
  local cfile=root..'/own-library.c';local dll=root..'/own-library.dll'
  assert(File.atomicWrite(cfile,'__declspec(dllexport) int ascendant_fixture_answer(void) { return 42; }\n'))
- pipe=assert(Process.argv({sdk..'/compiler/bin/clang.exe','-shared','-O2',cfile,'-o',dll},true))
+ -- Match the real import workers: their bundled UTF-8 Python host starts
+ -- Clang, including its linker children. Starting Clang directly from the
+ -- legacy LOVE host gives those children the host's ANSI code page instead.
+ pipe=assert(Process.argv({assert(Backend.file('python')),'-X','utf8','-c',
+  'import subprocess,sys;sys.exit(subprocess.run(sys.argv[1:]).returncode)',
+  sdk..'/compiler/bin/clang.exe','-shared','-O2',cfile,'-o',dll},true))
  lines={};for line in pipe:lines()do lines[#lines+1]=line end
  assert(pipe:close(),table.concat(lines,'\n'))
  local lib=require('src.core.NativeLibrary').load(dll,'int ascendant_fixture_answer(void);')
- check(lib.ascendant_fixture_answer()==42,'Bundled compiler and Unicode GetProcAddress loader work in the final Windows EXE')
+ check(lib.ascendant_fixture_answer()==42,'The bundled UTF-8 import host compiles a DLL and the final EXE loads its Unicode path through GetProcAddress')
  -- Loading alone resolves this DLL's dependencies; Vulkan API execution is
  -- covered by the separate native SDK test, not by an invented API export.
  local driver=require('src.core.NativeLibrary').load(sdk..'/vulkan/vulkan_lvp.dll','')
