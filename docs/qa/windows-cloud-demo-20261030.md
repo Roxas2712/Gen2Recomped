@@ -29,7 +29,7 @@ The bootstrap hands control to the engine's original frame loop exactly once.
 - German audit: **1,081 strings in 27 views, none missing**.
 - Profile regression: **16 checks passed**, filesystem fixtures only.
 - Updated bootstrap regression: **22 checks passed**, event-loop fixtures only.
-- Packaging guards: **4 tests**, unsafe paths, PE architecture, private-data
+- Packaging guards: **4 tests passed**, unsafe paths, PE architecture, private-data
   rejection and a valid synthetic diagnostic payload. These do not execute
   a Windows binary.
 - **9 real local HTTPS scenarios passed** against the existing Laravel server
@@ -101,9 +101,27 @@ generic runner-temporary output was not a known managed QA copy layout. The
 workflow now uses `.local/qa/windows-cloud-demo-build/candidate`; reserve and
 source gates remain enabled.
 
-Final package execution is pending at this report revision. Record its run URL,
-result and archive digest here after completion. A clean Windows CI host still
-does not reproduce the
+Final package [run 41111422478, attempt 2](https://github.com/Roxas2712/Gen2Recomped/actions/runs/41111422478)
+passed packaging and **nine native diagnostic checks in the final fused EXE on
+Windows Server 2025**. Attempt 1 hit a temporary official-host download HTTP
+503; its unchanged retry passed. The diagnostics confirm bundled HTTPS,
+account-transport availability, real Unicode profile discovery with unchanged
+synthetic bytes, a real background public-policy HTTPS request and four
+save/profile fixture suites. The archive was downloaded and its digest and
+native EXE/source receipts were checked against each other.
+
+| Artifact | Value |
+| --- | --- |
+| Windows x64 demo | `RetroRecomped-Windows-Demo-20261030.3-win64.zip` |
+| Size | 64,792,239 bytes |
+| Package source | `33f60d20e418cd23589b368599ba22f6b5d68641` |
+| Archive SHA-256 | `869510db13b288d4ee02a5c2347dc4dee3885cb502111b8e759ae79f109b51f5` |
+| Executed fused EXE SHA-256 | `2500416e52e48ac566b2aa3646a478266591b9d1f452afd8d783955ba3a03353` |
+
+The native report is `native-test/native-package-test.json` alongside the
+downloaded artifact. It explicitly records `playerCloudUploadTested=false`
+and `nativeCartridgeGameplayTested=false`. A clean Windows CI host still does
+not reproduce the
 reported existing player's “paused” case; confirm with the updated build on
 that PC and inspect logs if it persists. Real two-device account restoration,
 native gameplay and exact modded-battle continuation are separate checks.

@@ -82,7 +82,10 @@ device switch, wait for the cloud acknowledgement.
   final Windows executable. Its build/runtime evidence is recorded separately
   in docs/qa/windows-cloud-demo-20261030.md.
 - Windows/Linux/iOS/Android/NX/UWP HTTPS routing is covered by platform/API
-  fixtures. This does not establish physical Windows, phone or console success,
+  fixtures. The final Windows EXE additionally passed nine native headless
+  checks on Windows Server 2025, including real anonymous background HTTPS and
+  Unicode filesystem/profile discovery. This does not establish the player's
+  physical Windows, phone or console success,
   internet two-device gameplay, or exact modded battle continuation.
 
 No production server change is required or claimed for this client extension.
