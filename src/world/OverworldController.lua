@@ -3898,7 +3898,10 @@ function OverworldState:animate(dt)
 end
 
 function OverworldState:update(dt)
-  if GameVersion.isGen3()then require('src.world.Gen3FieldPoison').tick(self)end
+  if GameVersion.isGen3()then
+    self:updateGen3WeatherStage()
+    require('src.world.Gen3FieldPoison').tick(self)
+  end
   -- `earthquake <n>` (Script_earthquake -> EarthquakeMovement 25:$725D):
   -- the BG jolts while the sprites stay put, which is exactly what bgShakeY
   -- already feeds into draw().
@@ -9747,6 +9750,7 @@ function OverworldState:applyMapWeather(opts)
   end
 
   if not GameVersion.isGen3() then return end
+  self:updateGen3WeatherStage()
   -- CONTINUE restores SetSav1Weather's saved answer. Route 113's header is
   -- sunny; its scriptless coordinate events may have saved volcanic ash.
   if opts and opts.via=='boot'and(GameVersion.get()=='ruby'or GameVersion.get()=='sapphire')
@@ -9812,12 +9816,20 @@ end
 -- go while you stood still.
 function OverworldState:gen3WeatherStage()
   local save = Game.save
+  if not save or not GameVersion.isGen3() then return 0 end
+  return math.floor(tonumber(save.gen3WeatherStage) or 0) % 4
+end
+
+-- Commit the calendar on map entry/update. Drawing and weather observations
+-- read the committed stage without changing a new save or polling the clock.
+function OverworldState:updateGen3WeatherStage()
+  local save = Game.save
   if not save then return 0 end
   -- SINNOH HAS NO CYCLING ROUTE.  Its five calendar maps are a day-of-year
   -- LOOKUP, resolved in `Gen4Weather.resolve`, not a four-step sequence -- so
   -- this answers 0 rather than writing `gen3WeatherDay` into a Platinum save,
   -- where it would be two fields nothing reads.
-  if GameVersion.isGen4() then return 0 end
+  if not GameVersion.isGen3() then return 0 end
   local today = math.floor((os.time() or 0) / 86400)
   local seen = tonumber(save.gen3WeatherDay)
   local stage = math.floor(tonumber(save.gen3WeatherStage) or 0)
