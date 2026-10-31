@@ -28,7 +28,7 @@ for _,edition in ipairs{'ruby','sapphire','emerald'}do
   T.eq(temp==true,not ending,'Only a fresh League warp clears the temporary field flag')
   T.eq(g.save.gen3Vars[0x4064],29,'Permanent story state survives both branches')
   if ending then T.eq(g.save.gen3ObjectHomes.FIX_TOWN,nil,'New home entry uses its header templates')
-  else T.eq(S.encode(g.save.gen3ObjectHomes.FIX_ROUTE),homes,'Ordinary Continue keeps saved object coordinates')end
+  else T.eq(S.encode(g.save.gen3ObjectHomes.FIX_ROUTE or{}),homes,'Ordinary Continue keeps saved object coordinates')end
   T.eq(S.encode(g.save.party),party);T.eq(S.encode(g.save.inventory),inventory)
   f.close()
  end

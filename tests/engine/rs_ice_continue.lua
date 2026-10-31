@@ -72,17 +72,19 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
   require('src.script.Gen3ScriptVM').register(g.data,'scenes')
   local scene=require('src.script.MapScripts').get(id)
   for _,continuing in ipairs{false,true} do
-    local world={gen3RsContinuing=continuing and (edition=='ruby' or edition=='sapphire'),queue={}}
+    local world={gen3RsContinuing=continuing and (edition=='ruby' or edition=='sapphire'),
+      gen3FrlgContinuing=continuing and(edition=='firered'or edition=='leafgreen'),
+      gen3EmeraldContinuing=continuing and edition=='emerald',queue={}}
     world.runner=R.new(g,world)
     function world:queueScript(rows,ctx)self.queue[#self.queue+1]={rows,ctx}end
     g.save.gen3Vars={[0x4022]=29}
     scene.onEnter(g,world)
     for _,job in ipairs(world.queue) do world.runner:run(job[1],job[2]) end
-    T.eq(C.getVar(g.save,0x400B),(edition=='ruby' or edition=='sapphire') and 12 or 11,
-      'RS runs LOAD before RESUME even when the ROM lists RESUME first')
+    T.eq(C.getVar(g.save,0x400B),12,
+      'All five native loaders run LOAD before RESUME even when the header lists RESUME first')
     T.eq(C.getVar(g.save,0x400C),12)
-    T.eq(C.getVar(g.save,0x4022),world.gen3RsContinuing and 29 or 1)
-    T.eq(C.getVar(g.save,0x400D),world.gen3RsContinuing and 0 or 13)
+    T.eq(C.getVar(g.save,0x4022),continuing and 29 or 1)
+    T.eq(C.getVar(g.save,0x400D),continuing and 0 or 13)
   end
   f.close()
 end
