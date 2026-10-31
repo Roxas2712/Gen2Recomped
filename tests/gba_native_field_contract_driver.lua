@@ -22,6 +22,19 @@ return function(game)
   if world.map.id==map and world.player.cellX==x and world.player.cellY==y then press(k,n or 30)
   else U.wait(n or 30)end
  end
+ local function popupHeld(world)
+  local sign=world.mapNameSign;if not sign then return false end
+  if sign.rsNative then
+   local task=sign.rsNative.native.task
+   return task and task.state==1 and task.registerOffset==0
+  elseif sign.emerald then return sign.state=='wait'and sign.offset==0
+  elseif sign.frlg then return sign.frames<=132 and sign.frames>12 end
+  return false
+ end
+ local function waitPopup(world)
+  for _=1,240 do if popupHeld(world)then return end;U.wait(1)end
+  error('Native map popup never reached its fully visible hold phase')
+ end
  local function shot(name)
   local raw,rng=S.encode(game.save),love.math.getRandomState();local top=game.stack:top()
   assert(require('src.render.GraphicsScope').call(top.draw,top))
@@ -78,13 +91,13 @@ return function(game)
  U.teleport(game,V.isFRLG()and'MAP_G03_N34'or'MAP_G00_N16',10,12,'up');U.wait(30)
  local world=game.stack:top();if edition=='emerald'then game.save.flags.FLAG_G3_4000=nil end
  world.signLandmark=nil;world:updateMapNameSign();assert(world.mapNameSign,'Prepared route popup unavailable')
- U.wait(24);shot('native-field-poison-before')
+ waitPopup(world);shot('native-field-poison-before')
  local popup=world.mapNameSign;local mon=game.save.party[1];mon.status='PSN';local hp=mon.hp
  world:applyFieldPoisonDamage();assert(mon.hp==hp-1 and world.gen3PoisonMosaic,'Ordinary poison damage did not start mosaic')
  U.wait(3);report.capturedMosaicSize=M.size(world);assert(report.capturedMosaicSize>1)
- assert(world.mapNameSign==popup,'Poison replaced the map popup owner');shot('native-field-poison-mosaic')
+ assert(world.mapNameSign==popup and popupHeld(world),'Poison replaced or displaced the visible popup');shot('native-field-poison-mosaic')
  assert(M.size(world)>1,'Capture missed the brief original poison effect: run this visual fixture with --speed 1')
- U.wait(15);assert(world.gen3PoisonMosaic==nil and world.mapNameSign==popup)
+ U.wait(15);assert(world.gen3PoisonMosaic==nil and world.mapNameSign==popup and popupHeld(world))
  shot('native-field-poison-after');report.nativePoisonDamage=hp-mon.hp
  report.drawPreservesSaveRng=true;report.poisonEffect='BG mosaic; sharp OBJ and BG0 popup';report.status='pass';persist()
  print('PASS_NATIVE_GBA_FIELD_CONTRACT '..edition);love.event.quit(0)

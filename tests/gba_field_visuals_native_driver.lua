@@ -15,6 +15,19 @@ return function(game)
   captures={},placements={},healthboxes={},nativeCoordinatesMatched=true}
  local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
  local function press(key,n)game.input:overlayPressed(key);U.wait(1);game.input:overlayReleased(key);U.wait(n or 4)end
+ local function popupHeld(world)
+  local sign=world.mapNameSign;if not sign then return false end
+  if sign.rsNative then
+   local task=sign.rsNative.native.task
+   return task and task.state==1 and task.registerOffset==0
+  elseif sign.emerald then return sign.state=='wait'and sign.offset==0
+  elseif sign.frlg then return sign.frames<=132 and sign.frames>12 end
+  return false
+ end
+ local function waitPopup(world)
+  for _=1,240 do if popupHeld(world)then return end;U.wait(1)end
+  error('Native map popup never reached its fully visible hold phase')
+ end
  local function shot(name)
   local raw,rng=S.encode(game.save),love.math.getRandomState()
   local top=game.stack:top()
@@ -71,7 +84,7 @@ return function(game)
  -- field state; it never changes the ordinary campaign checkpoint.
  if edition=='emerald'then game.save.flags.FLAG_G3_4000=nil end
  world.signLandmark=nil;world:updateMapNameSign();assert(world.mapNameSign,'Prepared map has no native popup')
- U.wait(24);shot('native-map-popup-clear')
+ waitPopup(world);shot('native-map-popup-clear')
  require('src.world.Gen3FieldPoison').start(world,edition)
  world.gen3PoisonMosaic.frame=5;shot('native-map-popup-poison-pulse')
  assert(require('src.world.Gen3FieldPoison').size(world)>1,'Capture missed original mosaic: use --speed 1')
