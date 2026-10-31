@@ -6120,6 +6120,11 @@ end
 -- walking into one with STRENGTH in the party pushes it one cell, but
 -- only on the second consecutive push attempt (BIT_TRIED_PUSH_BOULDER);
 -- SFX_PUSH_BOULDER when the push starts, dust puff + SFX_CUT after.
+local function frlgBoulderFallAt(map, x, y)
+  return GameVersion.isFRLG() and map and map.sourceBehaviourAt
+    and map:sourceBehaviourAt(x, y) == 0x66
+end
+
 function OverworldState:checkBoulderPush(dir)
   local p = self.player
   -- VEILSTONE GYM'S PUNCHING BAGS are hit the same way, by pushing against
@@ -6190,7 +6195,8 @@ function OverworldState:checkBoulderPush(dir)
   -- boulder although nothing may walk there (Gen4DistPlatforms.fallAt)
   local dwFall = self.map.def and self.map.def.gen4DistWorld
                  and require("src.world.Gen4DistPlatforms").fallAt(self.map.def, bx, by)
-  if not dwFall and not self.map:isWalkableCell(bx, by) then
+  if not dwFall and not frlgBoulderFallAt(self.map, bx, by)
+     and not self.map:isWalkableCell(bx, by) then
     -- boulders may be pushed into holes/switch spots that aren't walkable
     if not self.map:isWarpTileCell(bx, by) then
       self.boulderTried = nil
@@ -6223,6 +6229,7 @@ function OverworldState:checkBoulderPush(dir)
         require("src.core.Sound").play(Game.data, "Cut")
       end)
     end
+    if OverworldState.gen3BoulderIntoHole(self, npc) then return end
     if self:gen2BoulderIntoPit(npc) then return end
     if self:boulderIntoHole(npc) then return end
     if dwFall and require("src.world.Gen4DistPlatforms").boulderFell(self, npc) then return end
@@ -6233,6 +6240,35 @@ function OverworldState:checkBoulderPush(dir)
       hooks.onBoulderMoved(Game, self, npc)
     end
   end, nil, ptPush and require("src.world.Gen4StrengthPush").RATE or nil)
+  return true
+end
+
+-- FRLG's DoBoulderFinish removes a stone on MB_FALL_WARP for this visit,
+-- then clears the lower-floor reveal flag stored in the template trainerType.
+-- This is not the upper stone's own visibility flag or trainerRange.
+function OverworldState:gen3BoulderIntoHole(npc)
+  local def = npc and npc.def
+  if not (def and def.index and frlgBoulderFallAt(self.map, npc.cellX, npc.cellY)) then
+    return false
+  end
+  require("src.core.Sound").playId(Game.data, 37) -- FRLG SE_FALL
+  local save = Game.save
+  local session = save.gen3SessionObjects
+  if type(session) ~= "table" or session.mapId ~= self.map.id then
+    session = { mapId = self.map.id }
+    save.gen3SessionObjects = session
+  end
+  session[def.index] = false
+  npc.moving, npc.marching, npc.targetX, npc.targetY = false, nil, nil, nil
+  for i = #(self.scriptMoves or {}), 1, -1 do
+    if self.scriptMoves[i].entity == npc then table.remove(self.scriptMoves, i) end
+  end
+  self:syncObjectVisibility(def)
+  local reveal = tonumber(def.trainerType) or 0
+  if reveal > 0 and reveal <= 0xFFFF and reveal % 1 == 0 then
+    require("src.script.Commands").clear_flag(
+      { game = Game, save = save, overworld = self }, ("FLAG_G3_%04X"):format(reveal))
+  end
   return true
 end
 

@@ -1054,6 +1054,22 @@ local function contributionFor(data, mapId, entry, mapDef)
   end
   if #coords > 0 then
     local Gen3Commands = require("src.script.Gen3Commands")
+    -- HandleBoulderActivateVictoryRoadSwitch asks the stone's coordinates,
+    -- bypassing the player-only var/value gate (Victory Road uses value 99).
+    contribution.onBoulderMoved = function(game, overworld, npc)
+      local map = overworld and overworld.map
+      if not require("src.core.GameVersion").isFRLG() or not npc
+         or not map or not map.sourceBehaviourAt
+         or map:sourceBehaviourAt(npc.cellX, npc.cellY) ~= 0x20
+         or not overworld.runner or overworld.runner:isRunning() then return false end
+      local rows
+      for _, coord in ipairs(coords) do
+        if coord.x == npc.cellX and coord.y == npc.cellY then rows = coord.rows end
+      end
+      if not rows then return false end
+      overworld.runner:run(rows, { mapId = mapId })
+      return true
+    end
     -- WHICH ROWS HAVE FIRED WHERE THE PLAYER IS STANDING.
     --
     -- A Gen 3 coord event is gated on a var, so the same cell can be asked
@@ -1138,7 +1154,7 @@ end
 
 local PHASE_KEYS = {
   talk = { talk = true },
-  scenes = { onEnter = true, onStep = true, onFrame = true },
+  scenes = { onEnter = true, onStep = true, onFrame = true, onBoulderMoved = true },
 }
 
 function Gen3ScriptVM.register(data, phase)
