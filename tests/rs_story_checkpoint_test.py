@@ -3,7 +3,7 @@ from pathlib import Path
 import copy,sys,unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
-from rs_story_checkpoint import qualify,first_badge_starter_proof
+from rs_story_checkpoint import qualify,qualify_interrupted,first_badge_starter_proof
 
 class CheckpointTests(unittest.TestCase):
     def fixture(self,e='sapphire'):
@@ -77,6 +77,48 @@ class CheckpointTests(unittest.TestCase):
     def test_injected_or_unproven_origin(self):
         f=list(self.fixture());f[3]['noPartyInjection']=False;self.assertRaises(AssertionError,qualify,*f)
         f=list(self.fixture());f[3]['continuousOpeningThroughRescueAndNormalLabSave']=False;self.assertRaises(AssertionError,qualify,*f)
+
+    def interrupted_fixture(self,e='ruby'):
+        f=list(self.fixture(e));v,r,c=f[2:]
+        v.update(status='fail',exitCode=124,stoppedOwnChildReason='absolute resource-slot deadline',frozenSourceUnchanged=False)
+        r.update(status='running',continuousOpeningThroughRescueAndNormalLabSave=False,
+                 continuedOwnNormalSave=True,continuedThroughUI=True,checkpointFullSavePreserved=True,
+                 lineage={'inherited':{'naturalStarterAccepted':True}})
+        start={'source':'src/ui/Gen3StartMenu.lua'}
+        yes={'source':'src/ui/Gen3RsSaveMenu.lua','nativeSaveKind':'rs','phase':'overwrite','index':1}
+        saved={'seq':2,'busy':False,'savedGameCount':54,'scriptRunning':False,'top':{'source':'src/world/OverworldController.lua'}}
+        queue=[{'op':'press','button':'a'},{'op':'press','button':'a'},{'op':'step','dir':'down'}]
+        r['commands']=[{'seq':1,'input':copy.deepcopy(queue[0]),'before':{'top':start},'after':{}},
+          {'seq':2,'input':copy.deepcopy(queue[1]),'before':{'top':yes,'stack':[start,yes]},'after':copy.deepcopy(saved)},
+          {'seq':3,'input':copy.deepcopy(queue[2]),'before':copy.deepcopy(saved),'after':{}}]
+        c.update(saveMenuCommandRange=[1,2],saveConfirmedSeq=2,snapshotAfterSaveCommand=copy.deepcopy(saved))
+        c.pop('inputProofKind');c.pop('saveConfirmedInputIndex')
+        state={'seq':3,'busy':False,'savedGameCount':54}
+        audit={'method':'restored-frozen-source-sha256','checkpointOnly':True,'driver':'tests/rs_story_driver.lua',
+               'verifiedFiles':8,'sourceManifestSHA256':'b'*64}
+        return f+[queue,state,audit]
+
+    def test_interrupted_hoenn_recovers_only_the_witnessed_save_without_relabelling_the_run(self):
+        for edition in('ruby','sapphire','emerald'):
+            f=self.interrupted_fixture(edition);before=copy.deepcopy(f)
+            inherited,proof=qualify_interrupted(*f)
+            self.assertTrue(inherited['naturalStarterAccepted']);self.assertTrue(proof['checkpointOnly'])
+            self.assertFalse(proof['priorRunCompleted']);self.assertEqual(proof['savedThroughSeq'],2)
+            self.assertEqual(proof['discardedCompletedCommands'],1);self.assertEqual(f,before)
+            self.assertRaises(AssertionError,qualify,*f[:5])
+
+    def test_interrupted_recovery_refuses_new_writes_bad_sources_and_unproven_origin(self):
+        for change in('new-save','wrong-driver','no-audit','bad-audit','wrong-stop','queue','no-origin','not-save-yes'):
+            f=self.interrupted_fixture('emerald')
+            if change=='new-save':f[6]['savedGameCount']=55
+            elif change=='wrong-driver':f[7]['driver']='tests/leafgreen_story_driver.lua'
+            elif change=='no-audit':f[7]=None
+            elif change=='bad-audit':f[7]['sourceManifestSHA256']='invalid'
+            elif change=='wrong-stop':f[2]['stoppedOwnChildReason']='unknown'
+            elif change=='queue':f[5][0]['button']='b'
+            elif change=='no-origin':f[3]['lineage']['inherited']['naturalStarterAccepted']=False
+            elif change=='not-save-yes':f[3]['commands'][1]['before']['top']['index']=2
+            self.assertRaises(AssertionError,qualify_interrupted,*f)
 
     def first_badge_fixture(self,e='ruby'):
         f=list(self.fixture(e));r,c=f[3],f[4]
