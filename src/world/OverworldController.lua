@@ -20081,28 +20081,7 @@ function OverworldState:drawUI()
   elseif self.mapNameSign and self.mapNameSign.emerald then
     require("src.world.Gen3MapPopup").draw(Game.data,self.mapNameSign)
   elseif self.mapNameSign and self.mapNameSign.frlg then
-    -- FIRERED (map_name_popup.c): a 14x2 window at tile (1,29) of BG0 with
-    -- its outer border, scrolled down from above the screen two pixels a
-    -- frame until 24 in; the name centred in 112 pixels, 2 down
-    local Font = require("src.render.Font")
-    local left = self.mapNameSign.frames
-    local shown = 144 - left
-    local pos = math.min(24, shown * 2, left * 2)
-    love.graphics.push()
-    -- the frame's top row starts one tile above the interior, which lands at
-    -- y 0 once fully in
-    love.graphics.translate(0, pos - 32)
-    local inner = self.mapNameSign.width or 14
-    Font.drawBox(0, 0, inner + 2, 4)
-    love.graphics.setColor(98 / 255, 98 / 255, 98 / 255, 1)
-    local name = self.mapNameSign.name
-    local two = Font.beginTwoTone and Font.beginTwoTone({ 98 / 255, 98 / 255, 98 / 255, 1 },
-                                                        { 214 / 255, 214 / 255, 206 / 255, 1 })
-    local maxWidth = (inner == 14 and 112) or (inner == 19 and 152) or 176
-    Font.draw(name, 8 + math.max(0, math.floor((maxWidth - Font.width(name)) / 2)), 8 + 2)
-    if two then Font.endTwoTone() end
-    love.graphics.pop()
-    love.graphics.setColor(1, 1, 1, 1)
+    require("src.world.Gen3FrlgMapPopup").draw(self.mapNameSign)
   elseif self.mapNameSign then
     local Font = require("src.render.Font")
     Font.drawBox(0, 0, 20, 4)
