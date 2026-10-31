@@ -31,6 +31,7 @@ return function(game)
   for frame=1,10 do
    local block=M.size(state);g.push('all');g.setCanvas(target);g.origin();g.setShader();g.setColor(1,1,1,1);g.clear(0,0,0,0)
    M.background(state,w,h,function()g.draw(image,0,0)end)
+   g.setCanvas(old)
    local actual=target:newImageData()
    for _,x in ipairs{0,1,7,math.floor(w/2),w-2,w-1}do
     for _,y in ipairs{0,1,7,math.floor(h/2),h-2,h-1}do
