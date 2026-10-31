@@ -1876,6 +1876,17 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     -- again (Field_InitMapObjectsFromZoneEventData reads them from ROM)
     require("src.script.Gen4Commands").restorePlacedObjects(self.map.def)
   end
+  -- Fresh maps must evaluate their objects against fresh scratch state.
+  -- Clearing TEMP flags after this spawn pass hid the next room's boulder
+  -- when a rock in the previous room used the same flag. Saved fields and
+  -- quiet checkpoint reconstruction keep their existing removals instead.
+  if GameVersion.isGen3() and Game and Game.save and not gen3Continuing
+     and not (opts and opts.checkpoint) then
+    self:clearGen3TempFlags()
+    pcall(function()
+      require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)
+    end)
+  end
   for _, obj in ipairs(self.map.def.objects or {}) do
     if objectVisible(Game.save, mapId, obj) then
       local npc = pooledNPC(self.npcPool, Game.data, mapId, obj)
@@ -2073,8 +2084,6 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- finishes, which is the other half of the load; see the drain in update().
   self.gen3MapWeatherPending = GameVersion.isGen3() or nil
 
-  -- ...AND THE SCRATCH FLAGS GO, on the same load.
-  if not gen3Continuing then self:clearGen3TempFlags() end
   -- ...and so does the ice.
   --
   -- The gym's ON_TRANSITION writes its step counter back to 1 on a fresh
@@ -2133,15 +2142,6 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     end
   end
 
-  -- THE TEMPORARY VARS AND FLAGS GO, and they go BEFORE anything on this map
-  -- is asked anything -- the map-entered listeners, the onEnter chain and the
-  -- frame table all read them.  ClearTempFieldEventData (0x0009D344) sits at
-  -- exactly this point in both of the cartridge's map-load paths.
-  if GameVersion.isGen3() and Game and Game.save and not gen3Continuing then
-    pcall(function()
-      require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)
-    end)
-  end
   require("src.world.Gen3RsIce").enter(self, Game, self.gen3RsContinuing)
   -- ...and Sinnoh / Johto's, from the same call (field_warp_tasks.c, on every
   -- warp and every connection).  See Gen4Commands.clearTempFieldEventData for
