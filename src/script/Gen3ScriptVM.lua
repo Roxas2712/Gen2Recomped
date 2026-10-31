@@ -994,6 +994,15 @@ local function contributionFor(data, mapId, entry, mapDef)
             if entryScript.phase==phase then entries[#entries+1]=entryScript end
           end
         end
+      elseif overworld.gen3FrlgContinuing then
+        -- InitMapFromSavedGame runs LOAD, then CB2_ReturnToField resumes.
+        -- Header order is not execution order on a saved FRLG field either.
+        entries={}
+        for _,phase in ipairs{ON_LOAD,ON_RESUME} do
+          for _,entryScript in ipairs(onEnter) do
+            if entryScript.phase==phase then entries[#entries+1]=entryScript end
+          end
+        end
       end
       for _, entryScript in ipairs(entries) do
         -- RS InitMapFromSavedGame runs ON_LOAD; CB2_ReturnToField runs

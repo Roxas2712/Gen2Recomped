@@ -8,7 +8,7 @@ for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
  local f=F.new(edition);local g=f.game;local id='OWNED_CONTINUE_'..edition
  g.data.maps[id]={}
  g.data.map_scripts={source='RomExtractorGen3',maps={[id]={callbacks={
-  {type=1,script='LOAD'},{type=3,script='TRANSITION'},{type=5,script='RESUME'}},
+  {type=5,script='RESUME'},{type=1,script='LOAD'},{type=3,script='TRANSITION'}},
   tables={{type=4,rows={{var=0x4023,value=0,script='WARP'}}}}}},scripts={
   LOAD={{'setvar',0x400B,11},{'end'}},TRANSITION={{'setvar',0x4064,1},{'end'}},
   RESUME={{'addvar',0x400B,1},{'end'}},WARP={{'setvar',0x400D,13},{'end'}}}}
@@ -22,7 +22,8 @@ for _,edition in ipairs{'firered','leafgreen','ruby','sapphire','emerald'}do
   g.save.gen3Vars={[0x4064]=29}
   scene.onEnter(g,world)
   for _,job in ipairs(world.queue)do world.runner:run(job[1],job[2])end
-  T.eq(C.getVar(g.save,0x400B),12,'saved field still runs LOAD and RESUME')
+  local nativeOrder=edition=='ruby'or edition=='sapphire'or world.gen3FrlgContinuing
+  T.eq(C.getVar(g.save,0x400B),nativeOrder and 12 or 11,'saved field runs LOAD before RESUME regardless of header order')
   T.eq(C.getVar(g.save,0x4064),saved and 29 or 1,'Continue skips fresh-entry TRANSITION')
   T.eq(C.getVar(g.save,0x400D),saved and 0 or 13,'Continue skips warp-into callbacks')
  end
