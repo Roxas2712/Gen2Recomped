@@ -25,6 +25,9 @@ return function(game)
    world.runner:run(assert(VM.compile(game.data,key)),{mapId=world.map.id});U.wait(30)
   end
   local map=world.map
+  local nativeBlock=map:blockAt(6,2)
+  world:stampClosedDoors() -- the actual afterBattle tail must not undo scripts
+  assert(map:blockAt(6,2)==nativeBlock,'Legacy afterBattle stamp overwrote the native open door')
   local row={mode=mode,block=map:blockAt(6,2),behavior=map:cellBehaviour(6,2),
    sourceBehavior=map:sourceBehaviourAt(6,2),walkable=map:isWalkableCell(6,2),
    arrival=map:isWarpTileCell(6,2),step=map:isStepWarpCell(6,2),
