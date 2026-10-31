@@ -3159,6 +3159,8 @@ function RomImporter.new(onComplete, opts)
     CacheFs.prefix = info.cachePrefix
     local marker = CacheFs.read(MARKER_PATH)
     CacheFs.prefix = saved
+    self._existingImports=self._existingImports or {}
+    self._existingImports[version]=marker~=nil
     -- Compared on the marker's FIRST LINE: the rest is the gap list this
     -- build writes, and a cache carrying one is not a cache from another
     -- version of the app.
@@ -3191,7 +3193,7 @@ function RomImporter.new(onComplete, opts)
     if not self.ready[version] then needRom = true; break end
   end
   if android and needRom and not interrupted then
-    local name, data, romPath = findPendingRom(self.ready, self.failedRoms)
+    local name, data, romPath = findPendingRom(self:_pendingRomReady(), self.failedRoms)
     if name then
       self:startData(data, name, romPath)
     else
@@ -3398,7 +3400,7 @@ function RomImporter:focus(f)
   if self.interruptedImport then return end
   for _, v in ipairs(GameVersion.ORDER) do
     if not self.ready[v] then
-      local name, data, romPath = findPendingRom(self.ready, self.failedRoms)
+      local name, data, romPath = findPendingRom(self:_pendingRomReady(), self.failedRoms)
       if name then
         self:startData(data, name, romPath)
       elseif consumePickedRomError(self) then
@@ -3469,8 +3471,10 @@ end
 -- extractor must not be handed 128 MiB as a Lua string (see
 -- src/import/RomExtractorGen4.lua), and it is the only thing that can open
 -- the cartridge itself and read ranges out of it on demand.
-function RomImporter:startData(data, displayName, sourcePath, verified)
+function RomImporter:startData(data, displayName, sourcePath, verified, reviewedVersion)
   if self.workState == "working" then return end
+  if self._modConfirm then return end
+  self._explicitReimport=nil
   if self._storageTask then self.settingsNotice='Finish or cancel the cloud transfer before importing a game.';return end
   self:_acknowledgeInterruptedImport()
   if not verified and type(data)=='string' then
@@ -3521,6 +3525,10 @@ function RomImporter:startData(data, displayName, sourcePath, verified)
     return
   end
   local info = GameVersion.info(version)
+
+  if reviewedVersion~=version and require('src.import.ImportReview').request(self,version,function()
+    self:startData(data,displayName,sourcePath,identity,version)
+  end,self.ready[version] or self.returning[version] or self._existingImports and self._existingImports[version]) then return end
 
   -- Bring the launcher to this version's tab so its progress bar is on screen
   -- (a dropped cart is routed by SHA-1 regardless of which tab was showing).
@@ -4846,7 +4854,7 @@ function RomImporter:choose(version)
     -- Prefer a not-yet-imported .gb/.gbc already in the save dir (USB copy, or
     -- a fresh SAF pick).  Never reuse an already-imported cart's file -- that
     -- was the #167 failure mode (second Choose just re-extracted Red).
-    local name, data, romPath = findPendingRom(self.ready, self.failedRoms)
+    local name, data, romPath = findPendingRom(self:_pendingRomReady(), self.failedRoms)
     if name then
       self:startData(data, name, romPath)
     elseif consumePickedRomError(self) then
@@ -4875,7 +4883,7 @@ function RomImporter:choose(version)
   -- kdialog.  Fall back to the same "drop a .gb/.gbc next to the game" scan
   -- used on Android, which works when the game is launched as an unpacked
   -- directory (see build-rg34xxsp.sh).
-  local name, data, romPath = findPendingRom(self.ready, self.failedRoms)
+  local name, data, romPath = findPendingRom(self:_pendingRomReady(), self.failedRoms)
   if name then
     self:startData(data, name, romPath)
     return
@@ -5330,9 +5338,17 @@ end
 function RomImporter:reimport(version)
   if self.workState == "working" then return end
   if not self.ready[version] then return end
-  self.ready[version] = false
-  self.returning[version] = false
-  self.chooseVersion = version
+  -- Picking/cancelling a ROM does not disable the working installed copy.
+  -- SHA-verified replacement is confirmed in startData, including drag/drop.
+  self._explicitReimport=version
+  self:choose(version)
+end
+
+function RomImporter:_pendingRomReady()
+  if not self._explicitReimport then return self.ready end
+  local ready={};for version,value in pairs(self.ready)do ready[version]=value end
+  ready[self._explicitReimport]=false
+  return ready
 end
 
 local function clamp(v, lo, hi)
@@ -7003,6 +7019,7 @@ function RomImporter:mousepressed(x, y, button)
     if button ~= 1 then return end
     if inside(self._modConfirmYes, x, y) then
       local c = self._modConfirm
+      if c.kind=='reimport' then require('src.import.ImportReview').accept(self,c);return end
       self._modConfirm = nil
       -- An index install carries its whole entry: the confirm is the only
       -- place the compatibility warnings were shown, so the install must not
@@ -7019,7 +7036,8 @@ function RomImporter:mousepressed(x, y, button)
         self:_toggleMod(c.id, true)
       end
     elseif inside(self._modConfirmNo, x, y) then
-      self._modConfirm = nil
+      if self._modConfirm.kind=='reimport' then require('src.import.ImportReview').cancel(self)
+      else self._modConfirm = nil end
     end
     return
   end
@@ -7572,7 +7590,8 @@ function RomImporter:keypressed(key)
       elseif self._modReleaseNotes then
         self._modReleaseNotes = nil
       else
-        self._modConfirm = nil
+        if self._modConfirm and self._modConfirm.kind=='reimport' then require('src.import.ImportReview').cancel(self)
+        else self._modConfirm = nil end
         self._modVersions = nil
       end
     end

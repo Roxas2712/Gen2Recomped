@@ -4,24 +4,42 @@ local F={}
 local S=require('src.core.SaveSerializer')
 local cache=setmetatable({},{__mode='k'})
 local function valid(id) return type(id)=='string' and #id<=20 and id:match('^[1-9][0-9]*$') end
-local function legacy(base)
-  local bytes=base.read('storage_account.lua');if not bytes then return nil end
+local function ownerAt(base,path)
+  local bytes=base.read(path..'storage_account.lua')
+  if not bytes then
+    if base.getInfo and base.getInfo(path..'storage_account.lua')then return false end
+    return nil
+  end
   local ok,value=pcall(S.decode,bytes)
   if ok and type(value)=='table' and value.schema==1 and valid(value.accountId) then return value.accountId end
   return false
 end
+local function legacy(base)return ownerAt(base,'')end
+local function guestPath(n)return n==1 and'profiles/guest/'or('profiles/guest-'..n..'/')end
+function F.guestPrefix(base)
+  for n=1,256 do local path=guestPath(n);if ownerAt(base,path)==nil then return path end end
+  return nil,'No free local guest profile is available.'
+end
 function F.prefix(base,id)
   local owner=legacy(base)
-  if not valid(id) then return 'profiles/guest/' end
+  if not valid(id) then return assert(F.guestPrefix(base)) end
   if owner==id then return '' end
   local prefix='profiles/'..id..'/'
   -- An existing named profile keeps its own routing even if the legacy
   -- binding needs repair. Invalid named bindings are surfaced by the policy.
   if base.read(prefix..'storage_account.lua')~=nil then return prefix end
+  for n=1,256 do
+    local path=guestPath(n);local guestOwner=ownerAt(base,path)
+    if guestOwner==id then return path end
+    -- Only the first unowned guest profile can be adopted. All earlier
+    -- claimed profiles remain private after sign-out, without moving saves.
+    if guestOwner==nil then break end
+  end
   if owner==false or not owner then return '' end
   return prefix
 end
 local function private(path)
+  if path:match('^cloud_outbox%.lua')then return true end
   return path:match('^options%.lua') or path:match('^storage_account%.lua') or path:match('^save[%w_]*%.lua')
     or path:match('^cloud_sync') or path:match('^cloud_google%.lua') or path:match('^cloud_microsoft%.lua')
     or path:match('^saves[/]') or path=='saves' or path:match('^bank[/]') or path=='bank'

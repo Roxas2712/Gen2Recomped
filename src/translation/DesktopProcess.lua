@@ -1,8 +1,11 @@
 local P={}
-function P.open(executable,request,captureErrors)
+function P.argv(arguments,captureErrors)
+ assert(type(arguments)=='table'and type(arguments[1])=='string','Missing native process executable')
+ local executable=arguments[1]
  if love.system.getOS()~="Windows"then
   local shell=require("src.core.HostShell")
-  return shell.popen(shell.quote(executable).." --request "..shell.quote(request)..(captureErrors and " 2>&1" or ""),"r")
+  local parts={};for i,value in ipairs(arguments)do parts[i]=shell.quote(value)end
+  return shell.popen(table.concat(parts,' ')..(captureErrors and " 2>&1" or ""),"r")
  end
  local ffi=require("ffi")
  ffi.cdef[[
@@ -30,7 +33,19 @@ function P.open(executable,request,captureErrors)
   assert(k.MultiByteToWideChar(65001,8,text,#text,out,n)>0)
   return out
  end
- assert(not executable:find('"',1,true) and not request:find('"',1,true),"Invalid translator path")
+ local function quote(value)
+  assert(type(value)=='string'and not value:find('%z'),'Invalid native process argument')
+  local out={'"'};local slash=0
+  for i=1,#value do
+   local c=value:sub(i,i)
+   if c=='\\'then slash=slash+1
+   else
+    out[#out+1]=string.rep('\\',c=='"'and(slash*2+1)or slash)..c;slash=0
+   end
+  end
+  out[#out+1]=string.rep('\\',slash*2)..'"';return table.concat(out)
+ end
+ local args={};for i,value in ipairs(arguments)do args[i]=quote(value)end
  local reader,writer=ffi.new("void *[1]"),ffi.new("void *[1]")
  local security=ffi.new("TR_SECURITY");security.nLength=ffi.sizeof(security);security.bInheritHandle=1
  assert(k.CreatePipe(reader,writer,security,0)~=0,"Could not create translation output pipe")
@@ -39,7 +54,7 @@ function P.open(executable,request,captureErrors)
  startup.hStdOutput=writer[0];startup.hStdError=writer[0]
  local process=ffi.new("TR_PROCESS")
  local exe=wide(executable)
- local command=wide('"'..executable..'" --request "'..request..'"')
+ local command=wide(table.concat(args,' '))
  local started=k.CreateProcessW(exe,command,nil,nil,1,0x08000000,nil,nil,startup,process)
  k.CloseHandle(writer[0])
  if started==0 then k.CloseHandle(reader[0]);return nil end
@@ -67,4 +82,5 @@ function P.open(executable,request,captureErrors)
  end
  return pipe
 end
+function P.open(executable,request,captureErrors)return P.argv({executable,'--request',request},captureErrors)end
 return P

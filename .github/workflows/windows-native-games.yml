@@ -1,0 +1,103 @@
+name: Windows native game SDK
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_run_id:
+        description: Requalify an unchanged already-built native SDK
+        type: string
+        default: ''
+      sdk_candidate:
+        description: Retest an unqualified candidate whose compile step succeeded
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      sdk_run_id:
+        type: string
+        default: ''
+      sdk_candidate:
+        type: boolean
+        default: false
+permissions:
+  contents: read
+  actions: read
+jobs:
+  native-sdk:
+    runs-on: windows-2025
+    timeout-minutes: 120
+    steps:
+      - name: Keep byte-reviewed source and patch hashes independent of Windows line endings
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
+        with:
+          arch: x64
+      - uses: actions/cache/restore@v5
+        if: ${{ !inputs.sdk_run_id }}
+        id: rust-cache
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .local/qa/windows-native-sdk-build/cargo-target
+          key: windows-native-rust-v1-${{ hashFiles('tools/pokemon-xy-bridge/Cargo.lock','tools/pokemon-xy-bridge/src/**/*.rs','tools/pokemon_xy_source_pins.json','tools/windows_native_components.json') }}
+          restore-keys: |
+            windows-native-rust-v1-
+      - name: Build pinned game-data-free native components
+        if: ${{ !inputs.sdk_run_id }}
+        shell: pwsh
+        run: python tools/build_windows_native_runtime.py --out "$env:GITHUB_WORKSPACE/.local/qa/windows-native-sdk/candidate/3ds-runtime" --graphics
+      - uses: actions/download-artifact@v8
+        if: ${{ inputs.sdk_run_id != '' }}
+        with:
+          name: ${{ inputs.sdk_candidate && 'windows-native-component-candidate' || 'windows-native-games' }}
+          run-id: ${{ inputs.sdk_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/original-sdk
+      - name: Verify the exact component bytes and native source binding
+        if: ${{ inputs.sdk_run_id != '' }}
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $extra = @()
+          if ("${{ inputs.sdk_candidate }}" -eq 'true') { $extra += '--candidate' }
+          python tools/requalify_windows_sdk.py --artifact "$env:RUNNER_TEMP/original-sdk" --run-id "${{ inputs.sdk_run_id }}" --out "$env:GITHUB_WORKSPACE/.local/qa/windows-native-sdk/candidate/3ds-runtime" @extra
+      - name: Archive the source-bound SDK candidate before native tests
+        shell: pwsh
+        run: Compress-Archive -Path .local/qa/windows-native-sdk/candidate/3ds-runtime -DestinationPath .local/qa/windows-native-sdk/windows-native-runtime.zip -CompressionLevel Fastest
+      - uses: actions/upload-artifact@v7
+        with:
+          name: windows-native-component-candidate
+          path: .local/qa/windows-native-sdk/windows-native-runtime.zip
+          include-hidden-files: true
+          retention-days: 14
+      - name: Native ABI, compiler and isolated save/lock checks
+        shell: pwsh
+        run: .local/qa/windows-native-sdk/candidate/3ds-runtime/python/python.exe -X utf8 tools/qualify_windows_native.py --sdk .local/qa/windows-native-sdk/candidate/3ds-runtime --out .local/qa/windows-native-sdk/report.json
+      - uses: actions/cache/save@v5
+        if: ${{ always() && !inputs.sdk_run_id && steps.rust-cache.outputs.cache-hit != 'true' }}
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            .local/qa/windows-native-sdk-build/cargo-target
+          key: ${{ steps.rust-cache.outputs.cache-primary-key }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: windows-native-games
+          path: |
+            .local/qa/windows-native-sdk/windows-native-runtime.zip
+            .local/qa/windows-native-sdk/*.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14

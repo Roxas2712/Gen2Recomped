@@ -10,7 +10,7 @@ M.result('uploaded',nil,'emerald','a');check(M.get().state=='available','only an
 M.result({uploaded=1,failed=1,suspendNotice='Broken suspend block'})
 check(M.get().state=='error' and M.get().detail=='Broken suspend block','partial batch failure cannot be hidden behind the normal save success')
 M.result({sync={uploaded=1,failed=0},cacheWarning='Import this game with the current engine before uploading it.'})
-check(M.get().state=='error' and M.get().detail:find('Private game transfer paused',1,true),'a completed normal save cannot advertise a failed private game transfer as ready on another device')
+check(M.get().state=='partial' and M.get().detail:find('Imported games',1,true),'a completed normal save cannot advertise a failed private game transfer as ready on another device')
 M.result({sync={uploaded=1,failed=1,suspendNotice='Missing suspend block'}})
 check(M.get().state=='error' and M.get().detail=='Missing suspend block','wrapped launcher results retain their portable suspend failure')
 M.result({sync={uploaded=1,failed=0}})

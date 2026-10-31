@@ -197,6 +197,8 @@ mobile/ios/bundle_id.local
 /tests/drivers/*
 !/tests/drivers/native_rom_languages.lua
 !/tests/drivers/native_rom_language_ui.lua
+!/tests/drivers/cloud_save_http.lua
+!/tests/drivers/legacy_cloud_ux.lua
 !/tests/drivers/builtin_language_setup.lua
 !/tests/drivers/ptbr_auto.lua
 !/mods/UNI_LANGUAGE_NATIVE/

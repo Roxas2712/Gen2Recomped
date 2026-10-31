@@ -1,0 +1,83 @@
+--- a/src/gba/gba_bios.cpp
++++ b/src/gba/gba_bios.cpp
+@@ -4,6 +4,7 @@
+ 
+ #include <cstdio>
+ #include <cstring>
++#include <filesystem>
+ 
+ #include "sha1.h"
+ 
+@@ -18,7 +19,11 @@
+     loaded_ = false;
+     sha1_hex_.clear();
+ 
++#ifdef _WIN32
++    std::FILE* f = _wfopen(std::filesystem::u8path(path).c_str(), L"rb");
++#else
+     std::FILE* f = std::fopen(path.c_str(), "rb");
++#endif
+     if (!f) {
+         if (err) *err = "open failed: " + path;
+         return false;
+--- a/src/debug/snapshot.cpp
++++ b/src/debug/snapshot.cpp
+@@ -178,7 +178,7 @@
+     // browser storage sync can never persist a half-written state.
+     const std::string tmp = std::string(path) + ".tmp";
+     {
+-        std::ofstream f(tmp, std::ios::binary | std::ios::trunc);
++        std::ofstream f(std::filesystem::u8path(tmp), std::ios::binary | std::ios::trunc);
+         if (!f) {
+             if (err) *err = "snapshot: cannot open for write: " + tmp;
+             return false;
+@@ -375,7 +375,7 @@
+ }
+ 
+ bool load_state(const char* path, const SnapshotContext& ctx, std::string* err) {
+-    std::ifstream f(path, std::ios::binary | std::ios::ate);
++    std::ifstream f(std::filesystem::u8path(path), std::ios::binary | std::ios::ate);
+     if (!f) {
+         if (err) *err = std::string("snapshot: cannot open for read: ") + path;
+         return false;
+--- a/src/debug/file_replace.cpp
++++ b/src/debug/file_replace.cpp
+@@ -10,31 +10,31 @@
+ bool replace_file_preserving(const std::string& tmp, const std::string& dest,
+                              std::string* err) {
+     std::error_code ec;
+-    std::filesystem::rename(tmp, dest, ec);  // replaces on POSIX and NTFS
++    std::filesystem::rename(std::filesystem::u8path(tmp), std::filesystem::u8path(dest), ec);  // replaces on POSIX and NTFS
+     if (!ec) return true;
+     // Rename-over refused (e.g. dest held open without delete sharing). Park
+     // the old copy instead of deleting it, so no step can lose both.
+     const std::string bak = dest + ".bak";
+     std::error_code ec2;
+-    std::filesystem::remove(bak, ec2);
+-    if (std::filesystem::exists(dest, ec2)) {
+-        std::filesystem::rename(dest, bak, ec2);
++    std::filesystem::remove(std::filesystem::u8path(bak), ec2);
++    if (std::filesystem::exists(std::filesystem::u8path(dest), ec2)) {
++        std::filesystem::rename(std::filesystem::u8path(dest), std::filesystem::u8path(bak), ec2);
+         if (ec2) {
+             if (err) *err = "cannot replace " + dest + " (" + ec.message() +
+                             "); new data kept in " + tmp;
+             return false;
+         }
+     }
+-    std::filesystem::rename(tmp, dest, ec2);
++    std::filesystem::rename(std::filesystem::u8path(tmp), std::filesystem::u8path(dest), ec2);
+     if (ec2) {
+         std::error_code ec3;
+-        std::filesystem::rename(bak, dest, ec3);  // restore the previous copy
++        std::filesystem::rename(std::filesystem::u8path(bak), std::filesystem::u8path(dest), ec3);  // restore the previous copy
+         if (err) *err = "cannot replace " + dest + " (" + ec2.message() +
+                         "); new data kept in " + tmp +
+                         (ec3 ? ", previous copy in " + bak : std::string());
+         return false;
+     }
+-    std::filesystem::remove(bak, ec2);
++    std::filesystem::remove(std::filesystem::u8path(bak), ec2);
+     return true;
+ }
+ 

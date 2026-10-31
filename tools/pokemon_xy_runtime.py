@@ -9,25 +9,32 @@ from pathlib import Path
 import platform
 import struct
 
-FILES = {'compiler': 'bin/3dsrecomp', 'cc': 'bin/cc',
+FILES_MAC = {'compiler': 'bin/3dsrecomp', 'cc': 'bin/cc',
          'bridge': 'lib/libascendant_3ds_bridge.dylib',
          'python': 'python/bin/python3.12',
          'loader': 'vulkan/libvulkan.1.dylib',
          'driver': 'vulkan/libMoltenVK.dylib',
          'icd': 'vulkan/MoltenVK_icd.json'}
+FILES_WINDOWS = {'compiler':'bin/3dsrecomp.exe','cc':'compiler/bin/clang.exe',
+                 'bridge':'lib/ascendant_3ds_bridge.dll','python':'python/python.exe',
+                 'loader':'vulkan/vulkan-1.dll','driver':'vulkan/vulkan_lvp.dll',
+                 'icd':'vulkan/lvp_icd.x86_64.json'}
+FILES = FILES_WINDOWS if platform.system()=='Windows' else FILES_MAC
 
 
 def load(path):
     root = Path(path).resolve(strict=True)
     metadata = json.loads((root/'runtime.json').read_text())
+    windows=platform.system()=='Windows' and platform.machine().lower() in {'amd64','x86_64'}
+    mac=platform.system()=='Darwin' and platform.machine()=='arm64'
     if (metadata.get('schema') != 1 or metadata.get('bridge_protocol') != 1 or
-            metadata.get('platform') != 'macos-arm64' or
-            platform.system() != 'Darwin' or platform.machine() != 'arm64' or
+            metadata.get('platform') != ('windows-x64' if windows else 'macos-arm64') or
+            not (windows or mac) or
             not isinstance(metadata.get('id'), str) or len(metadata['id']) != 64):
         raise ValueError('The bundled 3DS runtime is incompatible with this device.')
     version = tuple(int(n) for n in (platform.mac_ver()[0] or '0').split('.')[:2])
     minimum = tuple(int(n) for n in metadata.get('minimum_macos','15.0').split('.')[:2])
-    if version < minimum:
+    if mac and version < minimum:
         raise ValueError('This bundled 3DS graphics runtime requires macOS '+metadata.get('minimum_macos','15.0')+' or newer.')
     for relative in FILES.values():
         if not (root/relative).is_file():
@@ -54,7 +61,14 @@ def completed(binary, rom_hash, runtime_id):
 def finish(binary, rom_hash, runtime_id):
     with binary.open('rb') as stream:
         header = stream.read(32)
-        if len(header) != 32 or struct.unpack('<IiiI', header[:16]) != (0xfeedfacf, 0x100000c, 0, 6):
+        if platform.system()=='Windows':
+            if header[:2]!=b'MZ':raise ValueError('The compiler did not produce a Windows game DLL.')
+            stream.seek(60);pointer=stream.read(4)
+            if len(pointer)!=4:raise ValueError('The compiler produced a truncated Windows game DLL.')
+            offset=struct.unpack('<I',pointer)[0];stream.seek(offset);pe=stream.read(24)
+            if len(pe)!=24 or pe[:4]!=b'PE\0\0' or struct.unpack_from('<H',pe,4)[0]!=0x8664 or not(struct.unpack_from('<H',pe,22)[0]&0x2000):
+                raise ValueError('The compiler did not produce a Windows x64 game DLL.')
+        elif len(header) != 32 or struct.unpack('<IiiI', header[:16]) != (0xfeedfacf, 0x100000c, 0, 6):
             raise ValueError('The compiler did not produce an arm64 macOS game library.')
         stream.seek(0)
         digest = hashlib.file_digest(stream, 'sha256').hexdigest()
@@ -77,5 +91,5 @@ def environment(root, work):
                RUST_LOG='info,cranelift_jit=warn')
     # Compiler processes use the bundled C toolchain even with a minimal GUI
     # PATH. No shell setup, Homebrew or Xcode installation is required.
-    env['PATH'] = str(root/'bin')+os.pathsep+env.get('PATH', '/usr/bin:/bin')
+    env['PATH'] = os.pathsep.join([str(root/'bin'),str(root/'compiler/bin'),str(root/'lib'),str(root/'python'),str(root.parent),env.get('PATH','/usr/bin:/bin')])
     return env

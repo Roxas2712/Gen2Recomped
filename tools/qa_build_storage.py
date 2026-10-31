@@ -4,11 +4,13 @@ Integration by Roxas2712. Call while holding the backend's session.lock.
 Only matching C compiler object intermediates after successful linking may go.
 """
 import re
-import fcntl
+import os
+if os.name != 'nt':import fcntl
 import hashlib
 import json
 from pathlib import Path
-from qa_storage import GIB
+if os.name == 'nt':GIB=1024**3
+else:from qa_storage import GIB
 from qa_legacy_storage import LiveUse
 
 
@@ -99,15 +101,25 @@ def clean_linked_objects(work):
     if base.is_symlink() or base.resolve()!=base:return 0
     for output in base.glob('*'):
         if not re.fullmatch('[0-9a-f]{64}',output.name) or output.is_symlink() or not output.is_dir():continue
-        if (output/'.qa-keep').exists() or live.busy(output):continue
-        if not any(p.is_file() and not p.is_symlink() for p in output.glob('0004000000055?00.dylib')):continue
+        if (output/'.qa-keep').exists() or (os.name!='nt' and live.busy(output)):continue
+        binaries=list(output.glob('0004000000055?00.'+('dll' if os.name=='nt' else 'dylib')))
+        if not any(p.is_file() and not p.is_symlink() for p in binaries):continue
+        if os.name=='nt':
+            # Called only under the backend's exclusive session lock. Require
+            # the committed library digest before retiring its generated peers.
+            try:
+                if not any(json.loads(p.with_suffix('.complete.json').read_text()).get('sha256')==_digest(p) for p in binaries):continue
+            except (OSError,ValueError):continue
         for obj in output.glob('*.o'):
             # Require the generated C peer and a final shared library. No
             # recursive suffix deletion: models named *.obj and user data stay.
             if obj.is_symlink() or not obj.is_file() or not obj.with_suffix('.c').is_file():continue
             if not re.fullmatch(r'(?:code[0-9]+|entries|runtime|recomp|[0-9a-f]{8})\.o',obj.name):continue
-            if live.busy(obj):continue
-            size=obj.stat().st_blocks*512;obj.unlink();removed+=size
+            if os.name!='nt' and live.busy(obj):continue
+            size=getattr(obj.stat(),'st_blocks',0)*512 or obj.stat().st_size
+            try:obj.unlink()
+            except PermissionError:continue
+            removed+=size
     return removed
 
 
@@ -120,6 +132,7 @@ def prepare(storage, work, fingerprint):
 
 
 def sweep(storage):
+    if os.name=='nt':return 0
     removed=0
     for root in set(storage._registered_roots()):
         work=root/'.local/pokemon-x'

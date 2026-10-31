@@ -50,6 +50,8 @@ function P.saveCheck()
   return true
 end
 function P.profileChanged(self)
+  self._storageResumeAfter=nil
+  local outbox=package.loaded['src.storage.CloudOutbox'];if outbox then outbox.cancel() end
   local hub=package.loaded['src.ui.WalkerMinigames']
   if hub and hub.active then hub.active:close(true)end
   self.walker=nil;self._walkerPumpT=0
@@ -66,14 +68,40 @@ function P.profileChanged(self)
   if self._saveHistoryOverlay then require('src.import.SaveHistoryWorkspace').close(self) end
   if self._refreshSlots then for _,v in ipairs(require('src.core.GameVersion').ORDER) do if self.ready and self.ready[v] then self:_refreshSlots(v) end end end
 end
-function P.bind()
+local function hasProgress(fs,prefix)
+  for _,path in ipairs({'saves','bank','states','modstorage','mod_storage','pokewalker.lua','walker','minigames','exports'})do
+    if fs.getInfo(prefix..path)then return true end
+  end
+  for _,v in ipairs(require('src.core.GameVersion').ORDER)do
+    local suffix=require('src.core.GameVersion').saveSuffix(v)
+    if suffix and fs.getInfo(prefix..'save'..suffix..'.lua')then return true end
+  end
+end
+function P.localSources()
+  local sources={}
+  if hasProgress(disk(),'')then sources[#sources+1]='local' end
+  local base=require('src.core.SaveData').rawPersistenceFs()
+  local guest=require('src.storage.ProfileFs').guestPrefix(base)
+  if guest and hasProgress(base,guest)then sources[#sources+1]='guest'end
+  return sources
+end
+function P.bind(choice)
   local a=auth();local id=a.accountId and a.accountId()
   if not a.signedIn() or not valid(id) then return nil,'A confirmed account connection is required.' end
   local owner,why=P.owner()
   if why then return nil,why end
   if owner then return owner==id and true or nil,owner~=id and 'Existing saves and Bank belong to another account. Their assignment was preserved.' or nil end
   local bytes=S.encode({schema=1,accountId=id,linkedAt=os.time()})
-  return require('src.core.SaveSafety').atomicWrite(disk(),P.FILE,bytes,{decode=function(value)
+  local fs,path=disk(),P.FILE
+  if choice=='guest' or choice=='separate'then
+    fs=require('src.core.SaveData').rawPersistenceFs()
+    local prefix=choice=='guest'and require('src.storage.ProfileFs').guestPrefix(fs)or('profiles/'..id..'/')
+    if not prefix then return nil,'No free local guest profile is available.' end
+    if fs.read(prefix..P.FILE)then return nil,'This local profile is already assigned. Existing records were preserved.' end
+    local ok,err=fs.createDirectory(prefix:sub(1,-2));if not ok then return nil,err or 'Could not create the account profile.' end
+    path=prefix..P.FILE
+  end
+  return require('src.core.SaveSafety').atomicWrite(fs,path,bytes,{decode=function(value)
     local parsed=S.decode(value);return type(parsed)=='table' and parsed.schema==1 and valid(parsed.accountId) and parsed
   end})
 end
