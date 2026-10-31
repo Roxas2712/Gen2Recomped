@@ -51,7 +51,7 @@ def validate(commands):
     directions=('up','down','left','right')
     for c in commands:
         op=c.get('op')
-        assert op in ('press','hold','wait','step','goto','advance','battle-attack','shot','verify-continue','finish'), 'Unsupported story command'
+        assert op in ('press','hold','wait','step','goto','advance','battle-attack','shot','verify-continue','verify-lab-introduction','finish'), 'Unsupported story command'
         assert 'direction' not in c, 'Use dir for an ordinary step'
         if op=='step':assert c.get('dir')in directions, 'A step needs dir: up/down/left/right'
         if op in ('press','hold'):assert c.get('button')in (*directions,'a','b','start','select','l','r'), 'Invalid button'

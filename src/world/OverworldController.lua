@@ -3682,7 +3682,16 @@ function OverworldState:syncObjectVisibility(only)
       -- added (see toggleObject in src/script/Commands.lua); the Gen2 path
       -- never did.
       local key = objectToggleKey(npc.def)
-      if key then
+      if GameVersion.isGen3() then
+        -- RemoveObjectEvent retires the GBA struct. A later spawn reads the
+        -- current template, including setobjectxyperm/setobjectmovementtype.
+        -- Keeping the old entry placement put Oak back at the lab doorway.
+        if key then
+          self.npcResumeCell[key] = nil
+          if self.npcPlacement then self.npcPlacement[key] = nil end
+        end
+        if self.npcPool then self.npcPool[npc.id] = nil end
+      elseif key then
         self.npcResumeCell[key] =
           { x = npc.cellX, y = npc.cellY, facing = npc.facing }
       end

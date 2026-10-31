@@ -107,6 +107,7 @@ return function(game)
       state.scriptRunning=world.runner and world.runner:isRunning()or false
       state.entities={};for _,e in ipairs(world.entities or {})do
         local r=fields(e,{'id','cellX','cellY','facing','hidden','passable','moving'})
+        r.hidden=e.hidden or false;r.gen3Invisible=e.gen3Invisible or false
         r.def=fields(e.def,{'id','localId','script','text','sprite','flag','movementType'});state.entities[#state.entities+1]=r
       end
       local rows={}
@@ -257,6 +258,18 @@ return function(game)
         assert(lineage and lineage.loadedCheckpointSHA256Preserved)
         report.status='pass';seq=seq+1;busy=false;snapshot()
         print('PASS_LEAFGREEN_NATIVE_CHECKPOINT_CONTINUE');love.event.quit(0);return
+      elseif command.op=='verify-lab-introduction'then
+        assert(not lineage and report.newGameThroughUI and report.initialPartyEmpty)
+        assert(#game.save.party==0,'Lab introduction case must precede starter acceptance')
+        local w=game.overworld;assert(freeField()and w.map.id=='MAP_G04_N03')
+        local oak=assert(w:npcByIndex(4),'Original lab professor was not spawned')
+        assert(oak.cellX==6 and oak.cellY==3 and oak.px==96 and oak.py==48,
+          'Original lab professor did not respawn at his scripted template')
+        assert(not oak.hidden and not oak.gen3Invisible,'Original lab professor is invisible')
+        shot('native-oak-lab-introduction')
+        report.labIntroductionVerified=true;report.scope='native-frlg-lab-introduction'
+        report.status='pass';seq=seq+1;busy=false;snapshot()
+        print('PASS_NATIVE_FRLG_LAB_INTRODUCTION');love.event.quit(0);return
       elseif command.op=='finish'then
         snapshot()
         assert(report.starter and report.starter.level==5,'Starter was not acquired naturally at level five')
