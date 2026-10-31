@@ -5,8 +5,9 @@ import re
 
 
 def qualify(edition, run_name, verification, report, checkpoint):
-    assert edition == "leafgreen", "Only the existing LeafGreen ordinary driver is supported"
-    assert run_name.startswith("gen2recomp-qa-leafgreen-")
+    assert edition in ("firered", "leafgreen")
+    assert run_name.startswith("gen2recomp-qa-" + edition + "-")
+    assert verification["edition"] == report["edition"] == edition
     identity = "oasc-edition-qa-" + run_name[len("gen2recomp-qa-"):]
     assert verification["identity"] == identity
     assert verification["status"] == "pass" and verification["exitCode"] == 0
@@ -24,7 +25,7 @@ def qualify(edition, run_name, verification, report, checkpoint):
     assert checkpoint["producedThroughNormalSaveMenu"] is False
     assert checkpoint["personalSave"] is False
     assert re.fullmatch(r"[0-9a-f]{64}", checkpoint["sha256"])
-    assert re.fullmatch(r"profiles/guest/saves/leafgreen/slot[1-9][0-9]*\.lua", checkpoint["saveRelativePath"])
+    assert re.fullmatch(r"profiles/guest/saves/" + edition + r"/slot[1-9][0-9]*\.lua", checkpoint["saveRelativePath"])
     rows = report["commands"]
     assert rows and all(row["seq"] == index for index, row in enumerate(rows, 1))
     allowed = {"press", "hold", "wait", "step", "goto", "advance", "battle-attack", "shot", "finish"}

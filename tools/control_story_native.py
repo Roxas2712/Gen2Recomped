@@ -14,7 +14,7 @@ p.add_argument('--live-pid',type=int,help=argparse.SUPPRESS)
 p.add_argument('--worker',action='store_true',help=argparse.SUPPRESS);a=p.parse_args()
 run=a.run.resolve();assert run.parent==ROOT/'.local/qa'and run.name.startswith('gen2recomp-qa-')
 verification=json.loads((run/'verification.json').read_text());edition=verification['edition']
-assert edition in ('leafgreen','ruby','sapphire')
+assert edition in ('firered','leafgreen','ruby','sapphire','emerald')
 assert run.name.startswith('gen2recomp-qa-'+edition+'-')and verification['identity'].startswith('oasc-edition-qa-'+edition+'-')
 commands=json.loads(a.commands);assert isinstance(commands,list)and all(isinstance(c,dict)for c in commands)
 assert 0<=a.wait<=45

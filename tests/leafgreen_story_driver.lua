@@ -3,8 +3,9 @@ return function(game)
   local U=require('tests.drivers.util');local J=require('src.link.Json')
   local Serialize=require('src.core.SaveSerializer');local Collision=require('src.world.Collision')
   local out=assert(os.getenv('EDITION_QA_OUT'))
-  assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-leafgreen%-'))
-  assert(require('src.core.GameVersion').get()=='leafgreen')
+  local edition=require('src.core.GameVersion').get()
+  assert(edition=='firered'or edition=='leafgreen')
+  assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-'..edition..'%-'))
   -- Only this owned hidden QA process ignores desktop/controller events.
   for _,event in ipairs{'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',
     'joystickpressed','joystickreleased','joystickaxis','joystickhat','touchpressed','touchreleased',
@@ -12,7 +13,7 @@ return function(game)
   game.input:reset()
   local lf=io.open(out..'/story-lineage.json','r');local lineage
   if lf then lineage=J.decode(lf:read('*a'));lf:close()end
-  local hasSave=require('src.core.SaveData').saveFileExists('leafgreen')
+  local hasSave=require('src.core.SaveData').saveFileExists(edition)
   assert(hasSave==(lineage~=nil),'Only a qualified own ordinary checkpoint may resume a story test')
   if lineage then
     assert(lineage.personalSave==false and lineage.checkpoint.personalSave==false)
@@ -21,8 +22,8 @@ return function(game)
     if not f then
       -- saveFileExists resolves the host's ordinary flat-save -> slot migration.
       local Save=require('src.core.SaveData')
-      path=assert(Save.slotDiskPath('leafgreen',Save.activeSlot('leafgreen')))
-      assert(path:match('/saves/leafgreen/slot%d+%.lua$'))
+      path=assert(Save.slotDiskPath(edition,Save.activeSlot(edition)))
+      assert(path:match('/saves/'..edition..'/slot%d+%.lua$'))
       f=assert(io.open(path,'rb'));lineage.nativeSlotMigration=true
     end
     assert(path:find('/'..love.filesystem.getIdentity()..'/profiles/guest/',1,true))
@@ -31,7 +32,7 @@ return function(game)
     lineage.loadedCheckpointSHA256Preserved=true
   end
   U.teleport=function()error('Story acceptance forbids teleport helpers')end
-  local report={edition='leafgreen',status='running',commands={},captures={},maps={},events={},
+  local report={edition=edition,status='running',commands={},captures={},maps={},events={},
     continuousFromNewGame=true,noTeleport=true,noPartyInjection=true,noDirectStoryFlagEdits=true,fullStoryTested=false}
   local seq=0;local busy=false;local lastMap;local seenParcel=false;local lastParty=0
   if lineage then

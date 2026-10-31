@@ -1,4 +1,4 @@
-"""Qualify only this task's ordinary-input RS save receipts for continuation."""
+"""Qualify only this task's ordinary-input Hoenn save receipts for continuation."""
 import re
 
 def first_badge_starter_proof(report):
@@ -8,6 +8,10 @@ def first_badge_starter_proof(report):
     rather than the earlier lab driver's two summary booleans. Never edit
     its report or accept a completed-badge claim without that transition.
     """
+    edition=report.get('edition')
+    if edition not in ('ruby','sapphire','emerald'):return False
+    emerald=edition=='emerald'
+    starter_screen='Gen3StarterSelect'if emerald else'Gen3RsStarterSelect'
     if not (report.get('continuousOpeningToFirstBadge') is True
             and report.get('newGameThroughUI') is True
             and report.get('initialPartyEmpty') is True
@@ -26,15 +30,16 @@ def first_badge_starter_proof(report):
     if any(r.get('before',{}).get('party')or r.get('after',{}).get('party')for r in rows[:first]):
         return False
     if not (before.get('party')==[] and after.get('party')==[starter]
-            and before.get('top',{}).get('screenId')=='Gen3RsStarterSelect'
-            and before.get('top',{}).get('source')=='src/ui/Gen3RsStarterSelect.lua'
+            and before.get('top',{}).get('screenId')==starter_screen
+            and before.get('top',{}).get('source')=='src/ui/'+starter_screen+'.lua'
+            and (not emerald or (before['top'].get('stage')=='confirm'and before['top'].get('yes')is True))
             and row.get('input',{}).get('op')=='press'and row['input'].get('button')=='a'
             and any(p.get('key')=='a'for p in row.get('ordinaryInputs',[]))
             and before.get('map',{}).get('id')==after.get('map',{}).get('id')=='MAP_G00_N16'
             and after.get('scriptRunning') is True
             and top.get('source')=='src/battle/BattleState.lua'
             and top.get('musicKind')=='wild'
-            and top.get('enemy',{}).get('species')=='POOCHYENA'
+            and top.get('enemy',{}).get('species')==('ZIGZAGOON'if emerald else'POOCHYENA')
             and top['enemy'].get('level')==2
             and top.get('battler',{}).get('species')==starter['species']
             and top['battler'].get('level')==5):
@@ -62,7 +67,7 @@ def check_saved_tail(rows, confirmed, last):
             'Record the save receipt before moving or reopening menus'
 
 def qualify(edition, name, verification, report, checkpoint):
-    assert edition in ('ruby','sapphire')
+    assert edition in ('ruby','sapphire','emerald')
     assert re.fullmatch('gen2recomp-qa-'+edition+r'-[0-9]+',name)
     identity='oasc-edition-qa-'+name.removeprefix('gen2recomp-qa-')
     assert verification['edition']==report['edition']==edition
@@ -89,11 +94,11 @@ def qualify(edition, name, verification, report, checkpoint):
     assert all(report[k]is True for k in('continuousFromNewGame','noTeleport','noPartyInjection','noDirectStoryFlagEdits'))
     assert report['starter']['level']==5
     witnessed_first_badge=completed and first_badge_starter_proof(report)
-    origin=report.get('continuousOpeningThroughRescueAndNormalLabSave')is True or witnessed_first_badge
+    origin=(edition!='emerald'and report.get('continuousOpeningThroughRescueAndNormalLabSave')is True)or witnessed_first_badge
     continued=(report.get('continuedOwnNormalSave')is True and report.get('continuedThroughUI')is True
                and report.get('checkpointFullSavePreserved')is True
                and report.get('lineage',{}).get('inherited',{}).get('naturalStarterAccepted')is True)
-    assert origin or continued,'RS continuation must originate in a qualified natural starter run'
+    assert origin or continued,'Hoenn continuation must originate in a qualified natural starter run'
     rows=report['commands'];first,last=checkpoint['saveMenuCommandRange']
     assert 1<=first<=last<=len(rows)
     assert rows[first-1]['seq']==first and rows[last-1]['seq']==last

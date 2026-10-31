@@ -1356,6 +1356,12 @@ local function markerFor(version)
   end
   if GameVersion.generation(version)==3 then
     revision=revision..'gba-field-move-art-v1:gba-door-metadata-v'..require('src.import.Gen3DoorMetadata').REVISION..':'
+    -- Older completed imports predate the native Pickup distributions.
+    -- Re-extract these tables through the normal cache gate, retaining saves.
+    revision=revision..'gba-pickup-v'..require('src.import.Gen3PickupProfiles').REVISION..':'
+  end
+  if version=='emerald'then
+    revision=revision..'emerald-first-rescue-v'..require('src.import.Gen3FirstBattle').REVISION..':'
   end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then

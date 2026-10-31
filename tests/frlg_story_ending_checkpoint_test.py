@@ -8,9 +8,9 @@ from frlg_story_ending_checkpoint import qualify
 
 
 class EndingProvenance(unittest.TestCase):
-    def fixture(self):
-        run = 'gen2recomp-qa-leafgreen-owned'
-        v = dict(identity='oasc-edition-qa-leafgreen-owned', status='pass', exitCode=0,
+    def fixture(self, edition='leafgreen'):
+        run = 'gen2recomp-qa-' + edition + '-owned'
+        v = dict(edition=edition, identity='oasc-edition-qa-' + edition + '-owned', status='pass', exitCode=0,
                  frozenSourceUnchanged=True, externalSaveRecoveryDisabled=True,
                  allModsDisabled=True, sourceCommit='owned-source')
         def state(seq, screen, flags):
@@ -19,13 +19,13 @@ class EndingProvenance(unittest.TestCase):
                         savedGameCount=143, inventory={'OWNED_ITEM':2})
         states=[state(1,'Battle',{'FLAG_G3_04BC':True}),state(2,'Gen3FrlgHallOfFame',{}),
                 state(3,'Gen3FrlgCredits',{}),state(4,'TitleState',{'EVENT_BEAT_CHAMPION_RIVAL':True})]
-        report=dict(status='pass',continuousFromNewGame=True,noTeleport=True,noPartyInjection=True,
+        report=dict(edition=edition,status='pass',continuousFromNewGame=True,noTeleport=True,noPartyInjection=True,
                     noDirectStoryFlagEdits=True,parcelObtained=True,parcelReturned=True,
                     pokedexObtained=True,brockTmRewardObserved=True,starter={'level':5},
                     commands=[dict(seq=i,input={'op':'wait'},after=s)for i,s in enumerate(states,1)])
         ending=dict(sourceRun=run,profileIdentity=v['identity'],sourceCommit=v['sourceCommit'],
                     saveKind='native-frlg-hall-of-fame',producedThroughNormalSaveMenu=False,
-                    personalSave=False,sha256='a'*64,saveRelativePath='profiles/guest/saves/leafgreen/slot1.lua',
+                    personalSave=False,sha256='a'*64,saveRelativePath='profiles/guest/saves/'+edition+'/slot1.lua',
                     snapshotAfterEnding=copy.deepcopy(states[-1]))
         return run,v,report,ending
 
@@ -61,6 +61,15 @@ class EndingProvenance(unittest.TestCase):
     def test_other_edition_cannot_borrow_leafgreen_proof(self):
         r,v,s,e=self.fixture()
         with self.assertRaises(AssertionError):qualify('firered',r,v,s,e)
+
+    def test_firered_uses_its_own_complete_ending_proof(self):
+        r,v,s,e=self.fixture('firered')
+        self.assertEqual(qualify('firered',r,v,s,e)['starter'],{'level':5})
+        for target,key,value in [('verification','edition','leafgreen'),('report','edition','leafgreen'),
+                                 ('checkpoint','saveRelativePath','profiles/guest/saves/leafgreen/slot1.lua')]:
+            r,v,s,e=self.fixture('firered')
+            {'verification':v,'report':s,'checkpoint':e}[target][key]=value
+            with self.assertRaises(AssertionError):qualify('firered',r,v,s,e)
 
 
 if __name__=='__main__':unittest.main()

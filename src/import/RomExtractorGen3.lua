@@ -31123,12 +31123,9 @@ function RomExtractorGen3:extractStarterSelect()
   --   THE FIRST BATTLE.  The Pokemon that jumps Birch is an object event on
   --   Route 101 (local id 4, an overworld POKEMON sprite) which the rescue
   --   script `removeobject`s one row before it calls the special.  The
-  --   species name is pokeemerald's -- starter_choose.c fights POOCHYENA at
-  --   level 2 -- and it is written here ONLY if this cartridge's Route 101
-  --   really carries that species in its own grass, at which point the LEVEL
-  --   is read off that slot rather than typed in.  A wrong name therefore
-  --   writes no record at all instead of a wrong one, and the port falls back
-  --   to the shortened scene it had before.
+  --   paired games fight POOCHYENA; Emerald's battle_controllers.c creates
+  --   ZIGZAGOON at level 2. Require this edition's matching route/object
+  --   evidence before writing either record.
   -- ------------------------------------------------------------------------
   do
     local text = self._text or {}
@@ -31146,43 +31143,15 @@ function RomExtractorGen3:extractStarterSelect()
                     .. "own wording", #asked)
     end
 
-    local FIRST_BATTLE_SPECIES = "POOCHYENA"
-    local route = (self._encounters or {})["MAP_G00_N16"]
-    local grass = route and route.grass
-    local level
-    for _, slot in ipairs(grass and grass.slots or {}) do
-      if slot.species == FIRST_BATTLE_SPECIES then
-        local low = tonumber(slot.min)
-        if low and (not level or low < level) then level = low end
-      end
-    end
-    -- the map really has to carry the animal, too -- object 4 is the one the
-    -- rescue script removes, and 98 is the overworld sprite it wears
-    local route101 = (self._maps or {})["MAP_G00_N16"]
-    local object
-    for _, o in ipairs(route101 and route101.objects or {}) do
-      if tonumber(o.localId) == 4 then object = o end
-    end
-    if level and object then
-      constants.gen3FirstBattle = {
-        species = FIRST_BATTLE_SPECIES,
-        level = level,
-        mapId = "MAP_G00_N16",
-        localId = 4,
-        graphicsId = object.graphicsId,
-        -- a loss does NOT black the player out: the script's very next
-        -- commands are Birch's line and `special 0`, which is HealPlayerParty
-        canLose = true,
-        source = ("ROM:MAP_G00_N16 object 4 (sprite %s) + its own grass slot")
-                 :format(tostring(object.graphicsId)),
-      }
+    local edition=type(self.version)=='table'and self.version.id or self.version
+    local firstBattle,why=require('src.import.Gen3FirstBattle').extract(edition,self._maps,self._encounters)
+    constants.gen3FirstBattle=firstBattle
+    if firstBattle then
       Logger.info("Gen3 first battle: %s at level %d -- Route 101's own "
                     .. "slot, and its object 4 wears sprite %s",
-                  FIRST_BATTLE_SPECIES, level, tostring(object.graphicsId))
+                  firstBattle.species, firstBattle.level, tostring(firstBattle.graphicsId))
     else
-      Logger.warn("Gen3 first battle: Route 101 carries no %s in its grass "
-                    .. "(or no object 4), so the scene keeps its shortened "
-                    .. "form", FIRST_BATTLE_SPECIES)
+      Logger.warn('Gen3 first battle unavailable: %s',tostring(why))
     end
   end
 

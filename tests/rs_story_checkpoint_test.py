@@ -92,13 +92,27 @@ class CheckpointTests(unittest.TestCase):
                       'top':{'source':'src/battle/BattleState.lua','musicKind':'wild',
                              'enemy':{'species':'POOCHYENA','level':2},'battler':{'species':'TREECKO','level':5}}}}
         r['commands'].insert(0,row);r['commands'][1]['seq']=2;r['inputs'][0]['commandSeq']=2
+        if e=='emerald':
+            row['before']['top'].update(screenId='Gen3StarterSelect',source='src/ui/Gen3StarterSelect.lua',stage='confirm',yes=True)
+            row['after']['top']['enemy']['species']='ZIGZAGOON'
         c.update(saveMenuCommandRange=[2,2],saveConfirmedSeq=2)
         return f
     def test_first_badge_uses_actual_starter_input_without_rewriting_report(self):
-        for e in('ruby','sapphire'):
+        for e in('ruby','sapphire','emerald'):
             f=self.first_badge_fixture(e);before=copy.deepcopy(f)
             self.assertTrue(first_badge_starter_proof(f[3]))
             self.assertTrue(qualify(*f)['naturalStarterAccepted']);self.assertEqual(f,before)
+    def test_emerald_requires_its_own_rescue_opponent_and_confirmation(self):
+        for change in('ruby-opponent','ruby-screen','pick-stage','no-selected','legacy-summary'):
+            f=self.first_badge_fixture('emerald');r=f[3];row=r['commands'][0]
+            if change=='ruby-opponent':row['after']['top']['enemy']['species']='POOCHYENA'
+            elif change=='ruby-screen':row['before']['top'].update(screenId='Gen3RsStarterSelect',source='src/ui/Gen3RsStarterSelect.lua')
+            elif change=='pick-stage':row['before']['top']['stage']='pick'
+            elif change=='no-selected':row['before']['top']['yes']=False
+            elif change=='legacy-summary':
+                r['commands'].pop(0);r['continuousOpeningThroughRescueAndNormalLabSave']=True
+            self.assertFalse(first_badge_starter_proof(r))
+            self.assertRaises(AssertionError,qualify,*f)
     def test_first_badge_requires_native_rescue_transition(self):
         cases=[('screenId','Other'),('source','src/ui/PartyMenu.lua')]
         for key,value in cases:
