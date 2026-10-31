@@ -2432,7 +2432,7 @@ function Game:restoreSave(loaded, recovered)
   -- Emerald's CHAMPION_SAVEWARP (special 343): the Hall of Fame saved with
   -- the player standing in a room that has no exit, and this is the load
   -- that spends the bit and puts them back in their own bedroom.
-  require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
+  local emeraldHallWarp=require('src.core.Gen3EmeraldEndingSave').apply(loaded,self.data)
   local frlgHallWarp=require('src.core.Gen3FrlgEndingSave').apply(loaded,self.data)
   if not frlgHallWarp and SaveData.hasChampionSaveWarp(loaded) then
     local home = SaveData.applyChampionSaveWarp(loaded, self:bootConfig())
@@ -2443,7 +2443,7 @@ function Game:restoreSave(loaded, recovered)
   -- RS's League autosave resumes in the gender's ROM-derived bedroom.
   -- Only our versioned return marker can spend the RS bit; legacy flags
   -- and other editions continue through their existing paths.
-  require('src.core.Gen3RsEndingSave').apply(loaded,self.data)
+  local rsHallWarp=require('src.core.Gen3RsEndingSave').apply(loaded,self.data)
   local modsDiff = SaveData.modsDiff(loaded, activeMods)
   local report = SaveData.validate(loaded, self.data)
   report.recovered = recovered
@@ -2469,7 +2469,8 @@ function Game:restoreSave(loaded, recovered)
   -- takes FieldMapChange_UpdateGameData + CreateObjects (ON_TRANSITION and all)
   -- FR/LG's Hall bit takes CB2_ContinueSavedGame -> WarpIntoMap. Its
   -- Pallet destination is a fresh map entry, rather than the saved field.
-  local specialLocation = frlgHallWarp == true
+  -- Authenticated Hoenn League returns likewise enter the bedroom afresh.
+  local specialLocation = frlgHallWarp == true or emeraldHallWarp == true or rsHallWarp == true
   if require("src.core.GameVersion").get() == "platinum" then
     specialLocation = require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded) and true or false
   end

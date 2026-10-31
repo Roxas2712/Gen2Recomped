@@ -39,6 +39,7 @@ jobs:
           luajit tests/engine/gen3_native_script_ownership.lua
           luajit tests/engine/gba_title_native_music_fade.lua
           luajit tests/engine/frlg_ending_continue_entry.lua
+          luajit tests/engine/gba_saved_field_entry.lua
           luajit tests/engine/gba_native_field_move_default.lua
           luajit tests/engine/gen3_pickup_finish.lua
           luajit tests/engine/gen3_pickup_rules.lua

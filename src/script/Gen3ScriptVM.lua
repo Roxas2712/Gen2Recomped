@@ -985,20 +985,14 @@ local function contributionFor(data, mapId, entry, mapDef)
       local entries=onEnter
       local version=require('src.core.GameVersion').get()
       local savedContinue = overworld.gen3RsContinuing or overworld.gen3FrlgContinuing
-      if version=='ruby' or version=='sapphire' then
-        -- The map header lists callbacks, not their execution order. RS runs
-        -- TRANSITION before InitMap's LOAD, then RESUME during field setup.
+        or overworld.gen3EmeraldContinuing
+      if version=='ruby' or version=='sapphire' or version=='emerald'
+        or version=='firered' or version=='leafgreen' then
+        -- The header lists callbacks, not their execution order. All five
+        -- loaders run TRANSITION before InitMap's LOAD, then RESUME.
+        -- A normal Continue filters TRANSITION below and keeps LOAD/RESUME.
         entries={}
         for _,phase in ipairs{ON_TRANSITION,ON_LOAD,ON_RESUME} do
-          for _,entryScript in ipairs(onEnter) do
-            if entryScript.phase==phase then entries[#entries+1]=entryScript end
-          end
-        end
-      elseif overworld.gen3FrlgContinuing then
-        -- InitMapFromSavedGame runs LOAD, then CB2_ReturnToField resumes.
-        -- Header order is not execution order on a saved FRLG field either.
-        entries={}
-        for _,phase in ipairs{ON_LOAD,ON_RESUME} do
           for _,entryScript in ipairs(onEnter) do
             if entryScript.phase==phase then entries[#entries+1]=entryScript end
           end
