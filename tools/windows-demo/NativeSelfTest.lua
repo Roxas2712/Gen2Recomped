@@ -37,9 +37,9 @@ function M.run(check)
  check(#actual==#args,'CreateProcessW passes Unicode, empty arguments, percent signs, quotes and backslashes literally')
  local cfile=root..'/own-library.c';local dll=root..'/own-library.dll'
  assert(File.atomicWrite(cfile,'__declspec(dllexport) int ascendant_fixture_answer(void) { return 42; }\n'))
- -- Match the real import workers: their bundled UTF-8 Python host starts
- -- Clang, including its linker children. Starting Clang directly from the
- -- legacy LOVE host gives those children the host's ANSI code page instead.
+ -- Match the real import workers: bundled Python, a controlled toolchain
+ -- PATH and relative output names. LLVM's temporary-file patterns otherwise
+ -- interpret a literal percent sign in a profile folder as a placeholder.
  pipe=assert(Process.argv({assert(Backend.file('python')),'-X','utf8','-c',
   'import os,pathlib,subprocess,sys;cc,src,dst=map(pathlib.Path,sys.argv[1:]);assert src.is_file() and dst.parent==src.parent and dst.parent.is_dir(),"Native fixture paths are missing";os.environ["PATH"]=str(cc.parent)+os.pathsep+os.environ.get("PATH","");sys.exit(subprocess.run([str(cc),"-shared","-O2",src.name,"-o",dst.name],cwd=src.parent).returncode)',
   sdk..'/compiler/bin/clang.exe',cfile,dll},true))

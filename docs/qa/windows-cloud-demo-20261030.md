@@ -190,3 +190,52 @@ and rejection of truncated PE headers. Local Windows metadata (3 tests), safe
 compiled-intermediate retirement (2 tests), and package checks (7 tests) passed
 again after these changes. Final native execution and EXE reports remain the
 release gate, not these portable tests.
+
+## Qualified native Windows demo 20261030.4
+
+The final package is qualified on source
+`4d1a3efba4dde221adf321975ed068d6694f42a7`. Subsequent documentation/comment-only
+changes do not change that recorded package revision.
+
+- [Native SDK build and execution 41147503873](https://github.com/Roxas2712/Gen2Recomped/actions/runs/41147503873)
+  passed all **39 native Windows checks**, including the actual X/Y launcher
+  import/build/prepare CLI, both native CPU stacks, Vulkan/Lavapipe, non-silent
+  synthetic GBA PCM, exact frame restoration, snapshot overwrite, SRAM commit,
+  and unchanged fixture ROM bytes. Its build also passed 56 recompiler and 11
+  bridge Rust unit tests.
+- The entire native fixture directory contains **`Ömega %!`**. This exposed an
+  LLVM output-path bug: percent characters in an absolute parent directory are
+  interpreted as temporary-file placeholders. Both native builders now emit
+  relative object/DLL output names from their actual working directory. The
+  pinned 3DS compiler patch and the Pinball helper cover the production paths.
+  No user directory is renamed or copied as a workaround.
+- [Final package and EXE 41148783089](https://github.com/Roxas2712/Gen2Recomped/actions/runs/41148783089)
+  passed seven packaging guards and **16 checks in the actual fused Windows
+  EXE**. These cover wide atomic replacement/recovery, save-import backup,
+  literal Unicode/process arguments, the real bundled compiler host and native
+  DLL lookup, graphics/3DS library loading, profile discovery/preservation,
+  background public-policy HTTPS and save/profile regressions.
+- The 46 X/Y Python tests, five Windows metadata/retirement tests and seven
+  packaging tests passed locally again using a canonical owned temporary root.
+  The unchanged engine still uses the separately qualified 1,020-suite
+  stock/extended Windows component from run 41124257857.
+
+The successful archive was downloaded, its full SHA-256 checked against the
+receipt, the executed EXE digest/source matched, and the embedded native test
+report matched the SDK inventory. The host reserves 16,777,216 bytes of stack.
+
+| Artifact | Value |
+| --- | --- |
+| Windows x64 demo | `RetroRecomped-Windows-Demo-20261030.4-win64.zip` |
+| Size | 381,859,161 bytes |
+| Archive SHA-256 | `dc69e0c2b6e7ea0ea91bf07c3592a3df3377db5cf4884e20e4348f6684848e7a` |
+| Executed fused EXE SHA-256 | `d9a3717ebf88d763db646aeebf34bbdc25cfce149ac6c6fc13467afdd49a053e` |
+| Native SDK inventory SHA-256 | `8b2a3258c570510050788bab0dde865ccd3ea2db3fdb0ef495f769118f055863` |
+
+These are real native Windows execution tests with **self-authored ARM/ARM11
+programs and synthetic saves**. No player's ROM/save was uploaded to public CI
+or changed locally. A genuine Pokémon X/Y or Pinball Windows playthrough and
+real player cloud restoration on that PC remain unverified. Both final reports
+explicitly distinguish those checks from cartridge gameplay and account uploads.
+The ZIP keeps the earlier read-only profile discovery and confirmed re-import
+flow; the SDK and all its folders must stay next to the EXE.
