@@ -27,13 +27,17 @@ parser.add_argument('--driver',required=True)
 parser.add_argument('--cache-source',type=Path,help='Prior accepted import; reuse cache only when all extraction inputs match')
 parser.add_argument('--installed-profile',type=Path,help='Read-only input: clone only this edition cache, never player saves')
 parser.add_argument('--story-save-source',type=Path,help='Resume a qualified own RS/LeafGreen normal-menu checkpoint; never personal saves')
+parser.add_argument('--story-ending-save-source',type=Path,help='Resume a qualified own ordinary LeafGreen native Hall autosave; never a prepared fixture')
 parser.add_argument('--verify-story-continue',action='store_true',help="Queue the RS driver's ordinary CONTINUE verification and exit")
 parser.add_argument('--speed',type=int,default=8)
 parser.add_argument('--timeout',type=int,default=1200)
 parser.add_argument('--freeze',type=Path,help=argparse.SUPPRESS)
 parser.add_argument('--tracked-sources',type=Path,help=argparse.SUPPRESS)
 args=parser.parse_args()
+assert not (args.story_save_source and args.story_ending_save_source), 'Choose one checkpoint kind'
+assert not args.story_ending_save_source or args.edition=='leafgreen'
 driver=Path(args.driver)
+assert not args.story_ending_save_source or str(driver)=='tests/leafgreen_story_driver.lua'
 assert not driver.is_absolute() and '..'not in driver.parts and driver.suffix=='.lua'
 if args.verify_story_continue:
     assert args.story_save_source and args.edition in('ruby','sapphire')and str(driver)=='tests/rs_story_driver.lua'
@@ -109,19 +113,25 @@ elif args.installed_profile:
     assert not cache.is_symlink()and (cache/'rom-cache.complete').is_file()
     assert (cache/'rom-cache.complete').read_text().splitlines()[0].endswith(hashlib.sha1(args.rom.read_bytes()).hexdigest())
 story=None;story_save=None
-if args.story_save_source:
-    prior=args.story_save_source.resolve()
+if args.story_save_source or args.story_ending_save_source:
+    prior=(args.story_save_source or args.story_ending_save_source).resolve()
     assert args.edition in ('leafgreen','ruby','sapphire')and prior.parent==ROOT/'.local/qa'
     assert prior.name.startswith('gen2recomp-qa-'+args.edition+'-')and not prior.is_symlink()
     sv=json.loads((prior/'verification.json').read_text());sr=json.loads((prior/'result.json').read_text())
-    checkpoint=json.loads((prior/'normal-save-checkpoint.json').read_text())
+    checkpoint=json.loads((prior/('native-ending-checkpoint.json'if args.story_ending_save_source else'normal-save-checkpoint.json')).read_text())
     assert sv['identity']=='oasc-edition-qa-'+prior.name[len('gen2recomp-qa-'):]
     prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
     for path in (prior,prior_profile):qa_source(path)
     recovered_source_proof=None
     failed_tail_proof=None
     assert sv['cartridgeSHA1']==hashlib.sha1(args.rom.read_bytes()).hexdigest()
-    if args.edition in ('ruby','sapphire'):
+    if args.story_ending_save_source:
+        from frlg_story_ending_checkpoint import qualify
+        from story_frozen_sources import verify_processed_queue
+        inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
+        verify_processed_queue(json.loads((prior/'story-commands.json').read_text()),sr,
+            json.loads((prior/'story-state.json').read_text()))
+    elif args.edition in ('ruby','sapphire'):
         from rs_story_checkpoint import qualify
         inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
         if sv['status']!='pass':
@@ -225,7 +235,7 @@ receipt={'edition':args.edition,'identity':identity,'sourceCommit':qa_run(['git'
          'releaseStampPreserved':True,'compatibilityFieldsMatchSource':True,
          'cacheSource':str(previous)if previous else None,'status':'running'}
 receipt['installedCacheInput']=bool(args.installed_profile)
-if story:receipt['continuedOwnNormalStorySave']=story
+if story:receipt['continuedOwnNativeEndingStorySave'if args.story_ending_save_source else'continuedOwnNormalStorySave']=story
 (out/'verification.json').write_text(json.dumps(receipt,indent=2)+'\n')
 if args.verify_story_continue:
     # The unchanged story driver first performs all native CONTINUE checks;

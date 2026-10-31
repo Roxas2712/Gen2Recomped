@@ -2467,7 +2467,9 @@ function Game:restoreSave(loaded, recovered)
   -- (FieldTask_LoadSavedGameMap's special location)
   -- ...which is a WALK IN there, not a continue: SystemFlag_CheckCommunicationClubAccessible
   -- takes FieldMapChange_UpdateGameData + CreateObjects (ON_TRANSITION and all)
-  local specialLocation = false
+  -- FR/LG's Hall bit takes CB2_ContinueSavedGame -> WarpIntoMap. Its
+  -- Pallet destination is a fresh map entry, rather than the saved field.
+  local specialLocation = frlgHallWarp == true
   if require("src.core.GameVersion").get() == "platinum" then
     specialLocation = require("src.script.Gen4BattleTowerCommands").applySpecialLocation(loaded) and true or false
   end
