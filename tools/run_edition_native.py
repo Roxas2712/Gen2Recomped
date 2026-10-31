@@ -169,8 +169,10 @@ if args.story_save_source or args.story_ending_save_source:
             recovered_source_proof=verify_frozen_sources(prior/'engine',prior/'frozen-files.json')
             source_unchanged=True
         assert source_unchanged and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
-        failed_tail=(sv['status']=='fail'and type(sv.get('exitCode'))is int and sv['exitCode']>0
+        from story_opening_progress import stopped_at_opening_gate
+        failed_tail=((sv['status']=='fail'and type(sv.get('exitCode'))is int and sv['exitCode']>0
                      and not sv.get('stoppedOwnChildReason')and sv.get('unexpectedImporterRun')is False)
+                     or stopped_at_opening_gate(sv,(prior/'native.log').read_text(errors='replace')))
         assert sv['status']=='pass'or failed_tail or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')in
             ('native QA timeout','absolute resource-slot deadline'))
         if failed_tail:
