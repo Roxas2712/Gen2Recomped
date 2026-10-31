@@ -1,7 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 -- Birch's first opponent differs between the paired games and Emerald.
 -- Keep canonical host IDs, witnessed by the cartridge's own route data.
-local M={}
+local M={REVISION=1}
 local species={ruby='POOCHYENA',sapphire='POOCHYENA',emerald='ZIGZAGOON'}
 function M.extract(edition,maps,encounters)
  local wanted=species[edition];if not wanted then return nil,'unsupported rescue edition'end

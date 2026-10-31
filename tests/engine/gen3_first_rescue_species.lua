@@ -14,4 +14,24 @@ end
 T.eq(M.extract('firered',maps,encounters),nil)
 T.eq(M.extract('emerald',{},encounters),nil)
 T.eq(M.extract('emerald',{MAP_G00_N16={objects={{localId=4},{localId=4}}}},encounters),nil)
+local Importer=require('src.import.RomImporter')
+local V=require('src.core.GameVersion')
+local markerFor
+for i=1,100 do
+ local name,value=debug.getupvalue(Importer.readyReport,i)
+ if not name then break end
+ if name=='markerFor'then markerFor=value;break end
+end
+T.eq(type(markerFor),'function','Inspect actual import admission without mounting a cache')
+for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
+ local marker=markerFor(edition)
+ T.check(marker:find('gba-pickup-v1:',1,true)~=nil,'Completed pre-Pickup imports must rebuild: '..edition)
+ T.eq(marker:find('emerald-first-rescue-v1:',1,true)~=nil,edition=='emerald','Only Emerald had the wrong scripted rescue opponent')
+ T.eq(marker:sub(-40),V.info(edition).sha1,'Retain exact owned-cartridge admission')
+end
+for _,edition in ipairs{'red','gold','platinum','black'}do
+ local marker=markerFor(edition)
+ T.eq(marker:find('gba-pickup-v1:',1,true),nil,'Other generation cache stays valid: '..edition)
+ T.eq(marker:find('emerald-first-rescue-v1:',1,true),nil)
+end
 T.finish('Edition-correct native Hoenn rescue species and level, with own-route evidence')

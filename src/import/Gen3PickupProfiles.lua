@@ -8,6 +8,6 @@ local rows={
  emerald={sha1='f3ae088181bf583e55daf962a92bb46f4f1d07b7',style='level',common=0x31C440,rare=0x31C464,cuts=0x31C47A,
   pyramid50=0x61379C,pyramidOpen=0x61392C,pyramidCuts=0x613F86},
 }
-return{get=function(edition,sha1)
+return{REVISION=1,get=function(edition,sha1)
  local p=rows[edition];if p and p.sha1==sha1 then return p end
 end}
