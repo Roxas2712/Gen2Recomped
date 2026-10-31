@@ -2,6 +2,7 @@
 from pathlib import Path
 import argparse,hashlib,json,os,sys,time
 from qa_storage import qa_source,qa_run,qa_popen
+from story_published_receipt import published_receipt
 ROOT=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('run',type=Path);p.add_argument('--commands',default='[]')
@@ -69,12 +70,11 @@ def submit(commands,emit=True):
     deadline=time.monotonic()+a.wait
     while True:
         state=json.loads((run/'story-state.json').read_text())
-        report=json.loads((run/'result.json').read_text())
-        # The driver publishes its snapshot just before appending the matching
-        # input receipt. Wait for both: otherwise the previous command's
-        # outcome can be returned alongside the next command's field state.
-        recorded=report['commands'][-1]['seq']if report['commands']else 0
-        if state['seq']>=len(queue)and(recorded>=len(queue)or report['status']=='pass'):break
+        receipt=published_receipt(lambda name:json.loads((run/name).read_text()),state,queue,verification['identity'])
+        # A new snapshot may precede its full ledger row. New drivers publish
+        # a tiny receipt after that atomic write; older drivers retain the
+        # report check. Neither path may return the previous input's outcome.
+        if state['seq']>=len(queue)and(receipt['seq']>=len(queue)or receipt['passed']):break
         if time.monotonic()>=deadline:break
         if 'driver error:'in (run/'native.log').read_text(errors='replace'):raise SystemExit('Driver failed; inspect native.log')
         time.sleep(.1)
@@ -108,7 +108,7 @@ def submit(commands,emit=True):
         if state.get('map'):
             state['map'].pop('signs',None)
             if a.interactive:state['map'].pop('walkable',None)
-    report=json.loads((run/'result.json').read_text());state['lastOutcome']=report['commands'][-1]['outcome']if report['commands']else None
+    state['lastOutcome']=receipt['outcome']
     state['queuedCommands']=len(queue)
     if emit:print(json.dumps(state,ensure_ascii=False),flush=True)
     return state
