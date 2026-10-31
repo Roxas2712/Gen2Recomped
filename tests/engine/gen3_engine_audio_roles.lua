@@ -4,7 +4,7 @@ local T=require('tests.modkit');local M=require('src.import.Gen3EngineAudioRoles
 local S=require('src.core.SaveSerializer')
 local function fixture(edition)
  local kanto=edition=='firered'or edition=='leafgreen';local level=kanto and 257 or 367
- local ids={MUS_LEVEL_UP=level,SE_SAVE=55,SE_FLEE=17,SE_WIN_OPEN=6,SE_SELECT=5,SE_SHOP=95}
+ local ids={MUS_LEVEL_UP=level,SE_SAVE=kanto and 48 or 55,SE_FLEE=17,SE_WIN_OPEN=6,SE_SELECT=5,SE_SHOP=kanto and 248 or 95}
  local key=kanto and'gen3FrlgHall'or edition=='emerald'and'gen3EmeraldPresentation'or'gen3RsPresentation'
  local fanfare={index=level,song=('SONG_%03X'):format(level),frames=80}
  local constants={[key]={format=1,version=edition,songIds=ids},gen3Fanfares={fanfares={LEVEL_UP=fanfare}}}
@@ -17,7 +17,8 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
  local proof=assert(M.bind(edition,c,a));T.eq(proof.edition,edition);T.eq(a.sfx.custom,custom)
  T.eq(a.sfx.Level_Up.m4a,(edition=='firered'or edition=='leafgreen')and 257 or 367,'A Kanto level-up cannot inherit Hoenn numbering')
  T.eq(a.sfx.Level_Up.fanfare,'LEVEL_UP','Native level-up ducks and resumes the music')
- for role,index in pairs{Save=55,Run=17,Start_Menu=6,Select=5,Purchase=95}do
+ local kanto=edition=='firered'or edition=='leafgreen'
+ for role,index in pairs{Save=kanto and 48 or 55,Run=17,Start_Menu=6,Select=5,Purchase=kanto and 248 or 95}do
   T.eq(a.sfx[role].m4a,index);T.eq(a.sfx[role].fanfare,nil,'Short effects must not interrupt music')
  end
  for _,change in ipairs{'wrong-edition','wrong-fanfare','wrong-label','missing-effect','empty-program','wrong-index'}do
