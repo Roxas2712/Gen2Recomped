@@ -587,6 +587,12 @@ end
 
 -- GBA m4a fades have sixteen steps, each held for `speed` frames.
 function Music.fadeOutM4a(speed)
+  -- A title can use this facade after the field has started the native
+  -- sequencer. Its stream is serviced by Gen3Music, so the shared Source
+  -- fade below would never advance or release the song the title awaits.
+  if nativeBgm and state.nativeStream and require("src.core.GameVersion").isGen3() then
+    return nativeBgm:fadeOutBgm(math.max(1, tonumber(speed) or 4))
+  end
   Music.fadeOut(math.max(1, tonumber(speed) or 4))
   if state.fade then state.fade.level, state.fade.fullLevel = 16, 16 end
 end
