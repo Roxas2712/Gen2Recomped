@@ -169,8 +169,10 @@ if args.story_save_source or args.story_ending_save_source:
             recovered_source_proof=verify_frozen_sources(prior/'engine',prior/'frozen-files.json')
             source_unchanged=True
         assert source_unchanged and sv['externalSaveRecoveryDisabled']and sv['allModsDisabled']
-        failed_tail=(sv['status']=='fail'and type(sv.get('exitCode'))is int and sv['exitCode']>0
+        from story_opening_progress import stopped_at_opening_gate
+        failed_tail=((sv['status']=='fail'and type(sv.get('exitCode'))is int and sv['exitCode']>0
                      and not sv.get('stoppedOwnChildReason')and sv.get('unexpectedImporterRun')is False)
+                     or stopped_at_opening_gate(sv,(prior/'native.log').read_text(errors='replace')))
         assert sv['status']=='pass'or failed_tail or(sv['status']=='fail'and sv.get('stoppedOwnChildReason')in
             ('native QA timeout','absolute resource-slot deadline'))
         if failed_tail:
@@ -186,7 +188,8 @@ if args.story_save_source or args.story_ending_save_source:
         assert checkpoint['producedThroughNormalSaveMenu']and checkpoint['personalSave']is False
         assert checkpoint['saveRelativePath']=='profiles/guest/save_'+args.edition+'.lua'or re.fullmatch(r'profiles/guest/saves/'+args.edition+r'/slot[1-9][0-9]*\.lua',checkpoint['saveRelativePath'])
         assert all(sr[k]for k in ('continuousFromNewGame','noTeleport','noPartyInjection','noDirectStoryFlagEdits'))
-        assert sr['starter']['level']==5 and sr['parcelObtained']and sr['parcelReturned']and sr['pokedexObtained']
+        from story_opening_progress import inherited_progress
+        opening_progress=inherited_progress(sr,verified_failed_tail=bool(failed_tail_proof))
         rows=sr['commands'];first,last=checkpoint['saveMenuCommandRange']
         assert rows[first-1]['seq']==first and rows[last-1]['seq']==last
         assert rows[first-1]['before']['top']['source']=='src/ui/Gen3StartMenu.lua'
@@ -198,11 +201,11 @@ if args.story_save_source or args.story_ending_save_source:
                    and r['before']['top'].get('index')==1
                    and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in r['before']['stack'])
                    for r in rows[first-1:last]),'Checkpoint needs an actual YES in the normal SAVE flow'
-        inherited={k:sr[k]for k in ('starter','parcelObtained','parcelReturned','pokedexObtained')}
+        inherited=opening_progress
         # A later ordinary playthrough may have consumed Brock's TM. Retain
         # only the receipt from the checked prior input trace/checkpoint.
         inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or
-            checkpoint['snapshotAfterSaveCommand'].get('inventory',{}).get('TM39',0)>0)
+            (checkpoint['snapshotAfterSaveCommand'].get('inventory')or{}).get('TM39',0)>0)
     assert prior_profile.resolve()==prior_profile
     story_save=prior_profile/checkpoint['saveRelativePath'];assert not story_save.is_symlink()
     assert digest(story_save)==checkpoint['sha256']
