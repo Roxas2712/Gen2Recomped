@@ -266,6 +266,7 @@ return function(game)
         print('PASS_LEAFGREEN_CONTINUOUS_OPENING');love.event.quit(0);return
       else error('Unsupported ordinary-input story command: '..tostring(command.op))end
       inputLog=nil;seq=seq+1;busy=false;record.after=snapshot(false);report.commands[#report.commands+1]=record;write('result.json',report)
+      write('story-published.json',{format=1,identity=love.filesystem.getIdentity(),seq=seq,outcome=record.outcome})
     end
   end
 end
