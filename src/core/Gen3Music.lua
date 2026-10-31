@@ -180,7 +180,9 @@ function NativeMusic:update(data)
     if same then
       self:refresh()
     end
-    if u >= 1 then
+    -- Repeated 1/60 additions can leave an exact 160-frame fade a few
+    -- floating-point ulps short of its duration. End on that native tick.
+    if u >= 1 or math.abs(f.t - f.dur) < 1e-9 then
       if same then
         self.host.stop()
         self.current = nil
