@@ -138,10 +138,24 @@ return function(game)
   waitFor(function()return getmetatable(game.stack:top())==Title and game.stack:top().phase=='run'end,1400)
   press('start',150);assert(getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu'))
   if lineage then
-    assert(game.stack:top().items[1].key=='continue');press('a',120)
-    local w=assert(game.overworld)
     local ending=lineage.checkpoint.saveKind=='native-frlg-hall-of-fame'
     local expected=ending and lineage.checkpoint.snapshotAfterEnding or lineage.checkpoint.snapshotAfterSaveCommand
+    local adoptedFlags
+    if ending then
+      -- A fresh Pallet entry can immediately start Oak's postgame scene.
+      -- Observe the actual adopted save before those original scripts run;
+      -- do not ignore arbitrary permanent-flag changes at a later frame.
+      local adopt=game.adoptSave
+      local function packed(...)return{n=select('#',...),...}end
+      game.adoptSave=function(self,save,...)
+        self.adoptSave=adopt
+        local result=packed(adopt(self,save,...));adoptedFlags={}
+        for k,v in pairs(save.flags)do adoptedFlags[k]=v end
+        return unpack(result,1,result.n)
+      end
+    end
+    assert(game.stack:top().items[1].key=='continue');press('a',120)
+    local w=assert(game.overworld)
     if ending then
       local home=assert(game.data.constants.gen3HealLocations[1])
       assert(home.index==1 and home.outdoor and game.stack:top()==w and w.map.id==home.map)
@@ -162,10 +176,14 @@ return function(game)
     assert(Serialize.encode(game.save.inventory)==Serialize.encode(expected.inventory),'Continue changed inventory')
     for k,v in pairs(expected.flags)do
       local id=tonumber(k:match('^FLAG_G3_(%x+)$')or'',16)
-      if ending and id and(id<=0x1F or id==0x805)then
-        assert(game.save.flags[k]~=true,'Hall warp kept temporary field flag '..k)
+      if ending then
+        assert(adoptedFlags and adoptedFlags[k]==v,'Hall load lost saved flag before map scripts '..k)
+        if id and(id<=0x1F or id==0x805)then
+          assert(game.save.flags[k]~=true,'Hall warp kept temporary field flag '..k)
+        end
       else assert(game.save.flags[k]==v,'Continue lost story flag '..k)end
     end
+    if ending then report.hallSavedFlagsCheckedBeforeNativeScene=true end
     report.continuedThroughUI=true;report.checkpointPartyFlagsAndInventoryPreserved=true
     shot(ending and'story-continued-native-hall-checkpoint'or'story-continued-normal-checkpoint');snapshot()
   else
