@@ -15,6 +15,15 @@ local function fixture(version,mode)
   bytes[at+12]=(id==2 or id==9)and 128 or 0;bytes[at+13]=(id==1 or id==8)and 2 or 1
  end
  words[1024+12*64+2]=100 -- the original Green VS Seeker row shares Red's palette
+ for gender,id in ipairs{3,10}do
+  local anims=2048+gender*256;local list=anims+64
+  words[1024+id*64+24]=anims+0x08000000;words[anims]=list+0x08000000
+  for i=0,4 do words[list+i*4]=i;words[list+i*4+2]=i==4 and 8 or 4 end
+  words[list+20]=0xFFFF
+  if mode=='bad-animation'then words[list+8]=8 end
+  if mode=='bad-duration'then words[list+2]=5 end
+  if mode=='bad-end'then words[list+20]=0xFFFE end
+ end
  if mode=='bad-bike'then bytes[1024+8*64+13]=1 end
  if mode=='bad-ride'then bytes[1024+9*64+12]=0 end
  if mode=='bad-palette'then words[1024+10*64+2]=100 end
@@ -37,7 +46,12 @@ for _,version in ipairs{'firered','leafgreen'}do
   T.eq(record[key],('SPRITE_G3_%03d'):format(id),'FRLG uses its own six-state gender table')
  end
  T.eq(record.boyUnderwater,nil,'the fishing state cannot become Hoenn diving')
- for _,mode in ipairs{'missing','ambiguous','bad-bike','bad-ride','bad-palette','bad-dimensions'}do
+ for _,gender in ipairs{'boy','girl','male','female'}do
+ T.eq(M.poseDuration(record,gender),24,'the original pose completes before the band starts')
+ for age=0,64 do
+  T.eq(M.poseFrame(record,gender,age),math.min(4,math.floor(age/4)),'native five-frame timeline holds its last field pose')
+ end end
+ for _,mode in ipairs{'missing','ambiguous','bad-bike','bad-ride','bad-palette','bad-dimensions','bad-animation','bad-duration','bad-end'}do
   T.raises(function()M.avatars(fixture(version,mode))end)
  end
  local expected=version=='firered'and 0x3A0010 or 0x39FFF0
@@ -67,4 +81,6 @@ for _,version in ipairs{'firered','leafgreen'}do
  Fs.read,Fs.exists=read,exists
 end
 for _,version in ipairs{'ruby','sapphire','emerald','red','crystal'}do T.eq(#M.missing(version),0)end
+T.eq(M.poseFrame(nil,'boy',100),nil,'unimported/other-edition timelines preserve the existing runtime path')
+T.eq(M.poseDuration(nil,'boy'),nil)
 T.finish('FRLG native gender forms, edition-specific surf extraction and completed-cache admission')

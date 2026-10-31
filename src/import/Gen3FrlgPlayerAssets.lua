@@ -6,11 +6,39 @@ local ids={boy=0,girl=7,boyBike=1,girlBike=8,boySurf=2,girlSurf=9,
  boyFieldMove=3,girlFieldMove=10}
 -- sPlayerAvatarGfxIds: normal, bike, ride, field move, fish, VS Seeker.
 local signature=string.char(0,7,1,8,2,9,3,10,4,11,5,12)
+function M.fieldMoveTimeline(rom,info)
+ local anims=assert(rom:pointer(info+24));local at=assert(rom:pointer(anims))
+ local rows={}
+ for i=0,4 do
+  local frame,duration=rom:u16(at+i*4),rom:u16(at+i*4+2)
+  assert(frame==i and duration==(i==4 and 8 or 4),'Invalid native FRLG field-move animation')
+  rows[#rows+1]={frame=frame,ticks=duration}
+ end
+ assert(rom:u16(at+20)==0xFFFF,'Native FRLG field-move animation does not end')
+ return rows,at
+end
+function M.poseFrame(record,gender,age)
+ local all=record and record.fieldMoveAnims
+ local rows=all and all[(gender=='girl'or gender=='female')and'girl'or'boy']
+ if not rows then return nil end
+ local elapsed=0
+ for _,row in ipairs(rows)do
+  elapsed=elapsed+row.ticks
+  if age<elapsed then return row.frame end
+ end
+ return rows[#rows].frame
+end
+function M.poseDuration(record,gender)
+ local rows=record and record.fieldMoveAnims and record.fieldMoveAnims[(gender=='girl'or gender=='female')and'girl'or'boy']
+ if not rows then return nil end
+ local ticks=0;for _,row in ipairs(rows)do ticks=ticks+row.ticks end;return ticks
+end
 function M.avatars(x)
  if not supported[x.version]then return nil end
  local rom=x.rom;local first=rom.data:find(signature,1,true)
  assert(first and not rom.data:find(signature,first+1,true),'Missing or ambiguous native FRLG avatar states')
  local tableAt=assert(x:symbol('gObjectEventGraphicsInfoPointers'))
+ local programs,programSources={},{}
  for gender=0,1 do
   local palette
   for state=0,5 do
@@ -24,9 +52,14 @@ function M.avatars(x)
    if state<5 then assert(tag==palette,'Native FRLG avatar palette disagrees with gender')end
    if state==1 then assert(rom:u8(at+13)==2,'Native FRLG bicycle lacks tyre tracks')end
    if state==2 then assert(rom:u8(at+12)>=128,'Native FRLG ride lacks reflection override')end
+   if state==3 then
+    local who=gender==0 and'boy'or'girl'
+    programs[who],programSources[who]=M.fieldMoveTimeline(rom,at)
+   end
   end
  end
- local record={format=1,version=x.version,avatarTable=first-1,graphicsTable=tableAt,
+ local record={format=2,version=x.version,avatarTable=first-1,graphicsTable=tableAt,
+  fieldMoveAnims=programs,fieldMoveAnimSources=programSources,
   source=('ROM:sPlayerAvatarGfxIds %07X, FRLG normal/bike/ride/field-move states'):format(first-1)}
  for key,id in pairs(ids)do record[key]=('SPRITE_G3_%03d'):format(id)end
  return record
@@ -48,9 +81,16 @@ function M.surfPalette(x,used)
 end
 function M.valid(record,blob,version)
  if not supported[version]then return true end
- if not(type(record)=='table'and record.format==1 and record.version==version
+ if not(type(record)=='table'and record.format==2 and record.version==version
   and type(record.avatarTable)=='number'and type(record.graphicsTable)=='number')then return false end
  for key,id in pairs(ids)do if record[key]~=('SPRITE_G3_%03d'):format(id)then return false end end
+ for _,who in ipairs{'boy','girl'}do
+  local rows=record.fieldMoveAnims and record.fieldMoveAnims[who]
+  if type(rows)~='table'or#rows~=5 then return false end
+  for i,row in ipairs(rows)do
+   if type(row)~='table'or row.frame~=i-1 or row.ticks~=(i==5 and 8 or 4)then return false end
+  end
+ end
  return type(blob)=='table'and blob.frames==6 and blob.frameWidth==32 and blob.frameHeight==32
   and blob.paletteSource=='FRLG player OBJ palette slot 0'
   and blob.image=='assets/generated/overworld/g3_surf_blob.png'
