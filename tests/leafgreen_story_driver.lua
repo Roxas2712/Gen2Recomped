@@ -98,6 +98,16 @@ return function(game)
       end;rows[#rows+1]=table.concat(row)end
       state.map.walkable=rows;state.map.warps=map.def.warps;state.map.connections=map.def.connections
       state.map.coordEvents=map.def.coordEvents;state.map.signs=map.def.signs
+      -- Read the live metatile after original scripts and menu returns.
+      -- Base imported terrain alone cannot diagnose a script-opened door.
+      state.map.warpCells={}
+      for _,warp in ipairs(map.def.warps or{})do
+        state.map.warpCells[#state.map.warpCells+1]={x=warp.x,y=warp.y,
+          block=map:blockAt(warp.x,warp.y),behavior=map:cellBehaviour(warp.x,warp.y),
+          sourceBehavior=map:sourceBehaviourAt(warp.x,warp.y),
+          arrival=map:isWarpTileCell(warp.x,warp.y),step=map:isStepWarpCell(warp.x,warp.y),
+          arrow=map:arrowWarpDirAt(warp.x,warp.y)}
+      end
       if map.id~=lastMap then
         lastMap=map.id;report.maps[#report.maps+1]={id=map.id,x=world.player.cellX,y=world.player.cellY,frame=U.frame()}
       end

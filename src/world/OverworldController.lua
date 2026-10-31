@@ -1287,6 +1287,15 @@ end
 -- of a battle on that map (home/trainers.asm EndTrainerBattle), so the
 -- gate opens with SFX_GO_INSIDE the moment the last guard falls (#372).
 function OverworldState:stampClosedDoors()
+  -- Imported FRLG map scripts set the actual door metatile and permissions.
+  -- The legacy inferred table only knows a passable replacement block; its
+  -- afterBattle stamp can overwrite the scripted entrance with ordinary
+  -- floor (FRLG League: 0x296 becomes inert 0x293 after a victory).
+  local native = Game.data and Game.data.map_scripts
+  if GameVersion.isFRLG() and native and native.source == "RomExtractorGen3"
+      and self.map and MapIdentity.lookup(Game.data, native.maps, self.map.id) then
+    return
+  end
   local closedDoors = FieldDefaults.fieldValue(Game.data, "cardKeyDoors",
                                                "closedDoors")
   local floorDoors = self.map and MapIdentity.lookup(Game.data, closedDoors, self.map.id)
