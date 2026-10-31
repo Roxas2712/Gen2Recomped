@@ -984,6 +984,7 @@ local function contributionFor(data, mapId, entry, mapDef)
       for _, g in ipairs(onFrame) do g.armed = nil end
       local entries=onEnter
       local version=require('src.core.GameVersion').get()
+      local savedContinue = overworld.gen3RsContinuing or overworld.gen3FrlgContinuing
       if version=='ruby' or version=='sapphire' then
         -- The map header lists callbacks, not their execution order. RS runs
         -- TRANSITION before InitMap's LOAD, then RESUME during field setup.
@@ -997,11 +998,11 @@ local function contributionFor(data, mapId, entry, mapDef)
       for _, entryScript in ipairs(entries) do
         -- RS InitMapFromSavedGame runs ON_LOAD; CB2_ReturnToField runs
         -- ON_RESUME. Neither is a fresh-map ON_TRANSITION.
-        if not (overworld.gen3RsContinuing and entryScript.transition) then
+        if not (savedContinue and entryScript.transition) then
         queue(overworld, entryScript.rows, {mapId=mapId,gen3MapSetup=entryScript.setup})
         end
       end
-      for _, g in ipairs(overworld.gen3RsContinuing and {} or onWarpIn) do
+      for _, g in ipairs(savedContinue and {} or onWarpIn) do
         if Gen3Commands.getVar(game.save, g.var) == g.value then
           queue(overworld, g.rows, { mapId = mapId })
           break

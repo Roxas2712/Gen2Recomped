@@ -1344,6 +1344,11 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   local version = GameVersion.get()
   self.gen3RsContinuing = ((version == "ruby" or version == "sapphire")
     and opts and opts.via == "boot" and self.continuingSave) and true or nil
+  -- FRLG's CB2_ContinueSavedGame also restores the saved field: it runs
+  -- InitMapFromSavedGame, not LoadMapFromWarp/ClearTempFieldEventData.
+  self.gen3FrlgContinuing = (GameVersion.isFRLG() and opts and opts.via == "boot"
+    and self.continuingSave) and true or nil
+  local gen3Continuing = self.gen3RsContinuing or self.gen3FrlgContinuing
   self.continuingSave = nil
   -- Clay's stacked mine (Gen5DriftveilGym): its level rule hooks on at entry
   local liftDef = Game and Game.data and Game.data.maps and Game.data.maps[mapId]
@@ -1768,6 +1773,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- more visit -- which for this report is the visit the player is in.
   if GameVersion.isGen3() and Game and Game.save
      and Game.save.gen3ObjectHomes and not (opts and opts.checkpoint)
+     and not self.gen3FrlgContinuing
      and (fromMapId ~= mapId or (opts and opts.via == "boot")) then
     Game.save.gen3ObjectHomes[mapId] = nil
   end
@@ -1815,7 +1821,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     -- ...and Gen 3's, which is the same idea for the same reason: a
     -- `removeobject` with no event flag behind it lasts as long as the map
     -- stays loaded and no longer.
-    if not (GameVersion.isGen3() and fromMapId == mapId
+    if not (self.gen3FrlgContinuing or GameVersion.isGen3() and fromMapId == mapId
             and not (opts and opts.via == "boot")) then
       Game.save.gen3SessionObjects = nil
     end
@@ -2050,7 +2056,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   self.gen3MapWeatherPending = GameVersion.isGen3() or nil
 
   -- ...AND THE SCRATCH FLAGS GO, on the same load.
-  if not self.gen3RsContinuing then self:clearGen3TempFlags() end
+  if not gen3Continuing then self:clearGen3TempFlags() end
   -- ...and so does the ice.
   --
   -- The gym's ON_TRANSITION writes its step counter back to 1 on a fresh
@@ -2113,7 +2119,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- is asked anything -- the map-entered listeners, the onEnter chain and the
   -- frame table all read them.  ClearTempFieldEventData (0x0009D344) sits at
   -- exactly this point in both of the cartridge's map-load paths.
-  if GameVersion.isGen3() and Game and Game.save and not self.gen3RsContinuing then
+  if GameVersion.isGen3() and Game and Game.save and not gen3Continuing then
     pcall(function()
       require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)
     end)
