@@ -1879,9 +1879,11 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- Fresh maps must evaluate their objects against fresh scratch state.
   -- Clearing TEMP flags after this spawn pass hid the next room's boulder
   -- when a rock in the previous room used the same flag. Saved fields and
-  -- quiet checkpoint reconstruction keep their existing removals instead.
+  -- quiet checkpoint reconstruction and same-map graphics reloads keep their
+  -- existing removals instead.
   if GameVersion.isGen3() and Game and Game.save and not gen3Continuing
-     and not (opts and opts.checkpoint) then
+     and not (opts and (opts.checkpoint
+       or opts.via == "reload" and fromMapId == mapId)) then
     self:clearGen3TempFlags()
     pcall(function()
       require("src.script.Gen3Commands").clearTempFieldEventData(Game.save)

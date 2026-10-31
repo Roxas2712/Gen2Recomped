@@ -6,7 +6,7 @@ local copy=require('src.mods.Merge').deepCopy
 local encode=require('src.core.SaveSerializer').encode
 
 for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
- for _,mode in ipairs{'warp','connection','continue','checkpoint'}do
+ for _,mode in ipairs{'warp','connection','continue','checkpoint','reload','reload-change'}do
   local f=Fixture.boot(edition,3);local g,w=f.game,f.world
   local id='OWNED_SCRATCH_ENTRY_'..edition..'_'..mode
   local def=copy(g.data.maps.FIX_TOWN);def.id=id;def.connections={};def.warps={}
@@ -22,10 +22,15 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   g.save.flags.FLAG_G3_0013=true;g.save.flags.FLAG_G3_0354=true
   g.save.gen3Vars={[0x4008]=48,[0x4064]=29}
   local party,inventory=encode(g.save.party),encode(g.save.inventory)
-  local saved=mode=='continue'or mode=='checkpoint'
+  local saved=mode=='continue'or mode=='checkpoint'or mode=='reload'
   if mode=='continue'then w.continuingSave=true end
-  w:setMap(id,2,3,'down',{via=mode=='continue'and'boot'or mode,
-    seamless=mode=='connection',checkpoint=mode=='checkpoint'})
+  if mode=='reload'then
+   w:setMap(id,2,3,'down',{via='restore',checkpoint=true})
+   w:reloadMap(id,'owned graphics reload')
+  else
+   w:setMap(id,2,3,'down',{via=mode=='continue'and'boot'or mode=='reload-change'and'reload'or mode,
+     seamless=mode=='connection',checkpoint=mode=='checkpoint'})
+  end
   local live={}
   for _,npc in ipairs(w.npcs)do live[npc.def.localId]=npc end
   T.eq(live[3]~=nil,not saved,edition..' '..mode..': the new room evaluates its own cleared TEMP flag before spawning')
