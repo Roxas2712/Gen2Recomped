@@ -14,6 +14,14 @@ return function(game)
  local report={edition=edition,status='running',preparedFixture=true,continuousStory=false,captures={},gpuPixelChecks=0}
  local function persist()local f=assert(io.open(out..'/result.json','w'));f:write(J.encode(report));f:close()end
  local function press(k,n)game.input:overlayPressed(k);U.wait(1);game.input:overlayReleased(k);U.wait(n or 30)end
+ local function step(world,k,n)
+  local map,x,y=world.map.id,world.player.cellX,world.player.cellY
+  press(k,30)
+  -- A released d-pad's first tap may only turn. Observe that result before
+  -- giving the next ordinary press; never write facing or position.
+  if world.map.id==map and world.player.cellX==x and world.player.cellY==y then press(k,n or 30)
+  else U.wait(n or 30)end
+ end
  local function shot(name)
   local raw,rng=S.encode(game.save),love.math.getRandomState();local top=game.stack:top()
   assert(require('src.render.GraphicsScope').call(top.draw,top))
@@ -52,13 +60,13 @@ return function(game)
  if V.isFRLG()then
   U.teleport(game,'MAP_G01_N51',10,19,'down');U.wait(30);local world=game.stack:top()
   assert(world.map:sourceBehaviourAt(10,20)==0x67 and world.map:warpPadOrHoleAt(10,20)=='pad')
-  press('down',160);assert(world.map.id=='MAP_G01_N55')
+  step(world,'down',160);assert(world.map.id=='MAP_G01_N55')
   assert(world.player.cellX==22 and world.player.cellY==18,'Native Silph pad auto-stepped off its arrival')
   shot('native-silph-cross-floor-pad-arrival')
-  press('left',30);assert(world.player.cellX==21 and world.player.cellY==18)
-  press('right',160);assert(world.map.id=='MAP_G01_N51')
+  step(world,'left',30);assert(world.player.cellX==21 and world.player.cellY==18)
+  step(world,'right',160);assert(world.map.id=='MAP_G01_N51')
   assert(world.player.cellX==10 and world.player.cellY==20,'Return pad arrival displaced the player')
-  press('up',30);assert(world.player.cellX==10 and world.player.cellY==19,'Native north exit from pad failed')
+  step(world,'up',30);assert(world.player.cellX==10 and world.player.cellY==19,'Native north exit from pad failed')
   report.nativeCrossFloorTeleporter=true
   local party=require('src.ui.Gen3PartyMenu').new(game,{});game.stack:push(party);U.wait(30);press('a',30)
   local fields={};for _,row in ipairs(assert(party.submenu))do if row.action=='field'then fields[#fields+1]=row.move end end
