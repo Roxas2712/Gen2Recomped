@@ -984,6 +984,7 @@ local function contributionFor(data, mapId, entry, mapDef)
       for _, g in ipairs(onFrame) do g.armed = nil end
       local entries=onEnter
       local version=require('src.core.GameVersion').get()
+      local savedContinue = overworld.gen3RsContinuing or overworld.gen3FrlgContinuing
       if version=='ruby' or version=='sapphire' then
         -- The map header lists callbacks, not their execution order. RS runs
         -- TRANSITION before InitMap's LOAD, then RESUME during field setup.
@@ -993,15 +994,24 @@ local function contributionFor(data, mapId, entry, mapDef)
             if entryScript.phase==phase then entries[#entries+1]=entryScript end
           end
         end
+      elseif overworld.gen3FrlgContinuing then
+        -- InitMapFromSavedGame runs LOAD, then CB2_ReturnToField resumes.
+        -- Header order is not execution order on a saved FRLG field either.
+        entries={}
+        for _,phase in ipairs{ON_LOAD,ON_RESUME} do
+          for _,entryScript in ipairs(onEnter) do
+            if entryScript.phase==phase then entries[#entries+1]=entryScript end
+          end
+        end
       end
       for _, entryScript in ipairs(entries) do
         -- RS InitMapFromSavedGame runs ON_LOAD; CB2_ReturnToField runs
         -- ON_RESUME. Neither is a fresh-map ON_TRANSITION.
-        if not (overworld.gen3RsContinuing and entryScript.transition) then
+        if not (savedContinue and entryScript.transition) then
         queue(overworld, entryScript.rows, {mapId=mapId,gen3MapSetup=entryScript.setup})
         end
       end
-      for _, g in ipairs(overworld.gen3RsContinuing and {} or onWarpIn) do
+      for _, g in ipairs(savedContinue and {} or onWarpIn) do
         if Gen3Commands.getVar(game.save, g.var) == g.value then
           queue(overworld, g.rows, { mapId = mapId })
           break
