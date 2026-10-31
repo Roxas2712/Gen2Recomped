@@ -186,7 +186,8 @@ if args.story_save_source or args.story_ending_save_source:
         assert checkpoint['producedThroughNormalSaveMenu']and checkpoint['personalSave']is False
         assert checkpoint['saveRelativePath']=='profiles/guest/save_'+args.edition+'.lua'or re.fullmatch(r'profiles/guest/saves/'+args.edition+r'/slot[1-9][0-9]*\.lua',checkpoint['saveRelativePath'])
         assert all(sr[k]for k in ('continuousFromNewGame','noTeleport','noPartyInjection','noDirectStoryFlagEdits'))
-        assert sr['starter']['level']==5 and sr['parcelObtained']and sr['parcelReturned']and sr['pokedexObtained']
+        from story_opening_progress import inherited_progress
+        opening_progress=inherited_progress(sr,verified_failed_tail=bool(failed_tail_proof))
         rows=sr['commands'];first,last=checkpoint['saveMenuCommandRange']
         assert rows[first-1]['seq']==first and rows[last-1]['seq']==last
         assert rows[first-1]['before']['top']['source']=='src/ui/Gen3StartMenu.lua'
@@ -198,7 +199,7 @@ if args.story_save_source or args.story_ending_save_source:
                    and r['before']['top'].get('index')==1
                    and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in r['before']['stack'])
                    for r in rows[first-1:last]),'Checkpoint needs an actual YES in the normal SAVE flow'
-        inherited={k:sr[k]for k in ('starter','parcelObtained','parcelReturned','pokedexObtained')}
+        inherited=opening_progress
         # A later ordinary playthrough may have consumed Brock's TM. Retain
         # only the receipt from the checked prior input trace/checkpoint.
         inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or

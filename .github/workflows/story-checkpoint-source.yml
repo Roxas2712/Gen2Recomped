@@ -7,6 +7,8 @@ on:
       - 'tools/run_edition_native.py'
       - 'tests/test_story_frozen_sources.py'
       - 'tools/story_save_operator.py'
+      - 'tools/story_opening_progress.py'
+      - 'tests/test_story_opening_progress.py'
       - 'tools/control_story_native.py'
       - 'tests/test_story_save_operator.py'
       - 'tests/leafgreen_story_driver.lua'

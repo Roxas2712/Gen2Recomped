@@ -25,7 +25,8 @@ def main():
     qa_storage._storage=qa_storage.Storage(ROOT)
     atexit.register(qa_storage._storage.close)
     for source in (ROOT,Path(__file__),Path(sys.executable),ROOT/'tests/test_story_frozen_sources.py',ROOT/'tools/story_frozen_sources.py',
-                   ROOT/'tests/test_story_save_operator.py',ROOT/'tools/story_save_operator.py'):
+                   ROOT/'tests/test_story_save_operator.py',ROOT/'tools/story_save_operator.py',
+                   ROOT/'tests/test_story_opening_progress.py',ROOT/'tools/story_opening_progress.py'):
         qa_storage.qa_source(source)
     out=ROOT/'.local/qa'/('story-source-checks-'+datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f'))
     qa_storage.qa_cache(out);out.mkdir(parents=True)
