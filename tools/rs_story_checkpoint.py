@@ -55,7 +55,7 @@ def is_save_yes(state):
             (top.get('source')=='src/ui/Gen3RsSaveMenu.lua'and top.get('nativeSaveKind')=='rs'
              and top.get('phase')in('confirm','overwrite')))
     return choice and top.get('index')==1 and any(
-        s.get('source')=='src/ui/Gen3StartMenu.lua'for s in state['stack'])
+        s.get('source')=='src/ui/Gen3StartMenu.lua'for s in state.get('stack',[]))
 
 def check_saved_tail(rows, confirmed, last):
     """A receipt's final field position must still belong to its SAVE/YES."""
@@ -66,14 +66,15 @@ def check_saved_tail(rows, confirmed, last):
                 (cmd.get('op') == 'press' and cmd.get('button') in ('a', 'b'))), \
             'Record the save receipt before moving or reopening menus'
 
-def qualify(edition, name, verification, report, checkpoint):
+def _qualify(edition, name, verification, report, checkpoint, *, checkpoint_recovery=False):
     assert edition in ('ruby','sapphire','emerald')
     assert re.fullmatch('gen2recomp-qa-'+edition+r'-[0-9]+',name)
     identity='oasc-edition-qa-'+name.removeprefix('gen2recomp-qa-')
     assert verification['edition']==report['edition']==edition
     assert verification['identity']==checkpoint['profileIdentity']==identity
     assert checkpoint['sourceRun']==name
-    assert all(verification[k]is True for k in('frozenSourceUnchanged','externalSaveRecoveryDisabled','allModsDisabled'))
+    assert all(verification[k]is True for k in('externalSaveRecoveryDisabled','allModsDisabled'))
+    assert checkpoint_recovery or verification.get('frozenSourceUnchanged')is True
     completed = verification['status']=='pass'and report['status']=='pass'
     # Closing an isolated window after SAVE does not invalidate its saved
     # bytes. Recover only a clean exit whose complete trace ends at the
@@ -85,7 +86,7 @@ def qualify(edition, name, verification, report, checkpoint):
         and verification.get('unexpectedImporterRun') is False
         and not report.get('error')
         and len(report['commands'])==checkpoint['saveMenuCommandRange'][1])
-    assert completed or saved_clean_exit,'Run must finish or exit cleanly at its witnessed SAVE'
+    assert completed or saved_clean_exit or checkpoint_recovery,'Run must finish or exit cleanly at its witnessed SAVE'
     assert checkpoint['personalSave']is False and checkpoint['producedThroughNormalSaveMenu']is True
     relative=checkpoint['saveRelativePath']
     assert relative=='profiles/guest/save_'+edition+'.lua'or re.fullmatch(
@@ -122,3 +123,29 @@ def qualify(edition, name, verification, report, checkpoint):
         inherited[key]=report.get(key)is True or witnessed_first_badge
     assert all(inherited[key]is True for key in inherited if key!='starter')
     return inherited
+
+def qualify(edition,name,verification,report,checkpoint):
+    return _qualify(edition,name,verification,report,checkpoint)
+
+def qualify_interrupted(edition,name,verification,report,checkpoint,queue,state,source_audit=None):
+    """Admit only the last fully witnessed SAVE, retaining the failed run.
+
+    Later unsaved actions are discarded explicitly. A new disk write, an
+    unproven source, a broken input prefix or missing natural origin refuses
+    recovery; verification/result and the checkpoint are never rewritten.
+    """
+    assert verification['status']=='fail'and verification.get('exitCode')==124
+    assert verification.get('stoppedOwnChildReason')in('native QA timeout','absolute resource-slot deadline')
+    assert report['status']=='running'and not report.get('error')
+    if verification.get('frozenSourceUnchanged')is not True:
+        assert isinstance(source_audit,dict)and source_audit.get('checkpointOnly')is True
+        assert source_audit.get('method')=='restored-frozen-source-sha256'
+        assert source_audit.get('driver')=='tests/rs_story_driver.lua'
+        assert type(source_audit.get('verifiedFiles'))is int and source_audit['verifiedFiles']>=8
+        digest=source_audit.get('sourceManifestSHA256')
+        assert isinstance(digest,str)and re.fullmatch(r'[a-f0-9]{64}',digest)
+    from story_frozen_sources import verify_saved_prefix
+    proof=verify_saved_prefix(queue,report,state,checkpoint,save_yes=is_save_yes)
+    proof=dict(proof,method='completed-normal-save-prefix-before-native-deadline')
+    inherited=_qualify(edition,name,verification,report,checkpoint,checkpoint_recovery=True)
+    return inherited,proof

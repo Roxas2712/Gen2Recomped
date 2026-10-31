@@ -43,6 +43,16 @@ class FrozenStorySourceTests(unittest.TestCase):
                 with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
                 path.write_bytes(original)
 
+    def test_hoenn_audit_requires_its_own_frozen_driver(self):
+        old='tests/leafgreen_story_driver.lua';new='tests/rs_story_driver.lua'
+        path=self.engine/old;raw=path.read_bytes();path.unlink();self.expected.pop(old)
+        target=self.engine/new;target.write_bytes(raw);self.expected[new]=hashlib.sha256(raw).hexdigest();self.save_manifest()
+        with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
+        proof=verify_frozen_sources(self.engine,self.manifest,driver=new)
+        self.assertEqual(proof['driver'],new)
+        target.write_bytes(b'changed')
+        with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest,driver=new)
+
     def test_incomplete_or_invalid_manifests_are_rejected(self):
         for wrong in [{},[],dict(self.expected,**{'main.lua':'wrong'})]:
             with self.subTest(wrong=wrong):

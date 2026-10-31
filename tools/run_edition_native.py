@@ -139,9 +139,21 @@ if args.story_save_source or args.story_ending_save_source:
         verify_processed_queue(json.loads((prior/'story-commands.json').read_text()),sr,
             json.loads((prior/'story-state.json').read_text()))
     elif args.edition in ('ruby','sapphire','emerald'):
-        from rs_story_checkpoint import qualify
-        inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
-        if sv['status']!='pass':
+        interrupted=(sv['status']=='fail'and sv.get('exitCode')==124 and
+            sv.get('stoppedOwnChildReason')in('native QA timeout','absolute resource-slot deadline'))
+        if interrupted:
+            if sv.get('frozenSourceUnchanged')is not True:
+                from qa_storage import qa_restore_copy
+                from story_frozen_sources import verify_frozen_sources
+                qa_restore_copy(prior/'engine')
+                recovered_source_proof=verify_frozen_sources(prior/'engine',prior/'frozen-files.json',driver='tests/rs_story_driver.lua')
+            from rs_story_checkpoint import qualify_interrupted
+            inherited,failed_tail_proof=qualify_interrupted(args.edition,prior.name,sv,sr,checkpoint,
+                json.loads((prior/'story-commands.json').read_text()),json.loads((prior/'story-state.json').read_text()),recovered_source_proof)
+        else:
+            from rs_story_checkpoint import qualify
+            inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
+        if sv['status']!='pass'and not interrupted:
             # No unprocessed input may hide progress after the saved tail.
             assert len(json.loads((prior/'story-commands.json').read_text()))==len(sr['commands'])
     else:

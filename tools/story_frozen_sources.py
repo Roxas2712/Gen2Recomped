@@ -31,10 +31,10 @@ def verify_processed_queue(queue, report, state):
             and report['status']=='pass'), 'Interrupted story has unprocessed input'
 
 
-def verify_saved_prefix(queue, report, state, checkpoint):
-    """Recover only a completed normal SAVE before a later native crash.
+def verify_saved_prefix(queue, report, state, checkpoint, *, save_yes=None):
+    """Recover only a completed normal SAVE before a later interruption.
 
-    Unlike deadline recovery, a crashing command may still be pending. Its
+    A command interrupted by a crash or deadline may still be pending. Its
     tail is explicitly discarded; the failed run never becomes a passing run.
     The caller must separately prove frozen sources, ownership and save bytes.
     """
@@ -56,21 +56,24 @@ def verify_saved_prefix(queue, report, state, checkpoint):
     confirmed=checkpoint['saveConfirmedSeq']
     assert type(confirmed)is int and first<=confirmed<=last, 'SAVE confirmation is outside its completed prefix'
     yes=rows[confirmed-1]
-    assert (yes['input'].get('button')=='a' and yes['before']['top'].get('source')=='src/ui/ChoiceBox.lua'
-            and yes['before']['top'].get('index')==1
-            and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in yes['before']['stack'])), 'Saved prefix lacks its actual SAVE YES'
+    confirmation=(save_yes(yes['before'])if save_yes else
+        yes['before']['top'].get('source')=='src/ui/ChoiceBox.lua'and yes['before']['top'].get('index')==1
+        and any(s.get('source')=='src/ui/Gen3StartMenu.lua'for s in yes['before']['stack']))
+    assert yes['input'].get('button')=='a'and confirmation,'Saved prefix lacks its actual SAVE YES'
     return {'method':'completed-normal-save-prefix-before-native-crash','checkpointOnly':True,
             'savedThroughSeq':last,'discardedCompletedCommands':len(rows)-last,
             'discardedPendingCommands':len(queue)-len(rows),'priorRunCompleted':False}
 
 
-def verify_frozen_sources(engine, manifest):
+def verify_frozen_sources(engine, manifest, *, driver='tests/leafgreen_story_driver.lua'):
     engine, manifest = Path(engine), Path(manifest)
     assert not engine.is_symlink() and engine.is_dir(), 'Missing original frozen host'
     assert not manifest.is_symlink(), 'Frozen source manifest is a symlink'
     raw = manifest.read_bytes()
     expected = json.loads(raw)
-    assert isinstance(expected, dict) and REQUIRED <= expected.keys(), 'Incomplete frozen source manifest'
+    assert driver in ('tests/leafgreen_story_driver.lua','tests/rs_story_driver.lua'),'Unknown story driver'
+    required=(REQUIRED-{'tests/leafgreen_story_driver.lua'})|{driver}
+    assert isinstance(expected, dict) and required <= expected.keys(), 'Incomplete frozen source manifest'
     for name, wanted in expected.items():
         assert isinstance(name, str), 'Invalid frozen source path'
         relative = PurePosixPath(name)
@@ -90,5 +93,5 @@ def verify_frozen_sources(engine, manifest):
         if not name.startswith('.qa-runtime.app/'):
             assert not path.is_symlink(), 'Unrecorded source symlink: ' + name
             if path.suffix=='.lua':assert name in expected, 'Unrecorded Lua source: ' + name
-    return {'method': 'restored-frozen-source-sha256', 'verifiedFiles': len(expected),
+    return {'method': 'restored-frozen-source-sha256', 'verifiedFiles': len(expected),'driver':driver,
             'sourceManifestSHA256': hashlib.sha256(raw).hexdigest(), 'checkpointOnly': True}
