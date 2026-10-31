@@ -25,4 +25,4 @@ def stopped_at_opening_gate(verification, native_log):
         and verification.get('stoppedOwnChildReason')=='fatal importer error'
         and verification.get('unexpectedImporterRun') is False
         and not re.search(r'^src/import/RomImporter\.lua:\d+:',native_log,re.M)
-        and bool(re.search(r'^driver error: [^\n]*tests/leafgreen_story_driver\.lua:\d+: Continuous parcel/Pokedex sequence incomplete\s*$',native_log)))
+        and bool(re.search(r'^driver error: [^\n]*tests/leafgreen_story_driver\.lua:\d+: Continuous parcel/Pokedex sequence incomplete\s*\Z',native_log,re.M)))

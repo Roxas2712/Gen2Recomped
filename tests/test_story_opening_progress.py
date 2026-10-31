@@ -41,7 +41,7 @@ class OpeningProgressTests(unittest.TestCase):
 class OpeningGateStopTests(unittest.TestCase):
     def test_only_the_known_post_save_driver_gate_is_eligible(self):
         v=dict(status='fail',exitCode=-15,stoppedOwnChildReason='fatal importer error',unexpectedImporterRun=False)
-        log='driver error: /owned/engine/tests/leafgreen_story_driver.lua:263: Continuous parcel/Pokedex sequence incomplete\n'
+        log='[info] saved game\n[debug] state stack: pop Gen3StartMenu (depth 1)\ndriver error: /owned/engine/tests/leafgreen_story_driver.lua:263: Continuous parcel/Pokedex sequence incomplete\n'
         self.assertTrue(stopped_at_opening_gate(v,log))
         for key,value in (('status','pass'),('exitCode',0),('stoppedOwnChildReason','native QA timeout'),('unexpectedImporterRun',True)):
             changed=dict(v);changed[key]=value
