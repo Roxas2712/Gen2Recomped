@@ -12,11 +12,9 @@ return function(game)
   'touchmoved','mousepressed','mousereleased'}do love[event]=function()end end
  game.input:reset();U.freshSave(game)
  U.teleport(game,V.isFRLG()and'MAP_G04_N00'or'MAP_G01_N01',4,2,'down');U.wait(60)
- local species
- for id,def in pairs(game.data.pokemon)do
-  if def.abilities and def.abilities[1]=='PICKUP'then species=id;break end
- end
- assert(species,'Own species data has no Pickup ability')
+ local species=V.isFRLG()and'MEOWTH'or'ZIGZAGOON'
+ local def=assert(game.data.pokemon[species])
+ assert(def.abilities and def.abilities[1]=='PICKUP','Own species data has no Pickup ability')
  local P=require('src.pokemon.Pokemon');local Battle=require('src.battle.BattleState')
  local report={edition=edition,status='running',preparedFixture=true,continuousStory=false,
   freshOwnImport=true,cases={},captures={}}
@@ -51,8 +49,16 @@ return function(game)
   shot('pickup-'..case.name..'-take-result')
   report.cases[#report.cases+1]={name=case.name,level=case.level,species=species,
    item=item,index=index,rngCalls=calls,normalTakeHandler=true};persist()
-  game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a');U.wait(60)
-  game.input:overlayPressed('b');U.wait(1);game.input:overlayReleased('b');U.wait(60)
+  for _=1,20 do
+   if game.stack:top()==party then break end
+   assert(getmetatable(game.stack:top())==require('src.render.TextBox'),'Unexpected Take result owner')
+   game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a');U.wait(30)
+  end
+  assert(game.stack:top()==party,'Take text did not return to its party owner')
+  for _=1,10 do
+   if game.stack:top()==world then break end
+   game.input:overlayPressed('b');U.wait(1);game.input:overlayReleased('b');U.wait(30)
+  end
   assert(game.stack:top()==world,'Party Take did not return to the same field owner')
  end
  report.drawPreservesSaveRng=true;report.status='pass';persist()
