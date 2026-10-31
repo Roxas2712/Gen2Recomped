@@ -59605,6 +59605,10 @@ function RomExtractorGen3:run()
   require('src.import.Gen3RsPresentation').extract(self)
   require('src.import.Gen3EmeraldPresentation').extract(self)
   require('src.import.Gen3FrlgHallAssets').extract(self)
+  local engineAudio,audioWhy=require('src.import.Gen3EngineAudioRoles').bind(self.version,self._constants,self._audio)
+  assert(engineAudio,'Native GBA engine sounds unavailable: '..tostring(audioWhy))
+  self._constants.gen3EngineAudioRoles=engineAudio
+  self:write('constants',self._constants);self:write('audio',self._audio)
   require('src.import.Gen3FrlgCreditsAssets').extract(self)
   if self.version~='emerald'then require('src.import.Gen3NativeOptionsAssets').extract(self)end
   require('src.import.Gen3HallPcAssets').extract(self)

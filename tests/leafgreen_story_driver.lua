@@ -34,6 +34,20 @@ return function(game)
   U.teleport=function()error('Story acceptance forbids teleport helpers')end
   local report={edition=edition,status='running',commands={},captures={},maps={},events={},
     continuousFromNewGame=true,noTeleport=true,noPartyInjection=true,noDirectStoryFlagEdits=true,fullStoryTested=false}
+  local Sound=require('src.core.Sound');local nativeSoundPlay=Sound.play
+  Sound.play=function(data,name,...)
+    local source=nativeSoundPlay(data,name,...)
+    local proof=data==game.data and data.constants.gen3EngineAudioRoles
+    local expected=proof and proof.roles[name]
+    if expected then
+      local definition=assert(data.audio.sfx[name])
+      assert(source and definition.m4a==expected.index and definition.song==expected.song,
+        'Ordinary native FRLG sound missing: '..name)
+      report.events[#report.events+1]={kind='native-engine-effect-audio',role=name,
+        frame=U.frame(),index=expected.index,sourceCreated=true}
+    end
+    return source
+  end
   local seq=0;local busy=false;local lastMap;local seenParcel=false;local lastParty=0
   if lineage then
     report.lineage=lineage

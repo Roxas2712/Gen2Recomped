@@ -1359,6 +1359,7 @@ local function markerFor(version)
     -- Older completed imports predate the native Pickup distributions.
     -- Re-extract these tables through the normal cache gate, retaining saves.
     revision=revision..'gba-pickup-v'..require('src.import.Gen3PickupProfiles').REVISION..':'
+    revision=revision..'gba-engine-audio-roles-v'..require('src.import.Gen3EngineAudioRoles').REVISION..':'
   end
   if version=='emerald'then
     revision=revision..'emerald-first-rescue-v'..require('src.import.Gen3FirstBattle').REVISION..':'
