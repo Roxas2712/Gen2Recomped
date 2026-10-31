@@ -1341,7 +1341,17 @@ end
 
 -- true if the cell's collision tile is a door tile
 -- (pokered IsPlayerStandingOnDoorTile)
+-- FRLG's normalization folds REGULAR_WARP into CAVE_DOOR. Read the retained
+-- original attributes when the distinction controls an arrival animation.
+function Map:sourceBehaviourAt(cx, cy)
+  if not self:inBounds(cx,cy)then return nil end
+  local tiles=self.renderer and self.renderer.gen3 and self.renderer.gen3.tiles
+  if not(tiles and tiles.sourceBehavior)then return nil end
+  return tiles:sourceBehavior(self:blockAt(cx,cy))
+end
+
 function Map:isDoorTileCell(cx, cy)
+  if GameVersion.isFRLG()and self:sourceBehaviourAt(cx,cy)==0x67 then return false end
   -- GEN 3 ANSWERS THIS FROM A BEHAVIOUR BYTE, and the two are not the same
   -- number.
   --
@@ -1674,6 +1684,7 @@ end
 -- "pad"/"hole" when the cell's collision tile is a teleporter warp pad or
 -- a fall-through hole (IsPlayerStandingOnWarpPadOrHole), nil otherwise
 function Map:warpPadOrHoleAt(cx, cy)
+  if GameVersion.isFRLG()and self:sourceBehaviourAt(cx,cy)==0x67 then return 'pad'end
   -- GEN 3 ANSWERS THIS FROM A BEHAVIOUR BYTE, not a tile id, and the two are
   -- not interchangeable -- cellTile returns $FF for anything blocked and a
   -- metatile id otherwise, neither of which is a warp class.  Every Gen 3 map

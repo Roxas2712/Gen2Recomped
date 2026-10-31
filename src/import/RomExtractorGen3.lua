@@ -40228,6 +40228,11 @@ function RomExtractorGen3:extractPartyActions()
   local rom = self.rom
   local anchor = self:symbol("sPartyMenuActions")
   local moveNames = self:symbol("gMoveNames")
+  if self:isFireRedManifest() then
+    local ok,why=pcall(require('src.import.Gen3FrlgPartyActions').extract,self,anchor,moveNames)
+    if not ok then Logger.warn('FRLG party actions: %s',tostring(why))end
+    return
+  end
   if not anchor then
     Logger.warn("gen3 party actions: no anchor string -- the party screen "
                 .. "keeps the ten words it had")

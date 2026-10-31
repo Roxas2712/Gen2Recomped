@@ -65,6 +65,9 @@ function M.missing(version)
  local f=raw and loadstring(raw);if f then setfenv(f,{})end
  local ok,t=false,nil;if f then ok,t=pcall(f)end
  if not(ok and type(t)=='table'and M.valid(t.gen3NativeParty,version))then return{'<'..version..':native-party>'}end
+ if version~='emerald'and not require('src.import.Gen3FrlgPartyActions').valid(t.gen3PartyActions,version)then
+  return{'<'..version..':native-party-field-actions>'}
+ end
  for _,name in ipairs(M.files)do if not Fs.exists(M.ROOT..name)then return{M.ROOT..name}end end
  return{}
 end

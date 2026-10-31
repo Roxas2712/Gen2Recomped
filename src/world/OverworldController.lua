@@ -3872,6 +3872,7 @@ function OverworldState:animate(dt)
 end
 
 function OverworldState:update(dt)
+  if GameVersion.isGen3()then require('src.world.Gen3FieldPoison').tick(self)end
   -- `earthquake <n>` (Script_earthquake -> EarthquakeMovement 25:$725D):
   -- the BG jolts while the sprites stay put, which is exactly what bgShakeY
   -- already feeds into draw().
@@ -13569,7 +13570,9 @@ function OverworldState:applyFieldPoisonDamage()
   else
     require("src.core.Sound").play(Game.data, "Poisoned")
   end
-  self.poisonFlash = 12
+  if GameVersion.isGen3()then
+    require('src.world.Gen3FieldPoison').start(self,GameVersion.get())
+  else self.poisonFlash = 12 end
   local queue = {}
   for _, mon in ipairs(fainted) do
     local name = mon.nickname or Game.data.pokemon[mon.species].name
@@ -19005,6 +19008,28 @@ function OverworldState:_worldEntityLoop(drawEntity, cam, bgY, freeGround, groun
   return onTop
 end
 
+local function drawPoisonGround(self,cam,bgY,vw,vh)
+  self.map.renderer:drawBorderFill(cam.x,bgY,vw,vh)
+  self.map.renderer:draw(cam.x,bgY,vw,vh)
+  for _,nb in ipairs(self.neighbors)do
+    MapLoader.forNeighbor(nb,Game.data).renderer:drawMapOnly(cam.x-nb.ox,bgY-nb.oy,vw,vh)
+  end
+end
+
+local function drawPoisonAbove(self,cam,bgY,vw,vh,aim,feetX,feetZ)
+    aim(self, self.map.renderer, 0, 0, feetX, feetZ)
+    self.map.renderer:drawAbove(cam.x, bgY, vw, vh)
+    aim(self, self.map.renderer, nil, nil, feetX, feetZ)
+    for _, nb in ipairs(self.neighbors) do
+      local renderer = MapLoader.forNeighbor(nb, Game.data).renderer
+      if renderer.drawAbove then
+        aim(self, renderer, nb.ox, nb.oy, feetX, feetZ)
+        renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
+        aim(self, renderer, nil, nil, feetX, feetZ)
+      end
+    end
+end
+
 local function drawWorldBody(self, cadenceConsumed)
   -- Dark-map BG shade shift, armed for the whole frame before anything draws.
   -- home/fade.asm's LoadGBPal writes ONE rBGP for the screen, so terrain, the
@@ -19076,11 +19101,7 @@ local function drawWorldBody(self, cadenceConsumed)
   local override
   if not pipelineId then
     local closeTiles = FrameProfile.section("  world: tiles")
-    self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
-    self.map.renderer:draw(cam.x, bgY, vw, vh)
-    for _, nb in ipairs(self.neighbors) do
-      MapLoader.forNeighbor(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
-    end
+    require('src.world.Gen3FieldPoison').background(self,vw,vh,drawPoisonGround,self,cam,bgY,vw,vh)
     -- the Mirage Tower on BG0, under the sprites (src/world/Gen3MirageTower)
     if self.g3MirageTower then
       require("src.world.Gen3MirageTower").drawTower(self, cam)
@@ -19274,11 +19295,7 @@ local function drawWorldBody(self, cadenceConsumed)
       -- draw it now and fall through to the flat path below rather than
       -- compositing an empty canvas.
       local closeTiles = FrameProfile.section("  world: tiles")
-      self.map.renderer:drawBorderFill(cam.x, bgY, vw, vh)
-      self.map.renderer:draw(cam.x, bgY, vw, vh)
-      for _, nb in ipairs(self.neighbors) do
-        MapLoader.forNeighbor(nb, Game.data).renderer:drawMapOnly(cam.x - nb.ox, bgY - nb.oy, vw, vh)
-      end
+      require('src.world.Gen3FieldPoison').background(self,vw,vh,drawPoisonGround,self,cam,bgY,vw,vh)
       closeTiles()
     end
   end
@@ -19682,17 +19699,7 @@ local function drawWorldBody(self, cadenceConsumed)
       emoteEarly = true
     end
     local closeTiles = FrameProfile.section("  world: tiles")
-    aim(self, self.map.renderer, 0, 0, feetX, feetZ)
-    self.map.renderer:drawAbove(cam.x, bgY, vw, vh)
-    aim(self, self.map.renderer, nil, nil, feetX, feetZ)
-    for _, nb in ipairs(self.neighbors) do
-      local renderer = MapLoader.forNeighbor(nb, Game.data).renderer
-      if renderer.drawAbove then
-        aim(self, renderer, nb.ox, nb.oy, feetX, feetZ)
-        renderer:drawAbove(cam.x - nb.ox, bgY - nb.oy, vw, vh)
-        aim(self, renderer, nil, nil, feetX, feetZ)
-      end
-    end
+    require('src.world.Gen3FieldPoison').background(self,vw,vh,drawPoisonAbove,self,cam,bgY,vw,vh,aim,feetX,feetZ)
     closeTiles()
     closeEntities = FrameProfile.section("  world: entities")
     for _, e in ipairs(onTop or {}) do drawEntity(self, e, cam, bgY, freeGround, groundForRise, groundSin, grassColors, spriteDepthGround, shadows, riseOf, nil, gymFog) end
@@ -20147,23 +20154,16 @@ function OverworldState:drawUI()
     local step = math.floor((12 - self.poisonFlash) / 2)  -- 1..6
     local push = ({ 1, 2, 3, 2, 1, 0 })[step] or 0
     if push > 0 then Game.renderer.worldWobble = push end
-  elseif self.poisonFlash and self.poisonFlash > 0 then
+  elseif self.poisonFlash and self.poisonFlash > 0 and not GameVersion.isGen3() then
     self.poisonFlash = self.poisonFlash - 1
     local pulse = math.floor(self.poisonFlash / 4) % 2 == 1
     if pulse then
-      if GameVersion.isGen3() then
-        -- The widened field and its anchored popup are composed outside the
-        -- native UI canvas. Pulse their finished surface together, without
-        -- replacing a transition's independently owned screenVeil.
-        Game.renderer.fieldPoisonAlpha = 0.45
-      else
       -- the whole UI canvas, which is the Game Boy's 160 x 144 only on a
       -- Game Boy (Emerald's is 240 x 160, Black and White's 256 x 192)
       local uw, uh = Game.renderer:uiSize()
       love.graphics.setColor(0, 0, 0, 0.45)
       love.graphics.rectangle("fill", 0, 0, uw or 160, uh or 144)
       love.graphics.setColor(1, 1, 1, 1)
-      end
     end
   end
 end
