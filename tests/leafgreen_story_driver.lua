@@ -13,7 +13,7 @@ return function(game)
   local lf=io.open(out..'/story-lineage.json','r');local lineage
   if lf then lineage=J.decode(lf:read('*a'));lf:close()end
   local hasSave=require('src.core.SaveData').saveFileExists('leafgreen')
-  assert(hasSave==(lineage~=nil),'Only a proven own normal-menu checkpoint may resume a story test')
+  assert(hasSave==(lineage~=nil),'Only a qualified own ordinary checkpoint may resume a story test')
   if lineage then
     assert(lineage.personalSave==false and lineage.checkpoint.personalSave==false)
     local path=assert(lineage.copiedSaveAbsolutePath)
@@ -35,7 +35,9 @@ return function(game)
     continuousFromNewGame=true,noTeleport=true,noPartyInjection=true,noDirectStoryFlagEdits=true,fullStoryTested=false}
   local seq=0;local busy=false;local lastMap;local seenParcel=false;local lastParty=0
   if lineage then
-    report.lineage=lineage;report.continuedOwnNormalSave=true
+    report.lineage=lineage
+    report.continuedOwnNormalSave=lineage.checkpoint.saveKind==nil
+    report.continuedOwnNativeHallSave=lineage.checkpoint.saveKind=='native-frlg-hall-of-fame'
     for k,v in pairs(lineage.inherited)do report[k]=v end
     seenParcel=report.parcelObtained
   end
@@ -137,9 +139,19 @@ return function(game)
   press('start',150);assert(getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu'))
   if lineage then
     assert(game.stack:top().items[1].key=='continue');press('a',120)
-    local w=assert(game.overworld);local expected=lineage.checkpoint.snapshotAfterSaveCommand
-    assert(game.stack:top()==w and w.map.id==expected.map.id)
-    assert(w.player.cellX==expected.player.cellX and w.player.cellY==expected.player.cellY)
+    local w=assert(game.overworld)
+    local ending=lineage.checkpoint.saveKind=='native-frlg-hall-of-fame'
+    local expected=ending and lineage.checkpoint.snapshotAfterEnding or lineage.checkpoint.snapshotAfterSaveCommand
+    if ending then
+      local home=assert(game.data.constants.gen3HealLocations[1])
+      assert(home.index==1 and home.outdoor and game.stack:top()==w and w.map.id==home.map)
+      assert(w.player.cellX==home.x and w.player.cellY==home.y)
+      assert((game.save.specialSaveWarpFlags or 0)%2==0,'Hall bit must be spent once')
+      assert(not w.gen3FrlgContinuing,'The native Hall return must take fresh map entry')
+    else
+      assert(game.stack:top()==w and w.map.id==expected.map.id)
+      assert(w.player.cellX==expected.player.cellX and w.player.cellY==expected.player.cellY)
+    end
     assert(#game.save.party==#expected.party)
     for i,m in ipairs(game.save.party)do
       local e=expected.party[i]
@@ -148,9 +160,14 @@ return function(game)
       for j,mv in ipairs(m.moves)do assert(mv.id==e.moves[j].id and mv.pp==e.moves[j].pp)end
     end
     assert(Serialize.encode(game.save.inventory)==Serialize.encode(expected.inventory),'Continue changed inventory')
-    for k,v in pairs(expected.flags)do assert(game.save.flags[k]==v,'Continue lost story flag '..k)end
+    for k,v in pairs(expected.flags)do
+      local id=tonumber(k:match('^FLAG_G3_(%x+)$')or'',16)
+      if ending and id and(id<=0x1F or id==0x805)then
+        assert(game.save.flags[k]~=true,'Hall warp kept temporary field flag '..k)
+      else assert(game.save.flags[k]==v,'Continue lost story flag '..k)end
+    end
     report.continuedThroughUI=true;report.checkpointPartyFlagsAndInventoryPreserved=true
-    shot('story-continued-normal-checkpoint');snapshot()
+    shot(ending and'story-continued-native-hall-checkpoint'or'story-continued-normal-checkpoint');snapshot()
   else
     assert(game.stack:top().items[1].key=='newGame');press('a',100)
     for _=1,2500 do
