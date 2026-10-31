@@ -40,6 +40,9 @@ jobs:
           luajit tests/engine/gba_title_native_music_fade.lua
           luajit tests/engine/frlg_ending_continue_entry.lua
           luajit tests/engine/gba_native_field_move_default.lua
+          luajit tests/engine/gen3_pickup_finish.lua
+          luajit tests/engine/gen3_pickup_rules.lua
+          luajit tests/engine/gen3_pickup_import.lua
           python3 -m unittest discover -s tests -p frlg_story_ending_checkpoint_test.py
           luajit tests/engine/rs_battler_frame_placement.lua
           luajit tests/engine/emerald_battler_coordinates.lua
