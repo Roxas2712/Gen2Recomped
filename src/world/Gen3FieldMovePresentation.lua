@@ -14,6 +14,20 @@ function M.new(mon,opts,game,world)
     outdoors=M.outdoors(game,world),phase=opts.pose and'pose'or 1,posed=opts.pose==true,
     poseWait=24,hofs=0,winL=240,winT=80,winB=81,revealed=0,cleared=0}
 end
+function M.defaultOptions(game,world)
+  local Version=require('src.core.GameVersion')
+  if not Version.isGen3()then return end
+  local record=game.data.constants and game.data.constants.gen3FieldMovePresentation
+  local kind=M.outdoors(game,world)and'outdoors'or'indoors'
+  local row=type(record)=='table'and type(record.strips)=='table'and record.strips[kind]
+  if type(record)=='table'and record.schema==Art.SCHEMA and record.edition==Version.get()
+      and Version.acceptsSha1(Version.get(),record.romSha1)
+      and type(row)=='table'and row.width==Art.WIDTH and row.height==Art.HEIGHT
+      and type(row.indexed)=='string'and#row.indexed==Art.WIDTH*Art.HEIGHT
+      and type(row.palette)=='table'then
+    return{presentation='cartridge',pose=true}
+  end
+end
 function M.advance(fx,cry)
   if fx.phase=='pose'then
     fx.poseWait=fx.poseWait-1

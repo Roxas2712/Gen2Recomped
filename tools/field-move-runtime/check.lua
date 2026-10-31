@@ -102,7 +102,7 @@ launch();while Source.isActive()do f.game.stack:update(1/60)end
 collectgarbage('collect');collectgarbage('collect');T.eq(weak[1],nil,'retained callback observations release captured payloads');saved()
 Source.release()
 T.eq(Native.show(f.game,{species='TEST'}),true)
-T.eq(f.game.stack:top().effect,nil,'an inactive cached facade cannot change native field-move presentation')
+T.check(f.game.stack:top().effect~=nil,'imported native field artwork does not require an active observer')
 f.game.stack:top():complete(false)
 require('src.core.Sound').playCry=nativeCry
 Source.release();Source.start=base.start;Source.step=base.step;Source.draw=base.draw

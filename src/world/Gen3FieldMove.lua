@@ -25,15 +25,11 @@
 -- (RomExtractorGen3:playerAvatarStates, constants.gen3PlayerSprites).  The
 -- Pokemon's picture is its own front sprite, which the import already rips.
 --
--- DEFAULT PRESENTATION: the BAND.  Emerald's is gFieldMoveStreaksTiles, a tilemap
--- scrolled behind the picture, and the import does not rip it; nothing here
--- pretends otherwise.  What is drawn instead is the same figure -- a lit band
--- the height of the cartridge's, streaked with moving lines, sweeping in from
--- one side and out the other -- in the cartridge's own window colours where
--- the cache carries them.  The timings below are measured off the scene.
+-- Current imports carry digest-bound indoor/outdoor cartridge strips and
+-- their presentation program. Ordinary field moves select those directly;
+-- no mod observer is required. Older imports without that artwork retain
+-- the reconstructed sweep, as do callers that explicitly request its options.
 
--- Compatible observers may select the independently imported cartridge strips
--- and presentation program. The native default below remains available.
 local Font = require("src.render.Font")
 
 local Gen3FieldMove = {}
@@ -139,7 +135,8 @@ local function create(game, mon, onDone, opts)
   if Version.isGen3()and not world then return false,'no admitted native field world'end
   local cohort=setmetatable({data=game.data,save=game.save,mods=game.mods,stack=game.stack,edition=Version.get(),world=world,actor=world and world.player,map=world and world.map},{__mode='v'})
   local facade=source()
-  opts=opts or(facade and facade._nativeOptions and facade._nativeOptions(game))or{}
+  opts=opts or(facade and facade._nativeOptions and facade._nativeOptions(game))
+    or Presentation.defaultOptions(game,world)or{}
   local sprite,path = frontSprite(game, mon)
   if not sprite then return false end
   local self = setmetatable({}, Gen3FieldMove)
