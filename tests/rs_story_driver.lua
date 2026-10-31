@@ -62,10 +62,14 @@ return function(game)
   end
   local function screen(s)
     if not s then return {}end
-    local r=fields(s,{'phase','mode','state','index','menuIndex','moveIndex','cursor','waiting','charIndex','pageIndex','lineIndex','screenId','pocket','keepOpen','rs'})
+    local r=fields(s,{'phase','mode','state','index','menuIndex','moveIndex','cursor','waiting','charIndex','pageIndex','lineIndex','screenId','pocket','keepOpen','rs','newMoveId','selecting','subIndex'})
     local f=s.update or s.draw;r.source=type(f)=='function'and debug.getinfo(f,'S').short_src or '?'
     if s.pages and s.pageIndex then r.page=s.pages[s.pageIndex]end
     if s.entries then r.entries={};for i,e in ipairs(s.entries)do r.entries[i]=type(e)=='table'and fields(e,{'key','label','name','text'})or tostring(e)end end
+    if type(s.choose)=='table'then r.learnMove=s.choose.move end
+    if type(s.submenu)=='table'then
+      r.submenu={};for i,row in ipairs(s.submenu)do r.submenu[i]=fields(row,{'label','action'})end
+    end
     if s.screenId=='Gen3StartMenu'and s.rows then
       r.rows={};for i,row in ipairs(s.rows)do r.rows[i]=fields(row,{'key','id','label'})end
     end
@@ -125,7 +129,8 @@ return function(game)
     state.bike={onBike=game.save.onBike==true,kind=game.save.bikeKind,registeredItem=game.save.registeredItem}
     for i,s in ipairs(game.stack.states or {})do state.stack[i]=screen(s)end
     for i,m in ipairs(game.save.party or {})do
-      local p=fields(m,{'species','name','level','hp','status','exp'});p.maxHp=m.stats and m.stats.hp;p.moves={}
+      local p=fields(m,{'species','name','level','hp','status','exp','item'});p.maxHp=m.stats and m.stats.hp;p.moves={}
+      p.stats=fields(m.stats,{'hp','attack','defense','spatk','spdef','speed'})
       for n,mv in ipairs(m.moves or {})do p.moves[n]=fields(mv,{'id','pp','maxPp'})end;state.party[i]=p
     end
     for k,v in pairs(game.save.inventory or {})do state.inventory[k]=v end
