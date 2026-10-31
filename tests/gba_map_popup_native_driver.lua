@@ -22,7 +22,7 @@ return function(game)
   if not s then return false end
   if s.rsNative then local task=s.rsNative.native.task;return task and task.state==1 and task.registerOffset==0 end
   if s.emerald then return s.state=='wait'and s.offset==0 end
-  return s.frlg and s.frames<=132 and s.frames>30
+  return s.frlg and s.frames<=128 and s.frames>30
  end
  local function show(map)
   U.teleport(game,map,10,12,'up');U.wait(30);local world=game.stack:top()
@@ -38,10 +38,10 @@ return function(game)
   end
   local ok,why=pcall(function()shot('native-popup-pallet-standard')end)
   Font.drawStandardBox=original;assert(ok,why)
-  assert(seen and seen[1]==0 and seen[2]==-1 and seen[3]==16 and seen[4]==4,'Popup missed native BG0 standard-frame geometry')
+  assert(seen and seen[1]==0 and seen[2]==0 and seen[3]==16 and seen[4]==4,'Popup clipped its top border')
   local saved=game.save.options.gen3Frame
   game.save.options.gen3Frame=10;shot('native-popup-pallet-frame-option-10');game.save.options.gen3Frame=saved
-  report.fixedStandardFrame=true;report.visiblePopupBounds={x=0,y=0,width=128,height=24}
+  report.fixedStandardFrame=true;report.completeTopBorder=true;report.visiblePopupBounds={x=0,y=0,width=128,height=32}
  else shot('native-popup-edition-standard')end
  local popup=world.mapNameSign
  require('src.world.Gen3FieldPoison').start(world,edition)

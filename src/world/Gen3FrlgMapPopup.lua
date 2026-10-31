@@ -1,10 +1,12 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
--- FRLG map_name_popup.c: BG0 window (1,29), standard tiles/palette 3.
+-- FRLG standard tiles/palette 3 and normal text, with the whole border visible.
 local M={}
 function M.geometry(sign)
  local inner=sign.width or 14
  local elapsed=144-sign.frames
- local visible=math.max(0,math.min(24,elapsed*2,sign.frames*2))
+ -- A wrapped GBA BG0 window leaves the first border row above the viewport.
+ -- This host keeps all four rows on screen, including the top edge.
+ local visible=math.max(0,math.min(32,elapsed*2,sign.frames*2))
  return {x=0,y=visible-32,width=(inner+2)*8,height=32,
   textX=8,textY=visible-22,textWidth=inner*8}
 end
