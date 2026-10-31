@@ -900,11 +900,17 @@ local function objectHome(save, mapId, obj)
 end
 OverworldState.objectHome = objectHome -- exposed for tests
 
-local function pooledNPC(pool, data, mapId, obj)
+local function pooledNPC(pool, data, mapId, obj, neighbor)
   local runtimeMapId = MapIdentity.runtimeId(data, mapId)
   mapId = MapIdentity.sourceId(data, mapId)
   local key = mapId .. "_obj_" .. obj.index
   local npc = pool[key]
+  -- GBA script-written templates belong to the loaded map visit. Applying
+  -- an old neighbor's saved template before its own entry reset creates a
+  -- stale pooled actor: Briney can occupy Route 109's Seashore House door.
+  -- Already resident actors still keep their live position across the seam.
+  local home = neighbor and GameVersion.isGen3()
+    and resolveGraphicsVar(Game and Game.save, obj) or objectHome(nil, mapId, obj)
   -- ...AND A POOLED ONE WHOSE SPRITE HAS SINCE BEEN DECIDED IS STALE.
   --
   -- The pool is keyed by map and object index, which is right for everything
@@ -913,11 +919,10 @@ local function pooledNPC(pool, data, mapId, obj)
   -- visit and Lucas on another, and handing back the NPC built before the var
   -- was filled would keep the placeholder for the rest of the session.
   if npc then
-    local want = objectHome(nil, mapId, obj)
+    local want = home
     if want and npc.def and want.sprite ~= npc.def.sprite then npc = nil end
   end
   if not npc then
-    local home = objectHome(nil, mapId, obj)
     -- ...WITH THE MOVEMENT IT WAS SAVED WITH: MapObject_Save keeps each
     -- object's movement type and a continue restores it, while the template
     -- a map's ON_TRANSITION rewrote (SetObjectMovementType) is ROM's again
@@ -2595,7 +2600,7 @@ function OverworldState:rebuildNeighbors()
     -- whole number of blocks, so this is always exact.
     for _, obj in ipairs(nb.map.def.objects or {}) do
       if objectVisible(Game.save, nb.map.id, obj) and not offMap(nb.map.def, obj) then
-        local npc = pooledNPC(self.npcPool, Game.data, nb.map.id, obj)
+        local npc = pooledNPC(self.npcPool, Game.data, nb.map.id, obj, true)
         if not homeActors[npc] then
           table.insert(peers, npc)
           table.insert(self.ghosts,
