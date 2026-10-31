@@ -1317,6 +1317,7 @@ local function askNickname(ctx, mon)
     if ctx.portableCallback then onDone = ctx.portableCallback(onDone) end
     Screens.push(ctx.game, "NamingScreen", {
       title = Strings("NICKNAME?"), maxLen = 10, onDone = onDone,
+      kind = "mon", mon = mon, default = mon.nickname,
     })
   end
   if ctx.portableCallback then choice = ctx.portableCallback(choice) end
