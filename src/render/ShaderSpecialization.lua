@@ -4,9 +4,12 @@
 -- remains the fallback for unsupported source, values or resource lifetimes.
 local Branches=require('src.render.ShaderBranches')
 local Guard=require('src.render.ShaderSamplerGuard')
-local S={}
+local Numeric=require('src.render.NumericUniformReplay')
+local Keys=require('src.render.ShaderVariantKeyCache')
+local Interface=require('src.render.ShaderUniformInterface')
+local S={deferInactiveNumeric=false,reuseVariantKeys=false,cacheUniformInterfaces=false}
 local installed=false
-local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0}
+local stats={sources=0,variants=0,compiled=0,uses=0,depthUses=0,depthCompiled=0,fallbacks=0,failures=0,unsupported=0,compileSeconds=0,continuousUniforms=0,deferredNumericUpdates=0,numericReplayWrites=0,keyBuilds=0,keyReuses=0}
 local limits={sources=16,sourceBytes=2*1024*1024,minBytes=65536,maxBytes=262144,variants=64,perSource=16,uniforms=256,arguments=256,leaves=32768}
 local originals=setmetatable({},{__mode='k'})
 local variants={}
@@ -14,6 +17,11 @@ local records={}
 local hooks={}
 local sourceBytes=0
 local raw,compiling
+local function replayNumeric(record,variant)
+ local previous=compiling;compiling=true
+ local ok,why=pcall(Numeric.apply,record,variant,stats,S.cacheUniformInterfaces and Interface.has or nil)
+ compiling=previous;return ok,why
+end
 local unpack=table.unpack or unpack
 local function pack(...)return{n=select('#',...),...}end
 local function original(record)
@@ -58,6 +66,7 @@ local function snapshot(value,budget,depth)
  if kind=='number'or kind=='boolean'then return value end
  if kind=='string'and(value=='row'or value=='column')then return value end
  if kind=='userdata'and value.typeOf and value:typeOf('Texture')then
+  budget.numeric=false
   return{resource=setmetatable({value},{__mode='v'})}
  end
  if kind~='table'or depth>=4 or getmetatable(value)~=nil then error('unsupported uniform value')end
@@ -82,8 +91,9 @@ local function remember(record,method,args)
  if record.disabled then return end
  local name=args[1]
  if type(name)~='string'or not name:match('^[%a_][%w_]*$')or args.n<2 or args.n>limits.arguments+2 then disable(record);return end
- local budget={n=0};local row={method=method,n=args.n-1}
+ local budget={n=0,numeric=true};local row={method=method,n=args.n-1}
  for i=2,args.n do row[i-1]=snapshot(args[i],budget,0)end
+ row.numeric=budget.numeric
  if budget.n>limits.leaves then error('uniform snapshot cap')end
  local first=type(args[2])=='string'and 3 or 2
  row.coverage=args.n-first+1;row.leaves=budget.n
@@ -110,15 +120,26 @@ local function remember(record,method,args)
    record.continuous[name]=true;stats.continuousUniforms=stats.continuousUniforms+1
   end
   local literal=not record.continuous[name]and row.n==1 and Branches.literal(record.plan.kinds[name],args[2])or nil
-  if record.scalars[name]~=literal then record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1 end
- end
- -- Eager writes keep existing variant textures current, release their old C
- -- texture references, and flush pending batches at the native uniform seam.
- for _,variant in pairs(record.variants)do
-  if variant and record.hook.hasUniform(variant.shader,name)then
-   record.hook[method](variant.shader,name,unpack(args,2,args.n))
+  if record.scalars[name]~=literal then
+   local old=record.scalars[name];record.scalars[name]=literal;record.scalarRevision=record.scalarRevision+1
+   if record.keyCache then Keys.update(record.keyCache,name,old,literal)end
   end
  end
+ -- Textures/opaque values and the active program keep eager native writes.
+ -- Only detached numeric banks of inactive programs may wait until reuse.
+ local deferred=S.deferInactiveNumeric and not record.numericReplayUnsafe and Numeric.numericBank(bank)
+ local current=deferred and raw.getShader()
+ for _,variant in pairs(record.variants)do if variant then
+  if deferred and variant.shader~=current then
+   Numeric.queue(variant,name);stats.deferredNumericUpdates=stats.deferredNumericUpdates+1
+  else
+   if variant.numericPending then Numeric.clear(variant,name)end
+   local present
+   if S.cacheUniformInterfaces then present=Interface.has(record,variant,name,stats)
+   else present=record.hook.hasUniform(variant.shader,name)end
+   if present then record.hook[method](variant.shader,name,unpack(args,2,args.n))end
+  end
+ end end
  record.bankRevision=record.bankRevision+1
 end
 local function afterSend(record,method,args,...)
@@ -143,6 +164,16 @@ local function hook(shader)
  for _,method in ipairs{'send','sendColor'}do
   if h[method]then h.wrapped[method]=function(self,...)
    local record=not compiling and originals[self]
+   local owner=not compiling and variants[self]
+   if owner then
+    -- An independently held native alias keeps its established write order.
+    -- Settle all pending programs BEFORE forwarding the foreign setter.
+    local ok,why=pcall(function()
+     for _,variant in pairs(owner.variants)do if variant then local done,err=replayNumeric(owner,variant);if not done then error(err)end end end
+    end)
+    owner.numericReplayUnsafe=true
+    if not ok then stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(owner)end
+   end
    if not record or record.disabled or record.hook~=h then return h[method](self,...)end
    return afterSend(record,method,pack(...),h[method](self,...))
   end;methods[method]=h.wrapped[method]end
@@ -211,12 +242,25 @@ local function choose(record)
  end
  if love.graphics.isGammaCorrect and love.graphics.isGammaCorrect()~=record.gamma then disable(record);return end
  if record.keyRevision~=record.scalarRevision then
-  local constants,key={},{}
-  for _,name in ipairs(record.plan.order)do
-   local value=record.scalars[name]
-   if value then constants[name]=value;key[#key+1]=name..'='..value end
+  local cached
+  if S.reuseVariantKeys and not record.keyCacheUnsupported then
+   if not record.keyCache then
+    record.keyCache=Keys.new(record.plan,record.scalars,limits.perSource)
+    record.keyCacheUnsupported=record.keyCache==nil
+   end
+   if record.keyCache then cached=Keys.get(record.keyCache)end
   end
-  record.constants,record.key=constants,table.concat(key,';');record.keyRevision=record.scalarRevision
+  if cached then record.constants,record.key=cached.constants,cached.key;stats.keyReuses=stats.keyReuses+1
+  else
+   local constants,key={},{}
+   for _,name in ipairs(record.plan.order)do
+    local value=record.scalars[name]
+    if value then constants[name]=value;key[#key+1]=name..'='..value end
+   end
+   record.constants,record.key=constants,table.concat(key,';');stats.keyBuilds=stats.keyBuilds+1
+   if S.reuseVariantKeys and record.keyCache then Keys.put(record.keyCache,record.key,record.constants)end
+  end
+  record.keyRevision=record.scalarRevision
  end
  if record.key==''then return end
  local depth=record.depthAdapter and record.depthAdapter.fragmentDepthTarget()or false
@@ -230,15 +274,59 @@ local function choose(record)
  end
  return variant
 end
-local function beforeDraw()
+local function diagnosticBank(record)
+ if record.selectionBankRevision==record.bankRevision then return record.selectionBank end
+ local function value(v)
+  if type(v)~='table'then return v end
+  if v.resource then return tostring(v.resource[1])end
+  local out={};for i=1,#v do out[i]=value(v[i])end;return out
+ end
+ local out={}
+ for name,bank in pairs(record.bank)do
+  local rows={};out[name]=rows
+  for _,row in ipairs(bank)do
+   local args={};for i=1,row.n do args[i]=value(row[i])end
+   rows[#rows+1]={method=row.method,values=args}
+  end
+ end
+ record.selectionBankRevision,record.selectionBank=record.bankRevision,out;return out
+end
+local function beforeDraw(method,object)
  if stats.sources==0 then return end
  local actual=raw.getShader();local record=variants[actual]or originals[actual]
  if not record then return end
  local variant=choose(record)
+ if variant and(variant.numericPendingCount or 0)>0 then
+  local ok,why=replayNumeric(record,variant)
+  if not ok then
+   stats.unsupported=stats.unsupported+1;stats.lastFallback=tostring(why):sub(1,160);disable(record);variant=nil
+  end
+ end
  if variant then
   if actual~=variant.shader then raw.setShader(variant.shader)end
   stats.uses=stats.uses+1;if variant.depth then stats.depthUses=stats.depthUses+1 end
  else raw.setShader(original(record));stats.fallbacks=stats.fallbacks+1 end
+ local trace=S.selectionTrace
+ if trace and #trace<1024 then
+  local canvas=love.graphics.getCanvas and love.graphics.getCanvas()
+  for i=1,4 do if type(canvas)~='table'then break end;canvas=rawget(canvas,1)or rawget(canvas,'canvas')end
+  local scissor=love.graphics.getScissor and{love.graphics.getScissor()}or{}
+  local rect=S.selectionTraceRect
+  local include=not S.selectionTraceTarget or tostring(canvas)==S.selectionTraceTarget
+  if include and rect and #scissor==4 then include=scissor[1]<rect[1]+rect[3]and rect[1]<scissor[1]+scissor[3]and scissor[2]<rect[2]+rect[4]and rect[2]<scissor[2]+scissor[4]end
+  if not include then return end
+  local first,count,texture
+  if type(object)=='userdata'and object.typeOf and object:typeOf('Mesh')then
+   first,count=object:getDrawRange();texture=object:getTexture()
+  end
+  local depth,writes;if love.graphics.getDepthMode then depth,writes=love.graphics.getDepthMode()end
+  local blend,alpha;if love.graphics.getBlendMode then blend,alpha=love.graphics.getBlendMode()end
+  trace[#trace+1]={method=method,object=tostring(object),source=tostring(original(record)),
+   program=tostring(variant and variant.shader or original(record)),key=record.key,
+   target=tostring(canvas),first=first,count=count,texture=tostring(texture),depth=depth,writes=writes,blend=blend,alpha=alpha,
+   color=love.graphics.getColor and{love.graphics.getColor()}or nil,scissor=scissor,
+   inputs=S.selectionTraceBank and diagnosticBank(record)or nil}
+ end
 end
 local function admit(shader,source,second,third,n)
  if compiling or n>3 or second~=nil or third~=nil or type(source)~='string'or #source<limits.minBytes or #source>limits.maxBytes then return end
@@ -286,7 +374,7 @@ function S.install()
  end
  for _,name in ipairs{'draw','drawInstanced','drawFromShader','drawLayer','drawIndirect','drawFromShaderIndirect','rectangle','polygon','circle','ellipse','arc','line','points','print','printf'}do
   local native=g[name]
-  if native then g[name]=function(...)beforeDraw();return native(...)end end
+  if native then g[name]=function(...)if S.selectionTrace then beforeDraw(name,...)else beforeDraw()end;return native(...)end end
  end
  if raw.present then g.present=function(...)sweep();return raw.present(...)end end
  return true
