@@ -30,5 +30,13 @@ return function(game)
  assert(report.nativeSongReleased,'Title restart never released its native song')
  report.originalRestartCompleted=true;persist()
  assert(U.shot(game,out..'/native-title-restart-completed.png'))
+  U.tap(game,'b');U.wait(10);U.tap(game,'b')
+  waitFor(function()local top=game.stack:top();return getmetatable(top)==Title and top.phase=='run'end,
+    2400,'Restarted intro did not reach the original title')
+  U.tap(game,'start')
+  waitFor(function()return getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu')end,
+    500,'Restarted title did not open the native main menu')
+  report.restartedTitleOpensMainMenu=true;persist()
+  assert(U.shot(game,out..'/native-title-restart-main-menu.png'))
  report.status='pass';persist();print('PASS_NATIVE_FRLG_TITLE_MUSIC '..V.get());love.event.quit(0)
 end
