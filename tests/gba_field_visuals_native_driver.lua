@@ -74,6 +74,7 @@ return function(game)
  U.wait(24);shot('native-map-popup-clear')
  require('src.world.Gen3FieldPoison').start(world,edition)
  world.gen3PoisonMosaic.frame=5;shot('native-map-popup-poison-pulse')
+ assert(require('src.world.Gen3FieldPoison').size(world)>1,'Capture missed original mosaic: use --speed 1')
  report.poisonEffect='native BG mosaic; OBJ and BG0 popup unchanged'
  U.wait(24);shot('native-map-popup-after-poison')
  assert(report.nativeCoordinatesMatched,'Actual native battler frames differ from cartridge coordinates')

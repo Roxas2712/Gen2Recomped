@@ -83,6 +83,7 @@ return function(game)
  world:applyFieldPoisonDamage();assert(mon.hp==hp-1 and world.gen3PoisonMosaic,'Ordinary poison damage did not start mosaic')
  U.wait(3);report.capturedMosaicSize=M.size(world);assert(report.capturedMosaicSize>1)
  assert(world.mapNameSign==popup,'Poison replaced the map popup owner');shot('native-field-poison-mosaic')
+ assert(M.size(world)>1,'Capture missed the brief original poison effect: run this visual fixture with --speed 1')
  U.wait(15);assert(world.gen3PoisonMosaic==nil and world.mapNameSign==popup)
  shot('native-field-poison-after');report.nativePoisonDamage=hp-mon.hp
  report.drawPreservesSaveRng=true;report.poisonEffect='BG mosaic; sharp OBJ and BG0 popup';report.status='pass';persist()
