@@ -146,7 +146,7 @@ return function(game)
     report.pokedexObtained=state.flags[assert(game.data.constants.gen3StartMenu.pokedexFlag)]==true
     if world and world.map then
       local map=world.map;state.map=fields(map,{'id','widthCells','heightCells'});state.map.name=map.def.name
-      state.player=fields(world.player,{'cellX','cellY','facing','moving','inputLocked','turnTimer','progress','elevation',
+      state.player=fields(world.player,{'cellX','cellY','facing','moving','inputLocked','turnTimer','progress','elevation','surfing','diving',
         'machBike','acroBike','bikeCounter','rsMachSpeed','acroState','acroHold','acroHopClock'})
       state.scriptRunning=world.runner and world.runner:isRunning()or false
       state.entities={};for _,e in ipairs(world.entities or {})do
