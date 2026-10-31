@@ -205,7 +205,7 @@ if args.story_save_source or args.story_ending_save_source:
         # A later ordinary playthrough may have consumed Brock's TM. Retain
         # only the receipt from the checked prior input trace/checkpoint.
         inherited['brockTmRewardObserved']=bool(sr.get('brockTmRewardObserved')or
-            checkpoint['snapshotAfterSaveCommand'].get('inventory',{}).get('TM39',0)>0)
+            (checkpoint['snapshotAfterSaveCommand'].get('inventory')or{}).get('TM39',0)>0)
     assert prior_profile.resolve()==prior_profile
     story_save=prior_profile/checkpoint['saveRelativePath'];assert not story_save.is_symlink()
     assert digest(story_save)==checkpoint['sha256']
