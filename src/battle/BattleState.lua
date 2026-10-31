@@ -11967,6 +11967,7 @@ function BattleState:finish()
   -- battle discards the battle copy, so the original ids come back
   self:restoreMimicked(self.player)
   self:restoreMimicked(self.enemy)
+  require('src.pokemon.Gen3Pickup').afterBattle(self)
   -- end_of_battle.asm clears wLowHealthAlarm at battle teardown
   require("src.core.Sound").stopLoop("Low_Health_Alarm")
   -- the victory theme already started when the win was decided

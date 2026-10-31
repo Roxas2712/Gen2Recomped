@@ -12256,6 +12256,9 @@ function RomExtractorGen3:extractFieldEffects()
   local artwork,why=require('src.import.Gen3FieldMoveArt').extract(self.rom,self.manifest,ok and digest or nil,edition,self.checkpoint)
   local constants=self._constants or{}
   constants.gen3FieldMovePresentation=artwork
+  local pickup,pickupWhy=require('src.import.Gen3PickupData').extract(self.rom,self.manifest,ok and digest or nil,edition)
+  constants.gen3Pickup=pickup
+  if not pickup then Logger.warn('gen3 Pickup tables unavailable: %s',tostring(pickupWhy))end
   self._constants=constants
   if not artwork then Logger.warn('gen3 field move artwork unavailable: %s',tostring(why))end
   self:write('constants',constants)
