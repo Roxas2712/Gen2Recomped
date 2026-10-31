@@ -20,6 +20,10 @@ return function(game)
   C.setVar(game.save,0x4068,1)
   U.teleport(game,'MAP_G01_N75',6,3,'up');U.wait(90)
   local world=game.stack:top();assert(world.map.id=='MAP_G01_N75')
+  local npc=assert(world.npcs[1])
+  local native=assert(game.data.map_scripts.maps[world.map.id])
+  assert(require('src.script.MapScripts').talkScript(world.map.id,npc.def.text)
+    ==VM.compile(game.data,native.objects[1]),'Legacy alias replaced the native League object program')
   if mode=='opened-after-battle'then
    game.save.flags.FLAG_G3_04B8=true
    world.runner:run(assert(VM.compile(game.data,key)),{mapId=world.map.id});U.wait(30)
@@ -34,6 +38,14 @@ return function(game)
    arrow=map:arrowWarpDirAt(6,2),resolvedArrival=Warp.onArrive(map,6,2,'up')~=nil}
   report.cases[#report.cases+1]=row;persist()
   game.input:overlayPressed('up');U.wait(20);game.input:overlayReleased('up');U.wait(160)
+  for _=1,600 do
+   if game.stack:top()==world and not world.transitioning and not world.runner:isRunning()
+       and not world.player.moving then break end
+   U.wait(1)
+  end
+  assert(game.stack:top()==world and not world.transitioning and not world.runner:isRunning(),
+    'League arrival did not settle before its renderer capture')
+  U.wait(2)
   row.afterMap=world.map.id;row.afterX=world.player.cellX;row.afterY=world.player.cellY;persist()
   assert(U.shot(game,out..'/'..mode..'.png'))
   assert(world.map.id=='MAP_G01_N76','Native League door did not enter Bruno: '..J.encode(row))

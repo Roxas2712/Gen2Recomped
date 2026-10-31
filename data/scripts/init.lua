@@ -78,6 +78,11 @@ end
 
 local function attachBaseUnlessGen2(mapId, mod)
   if gen2OwnedMaps[mapId] then return end
+  -- Readable GBA names share the native registry record. Checking only the
+  -- raw group/number lets the older Kanto handler replace that same map's
+  -- original object program (including the League's post-win door script).
+  local source = require("src.core.MapIdentity").sourceId(gen2Data, mapId)
+  if gen2OwnedMaps[source] then return end
   local compact = type(mapId) == "string" and mapId:gsub("_(%d+)$", "%1") or mapId
   local normalized = type(mapId) == "string" and mapId:gsub("([A-Z])(%d)", "%1_%2") or mapId
   if gen2OwnedMaps[compact] or gen2OwnedMaps[normalized] then return end
