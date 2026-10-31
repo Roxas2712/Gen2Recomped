@@ -15785,7 +15785,18 @@ function OverworldState:gen4FieldResumed()
   end
 end
 
+function OverworldState:gen3FieldResumed(caller)
+  if not GameVersion.isGen3() or not self.map then return end
+  local hooks = mapScripts.get(self.map.id)
+  if hooks and hooks.onResume then hooks.onResume(Game, self, caller) end
+end
+
 function OverworldState:afterBattle(result, battle)
+  if GameVersion.isGen3() and battle and not battle.g3ScriptedFieldReturn
+    and not battle.g3FieldResumed and (result ~= "lose" or battle.canLose) then
+    battle.g3FieldResumed = true
+    self:gen3FieldResumed()
+  end
   if RsEncounter.active()then RsEncounter.restart(self)end
   if GameVersion.isGen2() and result=="win" and battle and battle.kind=="trainer" and not battle.linkBattle and not battle.battleTower and
       not battle.g2MomHandled and require("src.world.Gen2MomShopping").stock()then

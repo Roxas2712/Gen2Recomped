@@ -964,6 +964,24 @@ local function contributionFor(data, mapId, entry, mapDef)
         setup=callback.type==ON_LOAD or callback.type==ON_TRANSITION}end
     end
   end
+  -- Return-to-field callbacks must finish before the suspended event script
+  -- clears its temporary flags (Route 120 removes its revealed Kecleon here).
+  local resumeRows = {}
+  for _, entryScript in ipairs(onEnter) do
+    if entryScript.phase == ON_RESUME then resumeRows[#resumeRows + 1] = entryScript.rows end
+  end
+  if #resumeRows > 0 then
+    contribution.onResume = function(game, overworld, caller)
+      for _, rows in ipairs(resumeRows) do
+        if caller and caller.runner then
+          local runner = caller.runner
+          runner:exec(rows, runner:makeContext({mapId=mapId,gen3BattleResume=true}))
+        else
+          queue(overworld, rows, {mapId=mapId,gen3BattleResume=true})
+        end
+      end
+    end
+  end
   local onWarpIn, onFrame = {}, {}
   for _, tbl in ipairs(entry.tables or {}) do
     local into = (tbl.type == ON_FRAME_TABLE) and onFrame
@@ -1158,7 +1176,7 @@ end
 
 local PHASE_KEYS = {
   talk = { talk = true },
-  scenes = { onEnter = true, onStep = true, onFrame = true, onBoulderMoved = true },
+  scenes = { onEnter = true, onStep = true, onFrame = true, onResume = true, onBoulderMoved = true },
 }
 
 function Gen3ScriptVM.register(data, phase)
