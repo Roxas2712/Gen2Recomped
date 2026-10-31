@@ -4003,7 +4003,9 @@ function RomExtractorGen3:extractConstants()
   -- Both hold for the boy and the girl, and neither counts rows.
   local avatars = self.manifest.playerSprites
   local gfxTable = self:symbol("gObjectEventGraphicsInfoPointers")
-  if type(avatars) == "table" and avatars.boy and avatars.girl and gfxTable then
+  if self.version=='firered'or self.version=='leafgreen'then
+    constants.gen3PlayerSprites=require('src.import.Gen3FrlgPlayerAssets').avatars(self)
+  elseif type(avatars) == "table" and avatars.boy and avatars.girl and gfxTable then
     local gfxCount = self:layoutValue("objectEventGfxCount", 0)
 
     -- one row of gObjectEventGraphicsInfoPointers, in the fields this needs
@@ -9025,10 +9027,11 @@ end
 
 function RomExtractorGen3:surfBlob()
   local runs = self:fieldEffectTemplates()
-  -- FIRERED: gFieldEffectObjectTemplatePointers is known (36 entries), and
-  -- the shape scan does not isolate it there, so read it where it is
+  -- FRLG's 36-entry table contains a NULL row, so the contiguous shape scan
+  -- cannot isolate it. Each edition supplies its own original table address.
   if (self.manifest or {}).frlgItemMenu ~= nil then
-    runs = { { at = 0x3A0010, count = 36 } }
+    runs = { { at = assert(self:symbol('gFieldEffectObjectTemplatePointers')),
+               count = 36 } }
   end
   -- SEVERAL RUNS OF TEMPLATES ARE LONG ENOUGH -- the cartridge has other
   -- template tables, one of them 141 entries -- so the run is not chosen by
@@ -9068,6 +9071,12 @@ function RomExtractorGen3:surfBlob()
       usedIndex[byte % 16] = true
       usedIndex[math.floor(byte / 16)] = true
     end
+  end
+  if self.version=='firered'or self.version=='leafgreen'then
+    local colors,tag=require('src.import.Gen3FrlgPlayerAssets').surfPalette(self,usedIndex)
+    return{images=hit.shape.images,frames=hit.shape.frames,width=hit.shape.width,height=hit.shape.height,
+      table=hit.run.at,count=hit.run.count,index=hit.index,colors=colors,paletteTag=tag,
+      paletteSource='FRLG player OBJ palette slot 0'}
   end
   local palettes = self:fieldEffectPalettes(hit.run.at, hit.run.count)
   local chosen, chosenTag = nil, nil
@@ -9837,6 +9846,7 @@ function RomExtractorGen3:extractOverworldSprites()
         frameHeight = blob.height,
         frames = blob.frames,
         trueColor = true,
+        paletteSource = blob.paletteSource,
         source = ("ROM:field-effect templates %07X[%d], %d frames at %07X, "
                   .. "palette tag %d"):format(blob.table, blob.index,
                                               blob.frames, blob.images,
