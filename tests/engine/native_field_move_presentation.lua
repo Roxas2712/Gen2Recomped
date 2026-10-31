@@ -48,7 +48,9 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
   T.eq(state:finish(),false,'covered field moves cannot pop another native screen')
   state:update();T.eq(state.t,before+1,'direct updates cannot advance a covered admission')
   T.eq(stack:top(),cover);stack:pop()
-  for i=1,100 do stack:update(1/60)end
+  local ticks=0
+  while not state.done and ticks<256 do stack:update(1/60);ticks=ticks+1 end
+  T.check(state.done,'native presentation completes within its bounded cartridge program')
   T.eq(completions,1,'real native completion calls the pending callback once')
   T.eq(Source.isActive(),false);T.eq(state.sprite,nil,'native exit releases its owned image')
   T.eq(fixture.player.fieldMove,nil);T.eq(fixture.player.fieldMovePose,nil)
