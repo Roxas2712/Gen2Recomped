@@ -11,7 +11,7 @@ return function(game)
  local route=game.data.maps.MAP_G00_N24;local briney
  for _,obj in ipairs(route.objects)do if obj.index==2 then briney=obj end end
  assert(briney and briney.x==21 and briney.y==24,'Unexpected own Route109 object template')
- game.save.flags[briney.eventFlag]=nil
+ game.save.flags[briney.eventFlag]=false
  game.save.gen3ObjectHomes={MAP_G00_N24={[2]={x=12,y=6}}}
  local town=require('src.world.MapLoader').load(game.data,'MAP_G00_N01')
  U.teleport(game,'MAP_G00_N01',18,town.heightCells-1,'down');U.wait(30)
