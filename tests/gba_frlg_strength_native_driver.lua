@@ -76,6 +76,8 @@ return function(game)
   if var then
    assert(npc.cellX==tx and npc.cellY==ty,'Normal push did not reach the original button')
    assert(C.getVar(game.save,var)==100,'Native Strength button script did not activate: '..name)
+   local home=assert(game.save.gen3ObjectHomes[mapId][index])
+   assert(home.x==tx and home.y==ty,'Native coordinate script did not copy the live stone to its current template')
    if barrier then assert(world.map:blockAt(12,14)~=barrier[1]and world.map:blockAt(12,15)~=barrier[2],'Native rock barrier did not open')end
   else
    assert(not world:npcByIndex(index),'Fallen stone remains active')
@@ -86,7 +88,9 @@ return function(game)
    value=var and C.getVar(game.save,var)or nil,revealFlag=not var and revealed or nil,direction=dir};persist()
   if barrier then
    world=load(mapId,13,14)
-   assert(C.getVar(game.save,var)==100 and world:npcByIndex(index).cellX==tx and world:npcByIndex(index).cellY==ty,'Native switch/permanent boulder position did not survive map reload')
+   local original=world.map.def.objects[index];local restored=assert(world:npcByIndex(index))
+   assert(C.getVar(game.save,var)==100,'Native switch variable did not survive the next visit')
+   assert(restored.cellX==original.x and restored.cellY==original.y,'A new visit must rebuild the stone template from the map header')
    assert(world.map:blockAt(12,14)~=barrier[1]and world.map:blockAt(12,15)~=barrier[2])
    shot('native-strength-1f-barrier-after-reload')
   end
