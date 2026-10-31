@@ -1988,7 +1988,21 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- picks land tile-pairs whenever mover.surfing is falsy, and land
   -- tile-pairs never permit stepping off a water cell (#536).  Same
   -- boot-only shape as the refreshStandingOnWarp door-mat restore (#378).
-  if opts and opts.via == "boot" then
+  if GameVersion.isGen3() and self.map.def.elevationCells
+     and not (opts and (opts.checkpoint
+       or opts.via == "reload" and fromMapId == mapId)) then
+    -- GBA GetAdjustedInitialTransitionFlags derives the arrival avatar from
+    -- the destination, including Continue. A script can warp straight from
+    -- a dry cave onto the sea (the RS legendary awakening does exactly that).
+    -- The old cave avatar must not survive that arrival. Use the same native
+    -- water/elevation rule as collision, so shallow water and raised bridges
+    -- remain walkable and underwater gets its separate diving state.
+    local underwater = self.map.def.mapType == "UNDERWATER"
+      or self.map.def.mapType == 5
+    self.player.diving = underwater or nil
+    self.player.surfing = not underwater and self.map:isWaterCell(x, y) or false
+    self:syncSurfingPikachu()
+  elseif opts and opts.via == "boot" then
     local ps = Game.save and Game.save.player
     if ps and ps.surfing ~= nil then
       self.player.surfing = ps.surfing and true or false
