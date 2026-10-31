@@ -188,6 +188,9 @@ end
 -- an array of rows; control commands return a new program counter, as a
 -- row number or a label name.
 function ScriptRunner:exec(script, ctx, admission, startRow)
+  -- A restored battle starts at its saved continuation rather than inside
+  -- start_battle's suspended call. Apply the same field-return prelude first.
+  Commands._resumeFieldAfterBattle(ctx)
   local Decoded, trace, origin
   local decodedHooks = not admission and Runtime.hooks._decodedHooks
   if decodedHooks and decodedHooks.chains["script.command"] then

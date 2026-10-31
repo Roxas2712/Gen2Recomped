@@ -636,6 +636,16 @@ function Commands.take_item(ctx, itemId, count)
 end
 
 -- start_battle "wild" species level | start_battle "trainer" OPP_CLASS partyIndex
+function Commands._resumeFieldAfterBattle(ctx)
+  local pending = ctx.gen3PendingFieldReturn
+  if not pending then return end
+  ctx.gen3PendingFieldReturn = nil
+  local world, battle = ctx.overworld, pending.battle
+  if not world or world.map ~= pending.map or battle.g3FieldResumed then return end
+  battle.g3FieldResumed = true
+  world:gen3FieldResumed(ctx)
+end
+
 function Commands._checkpointBattleFinished(ctx, battle, kind, before, result)
   local runner = ctx.runner
   ctx.lastBattleResult = result
@@ -705,6 +715,15 @@ function Commands._checkpointBattleFinished(ctx, battle, kind, before, result)
   -- `reloadmapafterbattle` can tell that case from a real whiteout.
   ctx.lastBattleCanLose = battle.canLose and true or false
   ctx.lastCheck = result == "win"
+  if require("src.core.GameVersion").isGen3() then
+    -- Mark restored battle bindings here too. The owning script coroutine
+    -- executes the callback prelude, including callbacks which yield.
+    battle.g3ScriptedFieldReturn = true
+    if ctx.overworld and ctx.overworld.gen3FieldResumed
+      and (result ~= "lose" or battle.canLose) then
+      ctx.gen3PendingFieldReturn = {battle=battle,map=ctx.overworld.map}
+    end
+  end
   -- ...AND THE OUTCOME IS IN VAR_BATTLE_RESULT (0x4013) before they do:
   -- Encounter_GetResult (encounter.c) writes BATTLE_OUTCOME_* there, and a
   -- map's ON_LOAD reads it -- `StaticWildWonOrCaughtCheck <var>, 1`, which
@@ -866,6 +885,7 @@ function Commands.start_battle(ctx, kind, a, b, opts)
     ctx.game.stack:push(battle)
   end
   runner:yield()
+  Commands._resumeFieldAfterBattle(ctx)
 end
 
 function Commands.warp(ctx, mapId, x, y, facing)
