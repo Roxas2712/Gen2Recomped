@@ -930,6 +930,7 @@
     "gNatureNamePointers": 4601984,
     "gNatureStatTable": 2435876,
     "gObjectEventGraphicsInfoPointers": 3800464,
+    "gFieldEffectObjectTemplatePointers": 3801072,
     "gPokedexEntries": 4514416,
     "gRangedMovementTypes": 3800300,
     "gScriptCmdTable": 1440144,

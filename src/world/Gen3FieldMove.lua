@@ -149,6 +149,9 @@ local function create(game, mon, onDone, opts)
   self.t = 0
   self.frame=0;self.options=opts
   self.phase = "raise"
+  self.raiseFrames=Version.isFRLG()and require('src.import.Gen3FrlgPlayerAssets').poseDuration(
+    game.data.constants and game.data.constants.gen3PlayerSprites,
+    game.save.player and game.save.player.gender)or RAISE_FRAMES
   self.shade, self.ink = bandColours(game)
   -- THE POSE GOES ON HERE and comes off in finish(), so it is on screen for
   -- exactly as long as the window is -- which is what the cartridge does.
@@ -311,9 +314,12 @@ function Gen3FieldMove:updateBody()
   self.t = self.t + 1
   if self.poseInstalled and self.player._gen3FieldMovePoseOwner==self then
     self.age = (self.age or 0) + 1
-    -- drawPose clamps, so this simply counts upward and the pose settles on
-    -- its last frame -- the ball held up -- and stays there
-    self.player.fieldMovePose = math.floor(self.age / POSE_STEP)
+    -- FRLG's item sheet contains extra VS Seeker pictures. ANIM_FIELD_MOVE
+    -- uses only 0..4 at 4/4/4/4/8 ticks, then holds frame 4.
+    local nativePose=Version.isFRLG()and require('src.import.Gen3FrlgPlayerAssets').poseFrame(
+      self.game.data.constants and self.game.data.constants.gen3PlayerSprites,
+      self.game.save.player and self.game.save.player.gender,self.age)
+    self.player.fieldMovePose = nativePose or math.floor(self.age / POSE_STEP)
   end
   if self.effect then
     local done=Presentation.advance(self.effect,function()
@@ -322,7 +328,7 @@ function Gen3FieldMove:updateBody()
     if done then return self:finish()end
     return
   end
-  if self.phase == "raise" and self.t >= RAISE_FRAMES then
+  if self.phase == "raise" and self.t >= (self.raiseFrames or RAISE_FRAMES) then
     self.phase, self.t = "in", 0
   elseif self.phase == "in" and self.t >= IN_FRAMES then
     self.phase, self.t = "hold", 0
