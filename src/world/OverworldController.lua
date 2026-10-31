@@ -1362,7 +1362,11 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- InitMapFromSavedGame, not LoadMapFromWarp/ClearTempFieldEventData.
   self.gen3FrlgContinuing = (GameVersion.isFRLG() and opts and opts.via == "boot"
     and self.continuingSave) and true or nil
-  local gen3Continuing = self.gen3RsContinuing or self.gen3FrlgContinuing
+  -- Emerald's ordinary CB2_ContinueSavedGame also uses the saved map view
+  -- and object templates, without ClearTempFieldEventData or TRANSITION.
+  self.gen3EmeraldContinuing = (version == 'emerald' and opts and opts.via == 'boot'
+    and self.continuingSave) and true or nil
+  local gen3Continuing = self.gen3RsContinuing or self.gen3FrlgContinuing or self.gen3EmeraldContinuing
   self.continuingSave = nil
   -- Clay's stacked mine (Gen5DriftveilGym): its level rule hooks on at entry
   local liftDef = Game and Game.data and Game.data.maps and Game.data.maps[mapId]
@@ -1787,7 +1791,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- more visit -- which for this report is the visit the player is in.
   if GameVersion.isGen3() and Game and Game.save
      and Game.save.gen3ObjectHomes and not (opts and opts.checkpoint)
-     and not self.gen3FrlgContinuing
+     and not gen3Continuing
      and (fromMapId ~= mapId or (opts and opts.via == "boot")) then
     Game.save.gen3ObjectHomes[mapId] = nil
   end
@@ -1835,7 +1839,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
     -- ...and Gen 3's, which is the same idea for the same reason: a
     -- `removeobject` with no event flag behind it lasts as long as the map
     -- stays loaded and no longer.
-    if not (self.gen3FrlgContinuing or GameVersion.isGen3() and fromMapId == mapId
+    if not (gen3Continuing or GameVersion.isGen3() and fromMapId == mapId
             and not (opts and opts.via == "boot")) then
       Game.save.gen3SessionObjects = nil
     end
@@ -2079,7 +2083,7 @@ function OverworldState:setMap(mapId, x, y, facing, opts)
   -- cracked cells have to restart with it: the drawn tiles are rebuilt from
   -- the map layout on a load, so a remembered crack with no cracked tile
   -- under it is ice that looks whole and gives way anyway.
-  if GameVersion.isGen3() and not self.gen3RsContinuing
+  if GameVersion.isGen3() and not gen3Continuing
      and Game.save and Game.save.gen3ThinIce then
     Game.save.gen3ThinIce[mapId] = nil
   end
