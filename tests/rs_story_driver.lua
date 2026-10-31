@@ -4,7 +4,7 @@ return function(game)
   local Serialize=require('src.core.SaveSerializer');local Collision=require('src.world.Collision')
   local out=assert(os.getenv('EDITION_QA_OUT'))
   local edition=require('src.core.GameVersion').get()
-  assert(edition=='ruby'or edition=='sapphire')
+  assert(edition=='ruby'or edition=='sapphire'or edition=='emerald')
   assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-'..edition..'%-'))
   -- Hidden SDL windows can still receive desktop typing. Only this owned QA
   -- process ignores physical events; the trace uses the ordinary overlay API.
@@ -62,8 +62,9 @@ return function(game)
   end
   local function screen(s)
     if not s then return {}end
-    local r=fields(s,{'phase','mode','state','index','menuIndex','moveIndex','cursor','waiting','charIndex','pageIndex','lineIndex','screenId','pocket','keepOpen','rs','newMoveId','selecting','subIndex'})
+    local r=fields(s,{'phase','mode','state','index','menuIndex','moveIndex','cursor','waiting','charIndex','pageIndex','lineIndex','screenId','pocket','keepOpen','rs','newMoveId','selecting','subIndex','stage','yes','picGrow'})
     local f=s.update or s.draw;r.source=type(f)=='function'and debug.getinfo(f,'S').short_src or '?'
+    if getmetatable(s)==require('src.ui.Gen3StarterSelect')then r.screenId='Gen3StarterSelect'end
     if s.pages and s.pageIndex then r.page=s.pages[s.pageIndex]end
     if s.entries then r.entries={};for i,e in ipairs(s.entries)do r.entries[i]=type(e)=='table'and fields(e,{'key','label','name','text'})or tostring(e)end end
     if type(s.choose)=='table'then r.learnMove=s.choose.move end

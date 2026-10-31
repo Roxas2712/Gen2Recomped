@@ -35,12 +35,18 @@ parser.add_argument('--freeze',type=Path,help=argparse.SUPPRESS)
 parser.add_argument('--tracked-sources',type=Path,help=argparse.SUPPRESS)
 args=parser.parse_args()
 assert not (args.story_save_source and args.story_ending_save_source), 'Choose one checkpoint kind'
-assert not args.story_ending_save_source or args.edition=='leafgreen'
+assert not args.story_ending_save_source or args.edition in('firered','leafgreen')
 driver=Path(args.driver)
 assert not args.story_ending_save_source or str(driver)=='tests/leafgreen_story_driver.lua'
 assert not driver.is_absolute() and '..'not in driver.parts and driver.suffix=='.lua'
+if args.story_save_source:
+    expected_driver=('tests/leafgreen_story_driver.lua'if args.edition in('firered','leafgreen')
+                     else'tests/rs_story_driver.lua')
+    assert str(driver)==expected_driver,'Continuation requires the edition-specific ordinary story driver'
 if args.verify_story_continue:
-    assert args.story_save_source and args.edition in('ruby','sapphire')and str(driver)=='tests/rs_story_driver.lua'
+    expected_driver=('tests/leafgreen_story_driver.lua'if args.edition in('firered','leafgreen')
+                     else'tests/rs_story_driver.lua')
+    assert args.story_save_source and args.edition in('ruby','sapphire','emerald','firered','leafgreen')and str(driver)==expected_driver
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -115,9 +121,10 @@ elif args.installed_profile:
 story=None;story_save=None
 if args.story_save_source or args.story_ending_save_source:
     prior=(args.story_save_source or args.story_ending_save_source).resolve()
-    assert args.edition in ('leafgreen','ruby','sapphire')and prior.parent==ROOT/'.local/qa'
+    assert args.edition in ('firered','leafgreen','ruby','sapphire','emerald')and prior.parent==ROOT/'.local/qa'
     assert prior.name.startswith('gen2recomp-qa-'+args.edition+'-')and not prior.is_symlink()
     sv=json.loads((prior/'verification.json').read_text());sr=json.loads((prior/'result.json').read_text())
+    assert sv['edition']==sr['edition']==args.edition,'Story provenance belongs to another edition'
     checkpoint=json.loads((prior/('native-ending-checkpoint.json'if args.story_ending_save_source else'normal-save-checkpoint.json')).read_text())
     assert sv['identity']=='oasc-edition-qa-'+prior.name[len('gen2recomp-qa-'):]
     prior_profile=Path.home()/'Library/Application Support/LOVE'/sv['identity']
@@ -131,7 +138,7 @@ if args.story_save_source or args.story_ending_save_source:
         inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
         verify_processed_queue(json.loads((prior/'story-commands.json').read_text()),sr,
             json.loads((prior/'story-state.json').read_text()))
-    elif args.edition in ('ruby','sapphire'):
+    elif args.edition in ('ruby','sapphire','emerald'):
         from rs_story_checkpoint import qualify
         inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
         if sv['status']!='pass':
@@ -165,7 +172,7 @@ if args.story_save_source or args.story_ending_save_source:
         assert sv['cartridgeSHA1']==hashlib.sha1(args.rom.read_bytes()).hexdigest()
         assert checkpoint['sourceRun']==prior.name and checkpoint['profileIdentity']==sv['identity']
         assert checkpoint['producedThroughNormalSaveMenu']and checkpoint['personalSave']is False
-        assert checkpoint['saveRelativePath']=='profiles/guest/save_leafgreen.lua'or re.fullmatch(r'profiles/guest/saves/leafgreen/slot[1-9][0-9]*\.lua',checkpoint['saveRelativePath'])
+        assert checkpoint['saveRelativePath']=='profiles/guest/save_'+args.edition+'.lua'or re.fullmatch(r'profiles/guest/saves/'+args.edition+r'/slot[1-9][0-9]*\.lua',checkpoint['saveRelativePath'])
         assert all(sr[k]for k in ('continuousFromNewGame','noTeleport','noPartyInjection','noDirectStoryFlagEdits'))
         assert sr['starter']['level']==5 and sr['parcelObtained']and sr['parcelReturned']and sr['pokedexObtained']
         rows=sr['commands'];first,last=checkpoint['saveMenuCommandRange']

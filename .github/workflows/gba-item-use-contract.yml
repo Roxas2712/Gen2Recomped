@@ -44,7 +44,9 @@ jobs:
           luajit tests/engine/gen3_pickup_rules.lua
           luajit tests/engine/gen3_pickup_import.lua
           luajit tests/engine/gen3_neighbor_templates.lua
+          luajit tests/engine/gen3_first_rescue_species.lua
           python3 -m unittest discover -s tests -p frlg_story_ending_checkpoint_test.py
+          python3 -m unittest discover -s tests -p rs_story_checkpoint_test.py
           luajit tests/engine/rs_battler_frame_placement.lua
           luajit tests/engine/emerald_battler_coordinates.lua
           luajit tests/engine/frlg_double_healthboxes.lua
