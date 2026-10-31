@@ -36,6 +36,10 @@ return function(game)
   U.tap(game,'start')
   waitFor(function()return getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu')end,
     500,'Restarted title did not open the native main menu')
+  local menu=game.stack:top()
+  waitFor(function()return not menu.frlgPalette:fadeActive()end,180,
+    'Restarted main menu did not finish its native palette fade')
+  U.wait(2)
   report.restartedTitleOpensMainMenu=true;persist()
   assert(U.shot(game,out..'/native-title-restart-main-menu.png'))
  report.status='pass';persist();print('PASS_NATIVE_FRLG_TITLE_MUSIC '..V.get());love.event.quit(0)
