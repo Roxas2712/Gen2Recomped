@@ -18,7 +18,7 @@ for _,version in ipairs{'emerald','firered','leafgreen'}do
  for role in pairs(Assets.labels(version))do spec.textIR[role]={{op='text',text=role}}end
  local files={}
  for _,name in ipairs(Assets.files)do local path=Assets.ROOT..name;spec.resources[#spec.resources+1]=path;files[path]='fixture'end
- files['data/generated/constants.lua']=Writer.encode({gen3NativeParty=spec})
+ files['data/generated/constants.lua']=Writer.encode({gen3NativeParty=spec,gen3PartyActions=require('tests.fixtures.frlg_party_actions').record(version)})
  Fs.read=function(p)return files[p]end;Fs.exists=function(p)return files[p]~=nil end
  V.set(version);game.data.constants.gen3NativeParty=spec
  T.eq(Assets.valid(spec,version),true);T.eq(View.available(game),true);T.eq(#Assets.missing(version),0)

@@ -72,7 +72,9 @@ return function(game)
  if edition=='emerald'then game.save.flags.FLAG_G3_4000=nil end
  world.signLandmark=nil;world:updateMapNameSign();assert(world.mapNameSign,'Prepared map has no native popup')
  U.wait(24);shot('native-map-popup-clear')
- world.poisonFlash=8;shot('native-map-popup-poison-pulse')
+ require('src.world.Gen3FieldPoison').start(world,edition)
+ world.gen3PoisonMosaic.frame=5;shot('native-map-popup-poison-pulse')
+ report.poisonEffect='native BG mosaic; OBJ and BG0 popup unchanged'
  U.wait(24);shot('native-map-popup-after-poison')
  assert(report.nativeCoordinatesMatched,'Actual native battler frames differ from cartridge coordinates')
  report.drawPreservesSaveRng=true;report.status='pass';persist()
