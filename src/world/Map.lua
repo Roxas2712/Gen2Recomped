@@ -1667,7 +1667,8 @@ function Map:arrowWarpDirAt(cx, cy)
   -- press DOWN and refused the step LEFT, which is the report word for word.
   -- Gen 4's own rule is `gen4PressWarpDir`.
   if (self.def and self.def.generation) == 4 then return nil end
-  local arrows = self.tileset.arrowWarpBehaviours or GEN3_ARROW_WARPS
+  local arrows = self.tileset.arrowWarpBehaviours
+    or (GameVersion.isFRLG() and FRLG_DIRECTIONAL_WARP or GEN3_ARROW_WARPS)
   -- cellBehaviour, not cellTile: cellTile answers $FF for anything the
   -- collision bits block, and a Gen 3 warp cell very often IS blocked -- the
   -- collision bits shut 192 of Hoenn's 201 animated-door cells (derived), and
