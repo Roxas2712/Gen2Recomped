@@ -30,6 +30,7 @@ jobs:
           luajit tests/engine/gen3_palette_renderer.lua
           luajit tests/engine/gen3_palette_frame_cache.lua
           luajit tests/engine/gen3_weather_color.lua
+          luajit tests/engine/gba_weather_draw_immutability.lua
       - name: Automatic ROM palette program import, bounds and public consumers
         run: |
           luajit tests/engine/gen3_palette_program_import.lua

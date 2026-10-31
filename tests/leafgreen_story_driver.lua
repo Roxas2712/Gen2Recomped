@@ -144,7 +144,13 @@ return function(game)
     assert(name:match('^[%w_-]+$'))
     local s=game.stack:top();local old=Serialize.encode(game.save);local rng=love.math.getRandomState()
     local ok,why=require('src.render.GraphicsScope').call(s.draw,s);assert(ok,why)
-    assert(old==Serialize.encode(game.save)and rng==love.math.getRandomState(),'Story draw changed save/RNG')
+    local current=Serialize.encode(game.save);local currentRng=love.math.getRandomState()
+    if old~=current or rng~=currentRng then
+      write('story-draw-immutability-failure.json',{name=name,screenId=s.screenId,
+        source=debug.getinfo(s.draw,'S').source,saveChanged=old~=current,rngChanged=rng~=currentRng,
+        beforeSave=old,afterSave=current})
+    end
+    assert(old==current and rng==currentRng,'Story draw changed save/RNG')
     assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name
   end
   local function waitFor(fn,n)for _=1,n do if fn()then return end;U.wait(1)end;error('Story boot timed out')end
