@@ -22,7 +22,7 @@ return function(game)
   if not s then return false end
   if s.rsNative then local task=s.rsNative.native.task;return task and task.state==1 and task.registerOffset==0 end
   if s.emerald then return s.state=='wait'and s.offset==0 end
-  return s.frlg and s.frames<=132 and s.frames>30
+  return s.frlg and s.frames<=128 and s.frames>30
  end
  local function show(map)
   U.teleport(game,map,10,12,'up');U.wait(30);local world=game.stack:top()
