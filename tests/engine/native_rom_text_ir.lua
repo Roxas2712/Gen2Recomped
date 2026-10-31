@@ -106,6 +106,7 @@ Extractor.DATA_STAGES={'initial','later'};Extractor.ASSET_STAGES={}
 local finish=reader(source);local emitted
 function finish:initial()
  self._text={};self._textPointers={namedIR=Catalog.bind(self,self._text,{gText_Late=0})}
+ self._constants={};self._audio={}
 end
 function finish:later()self._text.TEXT_000000=plain end
 function finish:write(name,value)if name=='text_pointers'then emitted=value end end
@@ -116,6 +117,14 @@ local providers={
  require('src.import.Gen3SafariAssets'),
 }
 local originalExtract,called={},{}
+local AudioRoles=require('src.import.Gen3EngineAudioRoles')
+local originalBind,audioBound=AudioRoles.bind,false
+AudioRoles.bind=function(edition,constants,audio)
+ T.same(called,{1,2},'native presentation providers precede engine audio binding')
+ T.eq(constants,finish._constants);T.eq(audio,finish._audio)
+ audioBound=true
+ return {format=1,edition=edition}
+end
 local finalPlain=plain..' late native prose'
 for index,provider in ipairs(providers)do
  originalExtract[index]=provider.extract
@@ -126,9 +135,11 @@ for index,provider in ipairs(providers)do
  end
 end
 local completed,why=pcall(finish.run,finish)
+AudioRoles.bind=originalBind
 for index,provider in ipairs(providers)do provider.extract=originalExtract[index]end
 Extractor.DATA_STAGES,Extractor.ASSET_STAGES=dataStages,assetStages
 T.eq(completed,true,why);T.same(called,{1,2,3,4},'required native providers finish before IR publication')
+T.eq(audioBound,true,'required native audio binding completes before final IR publication')
 T.eq(emitted.namedIR.records.TEXT_000000.nativePlain,finalPlain,
  'final cache publication snapshots text added by later native stages')
 for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
