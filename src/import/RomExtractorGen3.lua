@@ -3966,6 +3966,12 @@ function RomExtractorGen3:extractConstants()
     self:layoutValue("abilityNameLength", 13), numAbilities, "constants")
 
   local constants = { source = "ROM:Emerald" }
+  local digest=require('src.import.RomVerification').sha1(self.rom.data)
+  local standardEdition=type(self.version)=='table'and self.version.id or self.version
+  local standard,standardWhy=require('src.import.Gen3StandardStrings').extract(
+    self.rom,self.manifest,digest,standardEdition,function(at,length)return self:readString(at,length)end)
+  assert(standard,'GBA standard script strings unavailable: '..tostring(standardWhy))
+  constants.gen3StandardStrings=standard
   constants.gen3MauvilleGym = self.manifest.mauvilleGym
 
   -- WHERE A NEW GAME STARTS, and it is not a constant anywhere on the

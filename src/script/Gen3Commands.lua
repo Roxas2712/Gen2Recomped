@@ -3189,6 +3189,10 @@ function Commands.g3_buffer(ctx, slot, kind, value, quantity)
     text = tostring(valueOf(ctx, value))
   elseif kind == "text" then
     text = data and data.text and data.text[value]
+  elseif kind == "std" then
+    text = require('src.import.Gen3StandardStrings').lookup(
+      data and data.constants and data.constants.gen3StandardStrings,
+      require('src.core.GameVersion').get(),resolved)
   end
   if text and quantity and (tonumber(valueOf(ctx, quantity)) or 1) > 1 then
     text = text .. "s"
