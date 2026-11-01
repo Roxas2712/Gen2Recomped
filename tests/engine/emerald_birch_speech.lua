@@ -1,6 +1,7 @@
 -- Copyright (c) 2026 Roxas2712. See LICENSE-ROXAS2712.md.
 package.path='./?.lua;./?/init.lua;'..package.path
 love=require('tests.love_stub')
+love.filesystem.load=function(path)return loadfile(path)end
 local T=require('tests.harness')
 local A=require('src.import.Gen3EmeraldBirchAssets')
 local syms=require('compat.gen1-rs.Loader').new('emerald')('src.import.gba.syms').of('emerald')
