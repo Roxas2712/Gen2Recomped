@@ -1027,8 +1027,26 @@ local function notePairedWalk(ctx, ow, entity, index, label, steps)
               dx, dy, tiles, dx - odx, dy - ody)
 end
 
+-- An explicit map names the object's origin, even after a seamless crossing.
+-- Only an actor still in the live cast can be addressed there; a pooled actor
+-- on an unloaded map and a destination bystander with the same id are distinct.
+function Gen3Commands.movementActor(ctx, index, group, number)
+  local ow = ctx.overworld
+  if not ow then return nil end
+  if elsewhereThan(ctx, group, number) then
+    if not index then return nil end
+    local wanted = mapKey(group, number) .. "_obj_" .. index
+    for _, actor in ipairs(ow.npcs or {}) do
+      if actor.id == wanted and not actor.removed and not actor.despawned then
+        return actor
+      end
+    end
+    return nil
+  end
+  return index and ow:npcByIndex(index) or (not index and ow.player)
+end
+
 function Commands.g3_move(ctx, target, movementLabel, group, number)
-  if elsewhereThan(ctx, group, number) then return end
   local pool = ctx.game and ctx.game.data and ctx.game.data.map_scripts
   local rows = pool and pool.movements and pool.movements[movementLabel]
   local ow = ctx.overworld
@@ -1041,10 +1059,11 @@ function Commands.g3_move(ctx, target, movementLabel, group, number)
   -- cameraPan, ramped over the same frames a walk takes, so the pan and a
   -- person's walk in the same scene stay in step.
   if index == GEN3_CAMERA_OBJECT_ID and ctx.g3CameraObject then
+    if elsewhereThan(ctx, group, number) then return end
     return cameraMove(ctx, ow, movementSteps(rows))
   end
 
-  local entity = index and ow:npcByIndex(index) or (not index and ow.player)
+  local entity = Gen3Commands.movementActor(ctx, index, group, number)
   if not entity then return end
   return startMovement(ctx, ow, entity, index, movementLabel, rows)
 end
@@ -1143,19 +1162,22 @@ end
 -- entity that is not on the map any more, which is the same failure caught a
 -- moment earlier.
 function Commands.g3_wait_move(ctx, target, group, number)
-  if elsewhereThan(ctx, group, number) then return end
   local raw = tonumber(target) or 0
   local key
   if raw == 0 then key = ctx.g3LastMoved
   else key = movementKey(objectId(ctx, target)) end
   local state = key and ctx.g3Moving and ctx.g3Moving[key]
   if not state or state.done then return end
+  if group ~= nil and number ~= nil
+     and Gen3Commands.movementActor(ctx, state.index, group, number) ~= state.entity then
+    return
+  end
 
   local ow = ctx.overworld
   if state.entity and ow then
     local gone = state.entity.removed or state.entity.despawned
     if type(state.index) == "number" and ow.npcByIndex
-       and ow:npcByIndex(state.index) ~= state.entity then
+       and Gen3Commands.movementActor(ctx, state.index, group, number) ~= state.entity then
       gone = true
     end
     if gone then

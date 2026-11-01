@@ -36,6 +36,7 @@ jobs:
           luajit tests/engine/emerald_wally_tutorial.lua
           luajit tests/engine/gba_seam_music_hold.lua
           luajit tests/engine/gba_raw_walk_speed.lua
+          luajit tests/engine/gba_carried_movement.lua
       - name: Automatic ROM palette program import, bounds and public consumers
         run: |
           luajit tests/engine/gen3_palette_program_import.lua

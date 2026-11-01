@@ -30,15 +30,31 @@ The first-call path consists of two 97-tile halves requiring 500 and 568 frames.
 The initial native candidate correctly rejected the stale cached movement pace;
 that failed fixture is retained separately from accepted campaign progress.
 
+The connected-edge escort allowance also covered only Ruby/Sapphire. Emerald's
+boat leads the hidden player by one cell, so its edge step was refused before
+the player's crossing could carry both actors. The same connected, paired-walk
+allowance now includes Emerald; lone actors and unconnected edges stay refused.
+
+The first Norman call revealed a separate ownership defect: its second half
+uses `applymovementat`/`waitmovementat` for the original Route 104 boat after
+reaching Route 105. Explicit movement now resolves that exact live carried
+actor by its original map/id. An unloaded pooled object and a same-id actor on
+the destination map cannot substitute for it. Ordinary local lookup remains
+unchanged. The accepted normal campaign save remains independent of fixtures.
+
 ## Validation
 
 - The real completed-step callback fails eight Emerald assertions before the
-  fix and passes all 340 after it. The fixture also covers Ruby/Sapphire,
+  music fix. With the paired-edge cases it passes all 389 checks; the
+  uncorrected Emerald escort fails two of those assertions. The fixture also covers Ruby/Sapphire,
   FireRed/LeafGreen, Red/Crystal, incomplete steps, stale cues, release,
   duplicate prevention, surf/bike forwarding and complete-save immutability.
 - The faster-walk callback regression rejects nine Emerald assertions before
   its correction and passes all 136 afterward. The neighboring actor-respawn
   and buried-movement suites pass another 95 and 110 checks.
+- Explicit movement/wait ownership passes 70 checks across all five GBA
+  editions; the old implementation fails 25. Cases cover the carried owner,
+  same-id bystanders, missing/retired actors, waits and save immutability.
 - The 110 native M4A source-ownership/lifecycle checks pass.
 - The 4,292 Gen2 connection-target and 94 Gen3 forced-movement checks pass.
 - The older standalone `parity_seam_walk_anim.lua` requires locally generated
@@ -51,6 +67,8 @@ that failed fixture is retained separately from accepted campaign progress.
   sailing music through all four maps, native landing music/release, actor
   alignment, the actual phone dialogue and an ordinary dock exit. These are
   prepared fixtures and receive no continuous-story credit.
-- Native candidate execution and final captures are pending qualification.
+- Native repeat-voyage timing, seams, landing, fade completion and dock exit
+  passed before the first-call ownership correction. Both complete voyages and
+  a Sapphire regression remain pending final native qualification.
 
 No ROM assets, private saves or generated caches are included in this change.
