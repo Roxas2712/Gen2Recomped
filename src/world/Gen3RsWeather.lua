@@ -95,7 +95,8 @@ local function create(game,ow)
   local state={engine=engine,game=game,data=game.data,version=version,audio=audio}
   function weather.setWeather(value)
     value=M.translate(value,ow:gen3WeatherStage(),M.spec(game))
-    game.save.gen3Weather=value;game.save.gen3WeatherActive=value
+    value=require('src.world.Gen3SavedWeather').set(game.save,value,game.data,version)
+    game.save.gen3WeatherActive=value
     setMode(state,value,false)
   end
   state.coordinate=load('src.core.game3.coord_weather')
