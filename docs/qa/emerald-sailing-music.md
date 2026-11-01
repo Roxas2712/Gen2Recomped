@@ -77,8 +77,17 @@ Dewford rather than an older departure-map cue.
   sailing music through all four maps, native landing music/release, actor
   alignment, the actual phone dialogue and an ordinary dock exit. These are
   prepared fixtures and receive no continuous-story credit.
-- Native repeat-voyage timing, seams, landing, fade completion and dock exit
-  passed before the first-call ownership correction. Both complete voyages and
-  a Sapphire regression remain pending final native qualification.
+- Native Emerald run `20261101065244492409` passes both complete voyages.
+  The repeat path has 1,125 observed held frames with zero alignment error;
+  the first Norman-call path executes both original halves, displays the
+  actual DAD dialogue, registers Norman, and completes landing/dock exit.
+- Native Sapphire run `20261101065452789958` passes the original 194-tile,
+  1,068-movement-frame path across all four maps with zero alignment error.
+  The explicit landing fade ends at `SONG_1AB`, with native map/default
+  ownership both equal to Dewford's cue, and the ordinary dock exit passes.
+- Both native parents exit zero, retain frozen-source verification, and finish
+  storage cleanup. Final-renderer phone, boat and landing captures were
+  inspected. Earlier rejected candidates remain separate from these accepted
+  runs; their prepared state is never copied into the ordinary campaign.
 
 No ROM assets, private saves or generated caches are included in this change.
