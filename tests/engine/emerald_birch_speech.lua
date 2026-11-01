@@ -68,7 +68,8 @@ local function fixture()
     rgbaImage=function(...)return{...}end,
     printer=function()return{draw=function()end}end,
     yesNo=function(x,y)return{x=x,y=y}end}
-  local chrome={stdFrame=function(...)return{...}end,userFrame=function(...)return{...}end}
+  local chrome={stdFrame=function(...)return{...}end,userFrame=function(...)return{...}end,
+    dialogueFrame=function()return{'own-message-box'}end}
   local cries={}
   local audio={playCry=function(id)cries[#cries+1]=id end}
   local pal={ALL=1,BLACK=0}
@@ -121,7 +122,7 @@ T.eq(first.sprites.azurill.y,75,'reshown Lotad retains the Emerald anchor')
 f.CreateNameYesNo(first,first.main,{new={}})
 T.same(first.yesNo,{x=2,y=1},'name confirmation uses the native Emerald window')
 T.eq(other.ProcessNameYesNoMenu(),'original choice policy','ordinary yes/no behavior remains untouched')
-T.same(chrome.stdFrame(3,14,24,4),{2,15,27,4},'native professor window bounds')
+T.same(chrome.stdFrame(3,14,24,4),{'own-message-box'},'professor dialogue uses its native message border rather than a user menu frame')
 T.same(chrome.stdFrame(1,2,3,4),{1,2,3,4},'unrelated frame calls pass through')
 
 -- Keyboard confirmation must pop its virtual stack, leave the actual

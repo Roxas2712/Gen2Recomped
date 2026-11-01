@@ -25,7 +25,7 @@ function M.new(context,spec,options)
   local frame,userFrame=Chrome.stdFrame,Chrome.userFrame
   Chrome.stdFrame=function(x,y,w,h,...)
     if x==3 and y==14 and w==24 and h==4 then
-      return frame(textWindow.left,textWindow.top,textWindow.width,textWindow.height,...)
+      return Chrome.dialogueFrame()
     end
     return frame(x,y,w,h,...)
   end
