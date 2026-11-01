@@ -1223,6 +1223,9 @@ function Data:seedDefaults()
     if boot.screens.newGame=='BirchSpeech'and require('src.ui.Gen3RsBirchSpeech').available(self)then
       boot.screens.newGame='Gen3RsBirchSpeech'
     end
+    if boot.screens.newGame=='BirchSpeech'and require('src.ui.Gen3EmeraldBirchSpeech').available(self)then
+      boot.screens.newGame='Gen3EmeraldBirchSpeech'
+    end
     -- FIRERED IS OAK'S, not Birch's: its own guide, Pikachu card and
     -- professor, and a rival the player names rather than the other gender.
     local frlgOak = (self.constants or {}).gen3FRLGOakSpeech
