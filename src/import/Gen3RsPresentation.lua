@@ -200,6 +200,7 @@ function Bridge.missing(version)
   for _,path in ipairs(require('src.import.Gen3RsCreditsAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsHallAssets').missing(version))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3RsPlaceholderAssets').missing(version))do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3TrainerBirth').missing(version))do absent[#absent+1]=path end
   return absent
 end
 

@@ -191,8 +191,13 @@ local function createPokemon(data, species, level, rng, form, opts, source)
   local def = require('src.pokemon.Gen4Forms').definition(data,
     {species=species,form=nativeForm})
   assert(def, "unknown species " .. tostring(species))
+  local trainerBirth=not source and generation==3 and opts and opts.gen3TrainerBirth
   local dvs, statExp, item
-  if source then
+  if trainerBirth then
+    -- Fixed native trainer IVs/PID bypass both legacy DVs and random genes.
+    -- The sixth public argument survives existing Pokemon.new wrappers.
+    dvs=nil
+  elseif source then
     item = opts.item
     if opts.wild then item = source.wildItem(def, opts.forceItem, opts.random) end
     dvs = opts.dvs or (opts.rng and Stats.randomDVs(opts.rng) or source.randomDVs())
@@ -211,7 +216,8 @@ local function createPokemon(data, species, level, rng, form, opts, source)
   else
     dvs = Stats.randomDVs(rng)
   end
-  local seed = not source and Stats.isGen3(def) and gen3Seed(data, def, rng) or nil
+  local seed = trainerBirth and require('src.pokemon.Gen3TrainerBirth').seed(data,def,trainerBirth,rng)
+    or not source and Stats.isGen3(def) and gen3Seed(data, def, rng) or nil
   local stats
   if source then stats = source.stats(def.baseStats, dvs, level, statExp)
   elseif seed then stats = Stats.calc(def, level, seed.ivs, nil, seed.evs, seed.nature)
@@ -243,6 +249,7 @@ local function createPokemon(data, species, level, rng, form, opts, source)
     evs = seed and seed.evs or nil,
     nature = seed and seed.nature or nil,
     abilitySlot = seed and seed.abilitySlot or nil,
+    otId = seed and seed.otId or nil,
     -- THE FIVE NUMBERS THAT HAVE NOTHING TO DO WITH FIGHTING.  Gen 3 stores
     -- them in the same save substruct as the EVs, six bytes right behind
     -- them, and this port read them off a cartridge save and then had

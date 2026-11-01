@@ -84,6 +84,7 @@ function M.missing(version)
   for _,path in ipairs(require('src.import.Gen3FrlgHallAssets').missing(version))do missing[#missing+1]=path end
   for _,path in ipairs(require('src.import.Gen3FrlgCreditsAssets').missing(version))do missing[#missing+1]=path end
   for _,path in ipairs(require('src.import.Gen3NativeOptionsAssets').missing(version))do missing[#missing+1]=path end
+  for _,path in ipairs(require('src.import.Gen3TrainerBirth').missing(version))do missing[#missing+1]=path end
   table.sort(missing);return missing
 end
 return M

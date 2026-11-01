@@ -1708,15 +1708,18 @@ local function buildTrainerParty(game, oppClass, partyIndex, partyDef)
     do
     local dvs = slot.dvs or trainerDvs
     local gen2 = require('src.core.GameVersion').generation()==2
+    local nativeBirth=require('src.core.GameVersion').generation()==3
+      and require('src.pokemon.Gen3TrainerBirth').forSlot(game.data,slot) or nil
     local mon = Pokemon.new(game.data, slot.species, slot.level, nil, slot.form,
-      gen2 and {dvs=dvs} or nil)
+      gen2 and {dvs=dvs} or nativeBirth and {gen3TrainerBirth=nativeBirth} or nil)
     -- fixed trainer DVs, recomputed stats.  A party slot that carries its OWN
     -- DVs and stat exp is a stored mon rather than a generated one -- the
     -- Battle Tower's opponents come out of BattleTowerMons with both -- so its
     -- numbers win, and Stats.calc reproduces the cartridge's own stat block
     -- from them.  No ordinary TrainerGroups slot has either field, so every
     -- other trainer in the game is unchanged.
-    if gen2 then dvs=mon.dvs else mon.dvs=dvs end
+    if gen2 then dvs=mon.dvs elseif not nativeBirth then mon.dvs=dvs end
+    if nativeBirth then mon.item=slot.item end
     if slot.statExp then mon.statExp = slot.statExp end
     if slot.happiness then mon.happiness = slot.happiness end
     if slot.stats then
@@ -1728,7 +1731,10 @@ local function buildTrainerParty(game, oppClass, partyIndex, partyDef)
       mon.stats = stats
     else
       local def=require('src.pokemon.Gen4Forms').definition(game.data,mon)
-      if (game.data.constants or {}).gen==4 then
+      if nativeBirth then
+        mon.stats=require('src.pokemon.Stats').calc(
+          def,slot.level,mon.ivs,nil,mon.evs,mon.nature)
+      elseif (game.data.constants or {}).gen==4 then
         mon.ivs=slot.dvs or mon.ivs
         mon.stats=require('src.pokemon.Stats').calc(
           def,slot.level,mon.ivs,nil,mon.evs,mon.nature)
