@@ -18,7 +18,7 @@ function M.new(game,opts)
   music.dsFade(1,16*math.max(1,speed or 1),0);return source
  end
  function audio.playSe(id)return sound.playId(game.data,id)end
- local context=require('src.ui.Gen3EmeraldSceneContext').new(game,{bindings={
+ local context=require('src.ui.Gen3EmeraldSceneContext').new(game,{textIR={},bindings={
   ['src.core.game3.audio']=audio,
   ['src.core.game3.constants']={of=function(version)
    assert(version=='emerald');return{require=function(_,family,name)
