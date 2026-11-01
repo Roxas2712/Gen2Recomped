@@ -66,7 +66,7 @@ return function(game)
     assert(W.current(world,game)==13 and world:battleWeather()=='RAIN')
     shot('emerald-original-abnormal-downpour')
     U.wait(421)
-    for _=1,240 do if engine.getCurrentWeather()==12 then break end;U.wait(1)end
+    for _=1,599 do if engine.getCurrentWeather()==12 then break end;U.wait(1)end
     assert(W.current(world,game)==12 and world:battleWeather()=='SUN')
     shot('emerald-original-abnormal-drought')
     assert(game.save.gen3WeatherActive==15,'Native abnormal task rewrote saved mode')

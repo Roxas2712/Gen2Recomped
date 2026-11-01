@@ -47,8 +47,7 @@ end
 Fs.read=function()return nil end
 local Sound=require('src.core.Sound');local oldPlay=Sound.playId;local cues={}
 Sound.playId=function(_,id)cues[#cues+1]=id;return{isPlaying=function()return false end}end
-local game={data={constants={gen3EmeraldWeather=spec,gen3WeatherNames={
- [0]='NONE',[2]='SUNNY',[3]='RAIN',[5]='RAIN_THUNDERSTORM',[7]='VOLCANIC_ASH',[15]='ABNORMAL'},
+local game={data={constants={gen3EmeraldWeather=spec,gen3WeatherNames=require('src.core.Gen3WeatherIds').names,
  gen3EmeraldPresentation={songIds={SE_RAIN=83,SE_RAIN_STOP=84,SE_DOWNPOUR=85,
  SE_DOWNPOUR_STOP=86,SE_THUNDERSTORM=87,SE_THUNDERSTORM_STOP=88}}}},
  save={gen3WeatherActive=7,party={'untouched'},inventory={SUPER_POTION=2}}}
@@ -79,7 +78,7 @@ local committed=Writer.encode(game.save)
 for _=1,601 do W.update(ow,game)end
 T.eq(engine.state.currentAbnormal,12,'original task requests drought after its 600-frame delay')
 T.eq(W.current(ow,game),engine.getCurrentWeather(),'battle inherits actual effect during the native transition')
-for _=1,240 do if engine.getCurrentWeather()==12 then break end;W.update(ow,game)end
+for _=1,599 do if engine.getCurrentWeather()==12 then break end;W.update(ow,game)end
 T.eq(W.current(ow,game),12,'original abnormal task alternates to drought')
 local task=engine.state.abnormal;local delay=task.delay
 ow.map={};W.update(ow,game)
@@ -100,6 +99,16 @@ Sound.playId=oldPlay;Fs.read,Fs.exists=oldRead,oldExists
 -- Exercise the real overworld entry points, including a map with no script hook.
 local fixture=require('tools.player-runtime.fixture').new('emerald')
 local g,world=fixture.game,fixture.world
+local OW=require('src.world.OverworldController')
+local scriptsUpvalue,previousScripts
+for i=1,100 do
+ local name,value=debug.getupvalue(OW.checkCoordEventHere,i)
+ if not name then break end
+ if name=='mapScripts'then
+  scriptsUpvalue,previousScripts=i,value
+  debug.setupvalue(OW.checkCoordEventHere,i,require('src.script.MapScripts'));break
+ end
+end
 g.data.constants.gen3EmeraldWeather=spec
 g.data.constants.gen3EmeraldPresentation=game.data.constants.gen3EmeraldPresentation
 g.data.constants.gen3WeatherNames=game.data.constants.gen3WeatherNames
@@ -113,4 +122,5 @@ world:applyMapWeather({via='boot'})
 T.eq(g.save.gen3WeatherActive,7,'CONTINUE preserves saved coordinate weather over sunny header')
 world:applyMapWeather({via='warp'})
 T.eq(g.save.gen3WeatherActive,2,'ordinary new map entry uses its own header')
+if scriptsUpvalue then debug.setupvalue(OW.checkCoordEventHere,scriptsUpvalue,previousScripts)end
 T.finish('Emerald native weather ownership, coordinate dispatch, daily cycles and abnormal task')
