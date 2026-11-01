@@ -53,7 +53,11 @@ local game={data={constants={gen3EmeraldWeather=spec,gen3WeatherNames=require('s
  save={gen3WeatherActive=7,party={'untouched'},inventory={SUPER_POTION=2}}}
 local stage=0;local ow={map={},camera={x=16,y=32},gen3WeatherStage=function()return stage end}
 T.eq(W.available(game),true,'native provider accepts own Emerald resources')
+-- The provider seeds its private presentation RNG from the calendar. Keep
+-- this fixture reproducible; thunder can delay a requested weather change.
+local calendar=os.time;os.time=function()return 12345 end
 local before=Writer.encode(game.save);W.update(ow,game)
+os.time=calendar
 local engine=ow.rsWeather.engine
 T.eq(engine.snapshot().ash,true,'map entry initializes original ash task')
 for _=1,60 do W.update(ow,game)end
@@ -78,15 +82,21 @@ local committed=Writer.encode(game.save)
 for _=1,601 do W.update(ow,game)end
 T.eq(engine.state.currentAbnormal,12,'original task requests drought after its 600-frame delay')
 T.eq(W.current(ow,game),engine.getCurrentWeather(),'battle inherits actual effect during the native transition')
-for _=1,599 do if engine.getCurrentWeather()==12 then break end;W.update(ow,game)end
+-- Original Thunderstorm_Finish waits for the current lightning phase. Its
+-- 360..719-frame random delay can cross the next600-frame abnormal request;
+-- observe the committed drought over bounded complete cycles instead.
+for _=1,4800 do if engine.getCurrentWeather()==12 then break end;W.update(ow,game)end
 T.eq(W.current(ow,game),12,'original abnormal task alternates to drought')
 local task=engine.state.abnormal;local delay=task.delay
 ow.map={};W.update(ow,game)
 T.eq(engine.state.abnormal,task,'adjacent abnormal maps retain the same original timer')
-T.eq(engine.state.abnormal.delay,delay-1,'map entry does not reset the abnormal cycle')
+T.eq(engine.state.abnormal.delay,delay>0 and delay-1 or 600,'map entry does not reset the abnormal cycle')
 T.eq(Writer.encode(game.save),committed,'abnormal animation does not rewrite saved mode')
 game.save.gen3WeatherActive=2;W.update(ow,game)
 T.eq(engine.state.abnormal,nil,'ordinary weather stops the abnormal task')
+T.eq(W.current(ow,game),engine.getCurrentWeather(),'battle observes actual weather while a clear request finishes')
+for _=1,1200 do if engine.getCurrentWeather()==2 then break end;W.update(ow,game)end
+T.eq(engine.getCurrentWeather(),2,'original task eventually commits the clear request')
 local frames=engine.state.frames
 local time,random=os.time,math.random
 os.time=function()error('weather observation polled calendar')end
