@@ -11,9 +11,12 @@ for _,version in ipairs({'ruby','sapphire','emerald'})do
  for location=0,3 do
   local flags={UNRELATED_SENTINEL=true}
   for _,id in ipairs({738,739,740,741,742,743,744,881,1245,1246,1247,1248,1275,1276,1277,1278})do flags[('FLAG_G3_%04X'):format(id)]=true end
-  game.save={flags=flags,gen3Vars={[16534]=location,[16540]=9},inventory={POKE_BALL=21},money=1000}
+  game.save={player={map='MAP_G16_N10'},flags=flags,gen3Vars={[16534]=location,[16540]=9},inventory={POKE_BALL=21},money=1000}
+  local expected
+  if version=='emerald'then expected=assert(require('tests.drivers.hoenn_recovery_oracle').expected(game.save,data,version))end
   local world={map={id='MAP_G00_N25'},entities={},syncObjectVisibility=function()end}
   assert(W.apply(game,world),'Native reset was not executed')
+  if expected then assert(require('src.core.SaveSerializer').encode(game.save)==require('src.core.SaveSerializer').encode(expected),'Runtime recovery disagrees with independently interpreted cartridge graph')end
   assert(flags.UNRELATED_SENTINEL and game.save.inventory.POKE_BALL==21 and game.save.money==1000)
   local elite=version=='emerald'and{1275,1276,1277,1278}or{1245,1246,1247,1248}
   for _,id in ipairs(elite)do assert(not flags[('FLAG_G3_%04X'):format(id)])end
