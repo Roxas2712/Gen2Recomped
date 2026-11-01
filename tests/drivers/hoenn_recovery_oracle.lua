@@ -27,7 +27,7 @@ function M.expected(save,data,edition)
     elseif op=='goto'then current,index=label(row[2]),1
     elseif op=='end'then return expected,true
     elseif op=='setflag'then expected.flags[flag(row[2])]=true
-    elseif op=='clearflag'then expected.flags[flag(row[2])]=nil
+    elseif op=='clearflag'then expected.flags[flag(row[2])]=false
     elseif op=='setvar'then expected.gen3Vars[row[2]]=row[3]
     elseif op=='checkflag'then comparison=expected.flags[flag(row[2])]and 1 or 0
     elseif op=='compare_var_to_value'then

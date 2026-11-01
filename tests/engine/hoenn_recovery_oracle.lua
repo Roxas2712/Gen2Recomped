@@ -18,7 +18,7 @@ for _,map in ipairs{'MAP_G00_N08','MAP_G16_N10'}do
   local save=fresh(map,2,location);local before=S.encode(save)
   local expected,changed=O.expected(save,data,'emerald')
   T.eq(changed,true);T.check(expected~=save,'oracle owns a detached snapshot')
-  T.eq(expected.flags.FLAG_G3_007B,nil);T.eq(expected.gen3Vars[0x409C],0)
+  T.eq(expected.flags.FLAG_G3_007B,false,'script-cleared flags retain their explicit stored false');T.eq(expected.gen3Vars[0x409C],0)
   T.eq(expected.flags.FLAG_G3_007C,location==3 and true or nil,'comparison controls original branch')
   T.eq(expected.money,4467);T.eq(expected.party[1].hp,83)
   T.eq(expected.inventory.REVIVE,1);T.eq(expected.flags.UNRELATED,true)
@@ -38,6 +38,10 @@ end
 local save=fresh('MAP_G16_N10',0,3)
 local expected,changed=O.expected(save,data,'emerald')
 T.eq(changed,false);T.eq(expected,save,'idle scene is protected')
+save=fresh('MAP_G16_N10',2,3);save.flags.FLAG_G3_007B=nil
+expected=O.expected(save,data,'emerald')
+T.eq(expected.flags.FLAG_G3_007B,false,'clearing an untouched flag also records explicit false')
+T.eq(save.flags.FLAG_G3_007B,nil,'oracle cannot write that marker into source SAVE')
 scripts.S0000020[1]={'invented_reset',123}
 T.eq(pcall(O.expected,fresh('MAP_G16_N10',2,3),data,'emerald'),false,'unknown bytecode fails the acceptance oracle')
 T.finish('Independent imported-bytecode Continue oracle and source SAVE purity')
