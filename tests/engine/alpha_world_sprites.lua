@@ -71,6 +71,19 @@ Overworld._worldDrawEntity(world,entity,{x=4,y=6},6,nil,nil,1,
 T.eq(#P.spriteRedraws(),5,'one actor plus both tiles in current and destination grass cells')
 T.eq(P.spriteRedraws()[1].image,sprite.image,'foreground replay follows the actor')
 for i=2,5 do T.eq(P.spriteRedraws()[i].image,raw,'current/destination grass remains in front')end
+-- GBA maps already exempt their complete native-colour background. Keep
+-- actors in the original world order, where BG1 can cover them. A later
+-- screen-space sprite replay would undo both foliage and field effects.
+for _,version in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
+ V.set(version)
+ for name,draw in pairs(methods)do
+  P.clearTrueColor();P.clearSpriteRedraws();P.setPass('world');draws={}
+  draw()
+  T.eq(#P.spriteRedraws(),0,version..' '..name..' retains native background priority')
+  T.eq(#draws,1,version..' '..name..' draws once in its original pass')
+  T.eq(#P.trueColorRects('world'),1,version..' '..name..' preserves authored colour')
+ end
+end
 love.graphics.draw,A.image=oldDraw,oldImage
 P.setPass(nil)
 T.finish('alpha-safe world sprites, exact poses and foreground grass replay')

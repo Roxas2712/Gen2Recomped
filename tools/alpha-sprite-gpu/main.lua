@@ -8,6 +8,7 @@ local g=love.graphics
 local P,R,S,actor,texture,quad,canvas,shader,mesh,opaque
 local captured=false
 local grass
+local gba
 local out=assert(os.getenv('ALPHA_OUT'))
 local function save(name,bytes)local f=assert(io.open(out..'/'..name,'wb'));f:write(bytes);f:close()end
 function love.load()
@@ -16,6 +17,7 @@ function love.load()
  require('src.render.LegacyShaderCompat').install()
  require('src.render.ShaderSpecialization').install()
  require('src.core.GameVersion').set(os.getenv('ALPHA_VERSION') or 'red')
+ gba=require('src.core.GameVersion').isGen3()
  P=require('src.render.PaletteFX');P.setMode('sgb')
  R=require('src.render.Renderer');R:init()
  local data=love.image.newImageData(16,96)
@@ -45,10 +47,17 @@ function love.draw()
  require('src.render.GraphicsStack').drain()
  R:beginFrame(true);R:beginWorldPass()
  g.setColor(.33,.33,.33,1);g.rectangle('fill',0,0,160,144);g.setColor(1,1,1,1)
+ if gba then P.markTrueColor(0,0,160,144)end
  actor:draw(20,24,0,0,'down',0,false)
  local palette={{255,255,255},{0,0,255},{0,255,0},{0,0,0}}
  grass:drawCellBottom(1,1,0,0)
  if P.spriteRedraws()[1]then grass:markCellBottomRedraw(1,1,0,0,palette)end
+ if gba then
+  -- Native BG1 covers an ordinary actor; bridge-deck actors draw after it.
+  g.setColor(0,1,0,1);g.rectangle('fill',26,27,4,3);g.rectangle('fill',66,27,4,3)
+  g.setColor(0,0,1,1);g.rectangle('fill',26,30,4,2);g.setColor(1,1,1,1)
+  actor:draw(60,24,0,0,'down',0,false)
+ end
  R:endWorldPass()
  R:endFrame(nil,{{x=0,y=0,w=160,h=144,colors=palette}})
  g.captureScreenshot(function(image)
@@ -58,6 +67,8 @@ function love.draw()
   local same=math.abs(r-cr)+math.abs(a-cg)+math.abs(b-cb)<.02
   local authored=ar>.95 and ag<.2 and ab<.3
   local fr,fg,fb=image:getPixel(27,30);local foreground=fb>.95 and fr<.05 and fg<.05
+  local nr,ng,nb=image:getPixel(27,28);local nativeForeground=not gba or(ng>.95 and nr<.05 and nb<.05)
+  local ur,ug,ub=image:getPixel(67,28);local nativeAboveActor=not gba or(ur>.95 and ug<.2 and ub<.3)
   -- Draw the same cutout before foliage into a real persistent depth target.
   g.push('all');g.setCanvas({canvas,depthstencil=g.newCanvas(32,32,{format='depth24',readable=true,dpiscale=1})});g.origin();g.setScissor();g.clear(0,0,0,1,true,true)
   g.setDepthMode('less',true);g.setShader(shader);g.setColor(1,1,1,1);g.draw(mesh)
@@ -85,10 +96,10 @@ function love.draw()
   local nativeStackLifetime=eg>.95 and er<.05 and eb<.05 and pr>.95 and pg<.2 and pb<.3
   local adapter=require('src.render.AlphaDepthCompat').status()
   local selected=g.getRendererInfo():lower():find('metal',1,true)==nil or adapter.lateDraws>0
-  local result={adapter=adapter,depthAdapterSelected=selected,nativeStackLifetime=nativeStackLifetime,renderer={g.getRendererInfo()},version=os.getenv('ALPHA_VERSION')or'red',transparentBackground=same,authoredColor=authored,foregroundGrass=foreground,depthCutout=cutout,depthBody=body,colourOnlyTarget=colourTarget,background={r,a,b},control={cr,cg,cb}}
+  local result={nativeForeground=nativeForeground,nativeAboveActor=nativeAboveActor,adapter=adapter,depthAdapterSelected=selected,nativeStackLifetime=nativeStackLifetime,renderer={g.getRendererInfo()},version=os.getenv('ALPHA_VERSION')or'red',transparentBackground=same,authoredColor=authored,foregroundGrass=foreground,depthCutout=cutout,depthBody=body,colourOnlyTarget=colourTarget,background={r,a,b},control={cr,cg,cb}}
   save('report.json',require('src.link.Json').encode(result))
   print('ALPHA_PIXELS',require('src.link.Json').encode(result))
-  love.event.quit(same and authored and foreground and cutout and body and colourTarget and selected and nativeStackLifetime and 0 or 1)
+  love.event.quit(same and authored and foreground and nativeForeground and nativeAboveActor and cutout and body and colourTarget and selected and nativeStackLifetime and 0 or 1)
  end)
  captured=true
 end

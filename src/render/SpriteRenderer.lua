@@ -277,7 +277,10 @@ end
 -- The world replay uses the image alpha, so only authored pixels retain
 -- their colour. Other passes retain their existing rectangle contract.
 local function preserveSpriteColor(x, y, w, h)
-  if PaletteFX.spriteRedrawPassActive() then return true end
+  -- GBA terrain is already true-colour. Replaying its actors after the
+  -- world composite would put them over BG1 foliage, bridges and effects
+  -- that the native world pass has already drawn in front of them.
+  if PaletteFX.spriteRedrawPassActive() and not GameVersion.isGen3() then return true end
   PaletteFX.markTrueColor(x, y, w, h)
   return false
 end
