@@ -34,8 +34,11 @@ function M.new(battle)
 end
 function M:text(key)
   local b=self.battle
-  return self.load('src.core.game3.scripting.text_ir').toAscii(assert(self.spec.textIR[key]),{
-    dialect=self.spec.dialect or'rs',battle={[0]=b.player.name,[3]=b.enemy.name,[0x13]=assert(b.data.items.POKE_BALL.name)}})
+  local IR=self.load('src.core.game3.scripting.text_ir');local dialect=self.spec.dialect or'rs'
+  local values={B_BUFF1=b.player.name,B_PLAYER_MON1_NAME=b.player.name,
+    B_OPPONENT_MON1_NAME=b.enemy.name,B_LAST_ITEM=assert(b.data.items.POKE_BALL.name)}
+  local vars={};for code,name in pairs(IR.dialect(dialect).B_TXT)do vars[code]=values[name]end
+  return IR.toAscii(assert(self.spec.textIR[key]),{dialect=dialect,battle=vars})
 end
 function M:record(kind)
   local b=self.battle

@@ -43,6 +43,9 @@ function M.open(wally)
     end
    end})
   assert(bag.emerald,'Original Emerald tutorial bag resources required')
+  -- Selecting the initial pocket locks the normal picker. Only this
+  -- no-input tutorial may subsequently switch it on its scripted timeline.
+  bag.lockPocket=false
   bag.emeraldFade={kind='open',age=0};wally.bagTicks=0;wally:record('bag-open')
   return bag
  end)

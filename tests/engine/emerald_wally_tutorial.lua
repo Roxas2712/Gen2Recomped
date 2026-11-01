@@ -7,6 +7,9 @@ local spec={format=1,version='emerald',game='emerald',romSha1='f3ae088181bf583e5
  dialect='rse',backIndex=6,manifest=A.ROOT..'manifest.lua',resources=A.resources(),
  images={idle=A.ROOT..'idle.png',strip=A.ROOT..'strip.png'},anim={rest=3,throw={{0,24},{1,9},{2,24},{0,9},{3,50}}},textIR={}}
 for key in pairs(A.labels)do spec.textIR[key]={{t='text',s='ROM_'..key}}end
+spec.textIR.BattleText_TutorialUsed={{t='bph',code=0x16}}
+spec.textIR.BattleText_BallCaught2={{t='bph',code=6}}
+spec.textIR.BattleText_ComeBackSingle1={{t='bph',code=0}}
 T.check(A.valid(spec,'emerald'),'complete own Emerald tutorial resources')
 for _,v in ipairs{'ruby','sapphire','firered','leafgreen','gold'}do T.check(not A.valid(spec,v),'no cross-edition tutorial resources')end
 for _,change in ipairs{'digest','index','rest','frame','duration','label','path','resource','version','format'}do
@@ -55,6 +58,9 @@ T.eq(battle.demoName,'ROM_WALLY','keep own trainer-table name')
 T.eq(battle.demoBackPath,spec.images.idle,'own Emerald Wally pose')
 T.eq(battle.player.abilityOverride,false,'borrowed Zigzagoon selects original empty second ability')
 T.eq(w:text('BattleText_WallyMenu'),'ROM_BattleText_WallyMenu','own Emerald prompt IR')
+T.eq(w:text('BattleText_TutorialUsed'),'ROM_BALL','Emerald B_LAST_ITEM uses its own code22')
+T.eq(w:text('BattleText_BallCaught2'),'ROM_RALTS','Emerald opponent placeholder uses code6')
+T.eq(w:text('BattleText_ComeBackSingle1'),'ROM_ZIG','recall buffer identifies the borrowed Pokemon')
 for turn=1,2 do
  for tick=1,144 do battle.frame=battle.frame+1;w:updateMenu()end
  T.eq(#battle.moves,turn,'one original move after the 64+80 frame choice')
@@ -72,9 +78,16 @@ T.eq(waits[2],46,'trainer-return wait plus dispatch makes forty-eight frames')
 T.eq(battle.queue[1].text,'ROM_BattleText_ComeBackSingle3','recall chooses own damage-dependent text')
 local rs=copy(spec);rs.textIR.BattleText_Wally={{t='text',s='ROM_RS_WALLY'}}
 rs.images={idle='rs-idle',strip='rs-strip'};rs.dialect=nil;rs.version='ruby'
+rs.textIR.BattleText_TutorialUsed={{t='bph',code=0x13}}
+rs.textIR.BattleText_BallCaught2={{t='bph',code=3}}
 version='ruby';battle.data.constants.gen3RsWally=rs
-T.check(Controller.new(battle)~=nil,'Ruby native controller retained')
+local rw=assert(Controller.new(battle));T.check(rw~=nil,'Ruby native controller retained')
 T.eq(battle.demoName,'ROM_RS_WALLY','RS still uses its own original label')
+T.eq(rw:text('BattleText_TutorialUsed'),'ROM_BALL','Ruby item placeholder stays code19')
+T.eq(rw:text('BattleText_BallCaught2'),'ROM_RALTS','Ruby opponent placeholder stays code3')
+version='sapphire';rs.version='sapphire';rw=assert(Controller.new(battle))
+T.eq(rw:text('BattleText_TutorialUsed'),'ROM_BALL','Sapphire item placeholder stays code19')
+T.eq(rw:text('BattleText_BallCaught2'),'ROM_RALTS','Sapphire opponent placeholder stays code3')
 for _,v in ipairs{'firered','leafgreen','gold','black'}do version=v;T.eq(Controller.new(battle),nil,'unrelated catching demos unchanged')end
 
 version='emerald'
@@ -87,9 +100,9 @@ function game.stack:push(s)stack[#stack+1]=s end
 function game.stack:pop()return table.remove(stack)end
 function game.stack:top()return stack[#stack]end
 package.loaded['src.ui.Gen3BagMenu']={new=function(g,opts)
- local bag={game=g,emerald=true,pocket=1,noInput=opts.noInput,wallyTutorial=opts.wallyTutorial,
+ local bag={game=g,emerald=true,pocket=1,lockPocket=opts.pocket~=nil,noInput=opts.noInput,wallyTutorial=opts.wallyTutorial,
   scriptRows=opts.rows,rows=opts.rows,script=opts.script}
- function bag:movePocket(dir)self.pocket=self.pocket+dir;self.rows=self.scriptRows end
+ function bag:movePocket(dir)if self.lockPocket then return end;self.pocket=self.pocket+dir;self.rows=self.scriptRows end
  return bag
 end}
 package.loaded['src.ui.Gen3ItemMenu']={new=function(g,opts)
@@ -103,6 +116,7 @@ function demo:oldManThrow()self.thrown=true end
 local flow={battle=demo,events={},record=function(self,kind)self.events[kind]=self.bagTicks end}
 require('src.battle.Gen3EmeraldWallyBag').open(flow)
 local bag=game.stack:top();T.check(bag.noInput and bag.wallyTutorial,'original tutorial owns the pad and its male bag')
+T.eq(bag.lockPocket,false,'scripted switch releases the initial-picker pocket lock')
 T.eq(bag.rows[1].id,'POTION','original tutorial opens on Potion')
 T.eq(bag.rows[1].qty,1,'virtual tutorial quantity')
 T.check(#bag.rows==2 and bag.rows[2].close,'original CLOSE BAG row stays visible with input disabled')
