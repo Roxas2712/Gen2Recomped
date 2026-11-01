@@ -60,6 +60,18 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   u.curTypes={'NORMAL'}
   T.eq(Targets.resolve(b,u,move,t)[1],u,'non-Ghost self-target byte still selects itself')
  end
+ do
+  local x,b,u,t=fresh();u.substituteHP=50
+  x.use();T.eq(u.mon.hp,200,'Ghost pays actual HP through its own doll')
+  T.eq(u.substituteHP,50,'self-sacrifice never damages the user substitute')
+ end
+ do
+  local x,b,u,t=fresh();t.invulnerable=true;t.hiddenAs='air'
+  x.use();T.eq(t.cursed,nil,'unlocked Ghost Curse cannot reach a hidden target')
+  T.eq(u.mon.hp,400,'unreachable target costs no HP')
+  u.lockedOn=t;x.use();T.eq(t.cursed,true,'Lock-On permits the native no-calculation accuracy branch')
+  T.eq(u.lockedOn,nil,'authored one-use Lock-On is spent once')
+ end
  f.close()
 end
 T.finish('five-edition native Ghost Curse, live types, cost and ordinary residual turns')
