@@ -6,6 +6,13 @@ local labels={'gText_Birch_Welcome','gText_ThisIsAPokemon','gText_Birch_MainSpee
   'gText_Birch_SoItsPlayer','gText_Birch_YourePlayer','gText_Birch_AreYouReady',
   'gText_BirchBoy','gText_BirchGirl','gText_Yes','gText_No','sText_NewParagraph'}
 M.LABELS=labels
+function M.ballConfig(symbols)
+  return {particle_sheets=assert(symbols.off('sBallParticleSpriteSheets')),
+    particle_palettes=assert(symbols.off('sBallParticlePalettes')),
+    fade_colors=assert(symbols.off('gBallOpenFadeColors')),sine_table=assert(symbols.off('gSineTable')),
+    sprite_sheets=assert(symbols.off('gBallSpriteSheets')),sprite_palettes=assert(symbols.off('gBallSpritePalettes')),
+    open_ball_gfx=assert(symbols.off('gOpenPokeballGfx'))}
+end
 function M.extract(x)
   assert(x.version=='emerald','Native Emerald Birch requires Emerald')
   x:beginStage('Emerald original Birch, Lotad and player naming')
@@ -29,6 +36,7 @@ function M.extract(x)
   load('src.import.gba.games.emerald.uc')(V)
   V.MESSAGE_BOX_PAL=V.sym('gMessageBox_Pal')
   V.DOWN_ARROW_GFX=V.sym('sDownArrowTiles')
+  V.BALL_OPEN=M.ballConfig(S)
   local chromeLoad=require('compat.gen1-rs.Loader').new('emerald',{
     ['src.import.gba.versions']=V,
     ['src.core.GameVersion']=require('src.import.Gen3EmeraldCreditsAssets').versionBinding()})
@@ -84,7 +92,7 @@ function M.extract(x)
   local resources={M.ROOT..'manifest.lua'}
   for _,file in ipairs(manifest.files)do resources[#resources+1]=file end
   -- The common release effect still decodes the selected Emerald cartridge.
-  assert(load('src.import.gba.ball_open_extract').run(rom,cache,{cacheRoot='data/generated/gba'}))
+  assert(chromeLoad('src.import.gba.ball_open_extract').run(rom,cache,{cacheRoot='data/generated/gba'}))
   for _,file in ipairs{'manifest.lua','balls.rgba','particles.rgba'}do
     resources[#resources+1]='data/generated/gba/pokemon/battle/ball_open/'..file
   end
