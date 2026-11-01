@@ -65,6 +65,7 @@ local function fixture()
   end
   local base={TASKS=tasks}
   local kit={loadLua=function()return man end,manifest=function()return 'other pack'end,
+    rgbaImage=function(...)return{...}end,
     printer=function()return{draw=function()end}end,
     yesNo=function(x,y)return{x=x,y=y}end}
   local chrome={stdFrame=function(...)return{...}end,userFrame=function(...)return{...}end}
@@ -88,10 +89,11 @@ local function fixture()
     ['src.core.game3.pal_fade']=pal,['src.core.game3.rng']={Random=function()return 19 end},
     ['src.core.game3.audio']=audio,['src.ui.game3.rs.birch_speech']=base}
   local context={load=function(name)return assert(modules[name],name)end}
-  return Scene.new(context,spec,{}),tasks,cries,chrome
+  return Scene.new(context,spec,{}),tasks,cries,chrome,kit
 end
-local first,f,cries,chrome=fixture()
+local first,f,cries,chrome,kit=fixture()
 local second,other=fixture()
+T.eq(kit.rgbaImage('data/generated/gba/chrome/fonts/down_arrow.rgba',8,48)[1],spec.arrow,'dialogue printer reads the own Emerald arrow instead of a foreign chrome pack')
 f.ThisIsAPokemon(first,first.main,{new={}})
 T.eq(first.printed,'gBirchSpeech_ThisIsPokemon','original encoded message is selected')
 T.eq(first.main.func,'MainSpeech','main printer continues independently of the release task')

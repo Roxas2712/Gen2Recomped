@@ -33,6 +33,11 @@ function M.new(context,spec,options)
     if x==3 and y==5 and w==5 and h==4 then w=spec.windows.gender.width end
     return userFrame(x,y,w,h,...)
   end
+  local rgbaImage=Kit.rgbaImage
+  Kit.rgbaImage=function(path,...)
+    if path=='data/generated/gba/chrome/fonts/down_arrow.rgba'then path=spec.arrow end
+    return rgbaImage(path,...)
+  end
   local printer=Kit.printer
   Kit.printer=function(...)
     local p=printer(...);local draw=p.draw
