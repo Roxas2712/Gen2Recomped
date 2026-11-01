@@ -3,7 +3,7 @@ return function(game)
   local U=require('tests.drivers.util');local J=require('src.link.Json')
   local Save=require('src.core.SaveSerializer');local W=require('src.world.Gen3RsWeather')
   local edition=require('src.core.GameVersion').get();local out=assert(os.getenv('EDITION_QA_OUT'))
-  assert(edition=='ruby'or edition=='sapphire')
+  assert(edition=='ruby'or edition=='sapphire'or edition=='emerald')
   assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-'..edition..'%-'))
   assert(W.available(game)and require('src.import.RomImporter').readyReport(edition).ok)
   for _,event in ipairs({'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',
@@ -21,7 +21,8 @@ return function(game)
     assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name;persist()
   end
   for _,name in ipairs({'SE_RAIN','SE_THUNDERSTORM','SE_DOWNPOUR','SE_RAIN_STOP'})do
-    local id=assert(game.data.constants.gen3RsPresentation.songIds[name])
+    local p=edition=='emerald'and game.data.constants.gen3EmeraldPresentation or game.data.constants.gen3RsPresentation
+    local id=assert(p.songIds[name])
     local label=('SONG_%03X'):format(id)
     local synth=require('src.core.M4ASynth').newEngine(game.data,assert(game.data.audio.songs[label]),{allowLoops=false})
     local audible=false
@@ -32,9 +33,10 @@ return function(game)
   local engine=assert(world.rsWeather).engine
   assert(world.map.def.weather==7 and engine.snapshot().ash,'Mt. Chimney header must start native ash')
   shot('mt-chimney-native-ash');report.cases.actualMapHeaderAsh=true
-  local spec=game.data.constants.gen3RsWeather
+  local spec=W.spec(game)
   local m=assert(engine.manifest());assert(m.family=='rse'and m.blobs.ash.w==64 and m.blobs.ash.h==128)
   assert(m.drought.tables==6 and #m.color_map_types==32)
+  if edition=='emerald'then assert(m.game=='emerald')end
   report.cases.originalGraphicsPalettesAndDrought=true
   for value=0,14 do
     -- Restart a prepared map's weather task, as a native map load does, so all
@@ -46,6 +48,10 @@ return function(game)
     if value==7 then assert(s.ash)end
     if value==8 then assert(s.sandstorm and s.swirls==5)end
     if value==14 then assert(s.bubbles>0)end
+    if edition=='emerald'then
+      local expected=({[3]='RAIN',[5]='RAIN',[8]='SANDSTORM',[12]='SUN',[13]='RAIN'})[value]
+      assert(world:battleWeather()==expected,'Emerald inherited a non-original field battle weather '..value)
+    end
     report.snapshots[tostring(value)]=s;shot(('weather-%02d'):format(value))
   end
   report.cases.allFifteenNativeWeatherStates=true
@@ -59,6 +65,17 @@ return function(game)
     report.cycles[#report.cycles+1]={route=value,stage=stage,weather=expected}
   end end
   report.cases.dailyCyclesAndBattleWeather=true
+  if edition=='emerald'then
+    game.save.gen3WeatherActive=15;world.rsWeather.map=nil;U.wait(180)
+    assert(W.current(world,game)==13 and world:battleWeather()=='RAIN')
+    shot('emerald-original-abnormal-downpour')
+    U.wait(421)
+    for _=1,599 do if engine.getCurrentWeather()==12 then break end;U.wait(1)end
+    assert(W.current(world,game)==12 and world:battleWeather()=='SUN')
+    shot('emerald-original-abnormal-drought')
+    assert(game.save.gen3WeatherActive==15,'Native abnormal task rewrote saved mode')
+    report.cases.originalAbnormalWeatherAndBattle=true
+  end
   game.save.gen3WeatherActive=7;world.rsWeather.map=nil;U.wait(90)
   local before=engine.state.ashOffsetY
   game.input:overlayPressed('left');U.wait(16);game.input:overlayReleased('left');U.wait(16)

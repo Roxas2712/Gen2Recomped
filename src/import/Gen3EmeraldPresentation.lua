@@ -39,6 +39,7 @@ function Bridge.missing()
   for _,path in ipairs(require('src.import.Gen3EmeraldMainMenuAssets').missing())do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3NativeOptionsAssets').missing('emerald'))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3EmeraldCableCarAssets').missing())do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3EmeraldWeatherAssets').missing())do absent[#absent+1]=path end
   return absent
 end
 
@@ -77,6 +78,7 @@ function Bridge.extract(extractor)
   require('src.import.Gen3EmeraldMainMenuAssets').extract(extractor)
   require('src.import.Gen3NativeOptionsAssets').extract(extractor)
   require('src.import.Gen3EmeraldCableCarAssets').extract(extractor)
+  require('src.import.Gen3EmeraldWeatherAssets').extract(extractor)
   local audio=assert(extractor._audio)
   audio.special=audio.special or {}
   for role,name in pairs({intro='MUS_INTRO',introBattle='MUS_INTRO_BATTLE',title='MUS_TITLE'})do

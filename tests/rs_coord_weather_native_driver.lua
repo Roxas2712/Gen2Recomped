@@ -3,7 +3,7 @@ return function(game)
   local U=require('tests.drivers.util');local J=require('src.link.Json')
   local Save=require('src.core.SaveSerializer');local W=require('src.world.Gen3RsWeather')
   local edition=require('src.core.GameVersion').get();local out=assert(os.getenv('EDITION_QA_OUT'))
-  assert(edition=='ruby'or edition=='sapphire')
+  assert(edition=='ruby'or edition=='sapphire'or edition=='emerald')
   assert(love.filesystem.getIdentity():match('^oasc%-edition%-qa%-'..edition..'%-'))
   assert(W.available(game)and require('src.import.RomImporter').readyReport(edition).ok)
   for _,event in ipairs({'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',
@@ -73,9 +73,20 @@ return function(game)
   local Start=require('src.ui.Gen3StartMenu');local owner=Start.new(game)
   for i,row in ipairs(owner.rows)do if row.key=='save'then owner.index=i end end
   game.stack:push(owner);press('a');local screen=game.stack:top()
-  assert(getmetatable(screen)==require('src.ui.Gen3RsSaveMenu')and screen.phase=='confirm')
-  press('a');untilTrue(function()return game.stack:top()==world end,300,'Native coordinate-weather SAVE did not finish')
-  assert(screen.wrote)
+  if edition~='emerald'then assert(getmetatable(screen)==require('src.ui.Gen3RsSaveMenu')and screen.phase=='confirm')end
+  if edition=='emerald'then
+    assert(getmetatable(screen)==require('src.render.TextBox'),'Emerald save prompt must remain owned by its Start menu')
+    -- Each A first finishes the currently printing page; the write and final
+    -- saved-message callback must both complete before expecting the field.
+    for _=1,40 do
+      if game.stack:top()==world then break end
+      press('a',30)
+    end
+    assert(game.stack:top()==world,'Original Emerald save flow did not close')
+  else
+    press('a');untilTrue(function()return game.stack:top()==world end,300,'Native coordinate-weather SAVE did not finish')
+    assert(screen.wrote)
+  end
   local IO=require('src.core.SaveData');local bytes=assert(love.filesystem.read(IO.saveFilename(edition)))
   local saved=assert(Save.decode(bytes))
   assert(saved.gen3Weather==7 and saved.gen3WeatherActive==7)
@@ -90,8 +101,14 @@ return function(game)
   untilTrue(function()local top=game.stack:top();return top and top.kind=='title'and top.scene.phase=='phase3'end,
     6000,'Native return to title timed out')
   press('start',100);assert(getmetatable(game.stack:top())==require('src.ui.Gen3MainMenu'))
-  assert(game.stack:top().items[1].key=='continue');press('a',30)
-  assert(game.stack:top().info);shot('route113-native-continue-summary');press('a',180)
+  local menu=game.stack:top();assert(menu.items[1].key=='continue')
+  if menu.rsNative then
+    untilTrue(function()return menu.rsNative.scene.state=='input'end,300,'Native Continue menu not ready')
+    shot('route113-native-continue-summary');press('a',180)
+  else
+    press('a',30);assert(game.stack:top().info)
+    shot('route113-native-continue-summary');press('a',180)
+  end
   world=game.overworld
   assert(game.stack:top()==world and game.save~=previousSave)
   assert(world.map.id=='MAP_G00_N28'and world.player.cellX==report.saved.x and world.player.cellY==report.saved.y)

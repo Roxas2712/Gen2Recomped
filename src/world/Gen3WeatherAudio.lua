@@ -31,6 +31,11 @@ function A.update(game,world)
  if current and not valid(current)then stop()end
  local name=world:fieldWeather()
  local resolved=name and Weather.resolve(name,world.weatherFrame or 0,game.save.gen3WeatherStage or 0)
+ -- Emerald's original task owns the actual transition and abnormal phase.
+ -- Observe it rather than running the fallback particle clock alongside it.
+ if Version.get()=='emerald'and world.rsWeather and world.rsWeather.data==game.data then
+  resolved=world:weatherName(world.rsWeather.engine.getCurrentWeather())
+ end
  local wanted=sounds[resolved]
  local chain=Host.hooks.chains and Host.hooks.chains['field.weather.sound']or{}
  if current and current.name==wanted and sameHooks(current,chain)then return end

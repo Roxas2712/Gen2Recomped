@@ -3916,7 +3916,7 @@ function OverworldState:update(dt)
   -- already feeds into draw().
   -- the weather's own clock; see drawFieldWeather
   self.weatherFrame = (self.weatherFrame or 0) + 1
-  if GameVersion.get()=='ruby'or GameVersion.get()=='sapphire'then
+  if require('src.world.Gen3RsWeather').available(Game)then
     require('src.world.Gen3RsWeather').update(self,Game)
   elseif GameVersion.isGen3() then
     require('src.world.Gen3WeatherAudio').update(Game,self)
@@ -9768,7 +9768,7 @@ function OverworldState:applyMapWeather(opts)
   self:updateGen3WeatherStage()
   -- CONTINUE restores SetSav1Weather's saved answer. Route 113's header is
   -- sunny; its scriptless coordinate events may have saved volcanic ash.
-  if opts and opts.via=='boot'and(GameVersion.get()=='ruby'or GameVersion.get()=='sapphire')
+  if opts and opts.via=='boot'and require('src.world.Gen3RsWeather').available(Game)
     and Game.save.gen3Weather~=nil and Game.save.player
     and MapIdentity.runtimeId(Game.data,Game.save.player.map)==self.map.id then
     Game.save.gen3WeatherActive=Game.save.gen3WeatherActive or Game.save.gen3Weather
@@ -10050,8 +10050,7 @@ function OverworldState:battleWeather()
   end
   if not GameVersion.isGen3() then return nil end
   if require('src.world.Gen3RsWeather').available(Game)then
-    local value=require('src.world.Gen3RsWeather').translate(Game.save.gen3WeatherActive,
-      self:gen3WeatherStage(),Game.data.constants.gen3RsWeather)
+    local value=require('src.world.Gen3RsWeather').current(self,Game)
     return Game.data.constants.gen3BattleWeather[self:weatherName(value)]
   end
   local name = self:weatherName(Game.save.gen3WeatherActive)
@@ -14035,7 +14034,7 @@ function OverworldState:checkCoordEventHere(again)
   self.coordFired = key
   -- Weather events have no script pointer and do not claim the script runner.
   -- They must also run on maps with no scripted coordinate hook at all.
-  if not self.runner:isRunning()and(GameVersion.get()=='ruby'or GameVersion.get()=='sapphire')then
+  if not self.runner:isRunning()and require('src.world.Gen3RsWeather').available(Game)then
     require('src.world.Gen3RsWeather').coordinate(self,Game)
   end
   local hooks = mapScripts.get(self.map and self.map.id)
