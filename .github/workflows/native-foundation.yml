@@ -35,6 +35,8 @@ jobs:
           luajit tests/rs_weather_contract.lua
           luajit tests/engine/native_weather_sound.lua
           luajit tests/engine/emerald_native_boot_readiness.lua
+          luajit tests/engine/emerald_birch_speech.lua
+          luajit tests/engine/gba_naming_player_save.lua
           luajit tests/engine/gba_npc_template_respawn.lua
           luajit tests/engine/gba_standard_strings.lua
           luajit tests/engine/emerald_wally_tutorial.lua

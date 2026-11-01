@@ -195,3 +195,13 @@ map views without moving the live world or altering the save. See
 Two further byte-exact files supply the original shared Emerald/FRLG party
 chrome extractor and stateless renderer. Host adapters retain party identities,
 selection callbacks, inventory effects and save ownership.
+
+The Emerald professor adapter uses the pinned RSE controller's public `TASKS`
+interface in a private loader context. Its own verified cartridge supplies
+Birch, Lotad, trainer pictures91/92, palettes, message IR, native windows and
+twenty default-name pointers per gender. Emerald release-on-text-pause, direct
+keyboard entry, name confirmation/return and final fade precede creation of
+the truck field. The shared controller remains byte-exact under its retained
+GPLv3/Section7 terms and BOIS CLUB GAMES, LLC credit. The adapter does not
+replace Ruby/Sapphire's rules or custom mod intro screens. Native acceptance
+is recorded separately after actual renderer/input qualification.

@@ -307,6 +307,7 @@ function Game:newGame()
   -- FR/LG must not publish a field beneath Oak: source boot decorators wait
   -- for its renderer and would otherwise hold the still-active introduction.
   local gbaIntro = newGameScreen == "Gen3RsBirchSpeech" or newGameScreen == "Gen3OakSpeechFRLG"
+    or newGameScreen == "Gen3EmeraldBirchSpeech"
   local deferWorld = (gen2 and newGameScreen) or gbaIntro
   if gbaIntro then self.overworld = nil end
   if not deferWorld then startWorld() end
