@@ -117,10 +117,38 @@ return function(game)
     'CONTINUE replaced coordinate ash with the sunny map header')
   assert(love.filesystem.read(IO.saveFilename(edition))==bytes,'CONTINUE changed stored save bytes')
   shot('route113-native-continued-ash');report.cases.nativeContinueRestoresCoordinateWeather=true
+  local Stats=require('src.pokemon.Gen3GameStats')
+  local Commands=require('src.script.Commands')
+  local ctx={game=game,save=game.save,overworld=world}
+  local initialRain=Stats.get(game.save,Stats.GOT_RAINED_ON)
+  Commands.g3_weather(ctx,3)
+  assert(game.save.gen3Weather==3 and game.save.gen3WeatherActive==7,
+    'Script weather activated before doweather')
+  assert(Stats.get(game.save,40)==initialRain+1,'Original saved rain transition was not counted')
+  report.cases.savedAndActiveWeatherRemainSeparate=true
+  Commands.g3_do_weather(ctx)
+  untilTrue(function()return world.rsWeather.engine.getCurrentWeather()==3 end,900,'Native rain transition did not finish')
+  shot('native-scripted-rain-counted-once')
+  Commands.g3_weather(ctx,3);U.wait(90)
+  assert(Stats.get(game.save,40)==initialRain+1,'Repeated request or native rain animation counted twice')
+  report.cases.originalSavedRainCountedOnce=true
+  Commands.g3_weather(ctx,5)
+  assert(game.save.gen3Weather==5 and game.save.gen3WeatherActive==3)
+  assert(Stats.get(game.save,40)==initialRain+2,'Changed original thunderstorm was not counted')
+  Commands.g3_do_weather(ctx)
+  untilTrue(function()return world.rsWeather.engine.getCurrentWeather()==5 end,900,'Native thunderstorm transition did not finish')
+  shot('native-scripted-thunderstorm-counted-once')
+  report.cases.originalThunderstormCountedOnce=true
+  Commands.g3_weather(ctx,13);Commands.g3_do_weather(ctx);U.wait(90)
+  assert(Stats.get(game.save,40)==initialRain+2,'Heavy rain incorrectly gained the original rain statistic')
+  report.cases.originalHeavyRainDoesNotCount=true
   U.teleport(game,'MAP_G19_N01',6,7,'up');U.wait(120)
   assert(game.overworld.map.def.weather==0 and game.save.gen3Weather==0 and game.save.gen3WeatherActive==0,
     'A different map boot inherited the previous map weather')
   assert(not game.overworld.rsWeather.engine.snapshot().ash)
   shot('different-map-keeps-own-weather-header');report.cases.differentMapEntryUsesOwnHeader=true
+  assert(Stats.get(game.save,40)==initialRain+2,'Indoor header changed the rain statistic')
+  assert(love.filesystem.read(IO.saveFilename(edition))==bytes,'Prepared weather transitions rewrote the saved file')
+  report.rainStatistics={before=initialRain,after=Stats.get(game.save,40)}
   report.status='pass';persist();print('PASS_RS_NATIVE_COORD_WEATHER');love.event.quit(0)
 end
