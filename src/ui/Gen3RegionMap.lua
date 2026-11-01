@@ -443,9 +443,16 @@ function Gen3RegionMap:pick()
   local place = self:current()
   local mapId = place and self.targets and self.targets[place.section]
   if self.fly and mapId then
+    local nativeWarp
+    if require('src.core.GameVersion').get()=='emerald' then
+      local targets=require('src.world.Gen3FlyTargets')
+      local position=targets.positionWithin(game,place.section,self.cx,self.cy)
+      local destination=targets.destination(game,place.section,self.targets,position)
+      if destination and destination.nativeEmerald then nativeWarp=destination;mapId=destination.map end
+    end
     Sound.play(game.data, "Press_AB")
     if game.stack then game.stack:pop() end
-    if self.onFly then self.onFly(mapId) end
+    if self.onFly then self.onFly(mapId,nativeWarp) end
   else
     -- not a FLY destination, or not flying: the cartridge refuses out loud
     Sound.play(game.data, "Wrong")

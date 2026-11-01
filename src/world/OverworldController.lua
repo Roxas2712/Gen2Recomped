@@ -7600,6 +7600,7 @@ function OverworldState:flyTo(mapId, mon,nativeWarp)
   local spot = MapIdentity.lookup(Game.data, flyWarps, mapId)
   if (GameVersion.get()=='ruby'or GameVersion.get()=='sapphire')and type(nativeWarp)=='table'and nativeWarp.nativeRs
     and nativeWarp.map==mapId and type(nativeWarp.x)=='number'and type(nativeWarp.y)=='number'then spot=nativeWarp end
+  if GameVersion.get()=='emerald'and require('src.world.Gen3FlyTargets').matchesEmeraldHeal(Game,mapId,nativeWarp)then spot=nativeWarp end
   if not spot then return end
   local field=package.loaded['src.core.game3.field']
   if GameVersion.isGen3()and field then
