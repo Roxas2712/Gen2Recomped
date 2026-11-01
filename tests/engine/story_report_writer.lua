@@ -2,8 +2,11 @@
 package.path='./?.lua;./?/init.lua;'..package.path
 local T=require('tests.modkit');local J=require('src.link.Json')
 local W=require('tests.drivers.story_report_writer')
-local directory=assert(os.getenv('STORY_WRITER_TEST_DIR'),'Set owned STORY_WRITER_TEST_DIR')
-local path=directory..'/story-writer-'..tostring({}):gsub('[^%w]','')..'.json'
+local directory=os.getenv('STORY_WRITER_TEST_DIR')or os.getenv('RUNNER_TEMP')
+-- Standalone headless suites also run without an explicit output directory.
+-- Reserve a unique OS temporary name and only remove this test's own files.
+local anchor=not directory and os.tmpname()or nil
+local path=directory and(directory..'/story-writer-'..tostring({}):gsub('[^%w]','')..'.json')or(anchor..'.story-report.json')
 local function bytes()
  local f=assert(io.open(path,'rb'));local value=f:read('*a');f:close();return value
 end
@@ -49,4 +52,5 @@ T.eq(pcall(writer.write,writer,report),false,'committed history cannot be shorte
 T.eq(bytes(),before)
 T.eq(pcall(W.new,path,J.encode),false,'an existing report cannot be silently overwritten')
 os.remove(path);os.remove(path..'.tmp')
+if anchor then os.remove(anchor)end
 T.finish('Atomic complete story reports, immutable committed rows, lossless retry and bounded encoding work')

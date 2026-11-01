@@ -26,6 +26,8 @@ metadata updates, failed encoding and retry, sequence continuity and bounded
 encoding work. Existing receipt and checkpoint tests remain applicable. Local
 native qualification must still use an ordinary normal SAVE and fresh CONTINUE;
 prepared fixtures do not count as campaign progress.
+The test also accepts the CI runner's temporary directory or reserves its own
+unique OS temporary name when invoked by the standalone headless suite.
 
 A local CPU comparison used five successive appends at the end of an actual
 690-command Emerald trace (18,424,871 final JSON bytes). Re-encoding took
