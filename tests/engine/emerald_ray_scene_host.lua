@@ -27,7 +27,7 @@ replace('src.ui.Gen3EmeraldSceneContext',{new=function(game,opts)
 end})
 local M=require('src.ui.Gen3EmeraldRayScene')
 local game={data={constants={gen3EmeraldRayScene={format=1,version='emerald',manifest=A.ROOT..'manifest.lua',
- resources=A.resources(),descendsTopByteOffset=0x200,song=401,rayquaza=406}}},save={party={{hp=83}},flags={KEEP=true}},input={},
+ resources=A.resources(),song=401,rayquaza=406}}},save={party={{hp=83}},flags={KEEP=true}},input={},
  overworld={map={id='MAP_G00_N07'},player={}}}
 local top;game.stack={top=function()return top end,pop=function()
  pops=pops+1;local old=top;top=nil;old:exit()

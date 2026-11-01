@@ -13,13 +13,6 @@ function M.resources()
  for _,key in ipairs(sprites)do out[#out+1]=M.ROOT..key..'.png'end
  return out
 end
--- The cartridge clears 0x340 BYTES beginning at u16 tilemap entry 0x100.
--- The pinned extractor treats that entry offset as a byte offset. Correct
--- the generated layer while preserving the reference source byte-for-byte.
-function M.descendsTop(map)
- assert(type(map)=='string'and #map==2048,'Invalid original Descends screen block')
- return map:sub(1,0x200)..string.rep('\0',0x340)..map:sub(0x540+1)
-end
 function M.extract(x)
  assert(x.version=='emerald');x:beginStage('Emerald original Rayquaza cinematic')
  local load=require('compat.gen1-rs.Loader').new('emerald',{__package={loaded={}}})
@@ -36,20 +29,15 @@ function M.extract(x)
  end}
  local ok,man=load('src.import.gba.rse.rayquaza_scene_extract').run(rom,cache,{game='emerald'})
  assert(ok and type(man)=='table')
- local K=load('src.import.gba.rse.boot_gfx');local c=K.context(rom,cache,{game='emerald'},'rayquaza_scene')
- local idx,w,h=K.bakeText(c:lz('gRaySceneDescends_Bg_Gfx'),M.descendsTop(c:lz('gRaySceneDescends_Bg_Tilemap')),32,32)
- man.layers.de_bg_top={index=c:gray('de_bg_top_idx.png',w,h,idx),w=w,h=h,bpp=4}
- man.descendsTopByteOffset=0x200
- cache:write(M.ROOT..'manifest.lua',require('src.import.LuaWriter').encode(man))
  local songs=load('src.core.game3.constants.emerald.songs').byName
  local species=load('src.core.game3.constants.emerald.species').byName
  x._constants.gen3EmeraldRayScene={format=1,version='emerald',manifest=M.ROOT..'manifest.lua',
-  resources=M.resources(),descendsTopByteOffset=0x200,
+  resources=M.resources(),
   song=assert(songs.MUS_RAYQUAZA_APPEARS),rayquaza=assert(species.SPECIES_RAYQUAZA)}
 end
 function M.valid(spec,version)
  if version~='emerald'or type(spec)~='table'or spec.version~=version or spec.format~=1
-  or spec.manifest~=M.ROOT..'manifest.lua'or spec.descendsTopByteOffset~=0x200
+  or spec.manifest~=M.ROOT..'manifest.lua'
   or type(spec.song)~='number'or spec.song<=0 or type(spec.rayquaza)~='number'or spec.rayquaza<=0
   or type(spec.resources)~='table'then return false end
  local resources=M.resources();if #spec.resources~=#resources then return false end
@@ -66,7 +54,7 @@ function M.missing()
  if not M.valid(spec,'emerald')then return{'<emerald:original-rayquaza-scene>'}end
  local out={};for _,path in ipairs(spec.resources)do if not Fs.exists(path)then out[#out+1]=path end end
  local man=read(spec.manifest)
- if not man or man.format~=1 or man.game~='emerald'or man.descendsTopByteOffset~=0x200
+ if not man or man.format~=1 or man.game~='emerald'
   or type(man.layers)~='table'or type(man.sprites)~='table'or type(man.palettes)~='table'
   or type(man.smokeCoords)~='table'or #man.smokeCoords~=10 then
   out[#out+1]=spec.manifest;return out

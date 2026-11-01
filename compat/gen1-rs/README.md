@@ -209,8 +209,7 @@ is recorded separately after actual renderer/input qualification.
 Two further byte-exact reference files provide the original Emerald Rayquaza
 cinematic and its indexed-art extractor. The host adapter preserves script
 ownership and callback order, uses the original private GBA machine for all
-phases, and keeps movie RNG separate from saved gameplay state. An extraction
-adapter corrects the Descends top-layer clear offset from a byte offset to the
-original u16-entry offset without modifying either pinned file. No cartridge
+phases, and keeps movie RNG separate from saved gameplay state. Both reference
+sources and their original byte-buffer layout remain unchanged. No cartridge
 bytes, extracted pictures, palettes or saves are vendored. Native visual and
 full-story qualification remain separate from resource and lifecycle tests.

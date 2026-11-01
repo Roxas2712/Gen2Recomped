@@ -29,7 +29,7 @@ return function(game)
   for y=0,size-1 do for x=0,size-1 do
    local cell=math.floor(y/8)*(size/8)+math.floor(x/8)
    local entry=affine and map[cell+1]or(map[cell*2+1]+map[cell*2+2]*256)
-   if clear and cell>=0x100 and cell<0x100+0x340/2 then entry=0 end
+   if clear and cell>=0x100/2 and cell<(0x100+0x340)/2 then entry=0 end
    local px,py=x%8,y%8
    if not affine then
     if math.floor(entry/1024)%2==1 then px=7-px end
