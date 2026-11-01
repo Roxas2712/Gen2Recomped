@@ -59,6 +59,23 @@ for _,edition in ipairs{'firered','leafgreen','emerald','ruby','sapphire'}do
  T.eq(rain.playing,true,'removing a claiming wrapper resumes native rain on the next field tick')
  T.eq(foreign.playing,true,'removing a wrapper preserves foreign SE playback')
  e.claimed=false;game.save.gen3WeatherActive=3;Weather.update(game,w)
+ if edition=='emerald'then
+  local actual=3
+  w.rsWeather={data=game.data,engine={getCurrentWeather=function()return actual end}}
+  game.save.gen3WeatherActive=15
+  Weather.update(game,w);T.eq(rain.playing,true,'native rain phase remains owned by ambient service')
+  local committed=require('src.link.Json').encode(game.save)
+  actual=12;Weather.update(game,w)
+  T.eq(rain.playing,false,'native drought phase stops the previous rain voice')
+  actual=13;Weather.update(game,w)
+  local downpour=false
+  for _,voice in ipairs(voices)do
+   if tostring(voice.file):find('SE_DOWNPOUR',1,true)and voice.playing and voice.loop then downpour=true end
+  end
+  T.eq(downpour,true,'sound follows the actual native abnormal phase')
+  T.eq(require('src.link.Json').encode(game.save),committed,'native phase observation preserves the whole save')
+  w.rsWeather=nil;game.save.gen3WeatherActive=3;Weather.update(game,w)
+ end
  local live=voices[1];T.eq(live.playing,true);game.save={};Stream.poll();T.eq(live.playing,false,'retired native save stops only its weather voice')
  T.eq(foreign.playing,true)
  math.random=random;Stream.shutdown();run.release();Sound.invalidate();G.release()
