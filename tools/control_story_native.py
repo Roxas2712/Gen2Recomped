@@ -51,7 +51,7 @@ def validate(commands):
     directions=('up','down','left','right')
     for c in commands:
         op=c.get('op')
-        assert op in ('press','hold','wait','step','goto','advance','battle-attack','shot','verify-continue','verify-lab-introduction','finish'), 'Unsupported story command'
+        assert op in ('press','hold','wait','step','goto','advance','battle-attack','shot','observe-credits','verify-continue','verify-lab-introduction','finish'), 'Unsupported story command'
         assert 'direction' not in c, 'Use dir for an ordinary step'
         if op=='step':assert c.get('dir')in directions, 'A step needs dir: up/down/left/right'
         if op in ('press','hold'):assert c.get('button')in (*directions,'a','b','start','select','l','r'), 'Invalid button'
@@ -59,6 +59,9 @@ def validate(commands):
         if op=='goto':assert all(type(c.get(k))is int for k in ('x','y')), 'goto needs integer x/y'
         if op=='battle-attack':assert type(c.get('slot'))is int and 1<=c['slot']<=4, 'Invalid move slot'
         if op=='shot':assert isinstance(c.get('name'),str)and c['name'], 'A capture needs a name'
+        if op=='observe-credits':
+            assert type(c.get('frames'))is int and 1<=c['frames']<=45000, 'Bounded credit observation required'
+            assert isinstance(c.get('name'),str)and c['name'], 'Credit observation needs a capture name'
         for k in ('frames','times','wait'):
             if k in c:assert type(c[k])is int and c[k]>=0, 'Invalid frame/count value'
 def submit(commands,emit=True):

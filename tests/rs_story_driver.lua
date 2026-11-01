@@ -49,6 +49,7 @@ return function(game)
     return source
   end
   local seq=0;local busy=false;local lastMap;local lastParty=0
+  local creditPages=setmetatable({},{__mode='k'})
   if lineage then
     report.lineage=lineage;report.continuedOwnNormalSave=true
     for key,value in pairs(lineage.inherited)do report[key]=value end
@@ -79,10 +80,27 @@ return function(game)
     if s.enemy then r.enemy=fields(s.enemy.mon or s.enemy,{'species','level','hp','status'})end
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
     local battle=package.loaded['src.battle.BattleState']
+    -- A forced replacement can be waiting while the other slot remains
+    -- alive. Export that visible party ownership during messages as well
+    -- as the move menu; do not infer it from the last selected party row.
+    if battle and getmetatable(s)==battle then
+      r.livePlayers={}
+      for _,position in ipairs{battle.POS.PLAYER_LEFT,battle.POS.PLAYER_RIGHT}do
+        local active=s:battlerAt(position)
+        if active and active.mon and active.mon.hp>0 then
+          local row=fields(active.mon,{'species','level','hp','status'});row.position=position
+          for index,mon in ipairs(game.save.party or{})do
+            if mon==active.mon then row.partyIndex=index;break end
+          end
+          r.livePlayers[#r.livePlayers+1]=row
+        end
+      end
+    end
     if battle and getmetatable(s)==battle and(s.phase=='menu'or s.phase=='moveSelect')then
       local chooser=s:menuBattler()
       if chooser and chooser.mon then
         r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
+        r.menuBattler.stages=fields(chooser.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'})
         for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
       end
       r.visibleOpponents={}
@@ -145,6 +163,20 @@ return function(game)
       r.playerPP=s.player and s.player.curMoves and s.player.curMoves[1].pp
     end
     if s.gen3Ball then r.ball=fields(s.gen3Ball,{'phase','phaseFrame','sendOut','monHidden','caught'})end
+    if (s.screenId=='Gen3RsCredits'or s.screenId=='Gen3EmeraldCredits')and s.state then
+      local state=s.state
+      r.nativeCredits=fields(state,{'mainFunc','endDelay','imgCounter','showMons','closed'})
+      local pages=creditPages[state]
+      if not pages then
+        pages={};local manifest=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
+        for index,page in ipairs(manifest.pages)do pages[page]=index end
+        creditPages[state]=pages
+      end
+      if state.text then r.nativeCredits.textPage=pages[state.text]end
+      local task=state.m.tasks:get(state.mainId)
+      if task then r.nativeCredits.scene=task.data[7]end
+      r.nativeCredits.paletteFadeActive=state.m.ppu.palette:fadeActive()
+    end
     return r
   end
   local function snapshot(persistReport)
@@ -204,6 +236,39 @@ return function(game)
     local ok,why=require('src.render.GraphicsScope').call(s.draw,s);assert(ok,why)
     assert(old==Serialize.encode(game.save)and rng==love.math.getRandomState(),'Story draw changed save/RNG')
     assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name
+  end
+  local function observeCredits(name,limit)
+    local credits=game.stack:top()
+    assert(credits and (credits.screenId=='Gen3RsCredits'or credits.screenId=='Gen3EmeraldCredits'),
+      'Credit observation requires the already-running original credits')
+    local state=assert(credits.state)
+    local manifest=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
+    local byPage,pages,scenes={},{},{}
+    for index,page in ipairs(manifest.pages)do byPage[page]=index end
+    for frame=0,limit do
+      assert(game.stack:top()==credits,'Original credits ended before THE END observation')
+      if state.text then pages[assert(byPage[state.text])]=true end
+      local task=state.m.tasks:get(state.mainId)
+      local scene=task and task.data[7]
+      if type(scene)=='number'then scenes[scene]=true end
+      if state.mainFunc=='end6'and state.endDelay<6800 and not state.m.ppu.palette:fadeActive()then
+        for index=1,#manifest.pages do assert(pages[index],'Unobserved original credit page '..index)end
+        for scene=0,4 do assert(scenes[scene],'Unobserved original cycling scene '..scene)end
+        local music=require('src.core.Music').current()
+        if edition=='emerald'then
+          assert(state.imgCounter==71,'Original Emerald Pokemon slide program is incomplete')
+          assert(music==('SONG_%03X'):format(game.data.constants.gen3EmeraldPresentation.songIds.MUS_END),
+            'Original Emerald THE END song is missing')
+        end
+        assert(#inputLog==0,'Credit observation issued unexpected button input')
+        shot(name)
+        report.nativeCreditsFullRoll={pageCount=#manifest.pages,pages=pages,scenes=scenes,
+          pokemonSlides=state.imgCounter,frames=frame,noButtons=true,theEndCaptured=true,music=music}
+        return
+      end
+      U.wait(1)
+    end
+    error('Original credits did not reach THE END within the observation bound')
   end
   local function waitFor(fn,n)for _=1,n do if fn()then return end;U.wait(1)end;error('Story boot timed out')end
   press('a',10);press('start',20)
@@ -287,6 +352,9 @@ return function(game)
       if command.op=='press'then
         for _=1,math.min(tonumber(command.times)or 1,200)do press(assert(command.button),command.wait or 12)end
       elseif command.op=='wait'then U.wait(math.min(command.frames or 60,3600))
+      elseif command.op=='observe-credits'then
+        assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=45000)
+        observeCredits(assert(command.name),command.frames)
       elseif command.op=='step'then local ok,why=step(assert(command.dir));if not ok then record.outcome=why end
       elseif command.op=='hold'then
         assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=6000)

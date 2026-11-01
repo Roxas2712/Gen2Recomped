@@ -1022,6 +1022,8 @@ local function hiddenPowerPower(mon)
 end
 
 local function typesOf(battler)
+  local current = Gen2Read.types(battler)
+  if current ~= nil then return current[1], current[2] end
   local mon = battler.mon or {}
   local t1 = mon.type1 or (battler.types and battler.types[1])
   local t2 = mon.type2 or (battler.types and battler.types[2])
@@ -1237,13 +1239,26 @@ end
 
 -- Curse is two moves in one: a Ghost pays half its max HP to lay a curse,
 -- anything else trades Speed for Attack and Defense.
-MoveEffects.primary.CURSE_EFFECT = function(battle, user, target)
+MoveEffects.primary.CURSE_EFFECT = function(battle, user, target, move)
   local t1, t2 = typesOf(user)
   if t1 == "GHOST" or t2 == "GHOST" then
+    if GameVersion.isGen3() then
+      if target.substituteHP then return { Strings("But, it failed!") } end
+      -- NO_ACC_CALC_CHECK_LOCK_ON skips the random accuracy roll.
+      local guaranteed = require('src.battle.Gen3Accuracy').guaranteed(battle, user, target, move or {})
+        or user.lockedOn == target
+      if user.lockedOn == target then user.lockedOn = nil end
+      if target.invulnerable and not guaranteed then return { Strings("But, it failed!") } end
+    end
     if target.cursed then return { Strings("But, it failed!") } end
-    local cost = math.max(1, math.floor((user.mon.maxHp or 2) / 2))
+    local cost = math.max(1, math.floor(((user.mon.stats or {}).hp or user.mon.maxHp or 2) / 2))
     target.cursed = true
-    battle:applyDamage(user, cost)
+    if GameVersion.isGen3() then
+      -- The script pays HP directly, including through the user's own doll.
+      user.mon.hp = math.max(0, user.mon.hp - cost)
+      require('src.battle.Gen3FaintFriendship').capture(battle, user)
+      if user.mon.hp == 0 then require('src.battle.Gen3Faint').mark(user) end
+    else battle:applyDamage(user, cost) end
     local out = { Strings("%s cut its own HP\nand laid a CURSE!",
       displayName(user)) }
     if (user.mon.hp or 0) <= 0 then battle:onFaint(user) end
