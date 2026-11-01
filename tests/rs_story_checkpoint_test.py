@@ -188,6 +188,86 @@ class CheckpointTests(unittest.TestCase):
             f=self.first_badge_fixture();f[3][key]=False;self.assertRaises(AssertionError,qualify,*f)
         f=self.first_badge_fixture();f[3]['status']='running';self.assertRaises(AssertionError,qualify,*f)
 
+    def emerald_fade_fixture(self):
+        f=self.first_badge_fixture('emerald');r,c=f[3:]
+        first=r['commands'][0]
+        battle=copy.deepcopy(first['after'])
+        battle['player']={'cellX':7,'cellY':15}
+        battle['top'].update(phase='messages',nativeBattle={})
+        first['after']['player']=copy.deepcopy(battle['player'])
+        first['after']['top']={'source':'src/render/BattleTransition.lua','phase':'wipe'}
+        before=copy.deepcopy(battle);before['frame']=25
+        after=copy.deepcopy(battle);after['frame']=115
+        r['commands'].insert(1,{'seq':2,'input':{'op':'wait','frames':90},
+                              'ordinaryInputs':[],'before':before,'after':after})
+        r['commands'][2]['seq']=3;r['inputs'][0]['commandSeq']=3
+        c.update(saveMenuCommandRange=[3,3],saveConfirmedSeq=3)
+        return f
+
+    def test_emerald_original_battle_fade_preserves_witnessed_starter_origin(self):
+        f=self.emerald_fade_fixture();original=copy.deepcopy(f)
+        self.assertTrue(first_badge_starter_proof(f[3]))
+        self.assertTrue(qualify(*f)['naturalStarterAccepted'])
+        self.assertEqual(f,original)
+
+    def test_emerald_fade_can_finish_during_the_recorded_wait(self):
+        f=self.emerald_fade_fixture();row=f[3]['commands'][1]
+        row['before']['top']={'source':'src/render/FieldFade.lua'}
+        self.assertTrue(qualify(*f)['naturalStarterAccepted'])
+
+    def test_emerald_fade_rejects_intervening_input_or_missing_wait_receipts(self):
+        for change in('press','goto','injection','buttons','missing-buttons','zero','negative',
+                      'long','fractional','boolean','missing-frames','missing-wait','sequence'):
+            f=self.emerald_fade_fixture();row=f[3]['commands'][1]
+            if change=='press':row['input']={'op':'press','button':'a'}
+            elif change=='goto':row['input']={'op':'goto','x':7,'y':15}
+            elif change=='injection':row['input']={'op':'inject'}
+            elif change=='buttons':row['ordinaryInputs']=[{'key':'a'}]
+            elif change=='missing-buttons':row.pop('ordinaryInputs')
+            elif change in('zero','negative','long','fractional','boolean'):
+                row['input']['frames']={'zero':0,'negative':-1,'long':601,'fractional':1.5,'boolean':True}[change]
+            elif change=='missing-frames':row['input'].pop('frames')
+            elif change=='missing-wait':f[3]['commands'].pop(1)
+            elif change=='sequence':row['seq']=9
+            with self.subTest(change=change):
+                self.assertFalse(first_badge_starter_proof(f[3]))
+                self.assertRaises(AssertionError,qualify,*f)
+
+    def test_emerald_fade_rejects_party_map_script_position_or_battle_changes(self):
+        for part in('before','after'):
+            for change in('party','level','hp','move','map','script','position','field','trainer',
+                          'opponent','enemy-level','battler','battle-level','already-fought','menu'):
+                f=self.emerald_fade_fixture();s=f[3]['commands'][1][part];top=s['top']
+                if change=='party':s['party'].append(copy.deepcopy(s['party'][0]))
+                elif change=='level':s['party'][0]['level']=6
+                elif change=='hp':s['party'][0]['hp']-=1
+                elif change=='move':s['party'][0]['moves'][0]['pp']-=1
+                elif change=='map':s['map']['id']='MAP_G01_N04'
+                elif change=='script':s['scriptRunning']=False
+                elif change=='position':s['player']['cellX']+=1
+                elif change=='field':s['top']={'source':'src/world/OverworldController.lua'}
+                elif change=='trainer':top['musicKind']='trainer'
+                elif change=='opponent':top['enemy']['species']='POOCHYENA'
+                elif change=='enemy-level':top['enemy']['level']=3
+                elif change=='battler':top['battler']['species']='MUDKIP'
+                elif change=='battle-level':top['battler']['level']=6
+                elif change=='already-fought':top['nativeBattle']['turnCount']=1
+                elif change=='menu':top['phase']='menu'
+                with self.subTest(part=part,change=change):
+                    self.assertFalse(first_badge_starter_proof(f[3]))
+                    self.assertRaises(AssertionError,qualify,*f)
+
+    def test_emerald_fade_proof_is_bounded_and_keeps_the_original_party_event_range(self):
+        for change in('old-before','long-after','backwards','late-event','unknown-fade','ruby'):
+            f=self.emerald_fade_fixture();first,wait=f[3]['commands'][:2]
+            if change=='old-before':wait['before']['frame']=19
+            elif change=='long-after':wait['after']['frame']=1221
+            elif change=='backwards':wait['after']['frame']=24
+            elif change=='late-event':f[3]['events'][0]['frame']=30
+            elif change=='unknown-fade':first['after']['top']['source']='src/render/Transition.lua'
+            elif change=='ruby':f[3]['edition']='ruby'
+            with self.subTest(change=change):self.assertFalse(first_badge_starter_proof(f[3]))
+
 if __name__=='__main__':
     if '--worker'not in sys.argv:
         from qa_storage import qa_source,qa_run

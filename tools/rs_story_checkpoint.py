@@ -1,6 +1,60 @@
 """Qualify only this task's ordinary-input Hoenn save receipts for continuation."""
 import re
 
+def _rescue_battle(top, starter, emerald):
+    return (top.get('source')=='src/battle/BattleState.lua'
+            and top.get('musicKind')=='wild'
+            and top.get('enemy',{}).get('species')==('ZIGZAGOON'if emerald else'POOCHYENA')
+            and top['enemy'].get('level')==2
+            and top.get('battler',{}).get('species')==starter['species']
+            and top['battler'].get('level')==5)
+
+def _emerald_rescue_after_fade(rows, first, starter):
+    """Follow only recorded, input-free waits from the original starter fade.
+
+    Emerald can still be displaying its native wipe when the confirmation
+    receipt arrives. The first-party event still belongs to that original
+    A press; later waits may establish the pending battle, never a new party.
+    """
+    fades={'src/render/BattleTransition.lua','src/render/FieldFade.lua'}
+    initial=rows[first]['after'];frame=initial.get('frame');seq=rows[first].get('seq')
+    position=initial.get('player',{})
+    cell=(position.get('cellX'),position.get('cellY'))
+    if (initial.get('top',{}).get('source')not in fades
+            or type(frame)is not int or type(seq)is not int
+            or any(type(n)is not int for n in cell)):
+        return False
+    previous_frame=frame
+    for row in rows[first+1:first+9]:
+        cmd=row.get('input',{});frames=cmd.get('frames')
+        if (row.get('seq')!=seq+1 or cmd.get('op')!='wait'
+                or type(frames)is not int or not 1<=frames<=600
+                or row.get('ordinaryInputs')!=[]):
+            return False
+        before=row.get('before',{});after=row.get('after',{})
+        start=before.get('frame');end=after.get('frame')
+        if (type(start)is not int or type(end)is not int
+                or not previous_frame<=start<=end or end-start<frames or end-frame>1200):
+            return False
+        for state in(before,after):
+            player=state.get('player',{});top=state.get('top',{})
+            if (state.get('party')!=[starter] or state.get('scriptRunning')is not True
+                    or state.get('map',{}).get('id')!='MAP_G00_N16'
+                    or (player.get('cellX'),player.get('cellY'))!=cell):
+                return False
+            if top.get('source')=='src/battle/BattleState.lua':
+                if (not _rescue_battle(top,starter,True) or top.get('phase')!='messages'
+                        or top.get('nativeBattle',{}).get('turnCount',0)!=0):
+                    return False
+            elif top.get('source')not in fades:
+                return False
+        if after.get('top',{}).get('source')=='src/battle/BattleState.lua':
+            return True
+        if before.get('top',{}).get('source')=='src/battle/BattleState.lua':
+            return False
+        seq+=1;previous_frame=end
+    return False
+
 def first_badge_starter_proof(report):
     """Derive legacy driver lineage from its witnessed native rescue input.
 
@@ -36,13 +90,10 @@ def first_badge_starter_proof(report):
             and row.get('input',{}).get('op')=='press'and row['input'].get('button')=='a'
             and any(p.get('key')=='a'for p in row.get('ordinaryInputs',[]))
             and before.get('map',{}).get('id')==after.get('map',{}).get('id')=='MAP_G00_N16'
-            and after.get('scriptRunning') is True
-            and top.get('source')=='src/battle/BattleState.lua'
-            and top.get('musicKind')=='wild'
-            and top.get('enemy',{}).get('species')==('ZIGZAGOON'if emerald else'POOCHYENA')
-            and top['enemy'].get('level')==2
-            and top.get('battler',{}).get('species')==starter['species']
-            and top['battler'].get('level')==5):
+            and after.get('scriptRunning') is True):
+        return False
+    if not (_rescue_battle(top,starter,emerald)
+            or(emerald and _emerald_rescue_after_fade(rows,first,starter))):
         return False
     events=[e for e in report.get('events',[])if e.get('kind')=='first-party-member']
     return (len(events)==1 and events[0].get('mon')==starter
