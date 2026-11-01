@@ -57,6 +57,12 @@ local Assets = require("src.render.Assets")
 local Gen3Cutscene = {}
 Gen3Cutscene.__index = Gen3Cutscene
 
+-- Current Emerald caches use the complete pinned native controller. The
+-- composition below remains only for legacy/custom datasets without that pack.
+function Gen3Cutscene.available(game)
+  return require('src.ui.Gen3EmeraldRayScene').available(game) or Gen3Cutscene.record(game) ~= nil
+end
+
 local GBA_W, GBA_H = 240, 160
 
 -- the port's own numbers, and the only ones here that are
@@ -241,6 +247,8 @@ function Gen3Cutscene.steps(record, part)
 end
 
 function Gen3Cutscene.new(game, opts)
+  local Native = require('src.ui.Gen3EmeraldRayScene')
+  if Native.available(game) then return Native.new(game, opts) end
   local self = setmetatable({}, Gen3Cutscene)
   self.game = game
   self.onDone = opts and opts.onDone

@@ -219,3 +219,4 @@ mobile/ios/bundle_id.local
 
 !/tcg-mods/
 !/tcg-mods/**
+!/tests/emerald_ray_scene_native_driver.lua
