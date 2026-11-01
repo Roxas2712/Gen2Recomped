@@ -78,8 +78,30 @@ return function(game)
     end
     if s.enemy then r.enemy=fields(s.enemy.mon or s.enemy,{'species','level','hp','status'})end
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
+    local battle=package.loaded['src.battle.BattleState']
+    if battle and getmetatable(s)==battle and(s.phase=='menu'or s.phase=='moveSelect')then
+      local chooser=s:menuBattler()
+      if chooser and chooser.mon then
+        r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
+        for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
+      end
+      r.visibleOpponents={}
+      for _,position in ipairs{battle.POS.OPPONENT_LEFT,battle.POS.OPPONENT_RIGHT}do
+        local opponent=s:battlerAt(position)
+        if opponent and opponent.mon and opponent.mon.hp>0 then
+          r.visibleOpponents[#r.visibleOpponents+1]=fields(opponent.mon,{'species','level','hp','status'})
+        end
+      end
+    end
     if s.trainer then r.trainer=fields(s.trainer,{'name','class','className','id','index'})end
     if s.musicKind then r.musicKind=s.musicKind end
+    if s.screenId=='Gen3EmeraldCableCar'or s.screenId=='Gen3RsCableCar'then
+      r.nativeCableCar=fields(s.scene,{'frames','goingDown','female','done'})
+      r.nativeCableCar.events={}
+      for _,event in ipairs(s.scene and s.scene.log or{})do
+        r.nativeCableCar.events[#r.nativeCableCar.events+1]=fields(event,{'frame','what'})
+      end
+    end
     if s.player and s.player.mon and s.enemy and s.enemy.mon then
       r.nativeBattle={turnCount=s.turnCount,result=s.result,
         player=fields(s.player,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns'}),
