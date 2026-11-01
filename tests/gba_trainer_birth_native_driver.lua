@@ -10,7 +10,13 @@ return function(game)
   local oracle=J.decode(f:read('*a'));f:close()
   assert(oracle.edition==version and oracle.schema==1)
   assert(require('src.import.RomImporter').readyReport(version).ok)
-  assert(require('src.import.Gen3TrainerBirth').valid(version,game.data.constants,game.data.trainers))
+  -- Data adds compatibility aliases (FRLG's OPP_RIVAL3) after loading the
+  -- strictly checked cache. Compare its original cartridge registry only.
+  local imported={}
+  for _,id in pairs(game.data.constants.trainerOrder)do
+    imported[id]=assert(game.data.trainers[id])
+  end
+  assert(require('src.import.Gen3TrainerBirth').valid(version,game.data.constants,imported))
   for _,event in ipairs{'keypressed','keyreleased','textinput','gamepadpressed','gamepadreleased',
     'joystickpressed','joystickreleased','joystickaxis','joystickhat','touchpressed','touchreleased',
     'touchmoved','mousepressed','mousereleased'}do love[event]=function()end end

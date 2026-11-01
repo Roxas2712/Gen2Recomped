@@ -58,6 +58,9 @@ local keys={'hp','attack','defense','speed','spatk','spdef'}
 for _,version in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   local owner,rows=imported(version)
   T.check(Cache.valid(version,owner._constants,owner._trainers),version..' actual importer writes complete recipe')
+  owner._trainers.RUNTIME_ALIAS=rows[1]
+  T.eq(Cache.valid(version,owner._constants,owner._trainers),false,'serialized cache remains strict about extra rows')
+  owner._trainers.RUNTIME_ALIAS=nil
   for index,row in ipairs(rows)do
     local base=index==4 and 128 or index%2==0 and 120 or 136
     local firstHash=186+index+197+201+202
