@@ -1,12 +1,15 @@
--- Host bridge for the pinned RS Wally policy. Normal battle commands own hits,
+-- Host bridge for the pinned RSE Wally policy. Normal battle commands own hits,
 -- PP and RNG; this controller supplies only the cartridge's scripted choices.
 local M={};M.__index=M
 function M.new(battle)
   local v=require('src.core.GameVersion').get()
-  if v~='ruby'and v~='sapphire'then return end
-  local spec=assert(battle.data.constants.gen3RsWally,'Native RS tutorial resources required')
+  if v~='ruby'and v~='sapphire'and v~='emerald'then return end
+  local emerald=v=='emerald'
+  local spec=assert(battle.data.constants[emerald and'gen3EmeraldWally'or'gen3RsWally'],
+    'Native Wally tutorial resources required')
+  if emerald then assert(require('src.import.Gen3EmeraldWallyAssets').valid(spec,v))end
   assert(battle.player.mon.species=='ZIGZAGOON'and battle.player.mon.level==7,
-    'The RS script must lend Wally his own Zigzagoon')
+    'The original script must lend Wally his own Zigzagoon')
   -- The script explicitly selects ability 2, including ABILITY_NONE. The
   -- ordinary host resolver falls back to slot 1 for empty second slots.
   local ability=battle.player.def.abilities and battle.player.def.abilities[2]
@@ -23,14 +26,16 @@ function M.new(battle)
     state={kinds={tutorial='wally'},wallyState=0},ui={},events={}},M)
   self.policy=load('src.core.game3.battle.tutorial_wally')
   self.ui._openMoveMenu=function()battle:chooseMenu('fight')end
-  battle.demoName=self:text('BattleText_Wally');battle.demoBackPath=spec.images.idle
+  -- Emerald's name already came from its own trainer table in the script.
+  if not emerald then battle.demoName=self:text('BattleText_Wally')end
+  battle.demoBackPath=spec.images.idle
   self.initialEnemyHP=battle.enemy.mon.hp
   return self
 end
 function M:text(key)
   local b=self.battle
   return self.load('src.core.game3.scripting.text_ir').toAscii(assert(self.spec.textIR[key]),{
-    dialect='rs',battle={[0]=b.player.name,[3]=b.enemy.name,[0x13]=assert(b.data.items.POKE_BALL.name)}})
+    dialect=self.spec.dialect or'rs',battle={[0]=b.player.name,[3]=b.enemy.name,[0x13]=assert(b.data.items.POKE_BALL.name)}})
 end
 function M:record(kind)
   local b=self.battle
@@ -38,6 +43,7 @@ function M:record(kind)
     playerHP=b.player.mon.hp,enemyHP=b.enemy.mon.hp,pp=b.player.curMoves[1].pp,bagFrame=self.bagTicks}
 end
 function M:openBag()
+  if self.spec.version=='emerald'then return require('src.battle.Gen3EmeraldWallyBag').open(self)end
   local b=self.battle;local game=b.game
   b.phase='messages';b.afterQueue='menu'
   local function row(id)

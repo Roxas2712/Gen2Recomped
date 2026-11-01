@@ -1364,6 +1364,7 @@ local function markerFor(version)
   end
   if version=='emerald'then
     revision=revision..'emerald-first-rescue-v'..require('src.import.Gen3FirstBattle').REVISION..':'
+    revision=revision..'emerald-original-wally-v'..require('src.import.Gen3EmeraldWallyAssets').REVISION..':'
   end
   -- Rebuild generated FR/LG ball timing only; saved game formats do not change.
   if GameVersion.isFRLG(version)then
@@ -2111,6 +2112,7 @@ function RomImporter.readyReport(version)
     if #absent==0 then absent=require('src.import.Gen3BagRegistrationAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3BagSaleAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3EmeraldBagAssets').missing(version)end
+    if #absent==0 then absent=require('src.import.Gen3EmeraldWallyAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3EmeraldItemPcAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3NativePartyAssets').missing(version)end
     if #absent==0 then absent=require('src.import.Gen3FrlgPlayerAssets').missing(version)end

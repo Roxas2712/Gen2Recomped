@@ -295,6 +295,7 @@ function Gen3BagMenu.new(game, opts)
   self.script = opts.script
   self.noInput = opts.noInput and true or false
   self.rsTutorial = opts.rsTutorial and true or false
+  self.wallyTutorial = opts.wallyTutorial and true or false
   self.rs = not self.pcList and (not self.scriptRows or opts.rsTutorial)
     and require('src.ui.Gen3RsBagView').available(game)
   self.emerald = require('src.ui.Gen3EmeraldBagView').available(self)
