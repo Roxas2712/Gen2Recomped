@@ -62,8 +62,8 @@ function M.extract(x)
   local name,id=entry[1],entry[2]
   local info=assert(x.rom:pointer(S.off('gObjectEventGraphicsInfoPointers')+id*4))
   local pictures=assert(x.rom:pointer(info+28));local count
-  for _,label in ipairs(S.namesAt(pictures))do if label:match('^gObjectEventPicTable_')then count=S.count(label,8);break end end
-  assert(count and count>=9 and count<64,'Incomplete original Emerald cable-car actor')
+  for _,label in ipairs(S.namesAt(pictures))do if label:match('^sPicTable_')then count=S.count(label,8);break end end
+  assert(count and count>=9 and count<64,('Incomplete Emerald cable-car actor %s (%d) at %X: %s'):format(name,id,pictures,tostring(count)))
   local w,h=x.rom:u16(info+8),x.rom:u16(info+10)
   assert((w==16 or w==32)and(h==16 or h==32),'Unsupported Emerald cable-car actor geometry')
   local tag=x.rom:u16(info+2);local palette={}
