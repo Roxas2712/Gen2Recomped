@@ -192,7 +192,19 @@ function Targeting.resolve(battle, user, move, chosen)
     if center then return { center } end
   end
 
-  if k == Targeting.USER then return { user } end
+  if k == Targeting.USER then
+    -- Ghost Curse's script replaces its nominal self target with a foe.
+    if require('src.core.GameVersion').isGen3() and move.effect == 'CURSE_EFFECT' then
+      for _, typ in ipairs(require('src.battle.Gen2BattleRead').types(user) or {}) do
+        if typ == 'GHOST' then
+          local foes = battle:foesOf(user)
+          if #foes == 0 then return {} end
+          return { foes[#foes > 1 and battle.rng(1, #foes) or 1] }
+        end
+      end
+    end
+    return { user }
+  end
 
   -- THE PARTNER, AND NOTHING ELSE. HELPING HAND names the Pokemon standing
   -- next to yours, so with nobody there the move has no target and fails --

@@ -398,6 +398,14 @@ function Status.residual(battler, opponent, battle)
     end
     if gba then require('src.battle.Gen3FaintFriendship').capture(battle,battler) end
   end
+  -- GBA's Curse phase follows poison/burn and precedes partial trapping.
+  -- It survives its source's departure and bypasses a substitute.
+  if gba and battler.cursed and mon.hp > 0 then
+    local damage = math.max(1, math.floor(mon.stats.hp / 4))
+    mon.hp = math.max(0, mon.hp - damage)
+    require('src.battle.Gen3FaintFriendship').capture(battle,battler)
+    msgs[#msgs + 1] = Strings("%s is afflicted\nby the CURSE!", name(battler))
+  end
   if not gba and battler.leechSeeded and mon.hp > 0 and opponent.mon.hp > 0 then
     -- the shared Toxic counter multiplies (and advances on) the seed
     -- drain too -- the Gen 1 Leech Seed glitch

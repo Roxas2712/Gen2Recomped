@@ -1022,6 +1022,8 @@ local function hiddenPowerPower(mon)
 end
 
 local function typesOf(battler)
+  local current = Gen2Read.types(battler)
+  if current ~= nil then return current[1], current[2] end
   local mon = battler.mon or {}
   local t1 = mon.type1 or (battler.types and battler.types[1])
   local t2 = mon.type2 or (battler.types and battler.types[2])
@@ -1240,8 +1242,9 @@ end
 MoveEffects.primary.CURSE_EFFECT = function(battle, user, target)
   local t1, t2 = typesOf(user)
   if t1 == "GHOST" or t2 == "GHOST" then
+    if GameVersion.isGen3() and target.substituteHP then return { Strings("But, it failed!") } end
     if target.cursed then return { Strings("But, it failed!") } end
-    local cost = math.max(1, math.floor((user.mon.maxHp or 2) / 2))
+    local cost = math.max(1, math.floor(((user.mon.stats or {}).hp or user.mon.maxHp or 2) / 2))
     target.cursed = true
     battle:applyDamage(user, cost)
     local out = { Strings("%s cut its own HP\nand laid a CURSE!",
