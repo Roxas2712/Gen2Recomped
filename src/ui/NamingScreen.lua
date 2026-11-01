@@ -857,8 +857,11 @@ function NamingScreen:drawFireRed(rec)
   local entryInk = cc.entry and rgb(cc.entry[2]) or darkGray
   local entryShadow = cc.entry and rgb(cc.entry[3]) or { 0.84, 0.84, 0.81, 1 }
   local title = self.title
-  if (self.game.data.constants or {}).gen3EmeraldNaming and self.kind == "mon" then
-    title = ((self.game.data.pokemon[self.species] or {}).name or "") .. Strings("'s nickname?")
+  local nativeMonTitle = (self.game.data.constants or {}).gen3EmeraldNaming
+    or (require("src.core.GameVersion").isFRLG() and title == Strings("NICKNAME?"))
+  if nativeMonTitle and self.kind == "mon" then
+    local species = (self.game.data.pokemon or {})[self.species]
+    if species and species.name then title = species.name .. Strings("'s nickname?") end
   end
   text(title, 72, 33, entryInk, entryShadow)
   local base = math.floor((240 - self.maxLen * 8) / 2) + 6
