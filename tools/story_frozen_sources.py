@@ -16,6 +16,21 @@ REQUIRED = frozenset({
 })
 
 
+def driver_dependencies(root, driver):
+    """Include literal QA helper imports rather than falling back to a checkout."""
+    root=Path(root).resolve();pending=[driver];found=set()
+    while pending:
+        name=pending.pop()
+        if name in found:continue
+        path=root/name
+        assert path.resolve().is_relative_to(root)and not path.is_symlink(), 'Unsafe driver dependency'
+        assert path.is_file(), 'Missing frozen driver dependency: '+name
+        found.add(name)
+        for module in re.findall(r'''require\s*\(?\s*['"](tests\.drivers\.[A-Za-z0-9_.]+)['"]''',path.read_text()):
+            pending.append(module.replace('.','/')+'.lua')
+    return found
+
+
 def verify_processed_queue(queue, report, state):
     rows=report['commands']
     assert isinstance(queue,list) and isinstance(rows,list), 'Invalid story input trace'
@@ -86,6 +101,7 @@ def verify_frozen_sources(engine, manifest, *, driver='tests/leafgreen_story_dri
             assert not target.is_symlink(), 'Frozen source contains a symlink'
         assert target.is_file(), 'Frozen source file is missing: ' + name
         assert hashlib.sha256(target.read_bytes()).hexdigest() == wanted, 'Frozen source changed: ' + name
+    assert driver_dependencies(engine,driver)<=expected.keys(), 'Unrecorded driver dependency'
     for path in engine.rglob('*'):
         name = path.relative_to(engine).as_posix()
         # The runner adds the separately pinned runtime app after the source

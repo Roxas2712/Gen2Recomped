@@ -53,7 +53,9 @@ return function(game)
     report.lineage=lineage;report.continuedOwnNormalSave=true
     for key,value in pairs(lineage.inherited)do report[key]=value end
   end
+  local reportWriter=require('tests.drivers.story_report_writer').new(out..'/result.json',J.encode)
   local function write(name,value)
+    if name=='result.json'then return reportWriter:write(value)end
     local f=assert(io.open(out..'/'..name..'.tmp','w'));f:write(J.encode(value));f:close()
     assert(os.rename(out..'/'..name..'.tmp',out..'/'..name))
   end
@@ -164,7 +166,7 @@ return function(game)
       end
     end
     write('story-state.json',state)
-    -- Keep idle heartbeats small; completed input receipts flush the full ledger.
+    -- Idle heartbeats stay small; published reports retain the complete ledger.
     if persistReport~=false then write('result.json',report)end
     return state
   end

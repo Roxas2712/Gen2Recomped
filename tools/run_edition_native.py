@@ -70,6 +70,8 @@ if args.freeze:
            and (name.startswith(('src/','data/','compat/','lib/','tools/map-editor/'))or name in ('main.lua','conf.lua')
                 or re.fullmatch(r'tools/rom_manifest_[a-z0-9_]+\.json',name))}
     paths.update([str(driver),'tests/drivers/util.lua'])
+    from story_frozen_sources import driver_dependencies
+    paths.update(driver_dependencies(ROOT,str(driver)))
     if str(driver)in ('tests/rs_story_driver.lua','tests/leafgreen_story_driver.lua'):
         paths.update(('tests/drivers/story_battle.lua','tests/drivers/story_movement.lua'))
     if str(driver)=='tests/rs_battle_panel_native_driver.lua':
