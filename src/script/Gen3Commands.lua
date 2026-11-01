@@ -4517,7 +4517,7 @@ end
 -- the cartridge locks the field, runs the car across the mountain as its own
 -- scene, and takes the warp at the end of it.
 --
--- Ruby/Sapphire runs its native art, ride, weather and fade before arriving.
+-- Hoenn runs its own native art, ride, weather and fade before arriving.
 -- Other editions retain their existing travel handler.
 Gen3Commands.SPECIALS[154] = function(ctx)
   local record = (ctx.game and ctx.game.data and ctx.game.data.constants
@@ -4550,8 +4550,8 @@ Gen3Commands.SPECIALS[155] = function(ctx)
     return
   end
   local version=require('src.core.GameVersion').get()
-  if version=='ruby'or version=='sapphire'then
-    local Car=require('src.ui.Gen3RsCableCar')
+  if version=='ruby'or version=='sapphire'or version=='emerald'then
+    local Car=require(version=='emerald'and'src.ui.Gen3EmeraldCableCar'or'src.ui.Gen3RsCableCar')
     if Car.available(ctx.game)then
       local game,runner,ow=ctx.game,ctx.runner,ctx.overworld
       assert(game and game.stack and runner and ow,'Native cable car needs an active field script')

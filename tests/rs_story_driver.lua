@@ -80,6 +80,13 @@ return function(game)
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
     if s.trainer then r.trainer=fields(s.trainer,{'name','class','className','id','index'})end
     if s.musicKind then r.musicKind=s.musicKind end
+    if s.screenId=='Gen3EmeraldCableCar'or s.screenId=='Gen3RsCableCar'then
+      r.nativeCableCar=fields(s.scene,{'frames','goingDown','female','done'})
+      r.nativeCableCar.events={}
+      for _,event in ipairs(s.scene and s.scene.log or{})do
+        r.nativeCableCar.events[#r.nativeCableCar.events+1]=fields(event,{'frame','what'})
+      end
+    end
     if s.player and s.player.mon and s.enemy and s.enemy.mon then
       r.nativeBattle={turnCount=s.turnCount,result=s.result,
         player=fields(s.player,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns'}),
