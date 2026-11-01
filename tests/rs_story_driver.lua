@@ -237,6 +237,39 @@ return function(game)
     assert(old==Serialize.encode(game.save)and rng==love.math.getRandomState(),'Story draw changed save/RNG')
     assert(U.shot(game,out..'/'..name..'.png'));report.captures[#report.captures+1]=name
   end
+  local function observeCredits(name,limit)
+    local credits=game.stack:top()
+    assert(credits and (credits.screenId=='Gen3RsCredits'or credits.screenId=='Gen3EmeraldCredits'),
+      'Credit observation requires the already-running original credits')
+    local state=assert(credits.state)
+    local manifest=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
+    local byPage,pages,scenes={},{},{}
+    for index,page in ipairs(manifest.pages)do byPage[page]=index end
+    for frame=0,limit do
+      assert(game.stack:top()==credits,'Original credits ended before THE END observation')
+      if state.text then pages[assert(byPage[state.text])]=true end
+      local task=state.m.tasks:get(state.mainId)
+      local scene=task and task.data[7]
+      if type(scene)=='number'then scenes[scene]=true end
+      if state.mainFunc=='end6'and state.endDelay<6800 and not state.m.ppu.palette:fadeActive()then
+        for index=1,#manifest.pages do assert(pages[index],'Unobserved original credit page '..index)end
+        for scene=0,4 do assert(scenes[scene],'Unobserved original cycling scene '..scene)end
+        local music=require('src.core.Music').current()
+        if edition=='emerald'then
+          assert(state.imgCounter==71,'Original Emerald Pokemon slide program is incomplete')
+          assert(music==('SONG_%03X'):format(game.data.constants.gen3EmeraldPresentation.songIds.MUS_END),
+            'Original Emerald THE END song is missing')
+        end
+        assert(#inputLog==0,'Credit observation issued unexpected button input')
+        shot(name)
+        report.nativeCreditsFullRoll={pageCount=#manifest.pages,pages=pages,scenes=scenes,
+          pokemonSlides=state.imgCounter,frames=frame,noButtons=true,theEndCaptured=true,music=music}
+        return
+      end
+      U.wait(1)
+    end
+    error('Original credits did not reach THE END within the observation bound')
+  end
   local function waitFor(fn,n)for _=1,n do if fn()then return end;U.wait(1)end;error('Story boot timed out')end
   press('a',10);press('start',20)
   waitFor(function()local top=game.stack:top();return top and top.kind=='title'and top.scene.phase=='phase3'end,6000)
@@ -319,6 +352,9 @@ return function(game)
       if command.op=='press'then
         for _=1,math.min(tonumber(command.times)or 1,200)do press(assert(command.button),command.wait or 12)end
       elseif command.op=='wait'then U.wait(math.min(command.frames or 60,3600))
+      elseif command.op=='observe-credits'then
+        assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=45000)
+        observeCredits(assert(command.name),command.frames)
       elseif command.op=='step'then local ok,why=step(assert(command.dir));if not ok then record.outcome=why end
       elseif command.op=='hold'then
         assert(type(command.frames)=='number'and command.frames>=1 and command.frames<=6000)
