@@ -77,7 +77,10 @@ return function(game)
    assert(trip.segments[tostring(0x1ED1C8)]and trip.segments[tostring(0x1ED22A)]and phoneShot,'First Norman call must separate both original movement halves')
    assert(game.save.flags.FLAG_G3_0132,'Original call must register Norman')
   else assert(trip.segments[tostring(0x1ED28C)],'Repeat voyage must use the complete original path')end
-  assert(Music.current()=='SONG_1AB'and not world.player.hidden and trip.explicitLandingDefaultFade)
+  trip.landing={songBeforeFade=Music.current(),playerHidden=world.player.hidden or false,explicitDefaultFade=trip.explicitLandingDefaultFade or false};persist()
+  assert(not world.player.hidden and trip.explicitLandingDefaultFade,'Native script must reveal the player and restore default BGM')
+  -- fadedefaultbgm fades over 128 native ticks and need not finish before dialogue.
+  U.wait(180);assert(Music.current()=='SONG_1AB','Native landing fade must finish on Dewford music')
   shot(label..'-dewford-landing-dialogue')
   for _=1,60 do
    if game.stack:top()==world and not world.runner:isRunning()then break end
