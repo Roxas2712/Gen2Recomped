@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from tools.story_frozen_sources import REQUIRED, verify_frozen_sources, verify_processed_queue, verify_saved_prefix
+from tools.story_frozen_sources import REQUIRED, driver_dependencies, verify_frozen_sources, verify_processed_queue, verify_saved_prefix
 from copy import deepcopy
 
 
@@ -58,6 +58,22 @@ class FrozenStorySourceTests(unittest.TestCase):
             with self.subTest(wrong=wrong):
                 self.manifest.write_text(json.dumps(wrong))
                 with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
+
+    def test_driver_helper_imports_must_be_archived_and_hashed_transitively(self):
+        driver='tests/leafgreen_story_driver.lua'
+        path=self.engine/driver;path.write_text("return require('tests.drivers.owned_writer')")
+        self.expected[driver]=hashlib.sha256(path.read_bytes()).hexdigest();self.save_manifest()
+        with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
+        for name,raw in [('tests/drivers/owned_writer.lua',b'return require "tests.drivers.owned_atom"'),
+                         ('tests/drivers/owned_atom.lua',b'return {}')]:
+            path=self.engine/name;path.write_bytes(raw)
+            with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
+            self.expected[name]=hashlib.sha256(raw).hexdigest();self.save_manifest()
+        dependencies=driver_dependencies(self.engine,driver)
+        self.assertEqual(dependencies,{driver,'tests/drivers/owned_writer.lua','tests/drivers/owned_atom.lua'})
+        self.assertTrue(verify_frozen_sources(self.engine,self.manifest)['checkpointOnly'])
+        (self.engine/'tests/drivers/owned_atom.lua').write_text('changed')
+        with self.assertRaises(AssertionError):verify_frozen_sources(self.engine,self.manifest)
 
     def test_paths_cannot_escape_or_alias_the_frozen_host(self):
         for name in ['../escape.lua','/escape.lua','./main.lua','src/../main.lua',r'src\escape.lua','C:/escape.lua']:

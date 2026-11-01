@@ -28,6 +28,9 @@ native qualification must still use an ordinary normal SAVE and fresh CONTINUE;
 prepared fixtures do not count as campaign progress.
 The test also accepts the CI runner's temporary directory or reserves its own
 unique OS temporary name when invoked by the standalone headless suite.
+The native runner follows literal `tests.drivers.*` imports transitively when
+freezing a driver. Recovery audits require those helper files in the original
+hash manifest, so the new writer is included alongside its ordinary input driver.
 
 A local CPU comparison used five successive appends at the end of an actual
 690-command Emerald trace (18,424,871 final JSON bytes). Re-encoding took
