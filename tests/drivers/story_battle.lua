@@ -7,6 +7,7 @@ function M.attack(game,U,press,slot)
     local function advanceBattle()
       for _=1,600 do
         if game.stack:top()~=b then return 'subordinate UI or field'end
+        if b.phase=='targetSelect'then return 'ordinary target selection requires input'end
         if b.phase=='menu'or b.phase=='moveSelect'then return end
         if b.phase=='messages'then press('b',8)else U.wait(4)end
       end
