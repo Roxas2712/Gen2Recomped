@@ -40,6 +40,7 @@ function Bridge.missing()
   for _,path in ipairs(require('src.import.Gen3NativeOptionsAssets').missing('emerald'))do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3EmeraldCableCarAssets').missing())do absent[#absent+1]=path end
   for _,path in ipairs(require('src.import.Gen3EmeraldWeatherAssets').missing())do absent[#absent+1]=path end
+  for _,path in ipairs(require('src.import.Gen3TrainerBirth').missing('emerald'))do absent[#absent+1]=path end
   return absent
 end
 

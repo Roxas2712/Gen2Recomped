@@ -10579,6 +10579,8 @@ function RomExtractorGen3:extractTrainers()
   local base = self:need("gTrainers", "trainers")
   if not base then return end
   local out, taken = {}, {}
+  local birthReader=require('src.import.Gen3TrainerBirth').reader(self)
+  local birthSlots=0
   -- A SCRIPT NAMES A TRAINER BY NUMBER; this table is keyed by name.
   --
   -- `trainerbattle 0, 418` is how every trainer in Hoenn is started, and 418
@@ -10599,6 +10601,10 @@ function RomExtractorGen3:extractTrainers()
   local strides = self:partyStrides(base, count)
   for i = 0, count - 1 do
     local o = base + i * 40
+    local trainerHash=birthReader and birthReader.trainerHash(o+4)
+    local nameHash=0
+    local birthBase=self.rom:u8(o+24)~=0 and 128
+      or self.rom:u8(o+2)>=128 and 120 or 136
     local flags = self.rom:u8(o)
     local name = self:readString(o + 4, 12)
     local id = uniqueId(taken, slug(name), i, "TRAINER")
@@ -10631,6 +10637,15 @@ function RomExtractorGen3:extractTrainers()
           species = self._speciesIds and self._speciesIds[self.rom:u16(p + 4)]
                     or self.rom:u16(p + 4),
         }
+        if birthReader then
+          -- The original accumulates BOTH encoded names on every party slot.
+          -- Hash before display decoding, so localization/mod labels cannot
+          -- change nature, gender or ability.
+          nameHash=nameHash+trainerHash+birthReader.speciesHash(self.rom:u16(p+4))
+          member.nativeTrainerBirth=require('src.pokemon.Gen3TrainerBirth')
+            .importedSlot(birthReader.version,member,nameHash,birthBase)
+          birthSlots=birthSlots+1
+        end
         -- the held item as an ITEM ID, not the cartridge's number: nothing
         -- can look one up by number, and 0 is ITEM_NONE rather than an item
         -- called zero.  extractItems runs before this stage, so the order
@@ -10720,6 +10735,10 @@ function RomExtractorGen3:extractTrainers()
   self:write("trainers", out)
   local constants = self._constants or {}
   constants.trainerOrder = trainerOrder
+  if birthReader then
+    constants.gen3TrainerBirth=require('src.pokemon.Gen3TrainerBirth')
+      .recipe(birthReader.version,count,birthSlots)
+  end
   self._constants = constants
   self:write("constants", constants)
   Logger.info("Gen3 trainers: %d from ROM", count)

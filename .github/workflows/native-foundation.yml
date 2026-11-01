@@ -44,6 +44,8 @@ jobs:
           luajit tests/engine/music_held_map_owner.lua
           STORY_WRITER_TEST_DIR="$RUNNER_TEMP" luajit tests/engine/story_report_writer.lua
           luajit tests/engine/emerald_cable_car.lua
+          luajit tests/engine/gba_native_trainer_birth.lua
+          luajit tests/engine/frlg_presentation_readiness.lua
       - name: Automatic ROM palette program import, bounds and public consumers
         run: |
           luajit tests/engine/gen3_palette_program_import.lua

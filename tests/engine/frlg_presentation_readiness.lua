@@ -26,18 +26,27 @@ local labels={};for _,key in ipairs(Hall.LABELS)do labels[key]={{t='text',s='OWN
 c.gen3FrlgHall={format=1,version='leafgreen',resources=Hall.resources(),textIR=labels,
  trainerPics={boy='OWNED_BOY.png',girl='OWNED_GIRL.png'},songIds={MUS_HALL_OF_FAME=286,SE_APPLAUSE=98}}
 c.gen3TrainerPresentation={format=1,version='leafgreen',classCount=107};c.trainerClasses={[106]='PLAYER'}
+local Birth=require('src.pokemon.Gen3TrainerBirth')
+local birthSlot={species='OWNED',level=5,iv=255}
+birthSlot.nativeTrainerBirth=Birth.importedSlot('leafgreen',birthSlot,400,136)
+local trainers={OWNED={parties={{birthSlot}}}}
+c.gen3TrainerBirth=Birth.recipe('leafgreen',1,1)
 local font={
  dialogueFrame={source='ROM:gfx 041F004, gTextWindowPalettes[0] 04716C8',fill={1,1,1},image='assets/generated/fonts/frlg_dialogue.png'},
  signpostFrame={source='ROM:gfx 04703E8, gTextWindowPalettes[1] 04716E8',fill={1,1,1},image='assets/generated/fonts/frlg_signpost.png'},
  standardFrame={source='ROM:gStdTextWindow_Gfx 0471328, gTextWindowPalettes[3] 0471728',fill={1,1,1},image='assets/generated/fonts/frlg_standard_frame.png'},
 }
 F.read=function(path)
+ if path=='data/generated/trainers.lua'then return Writer.encode(trainers)end
  if path==Hall.ROOT..'hall_of_fame/manifest.lua'then return Writer.encode({format_version=1,width=240,height=160,confetti={w=8,h=8,frames=17}})end
  return Writer.encode(path=='data/generated/font.lua'and font or c)
 end
 F.exists=function()return true end
 T.eq(#M.missing('leafgreen'),0,'complete native LeafGreen replaces generic boot/summary requirements')
-T.eq(#M.missing('firered'),9,'wrong title, menu, trainer, Hall, credits, options and three frame identities cannot be accepted as FireRed')
+T.eq(#M.missing('firered'),10,'wrong title, menu, trainer birth, trainer classes, Hall, credits, options and frame identities cannot be accepted as FireRed')
+local nativeBirth=birthSlot.nativeTrainerBirth;birthSlot.nativeTrainerBirth=nil
+T.eq(#M.missing('leafgreen'),1,'legacy trainer genes require an automatic cache upgrade')
+birthSlot.nativeTrainerBirth=nativeBirth
 optionsReady=false;T.eq(#M.missing('leafgreen'),1,'original options readiness is mandatory');optionsReady=true
 creditsReady=false;T.eq(#M.missing('leafgreen'),1,'original credits readiness is mandatory');creditsReady=true
 c.gen3FRLGTitle.images.streak=nil
