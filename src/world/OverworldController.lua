@@ -9774,7 +9774,7 @@ function OverworldState:applyMapWeather(opts)
     Game.save.gen3WeatherActive=Game.save.gen3WeatherActive or Game.save.gen3Weather
     return
   end
-  Game.save.gen3Weather = value
+  value = require('src.world.Gen3SavedWeather').set(Game.save,value,Game.data)
   -- the header's weather is active immediately; a script's is not
   Game.save.gen3WeatherActive = value
 end

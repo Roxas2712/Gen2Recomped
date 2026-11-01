@@ -32,6 +32,7 @@ jobs:
           luajit tests/engine/gen3_weather_color.lua
           luajit tests/engine/gba_weather_draw_immutability.lua
           luajit tests/engine/emerald_native_weather.lua
+          luajit tests/engine/gba_saved_weather.lua
           luajit tests/rs_weather_contract.lua
           luajit tests/engine/native_weather_sound.lua
           luajit tests/engine/emerald_native_boot_readiness.lua

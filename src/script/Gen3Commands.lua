@@ -2746,9 +2746,10 @@ end
 -- and every script in the game uses them in that order.
 function Commands.g3_weather(ctx, weather)
   local save = ctx.save
-  if save then save.gen3Weather = tonumber(weather) end
+  local value = require('src.world.Gen3SavedWeather').set(save,weather,
+    ctx.game and ctx.game.data)
   local ow = ctx.overworld
-  if ow then ow.gen3Weather = tonumber(weather) end
+  if ow then ow.gen3Weather = value end
 end
 
 -- doweather -> DoCurrentWeather: the saved weather becomes the active one.
@@ -4344,8 +4345,7 @@ function Gen3Commands.setCycleWeather(ctx, name)
   end
   -- SetSav1Weather, exactly as `setweather` does it: what the region WILL be.
   -- The map load is what makes it so, and these two are called from the load.
-  if ctx.save then ctx.save.gen3Weather = value end
-  if ctx.overworld then ctx.overworld.gen3Weather = value end
+  Commands.g3_weather(ctx,value)
   return true
 end
 

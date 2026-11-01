@@ -76,6 +76,7 @@ T.eq(W.coordinate(ow,game),false,'another elevation cannot trigger weather')
 ow.cellSerial=3;ow.map.def.coordEvents[1].elevation=0;ow.map.def.coordEvents[1].var=20
 T.eq(W.coordinate(ow,game),true,'cycle coordinate accepts wildcard elevation')
 T.eq(game.save.gen3WeatherActive,5,'cycle uses the committed stage')
+T.eq((game.save.gen3Stats or{})[40],1,'native coordinate counts its one changed rainy commitment')
 ow.map={};game.save.gen3WeatherActive=15;W.update(ow,game)
 T.eq(W.current(ow,game),13,'abnormal mode begins with original downpour')
 local committed=Writer.encode(game.save)
