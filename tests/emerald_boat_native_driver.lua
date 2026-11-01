@@ -54,7 +54,8 @@ return function(game)
      for _,step in ipairs(moving[7].steps)do assert(step.kind=='walk');tiles=tiles+step.count;frames=frames+step.count*16*(step.rate or 1)end
      local expected
      for at,path in pairs(paths)do if path.tiles==tiles and path.frames==frames then expected=at end end
-     assert(expected,'Native movement does not match an independent ROM path');trip.segments[tostring(expected)]=true
+     if not expected then trip.unexpectedMovement={tiles=tiles,frames=frames,label=moving[7].label};persist()end
+     assert(expected,('Native movement does not match an independent ROM path: %d tiles, %d frames'):format(tiles,frames));trip.segments[tostring(expected)]=true
      local gap=math.max(math.abs((boat.px or 0)-world.player.px),math.abs((boat.py or 0)-world.player.py-16));trip.maxPixelGapError=math.max(trip.maxPixelGapError,gap)
      assert(gap<=8,'Native boat and player separated')
     end

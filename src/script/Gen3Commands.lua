@@ -776,7 +776,7 @@ local startMovement
 local function movementSteps(rows)
   local steps = {}
   local version = require("src.core.GameVersion").get()
-  local rs = version == "ruby" or version == "sapphire"
+  local hoenn = version == "ruby" or version == "sapphire" or version == "emerald"
   local pending, count, pendingRate = nil, 0, 1.0
   local function flush()
     if pending and count > 0 then
@@ -787,11 +787,11 @@ local function movementSteps(rows)
   end
   for _, row in ipairs(rows) do
     local name = row[1]
-    -- RS 0x2D..0x30 are WALK_FASTEST, not the plain walk inferred by old
+    -- Hoenn 0x2D..0x30 are WALK_FASTEST, not the plain walk inferred by old
     -- caches from their shared step helper. The original action byte is
     -- retained in every imported row, so existing imports need no rewrite.
     local action = tonumber(row[2])
-    if rs and action and action >= 0x2D and action <= 0x30 then
+    if hoenn and action and action >= 0x2D and action <= 0x30 then
       name = "walk_fastest_" .. ({ "down", "up", "left", "right" })[action - 0x2C]
     end
     local kind, dir = name:match("^(.-)_(%a+)$")
