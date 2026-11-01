@@ -77,8 +77,9 @@ function M.extract(x)
  end
  local constants=assert(x._constants)
  constants.gen3EmeraldWeather=spec;constants.gen3WeatherNames=NAMES;constants.gen3WeatherCycles=cycles
+ -- battle_util.c: ABILITYEFFECT_SWITCH_IN_WEATHER has no snow/hail case.
  constants.gen3BattleWeather={RAIN='RAIN',RAIN_THUNDERSTORM='RAIN',DOWNPOUR='RAIN',
-  DROUGHT='SUN',SANDSTORM='SANDSTORM',SNOW='HAIL'}
+  DROUGHT='SUN',SANDSTORM='SANDSTORM'}
 end
 function M.valid(spec,version)
  if version~='emerald'or type(spec)~='table'or spec.version~='emerald'or spec.format~=1

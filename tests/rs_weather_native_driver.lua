@@ -48,6 +48,10 @@ return function(game)
     if value==7 then assert(s.ash)end
     if value==8 then assert(s.sandstorm and s.swirls==5)end
     if value==14 then assert(s.bubbles>0)end
+    if edition=='emerald'then
+      local expected=({[3]='RAIN',[5]='RAIN',[8]='SANDSTORM',[12]='SUN',[13]='RAIN'})[value]
+      assert(world:battleWeather()==expected,'Emerald inherited a non-original field battle weather '..value)
+    end
     report.snapshots[tostring(value)]=s;shot(('weather-%02d'):format(value))
   end
   report.cases.allFifteenNativeWeatherStates=true
