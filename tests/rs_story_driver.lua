@@ -78,6 +78,21 @@ return function(game)
     end
     if s.enemy then r.enemy=fields(s.enemy.mon or s.enemy,{'species','level','hp','status'})end
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
+    local battle=package.loaded['src.battle.BattleState']
+    if battle and getmetatable(s)==battle and(s.phase=='menu'or s.phase=='moveSelect')then
+      local chooser=s:menuBattler()
+      if chooser and chooser.mon then
+        r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
+        for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
+      end
+      r.visibleOpponents={}
+      for _,position in ipairs{battle.POS.OPPONENT_LEFT,battle.POS.OPPONENT_RIGHT}do
+        local opponent=s:battlerAt(position)
+        if opponent and opponent.mon and opponent.mon.hp>0 then
+          r.visibleOpponents[#r.visibleOpponents+1]=fields(opponent.mon,{'species','level','hp','status'})
+        end
+      end
+    end
     if s.trainer then r.trainer=fields(s.trainer,{'name','class','className','id','index'})end
     if s.musicKind then r.musicKind=s.musicKind end
     if s.screenId=='Gen3EmeraldCableCar'or s.screenId=='Gen3RsCableCar'then
