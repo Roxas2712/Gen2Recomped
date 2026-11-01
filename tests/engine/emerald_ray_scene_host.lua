@@ -10,9 +10,9 @@ local frames,draws,clears,releases,resumed,pops,restored,stopped=0,0,0,0,0,0,0,0
 local options,bindings,drawFailure,privateAudio
 replace('src.core.Music',{current=function()return nil end,stop=function()stopped=stopped+1 end,
  playMap=function()restored=restored+1 end})
-replace('src.ui.Gen3EmeraldSceneContext',{new=function(_,opts)
+replace('src.ui.Gen3EmeraldSceneContext',{new=function(game,opts)
  bindings=opts.bindings;privateAudio={playSong=function(id)return id end}
- return{canvas={release=function()releases=releases+1 end},load=function(key)
+ return{game=game,canvas={release=function()releases=releases+1 end},load=function(key)
   if key=='src.core.game3.audio'then return privateAudio end
   if key=='src.core.game3.gba_ppu'then return{clearCache=function()clears=clears+1 end}end
   if key=='src.ui.game3.rse.rayquaza_scene'then return{new=function(opts)
