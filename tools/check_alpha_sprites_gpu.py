@@ -27,7 +27,7 @@ def main():
     runtime.add_argument('--love', type=Path)
     parser.add_argument('--engine', type=Path, default=ROOT)
     parser.add_argument('--backend', choices=['metal', 'opengl', 'opengles', 'vulkan'], required=True)
-    parser.add_argument('--version', choices=['red', 'crystal'], required=True)
+    parser.add_argument('--version', choices=['red', 'crystal', 'ruby', 'sapphire', 'emerald', 'firered', 'leafgreen'], required=True)
     args = parser.parse_args()
     source = args.engine.resolve()
     runtime = (args.runtime_app or args.love).resolve()
@@ -69,6 +69,8 @@ def main():
     if result.returncode:
         return result.returncode
     report = json.loads((out / 'report.json').read_text())
+    if args.version in ('ruby', 'sapphire', 'emerald', 'firered', 'leafgreen'):
+        assert report['nativeForeground'] and report['nativeAboveActor'], report
     assert all(report[key] for key in ('transparentBackground', 'authoredColor', 'foregroundGrass', 'depthCutout', 'depthBody', 'colourOnlyTarget', 'depthAdapterSelected', 'nativeStackLifetime'))
     return 0
 

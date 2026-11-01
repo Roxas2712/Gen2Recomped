@@ -24,7 +24,8 @@ A.image=function()return g.newCanvas(16,96)end
 local sprite=S.new({id='FLASH_RGBA_PROBE',image='flash-rgba-probe',frames=6,trueColor=true})
 local events={}
 g.draw=function(texture,...)
- if texture==sprite.image and g.getCanvas()~=R.worldCanvas then events[#events+1]='sprite replay'end
+ if texture==sprite.image then events[#events+1]=g.getCanvas()==R.worldCanvas and'sprite world'or'sprite replay'end
+ if texture==R.worldCanvas then events[#events+1]='world composite'end
  if texture==R.uprightCanvas then events[#events+1]='upright composite'end
  if texture==R.canvas then events[#events+1]='UI'end
  return draw(texture,...)
@@ -47,19 +48,22 @@ for _,version in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   local w,h=R:worldViewSize();local cx,cy=math.floor(w/2),math.floor(h/2)
   local world={player={px=cx-8,py=cy-8}}
   events={};sprite:draw(16,16,0,0,'down',0,false)
-  T.eq(#P.spriteRedraws(),1,'actual RGBA world sprite uses the late colour replay')
+  T.eq(#P.spriteRedraws(),0,'native RGBA actor retains its world-layer priority')
   Overworld.drawGen3Flash(world,{x=0,y=0},w,h)
-  T.eq(#events,0,'native world window waits for the final world composite')
+  T.same(events,{'sprite world'},'actor draws in the world; native window waits for the final composite')
   R:endWorldPass();R:endFrame(nil,{})
-  local replay,window,ui
+  local actor,composite,replay,window,ui
   for i,event in ipairs(events)do
    if event=='sprite replay'then replay=i end
+   if event=='sprite world'then actor=i end
+   if event=='world composite'then composite=i end
    if event=='UI'then ui=i end
    if type(event)=='table'and event.kind=='mask'then
     window=i;T.same(event.args,{24,w,h,cx,cy},'native integer radius and player anchor are retained')
    end
   end
-  T.check(replay and window and replay<window,'Flash covers the real post-zone sprite replay')
+  T.check(actor and composite and window and not replay and actor<composite and composite<window,
+   'Flash covers the completed native actor/world composite without a late actor redraw')
   T.check(window and ui and window<ui,'dialogue/UI is composited above darkness')
   T.same(Game.save,before,'drawing and presentation cannot change Flash/save state')
   R:beginFrame(true)
@@ -108,4 +112,4 @@ T.eq(R:setWorldFlashWindow(24,w,h,w/2,h/2),false,'completed foreign world images
 R:endWorldPass()
 g.draw,A.image,Flash.drawMask,g.getDimensions,g.getPixelDimensions=draw,image,mask,dims,pixels
 debug.setupvalue(Overworld.drawGen3Flash,gameSlot,previousGame)
-T.finish('native GBA Flash covers replayed sprites and preserves capture/UI ownership')
+T.finish('native GBA Flash covers world actors and preserves capture/UI ownership')
