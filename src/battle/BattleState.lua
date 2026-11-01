@@ -2261,8 +2261,8 @@ end
 -- to .catch_without_fail (item_effects.asm:243-246), and .FinishTutorial
 -- returns before any of the caught-mon bookkeeping (:501-503).
 --
--- RS uses its own Wally controller: two actual Tackle turns, recall, trainer
--- return and the scripted RS bag. The common demo flag still excludes owned
+-- RSE uses its own Wally controller: two actual Tackle turns, recall, trainer
+-- return and the edition's scripted bag. The common demo flag still excludes owned
 -- capture bookkeeping. Other generations retain their existing controllers.
 function BattleState:makeDudeDemo(name)
   self:makeOldManDemo(name or "DUDE")

@@ -127,7 +127,7 @@ end
 function M:drawNative(action)
  local owner,man=self.owner,self.manifest;local g=love.graphics
  local font=self.load('src.ui.game3.frlg_font');local K=self.load('src.import.gba.rse.boot_gfx')
- local female=(self.game.save.player or{}).gender=='girl'
+ local female=not owner.wallyTutorial and(self.game.save.player or{}).gender=='girl'
  local palette=man.palettes[female and'female'or'male']
  local function color(index)local r,gg,b=K.rgb8(palette[index+1]);return{r/255,gg/255,b/255,1}end
  local normal={fg=color(17),shadow=color(19),bg={0,0,0,0}}

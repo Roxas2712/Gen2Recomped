@@ -230,7 +230,26 @@ function M.run(root, backend, version)
           b = require("src.battle.BattleState").newPokedudeDemo(f.game, "battle")
           T.check(b.pokedudeDemo ~= nil, "native Teachy TV constructor supplies its controller state")
         elseif spec.kind == "wally" then
-          b:makeDudeDemo("WALLY")
+          if native then
+            b:makeDudeDemo("WALLY")
+          else
+            -- This critical-roll fixture uses synthetic level-30 battlers,
+            -- not Wally's borrowed level-7 Zigzagoon or imported scene art.
+            -- Exercise the real constructor's battle-kind metadata while
+            -- isolating its presentation controller. The dedicated Wally
+            -- contracts and native driver cover that controller and assets.
+            local bridge = require("src.battle.Gen3RsWallyTutorial")
+            local original, requested = bridge.new, 0
+            bridge.new = function(actual)
+              T.eq(actual, b, "Wally constructor requests its own battle bridge")
+              requested = requested + 1
+            end
+            local ok, why = pcall(b.makeDudeDemo, b, "WALLY")
+            bridge.new = original
+            assert(ok, why)
+            T.eq(requested, 1, "Wally constructor requests one presentation bridge")
+            T.eq(b.wallyTutorial, true, "Wally constructor retains critical-exclusion metadata")
+          end
         elseif spec.kind == "oldman" then
           b:makeOldManDemo("OLD MAN")
         elseif spec.kind == "oak" then

@@ -2131,7 +2131,14 @@ local function drawCommandMenu(battle)
   -- parked in battle.player as a placeholder -- so it is left unasked there,
   -- exactly as the classic layout leaves it.
   local record = Gen3Battle.menuRecord(battle)
-  if not battle.demo then
+  if battle.rsWally then
+    shadowed(battle,"message",function(dx,dy)
+      local line=0
+      for text in battle.rsWally:text('BattleText_WallyMenu'):gmatch('[^\n]+')do
+        Font.draw(text,w.prompt.textX+dx,w.prompt.row1+line*16+dy);line=line+1
+      end
+    end)
+  elseif not battle.demo then
     -- THE QUESTION SITS ON THE TEAL HALF, so it takes the message's colours;
     -- the four actions sit in the framed box beside it and take the menu's.
     -- One colour for both is what made the whole strip read wrong.
