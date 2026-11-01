@@ -9,11 +9,13 @@ function M.translate(value,stage,spec)
 end
 function M.spec(game)
   local version=require('src.core.GameVersion').get()
-  local constants=game.data.constants
-  return version=='emerald'and constants.gen3EmeraldWeather or constants.gen3RsWeather
+  local constants=game and game.data and game.data.constants or{}
+  if version=='emerald'then return constants.gen3EmeraldWeather end
+  return constants.gen3RsWeather
 end
 function M.available(game)
   local version=require('src.core.GameVersion').get()
+  if version~='ruby'and version~='sapphire'and version~='emerald'then return false end
   local assets=version=='emerald'and'src.import.Gen3EmeraldWeatherAssets'or'src.import.Gen3RsWeatherAssets'
   return require(assets).valid(M.spec(game),version)
 end

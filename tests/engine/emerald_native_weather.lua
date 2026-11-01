@@ -123,4 +123,8 @@ T.eq(g.save.gen3WeatherActive,7,'CONTINUE preserves saved coordinate weather ove
 world:applyMapWeather({via='warp'})
 T.eq(g.save.gen3WeatherActive,2,'ordinary new map entry uses its own header')
 if scriptsUpvalue then debug.setupvalue(OW.checkCoordEventHere,scriptsUpvalue,previousScripts)end
+for _,edition in ipairs{'red','gold','firered','leafgreen','platinum'}do
+ V.set(edition);T.eq(W.available({}),false,'unrelated editions do not enter the RSE weather provider')
+end
+V.set('emerald');T.eq(W.available({data={}}),false,'an unimported Emerald session stays unavailable')
 T.finish('Emerald native weather ownership, coordinate dispatch, daily cycles and abnormal task')
