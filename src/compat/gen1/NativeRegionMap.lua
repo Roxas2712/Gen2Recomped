@@ -51,6 +51,11 @@ local function destination(c,sec,pos)
   return dest and Targets.detached(game,dest.map,dest)
  end
  if s.frlg and s.page~=(s.playerPage or'kanto')then return end
+ if Version.get()=='emerald'then
+  local position=Targets.positionWithin(game,sec,s.cx,s.cy)
+  if pos~=nil and pos~=position then return end
+  return Targets.destination(game,sec,s.targets,position)
+ end
  return Targets.destination(game,sec,s.targets)
 end
 function M.active(family)
