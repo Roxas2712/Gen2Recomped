@@ -619,9 +619,9 @@ local function effectiveMapSong(data, song)
   return song
 end
 
--- overworld map theme; onBike/surfing override outdoor themes with the
--- bike/surf songs and restore the map theme when they end
-function Music.playMap(data, mapId, onBike, surfing)
+-- Update the restorable map cue without taking playback from a script.
+-- Briney crosses several maps while MUS_SAILING owns the audio bus.
+function Music.rememberMap(data, mapId, onBike, surfing)
   local song = data and data.audio and data.audio.mapSongs
     and mapId and MapIdentity.lookup(data, data.audio.mapSongs, mapId) or nil
   local nights = data and data.audio and data.audio.mapNightSongs
@@ -637,6 +637,11 @@ function Music.playMap(data, mapId, onBike, surfing)
   if not require("src.core.GameVersion").isGen3() then
     sharedHookState.mapSong, sharedHookState.onBike, sharedHookState.surfing = song, state.onBike, state.surfing
   end
+  return song
+end
+
+function Music.playMap(data, mapId, onBike, surfing)
+  local song = Music.rememberMap(data, mapId, onBike, surfing)
   local play = effectiveMapSong(data, song)
   -- FieldBGM_PlayForMapHeader starts the map's BGM at its full level, so a
   -- script's fade-out does not carry silence onto a map with the same song

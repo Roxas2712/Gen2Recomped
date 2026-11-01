@@ -4826,9 +4826,13 @@ function OverworldState:finishPlayerStep(stepped, scripted)
     -- Their explicit landing commands own the default-music fade and release;
     -- a deferred ordinary map cue must not replace the voyage's sailing song.
     local held = hoenn and Game.save.flags and Game.save.flags.FLAG_G3_4001
-    if mapId == self.map.id and not held then
-      require("src.core.Music").playMap(Game.data, mapId, Game.save.onBike,
-                                        self.player.surfing)
+    if mapId == self.map.id then
+      local music = require("src.core.Music")
+      if held then
+        music.rememberMap(Game.data, mapId, Game.save.onBike, self.player.surfing)
+      else
+        music.playMap(Game.data, mapId, Game.save.onBike, self.player.surfing)
+      end
     end
   end
   -- ...AND THE LEVEL THEY ARE NOW ON, which a step changes and nothing here

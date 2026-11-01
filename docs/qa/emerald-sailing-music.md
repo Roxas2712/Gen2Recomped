@@ -42,10 +42,17 @@ actor by its original map/id. An unloaded pooled object and a same-id actor on
 the destination map cannot substitute for it. Ordinary local lookup remains
 unchanged. The accepted normal campaign save remains independent of fixtures.
 
+Sapphire's native regression also exposed stale arrival music: suppressing
+ordinary playback at a held seam must still remember the destination's default
+cue. `Music.rememberMap` now performs that existing bookkeeping without
+starting or stopping playback; ordinary `playMap` uses the same bookkeeping.
+This preserves sailing while allowing the original landing command to restore
+Dewford rather than an older departure-map cue.
+
 ## Validation
 
 - The real completed-step callback fails eight Emerald assertions before the
-  music fix. With the paired-edge cases it passes all 389 checks; the
+  music fix. With the paired-edge cases it passes all 441 checks; the
   uncorrected Emerald escort fails two of those assertions. The fixture also covers Ruby/Sapphire,
   FireRed/LeafGreen, Red/Crystal, incomplete steps, stale cues, release,
   duplicate prevention, surf/bike forwarding and complete-save immutability.
@@ -55,7 +62,10 @@ unchanged. The accepted normal campaign save remains independent of fixtures.
 - Explicit movement/wait ownership passes 70 checks across all five GBA
   editions; the old implementation fails 25. Cases cover the carried owner,
   same-id bystanders, missing/retired actors, waits and save immutability.
-- The 110 native M4A source-ownership/lifecycle checks pass.
+- Destination-map music ownership passes 50 checks across all five GBA
+  editions. Remembering a seam changes no playing source; the original default
+  command restores the destination cue. Public music ownership passes another
+  168 checks, native source leases 145, and M4A fade timing 12.
 - The 4,292 Gen2 connection-target and 94 Gen3 forced-movement checks pass.
 - The older standalone `parity_seam_walk_anim.lua` requires locally generated
   Game Boy data unavailable in this ROM-free CPU environment. The existing

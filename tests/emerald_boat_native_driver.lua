@@ -66,7 +66,7 @@ return function(game)
     if phone and world.map.id=='MAP_G00_N20'and game.stack:top()~=world then
      local top=game.stack:top();local page=top.pages and top.pages[top.pageIndex]
      local text=type(page)=='table'and table.concat(page,' ')or''
-     if not phoneShot and(text:find('DAD',1,true)or text:find('NORMAN',1,true))then shot(label..'-norman-dialogue');phoneShot=true end
+     if not phoneShot and(text:find('DAD',1,true)or text:find('NORMAN',1,true))then U.wait(90);shot(label..'-norman-dialogue');phoneShot=true end
      if frame%30==0 then game.input:overlayPressed('a');U.wait(1);game.input:overlayReleased('a')end
     end
    elseif seen.MAP_G00_N11 and game.stack:top()~=world then arrived=true;break end
