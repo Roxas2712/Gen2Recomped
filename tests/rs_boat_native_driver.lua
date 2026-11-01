@@ -73,7 +73,10 @@ return function(game)
   end
   assert(arrival and report.samples>500,'Native trip did not reach its landing dialogue')
   assert(seen.MAP_G00_N19 and seen.MAP_G00_N20 and seen.MAP_G00_N21 and seen.MAP_G00_N11)
-  assert(Music.current()=='SONG_1AB'and not world.player.hidden)
+  report.landing={songBeforeFade=Music.current(),playerHidden=world.player.hidden or false};persist()
+  assert(not world.player.hidden)
+  -- The original default-BGM fade lasts 128 ticks and overlaps this dialogue.
+  U.wait(180);assert(Music.current()=='SONG_1AB','Original landing fade did not finish on Dewford music')
   shot('dewford-landing-dialogue')
   for _=1,40 do
     if game.stack:top()==world and not world.runner:isRunning()then break end
