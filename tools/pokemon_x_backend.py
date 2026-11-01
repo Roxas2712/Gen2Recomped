@@ -150,13 +150,13 @@ def main(argv=None):
     try:
         # A running game owns this lock too: changes take effect on the next
         # launch, never race an upstream settings save or move live mod files.
-        import fcntl
+        from native_workspace import lock_file
         WORK.mkdir(parents=True, exist_ok=True)
         lock_path = (args.qa_profile / "prepare.lock") if args.action=="prepare" and args.qa_profile else WORK / "session.lock"
         lock_path.parent.mkdir(parents=True, exist_ok=True)
         with lock_path.open("a") as lock:
             try:
-                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                lock_file(lock)
             except BlockingIOError:
                 raise ValueError("Ein 3DS-Spiel oder ein anderer Bibliotheksvorgang läuft bereits.")
             result = execute(args, rom, qa)

@@ -26,10 +26,11 @@
     "3dsrecomp": {
       "revision": "cec1270db38411f9c02d3f356fc3ed6c3f007424",
       "patches": {
-        "3dsrecomp-build-jobs.patch": "2c1b86971fde2dea0222bc634d01c6db6d167db66690506850e94e80e659f59a"
+        "3dsrecomp-build-jobs.patch": "2c1b86971fde2dea0222bc634d01c6db6d167db66690506850e94e80e659f59a",
+        "3dsrecomp-windows-output.patch": "8bb17ac53645791a64c02ec942af87845614de01bb19241edeb94ed52feb925c"
       },
       "patched_files": {
-        "src/compile.rs": "43bc9ff35ef30f0bb1e9f6994aafe27f2240a143a9de068681d9c5fd2a534493"
+        "src/compile.rs": "c411cb1a9ca598ebb1f0d3e9e9cd129ec776e294667a5f813c21b18f8f220081"
       }
     }
   }

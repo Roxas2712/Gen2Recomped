@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "author": "Roxas2712",
+  "date": "2026-10-30",
+  "launcherSuites": 97,
+  "syntaxChecks": 118,
+  "reviewedGermanStrings": 1115,
+  "httpsChecks": 6,
+  "nativeMacUIChecks": 3,
+  "windows": "simulated native-API contracts only; no physical Windows run",
+  "productionQualified": false,
+  "nativeUIFixture": "full-storage error is deliberately injected; not an account-quota finding",
+  "sourceFiles": [
+    "src/cloud/Http.lua",
+    "src/cloud/RetroCloud.lua",
+    "src/core/SaveData.lua",
+    "src/import/CloudSync.lua",
+    "src/import/ImportReview.lua",
+    "src/import/LauncherLibrary.lua",
+    "src/import/LauncherPinball.lua",
+    "src/import/LauncherPokemonXY.lua",
+    "src/import/LauncherStorage.lua",
+    "src/import/RomImporter.lua",
+    "src/storage/SuspendStore.lua",
+    "src/storage/SyncStatus.lua",
+    "src/translation/LauncherCatalog.lua",
+    "src/ui/RetroOverlay.lua"
+  ]
+}

@@ -8,6 +8,7 @@ import argparse
 import atexit
 import hashlib
 import json
+import os
 import platform
 from pathlib import Path
 import shutil
@@ -194,6 +195,9 @@ def host_status():
 
 
 def qa_manager(*, collect=True, bundled=False):
+    if os.name == 'nt':
+        from native_workspace import manager
+        return manager(ROOT,collect=collect)
     installed = Path.home() / ".local/lib/origami-qa-storage/active-tools"
     sys.path.insert(0, str(installed if not bundled and installed.is_dir() else ROOT / "tools"))
     import qa_storage as qa

@@ -1,0 +1,40 @@
+--- a/src/compile.rs
++++ b/src/compile.rs
+@@ -240,16 +240,22 @@
+                 if background {
+                     lower(&mut command);
+                 }
++                // LLVM treats percent signs in absolute output paths as
++                // temporary-file placeholders. Keep outputs relative to the
++                // native working directory, including on Unicode profiles.
++                if cfg!(windows) { command.current_dir(dir); }
++                let input = if cfg!(windows) { PathBuf::from(source) } else { path.clone() };
++                let include = if cfg!(windows) { Path::new(".") } else { dir };
+                 let status = command
+                     .args(FLAGS)
+                     .args(if gcc { GCC_FLAGS } else { &[] })
+                     .args(if cfg!(windows) { &[][..] } else { UNIX_FLAGS })
+                     .arg("-I")
+-                    .arg(dir)
++                    .arg(include)
+                     .arg("-c")
+-                    .arg(&path)
++                    .arg(&input)
+                     .arg("-o")
+-                    .arg(path.with_extension("o"))
++                    .arg(input.with_extension("o"))
+                     .status();
+                 if !status.is_ok_and(|s| s.success()) {
+                     failures.lock().unwrap().push(source.clone());
+@@ -283,7 +289,10 @@
+     }
+     let library = std::path::absolute(library).map_err(|e| format!("linking failed, {e}"))?;
+     let objects = from_folder(&mut command, objects);
+-    finished(command.arg("-shared").arg("-o").arg(library).args(objects).status(), "linking")
++    let output = if cfg!(windows) && library.parent() == command.get_current_dir() {
++        library.file_name().map(PathBuf::from).unwrap_or_else(|| library.clone())
++    } else { library.clone() };
++    finished(command.arg("-shared").arg("-o").arg(output).args(objects).status(), "linking")
+ }
+ 
+ /// has command run in the folder objects are all in and gives their names

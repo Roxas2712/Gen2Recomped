@@ -1,6 +1,6 @@
 -- Integration by Roxas2712. The runtime stays in the fork's ignored data.
 local ffi=require('ffi')
-ffi.cdef[[
+local declarations=[[
  typedef struct Ascendant3DS Ascendant3DS;
  typedef struct {double fps,p95_ms,target_fps;uint32_t status,samples;} AscendantAssessment;
  bool ascendant_3ds_assess(const double*,size_t,bool,bool,uint32_t,AscendantAssessment*);
@@ -22,6 +22,7 @@ ffi.cdef[[
  void ascendant_3ds_close(Ascendant3DS*);
  size_t ascendant_3ds_layout(uint32_t,uint32_t,uint32_t,uint32_t,bool,bool,AscendantPlace*,size_t);
 ]]
+ffi.cdef(declarations)
 local M={ffi=ffi}
-function M.load(path)return ffi.load(path)end
+function M.load(path)return require('src.core.NativeLibrary').load(path,declarations)end
 return M

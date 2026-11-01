@@ -1106,6 +1106,13 @@ end
 -- Inspect a slot before migrations or mod validation can alter its contents.
 -- The usual recovery reader can inspect complete backups, but this neither
 -- writes progress, selects a slot nor invokes game/mod code.
+function SaveData.readSlotBytes(version, slotId)
+  if not knownVersion(version) or type(slotId) ~= 'string' or not slotId:match('^slot%d+$') then return nil,'Unknown save slot.' end
+  local fs=persistFs(nil);local name=slotNames(version,slotId)
+  local bytes=fs.read(name)
+  if not bytes and fs.getInfo(name) then return nil,'The local save could not be read. Check folder access and retry.' end
+  return bytes
+end
 function SaveData.peekSlot(version, slotId)
   if not knownVersion(version) or type(slotId) ~= "string" or not slotId:match("^slot%d+$") then return nil, "Unknown save slot." end
   local ok, save, state = pcall(decodeSlot, persistFs(nil), version, slotId)
@@ -1806,6 +1813,11 @@ function SaveData.commitSave(fs, main, bak, encoded, live, reencode)
   local ok, err = SaveSafety.atomicWrite(fs, main, encoded, { bak = bak, decode = SaveSafety.decodeSave })
   if ok then
     knownBytes[main] = encoded
+    local sync=package.loaded['src.storage.SyncStatus']
+    local version,slot=main:match('^saves/([%w_]+)/([%w_]+)%.lua$')
+    if sync and sync.changed and version and prevBytes~=encoded then sync.changed(version,slot) end
+    local outbox=package.loaded['src.storage.CloudOutbox']
+    if outbox and version and prevBytes~=encoded then pcall(outbox.changed,version,slot) end
     if type(live) == "table" then loadedWalkerKeys[main] = SaveSafety.walkerKeys(live) end
   end
   return ok, err
@@ -1820,6 +1832,8 @@ function SaveData.save(data, mods)
   end
   -- write to the file matching this save's own version, not just the active
   -- one, so Blue/Yellow playthroughs land in save_blue.lua / save_yellow.lua
+  local outbox=package.loaded['src.storage.CloudOutbox']
+  if outbox and outbox.ensureSlot then pcall(outbox.ensureSlot,data.version or GameVersion.get())end
   local FILENAME, BACKUP_FILENAME = saveNames(data.version)
   local identity = require("src.core.PlaythroughIdentity")
   local fs = persistFs(nil)
@@ -2744,7 +2758,7 @@ end
 -- Enforce the app's storage policy at persistence boundaries, including
 -- imports, autosaves, history restores and cloud writes. Options stay local.
 for _,name in ipairs({'save','writeSlot','commitSave','createSlot','deleteSlot','renameSlot','setActiveSlot',
-  'load','peekSlot','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
+  'load','peekSlot','readSlotBytes','restoreBackup','restoreAsNewSlot','listSlots','slotBackups','deletedSlots','_foreignSlots','saveFileExists'}) do
   local original=SaveData[name]
   SaveData[name]=function(...)
     local ok,why=require('src.storage.AccountStorage').saveCheck()

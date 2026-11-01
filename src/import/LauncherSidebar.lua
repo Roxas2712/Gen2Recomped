@@ -1752,9 +1752,14 @@ function Sidebar.install(RI)
   -- THE CLOUD SAVES ROWS, at the top of the main Settings page: the service,
   -- its account (or its sync folder), SYNC NOW
   function RI:_sbCloudRows(add)
+      local advanced=self._cloudAdvanced or self:_sbCloudService()~='retro'
+      add({kind='section',label='CLOUD SAVES',note='Sign in to ModCompass once. Your saves sync with your account; no provider keys or folder setup are needed.'})
+      add({kind='action',label='ADVANCED CLOUD OPTIONS',value=advanced and 'HIDE' or 'SHOW',action='cloudAdvanced'})
+      local cfValues,cfLabels
+      if advanced then
       -- CLOUD SAVES (src/import/CloudSync.lua): a sync folder on this machine
       self._cloudFolders = self._cloudFolders or require("src.import.CloudSync").detectFolders()
-      local cfValues, cfLabels = { "off" }, { off = "Off" }
+      cfValues, cfLabels = { "off" }, { off = "Off" }
       for _, f in ipairs(self._cloudFolders) do
         if not cfLabels[f.path] then cfValues[#cfValues + 1] = f.path; cfLabels[f.path] = f.name .. "  " .. f.path end
       end
@@ -1765,6 +1770,7 @@ function Sidebar.install(RI)
       add({ kind = "option", scope = "launcher", label = "SERVICE",
             row = { id = "cloudService", values = { "retro", "folder", "google", "onedrive" },
                     labels = { retro='RetroRecomped · ModCompass',folder = "Sync folder", google = "Google Drive", onedrive = "OneDrive" } } })
+      end
       local svcDef = Sidebar.CLOUD_SERVICES[self:_sbCloudService()]
       if svcDef then
         local Auth = require(svcDef.auth)

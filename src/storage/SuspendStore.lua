@@ -75,6 +75,7 @@ function M.sync(store,version,id,pushOnly,fs)
  end
  local info=parse(fs.read(p..'.info.lua'),4096)or {};local base=info.base
  local headPath='states/heads/'..version..'/'..id..'.lua'
+ if not bytes and store.has and not store.has(headPath)then return 'absent' end
  local headBytes=store.read(headPath);local head=headBytes and parse(headBytes,4096)
  if headBytes and (not head or head.schema~=1 or not digest(head.manifest))then return nil,'Cloud suspend head needs recovery.'end
  local remote=head and head.manifest

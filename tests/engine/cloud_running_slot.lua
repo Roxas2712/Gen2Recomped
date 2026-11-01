@@ -30,6 +30,8 @@ local store={kind='retro',profileScope='retro:one@example.invalid',read=function
 check(C.syncSlot(store,state,'red','running',true)=='kept both','uploading a running game keeps a competing cloud branch')
 check(not writes.running and writes['cloud-copy'].player.name=='Other device','remote progress is imported as a new slot and never replaces the running slot')
 check(objects['saves/red/linked.lua']==current and objects['backups/red/linked.1.lua']==remote,'the current game uploads while the previous cloud copy remains backed up')
+state.links.red.running.hash=C.hash('older-base');writes={}
+check(C.syncSlot(store,state,'red','running',true)=='same'and not next(writes),'a lost upload acknowledgement retries equal bytes without making conflict copies')
 local keys={};C.loadState=function(key) keys[#keys+1]=key;return {device='device',links={}} end;C.saveState=function() end
 C.syncOne(store,'red','running',true)
 store.profileScope='retro:two@example.invalid';C.syncOne(store,'red','running',true)
@@ -41,7 +43,7 @@ objects['saves/red/linked.lua']=remote;writes={}
 local result=assert(C.restoreVersions(store,{'red'}))
 check(result.downloaded==1 and writes.running.player.name=='Other device','returning to an already linked device refreshes normal saves before restoring exact suspend')
 check(objects['saves/red/linked.lua']==remote,'restore-only login never pushes the older local save back to the cloud')
-restoreState.links.red.running.hash=C.hash('older-base');writes={}
+restoreState.links.red.running.hash=C.hash('older-base');restoreState.links.red.running.localHash=nil;writes={}
 result=assert(C.restoreVersions(store,{'red'}))
 check(result['kept both']==1 and not writes.running and writes['cloud-copy'],'restore preserves an unsynced local branch and downloads the competing branch separately')
 io.open=originalOpen

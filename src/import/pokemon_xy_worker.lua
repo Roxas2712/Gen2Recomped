@@ -5,15 +5,15 @@ local job=Json.decode(...)
 local channel=love.thread.getChannel('pokemon.xy.result')
 local Shell=require('src.core.HostShell')
 local function command(action,extras)
- local args={job.python,'-B','-E','-s',job.root..'/tools/pokemon_x_backend.py',action,'--edition',job.edition,'--root',job.root,'--worker-protocol'}
+ local args={job.python,'-X','utf8','-B','-E','-s',job.root..'/tools/pokemon_x_backend.py',action,'--edition',job.edition,'--root',job.root,'--worker-protocol'}
  if job.runtime_root then args[#args+1]='--runtime-root';args[#args+1]=job.runtime_root end
  for _,a in ipairs(extras or {}) do args[#args+1]=a end
  if job.qa_profile and (action=='prepare' or action=='import' or action=='build') then args[#args+1]='--qa-profile';args[#args+1]=job.qa_profile end
- for i,a in ipairs(args) do args[i]=Shell.quote(a) end
- return table.concat(args,' ')..' 2>&1'
+ return args
 end
+local function spawn(action,extras)return require('src.translation.DesktopProcess').argv(command(action,extras),true)end
 local function state()
- local status=assert(Shell.popen(command('status'),'r'))
+ local status=assert(spawn('status'))
  local data;local terminal
  for line in status:lines()do
   if line:sub(1,1)=='{' then
@@ -28,7 +28,7 @@ local function state()
  return data
 end
 local ok,errorText=pcall(function()
- local pipe=assert(Shell.popen(command(job.action,job.args),'r'),'Backend could not start')
+ local pipe=assert(spawn(job.action,job.args),'Backend could not start')
  local tail='';local prepared;local edition;local terminal
  for line in pipe:lines() do
   if line:sub(1,1)=='{' then

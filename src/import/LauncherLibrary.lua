@@ -328,6 +328,11 @@ function Library.install(RI)
 
   local mouse = RI._sbMousepressed
   RI._sbMousepressed = function(self,x,y)
+    if self.section=='games' and (self.gamesView=='consoles' or self.gamesView=='list') and U.inside(self._cloudRetryRect,x,y) then
+      local status=require('src.storage.SyncStatus').get()
+      if status and status.state~='available' and not self._storageTask then self:_settingsAction({action='storageRetry'}) end
+      return true
+    end
     if U.inside(self._headerAccount,x,y) or U.inside(self._headerAvatar,x,y) then self:_openAccount();return true end
     if U.inside(self._headerRegister,x,y) then
       self:_openAccount();require('src.import.AccountWorkspace').action(self,'register')
@@ -373,16 +378,23 @@ function Library.install(RI)
 
   local originalGames=RI._sbGames
   function RI:_sbGames(x,y,w,h)
+    self._cloudRetryRect=nil
     if self.gamesView~='consoles' and self.gamesView~='list' then return originalGames(self,x,y,w,h) end
     local s,P,g=self._s,palette(),love.graphics
     local top=y
     local status=require('src.storage.SyncStatus').get()
     if status then
-      local line=Strings(require('src.storage.SyncStatus').describe(status))
+      local line=require('src.storage.SyncStatus').notice(status)
       local _,lines=self.hintFont:getWrap(line,w-24*s)
-      local sh=math.max(38*s,#lines*self.hintFont:getHeight()+18*s)
+      local retry=not self._storageTask and (status.state=='error' or status.state=='partial' or status.state=='conflict' or status.state=='cancelled')
+      local sh=math.max(38*s,#lines*self.hintFont:getHeight()+18*s)+(retry and 42*s or 0)
       surface(x,y,w,sh,8*s,status.state=='available' and P.green or P.link,false)
       g.setFont(self.hintFont);col(status.state=='available' and P.green or P.detail);g.printf(line,x+12*s,y+9*s,w-24*s,'left')
+      if retry then
+        local r=self:_chipButton(x+12*s,y+sh-36*s,'RETRY CLOUD SYNC',{w=math.min(w-24*s,220*s),h=30*s,kind='accent'})
+        local _,cy,_,ch=g.getScissor();if cy then r.clipY={cy,cy+ch}end
+        self._cloudRetryRect=r
+      end
       y=y+sh+14*s
     end
     local list

@@ -22,7 +22,7 @@ Copy-Item main.lua, conf.lua $stage
 if (Test-Path -LiteralPath "cloud_clients.lua") {
     Copy-Item -LiteralPath "cloud_clients.lua" -Destination $stage
 } else {
-    Write-Warning "No cloud_clients.lua: cloud sign-in is unavailable in this package."
+    Write-Host "ModCompass account cloud is built in. Optional Google/OneDrive OAuth clients are not configured."
 }
 Copy-Item -Recurse src, data, assets $stage
 

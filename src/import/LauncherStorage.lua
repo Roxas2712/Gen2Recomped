@@ -18,6 +18,8 @@ function Storage.install(RI)
     local ready={};for v,on in pairs(self.ready) do ready[v]=on end
     require('src.import.LauncherBackdrop').stop()
     local task,why=Task.new(function()
+      local outbox=package.loaded['src.storage.CloudOutbox']
+      while outbox and outbox.job do Task.yield()end
       local target,err=self:_sbCloudTarget()
       if not target then return nil,err end
       if cartChoice then
@@ -25,58 +27,66 @@ function Storage.install(RI)
         local synced,why=require('src.storage.CartridgeCloud').sync(target,cartChoice)
         return synced and ('Custom cartridges: '..synced..'.') or nil,why
       end
-      local games,cacheWarning
-      if target.kind=='retro' then
-        local cacheOptions={gameCacheDownload=restoreOnly or options.gameCacheDownload,gameCacheUpload=not restoreOnly and options.gameCacheUpload}
-        games,err=GameCache.sync(target,cacheOptions,ready,function(note) self.settingsNotice=note end,mode=='games-upload')
-        if not games then
-          if mode=='games-upload' or mode=='games' then return nil,err end
-          cacheWarning=err;games={uploaded=0,downloaded=0,versions={}}
-        end
-        if mode=='games-upload' or mode=='games' then return {message='Private games: '..games.uploaded..' uploaded, '..games.downloaded..' restored.',games=games} end
-      end
       local Cloud=require('src.import.CloudSync')
       if type(target)=='string' then target=Cloud.folderStore(target) end
+      local function completed(normal)
+        self._storageProgress={sync=normal}
+        self._storagePhase='Exact resume'
+        Sync.result(normal,nil,version,slot)
+        self.settingsNotice=Sync.notice(Sync.get(version,slot))
+      end
       if version then
-        local result,problem=Cloud.syncOne(target,version,slot)
-        return result and {message='Cloud sync: '..result,sync=result,cacheWarning=cacheWarning} or nil,problem
+        return Cloud.syncOne(target,version,slot,false,completed,true)
       end
       local result,problem
-      if restoreOnly then
-        result,problem=Cloud.restoreVersions(target,list)
-      else result,problem=Cloud.syncVersions(target,list) end
-      if not result then return nil,problem end
-      local message='Cloud sync: '..Cloud.describe(result)
-      if games then message=message..' · Private games: '..games.uploaded..' uploaded / '..games.downloaded..' restored.' end
-      if cacheWarning then message=message..' · Private game transfer paused: '..tostring(cacheWarning) end
+      if mode~='games-upload' and mode~='games' then
+        if restoreOnly then result,problem=Cloud.restoreVersions(target,list,completed)
+        else result,problem=Cloud.syncVersions(target,list,completed) end
+        if not result then return nil,problem end
+        self._storageProgress={sync=result}
+        if (result.failed or 0)>0 then return result end
+      end
+      local payload={sync=result,warnings={}}
+      local function extra(label,fn)
+        self._storagePhase=label
+        self.settingsNotice=Sync.notice(Sync.get(version,slot))..' · '..require('src.translation.Service').launcherLookup(label)
+        local ran,value,why=pcall(fn)
+        if not ran then why=value;value=nil end
+        if not value then payload.warnings[#payload.warnings+1]=require('src.translation.Service').launcherLookup(label)..': '..require('src.translation.Service').launcherLookup(tostring(why or 'Transfer failed.')) end
+        return value
+      end
+      if target.kind=='retro' and (restoreOnly or options.gameCacheDownload or options.gameCacheUpload or mode=='games-upload' or mode=='games') then
+        payload.games=extra('Imported games',function()
+          return GameCache.sync(target,{gameCacheDownload=restoreOnly or options.gameCacheDownload,
+            gameCacheUpload=not restoreOnly and options.gameCacheUpload},ready,nil,mode=='games-upload')
+        end)
+      end
+      if mode=='games-upload' or mode=='games' then
+        if #payload.warnings>0 then return nil,table.concat(payload.warnings,' · ') end
+        return {sync='same',games=payload.games}
+      end
       if target.kind=='retro' and (options.cartridgeCloudSync or restoreOnly) then
-        local carts,cartWhy=require('src.storage.CartridgeCloud').sync(target,restoreOnly and 'download' or nil)
-        if not carts then return nil,cartWhy end
-        message=message..' · Custom cartridges: '..carts..'.'
+        extra('Cartridge designs',function()return require('src.storage.CartridgeCloud').sync(target,restoreOnly and 'download' or nil)end)
       end
       local ok,Bank=pcall(require,'src.storage.PokemonBank')
       if ok and require('src.cloud.RetroCloud').signedIn() then
-        local synced,bankWhy=Bank.sync(target,restoreOnly)
-        if not synced then return nil,bankWhy end
-        message=message..' · Bank '..tostring(synced)..' entries.'
+        extra('Pokémon Bank',function()return Bank.sync(target,restoreOnly)end)
       end
       if target.kind=='retro' then
-        local walker,walkerWhy=require('src.pokewalker.WalkerCloud').sync(target,restoreOnly)
-        if not walker then return nil,walkerWhy end
-        if walker~='empty' then message=message..' · '..require('src.core.Strings')('Pokéwalker: %s',require('src.core.Strings')(walker)) end
+        extra('Pokéwalker',function()return require('src.pokewalker.WalkerCloud').sync(target,restoreOnly)end)
       end
-      local profile
       if not restoreOnly and options.modProfileSync then
-        local profileWhy
-        local profileStore=target
-        if target.kind~='retro' then profileStore,profileWhy=require('src.cloud.RetroCloud').open() end
-        if not profileStore then return nil,profileWhy end
-        profile,profileWhy=require('src.mods.ModProfiles').sync(profileStore,mods,options)
-        if not profile then return nil,profileWhy end
-        message=message..' · Mod profile: '..profile.kind..'.'
+        payload.profile=extra('Mod profile',function()
+          local profileStore,why=target
+          if target.kind~='retro' then profileStore,why=require('src.cloud.RetroCloud').open() end
+          if not profileStore then return nil,why end
+          return require('src.mods.ModProfiles').sync(profileStore,mods,options)
+        end)
       end
-      return {message=message,profile=profile,games=games,sync=result,cacheWarning=cacheWarning}
+      return payload
     end)
+    self._storageProgress=nil;self._storagePhase=nil
+    self._storageScope=require('src.cloud.RetroCloud').accountId()
     self._storageTask=task;self._storageVersions=list
     Sync.set(task and 'uploading' or 'error',version,slot,why)
     self.settingsNotice=task and 'Syncing your saves and Pokémon Bank...' or tostring(why)
@@ -89,14 +99,17 @@ function Storage.install(RI)
     rows(self,add,...)
     local state=Sync.get()
     add({kind='section',label='CLOUD STATUS',cloud=true,note=Sync.describe(state)..(state and state.detail and (' · '..state.detail) or '')})
-    if state and (state.state=='error' or state.state=='cancelled' or state.state=='conflict') then
+    if state and (state.state=='error' or state.state=='cancelled' or state.state=='conflict' or state.state=='partial') then
       add({kind='action',label='RETRY CLOUD SYNC',value='RETRY',action='storageRetry'})
     end
     add({kind='section',label='YOUR STORAGE',cloud=true,note='Saves, Bank and designs use progress storage. Private imported games have a separate account quota and remain available locally after app updates.'})
     add({kind='option',scope='launcher',label='AUTOMATIC SAVE SYNC',
-      note='Sync while the launcher is open. Local play remains available offline.',
+      note='New normal saves upload automatically, including during play. Offline saves retry when connected. Exact resume has its own save action.',
       row={id='cloudAutoSync',values={true,false},labels={[true]='ON',[false]='OFF'}}})
     add({kind='action',label='MODCOMPASS ACCOUNT & DEVICES',value='OPEN',action='retroCloudAccount'})
+    if self:_settings().cloudAutoSync~=true or not require('src.storage.AccountStorage').check()then
+      add({kind='action',label='SET UP AUTOMATIC ACCOUNT CLOUD',value='ENABLE',action='cloudSetup'})
+    end
     add({kind='section',label='PRIVATE IMPORTED GAMES',cloud=true,note='Optional private copies of data you imported yourself, shared only with your own account devices. Saves keep their own quota. Existing imports are preserved when a cloud copy is activated.'})
     add({kind='option',scope='launcher',label='UPLOAD MY IMPORTED GAMES TO MY PRIVATE CACHE',note='Uploads game content to your private account storage. No sharing between accounts.',row={id='gameCacheUpload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
     add({kind='option',scope='launcher',label='DOWNLOAD MY PRIVATE GAMES ON THIS DEVICE',note='Restore matching game/import revisions after signing in.',row={id='gameCacheDownload',values={false,true},labels={[true]='ON',[false]='OFF'}}})
@@ -123,8 +136,14 @@ function Storage.install(RI)
   end
   local action=RI._settingsAction
   RI._settingsAction=function(self,entry,...)
+    if entry and entry.action=='cloudAdvanced' then self._cloudAdvanced=not self._cloudAdvanced;self._settingsRowCache=nil;return end
+    if entry and entry.action=='cloudSetup' then
+      self:_openAccount();return require('src.import.AccountWorkspace').action(self,'enableCloud')
+    end
     if entry and entry.action=='storageRetry' then
-      local r=self._storageRetry or {};return self:_storageSync(r.version,r.slot,r.cartChoice,r.mode)
+      local status=Sync.get()
+      local r=self._storageRetry or {version=status and status.edition,slot=status and status.slot}
+      return self:_storageSync(r.version,r.slot,r.cartChoice,r.mode)
     end
     if entry and entry.action=='gameCacheUploadNow' then return self:_storageSync(nil,nil,nil,'games-upload') end
     if entry and entry.action=='accountRestoreNow' then return self:_storageSync(nil,nil,nil,'restore') end
@@ -133,9 +152,12 @@ function Storage.install(RI)
     end
     if entry and entry.action=='retroCloudAccount' then self:_openAccount();return end
     if entry and entry.action=='retroCloudCancel' then
+      self._storageResumeAfter=nil
       if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
-      Sync.set('cancelled')
-      self.settingsNotice='Cloud sync cancelled. Local saves are preserved.';self._settingsRowCache=nil;return
+      if self._storageProgress then Sync.result({sync=self._storageProgress.sync,warnings={'Extra transfer cancelled. Local saves are preserved.'}})
+      else Sync.set('cancelled') end
+      self._storageProgress=nil
+      self.settingsNotice=Sync.notice(Sync.get());self._settingsRowCache=nil;return
     end
     return action(self,entry,...)
   end
@@ -144,6 +166,11 @@ function Storage.install(RI)
     local result=set(self,entry,value,...)
     local id=entry and entry.row and entry.row.id
     if id=='modProfileAutoDownload' and value then self:_settings().modProfileSync=true end
+    if id=='cloudAutoSync' then
+      self:_settings().cloudSetupVersion=require('src.storage.CloudSetup').VERSION
+      self:_saveSettings();self._storageNext=0
+      if value then require('src.storage.CloudOutbox').retry()else require('src.storage.CloudOutbox').cancel()end
+    end
     if id=='modProfileSync' and not value then self:_settings().modProfileAutoDownload=false end
     if id=='modProfileSync' or id=='modProfileAutoDownload' then self._storageNext=0;self._settingsRowCache=nil end
     if id=='gameCacheUpload' or id=='gameCacheDownload' then self._storageNext=0;self._settingsRowCache=nil end
@@ -151,8 +178,14 @@ function Storage.install(RI)
   end
   local play=RI.play
   RI.play=function(self,...)
+    self._storageResumeAfter=nil
     -- A discarded launcher cannot continue a coroutine into a running game.
-    if self._storageTask then self._storageTask:cancel();self._storageTask=nil end
+    if self._storageTask then
+      self._storageTask:cancel();self._storageTask=nil
+      if self._storageProgress then Sync.result({sync=self._storageProgress.sync,warnings={'Extra transfer cancelled. Local saves are preserved.'}})
+      else Sync.set('cancelled') end
+      self._storageProgress=nil
+    end
     return play(self,...)
   end
   local update=RI.update
@@ -163,8 +196,14 @@ function Storage.install(RI)
         if result then
           self._storageTask=nil;self._settingsRowCache=nil;self._settingsCache=nil;self._cartStyleCache=nil
           local payload=result.kind=='done' and result.first
-          Sync.result(payload,result.error or result.second)
-          self.settingsNotice=type(payload)=='table' and payload.message or payload or ('Cloud sync paused: '..tostring(result.error or result.second))
+          local problem=result.error or result.second
+          if not payload and self._storageProgress and self._storageScope==require('src.cloud.RetroCloud').accountId() then
+            payload={sync=self._storageProgress.sync,warnings={(self._storagePhase or 'Extra transfer')..': '..tostring(problem)}}
+          end
+          local retry=self._storageRetry or {}
+          local status=Sync.result(payload,problem,retry.version,retry.slot)
+          self.settingsNotice=Sync.notice(status)
+          self._storageProgress=nil
           if type(payload)=='table' and payload.profile and (payload.profile.kind=='apply' or payload.profile.kind=='conflict') then
             self._modProfilePlan=payload.profile
             if payload.profile.kind=='apply' and not payload.profile.engineMismatch and self:_settings().modProfileAutoDownload then
@@ -175,16 +214,20 @@ function Storage.install(RI)
           end
           for _,v in ipairs(self._storageVersions or {}) do pcall(self._refreshSlots,self,v) end
           GameCache.refresh();self:_recheckReady()
+          if self._storageResumeAfter then
+            local after=self._storageResumeAfter;self._storageResumeAfter=nil
+            if status.state=='available'then require('src.storage.AccountStorage').resume(self,after)end
+          end
         end
       elseif self.launcher and not self._handedOff and not self.toolFlow and not self._bankOverlay and not self._developerOverlay
         and (not self._accountOverlay or self._cloudRestoreOnce and self._accountOverlay.mode=='account' and not self._accountOverlay.job and require('src.storage.AccountStorage').check())
         and not self._resumeOverlay and not self._saveHistoryOverlay and not self._resumeRestore and not self._profileApplying and not self._profileRecoveryBlocked and self.workState~='working'
-        and not self._cloudFlow and (self:_settings().cloudAutoSync~=false or self:_settings().gameCacheUpload or self._cloudRestoreOnce) and (self._cloudRestoreOnce or os.time()>=(self._storageNext or 0)) then
+        and not self._cloudFlow and not self._modConfirm and (self:_settings().cloudAutoSync~=false or self:_settings().gameCacheUpload or self._cloudRestoreOnce) and (self._cloudRestoreOnce or os.time()>=(self._storageNext or 0)) then
         self._storageNext=os.time()+5
         local service=self:_sbCloudService()
         local definitions=require('src.import.LauncherSidebar').CLOUD_SERVICES
         local definition=definitions[service]
-        if definition and require(definition.auth).signedIn() then
+        if definition and require(definition.auth).signedIn() and require('src.storage.AccountStorage').check() then
           local mode=self._cloudRestoreOnce and 'restore' or self:_settings().cloudAutoSync==false and 'games' or nil
           self._cloudRestoreOnce=nil;self:_storageSync(nil,nil,nil,mode)
         end

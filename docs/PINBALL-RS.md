@@ -23,6 +23,23 @@ It never rewrites the original ROM. `status` reports the local installation.
 `ASCENDANT_LOVE_BIN`, or a private `.local/pinball-rs/love-bin.txt` containing
 the executable path, before checking the usual local LÖVE installations.
 
+The Windows x64 demo instead includes the generic GBA runtime, replacement BIOS,
+bundled Python, native recompiler and matching C++ compiler in `3ds-runtime/`
+beside the EXE. It does not include ROM-derived guest code. The ordinary launcher
+import generates that code locally and links it against the bundled generic
+libraries through `tools/pinball_windows.py`; CMake, Git and Visual Studio are
+not needed on the player's PC. USA and multilingual EU revisions keep the same
+hash checks as above. The USA cartridge is currently needed for the native base;
+an EU-only import is recorded and asks for that base rather than claiming readiness.
+
+Existing raw SRAM, quick states, slots and the player directory stay in place.
+Native code is cached by cartridge, bridge and SDK identity. A killed compiler
+or linker cannot become a successful cache hit; failed replacement retains the
+previous library. Windows SRAM imports back up an existing save before replacing
+it, and wide-character APIs handle Unicode paths. Keep the whole SDK directory
+when updating the demo. The Windows report distinguishes synthetic native
+CPU/save tests from actually played cartridge sessions.
+
 The optional `--eu-rom` verifies and records the multilingual European dump
 (BPPP, SHA-1 `b8b7881eaa9856b5ada99078ad1053d31cb79827`). It builds a separately verified native EU companion for the original
 French, German, Italian and Spanish choices. English keeps the USA base. The

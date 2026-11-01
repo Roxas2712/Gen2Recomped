@@ -9,6 +9,7 @@
 #include "gba_ppu.h"
 #include "sha1.h"
 #include "snapshot.h"
+#include "file_replace.h"
 #include "self_heal.h"
 #include "presentation.h"
 #include <array>
@@ -23,7 +24,12 @@
 #include <cstring>
 #include <unordered_set>
 #include <chrono>
-#ifdef __APPLE__
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#elif defined(__APPLE__)
 #include <mach/mach.h>
 #include <pthread.h>
 #else
@@ -43,7 +49,7 @@ constexpr const char* cartridge_code="BPPE";
 std::mutex ownership;
 thread_local std::string error;
 std::vector<uint8_t> bytes(const char* path) {
- std::ifstream file(path,std::ios::binary|std::ios::ate);
+ std::ifstream file(std::filesystem::u8path(path),std::ios::binary|std::ios::ate);
  if(!file)throw std::runtime_error("Input file cannot be opened");
  const auto count=file.tellg();
  if(count<0||count>32*1024*1024)throw std::runtime_error("Invalid input size");
@@ -52,7 +58,12 @@ std::vector<uint8_t> bytes(const char* path) {
  return result;
 }
 double thread_seconds() {
-#ifdef __APPLE__
+#ifdef _WIN32
+ FILETIME created{},exited{},kernel{},user{};
+ if(!GetThreadTimes(GetCurrentThread(),&created,&exited,&kernel,&user))return 0;
+ const auto ticks=[](FILETIME value){return (uint64_t(value.dwHighDateTime)<<32)|value.dwLowDateTime;};
+ return (ticks(kernel)+ticks(user))*1e-7;
+#elif defined(__APPLE__)
  thread_basic_info_data_t info{};mach_msg_type_number_t count=THREAD_BASIC_INFO_COUNT;
  if(thread_info(pthread_mach_thread_np(pthread_self()),THREAD_BASIC_INFO,reinterpret_cast<thread_info_t>(&info),&count)!=KERN_SUCCESS)return 0;
  return info.user_time.seconds+info.system_time.seconds+(info.user_time.microseconds+info.system_time.microseconds)*1e-6;
@@ -103,8 +114,10 @@ struct Machine {
   if(save.empty()||!bus.save().dirty())return true;
   const auto& content=bus.save().sram_bytes();
   const auto pending=save+".pending";
-  {std::ofstream f(pending,std::ios::binary|std::ios::trunc);if(!f.write(reinterpret_cast<const char*>(content.data()),content.size()))return false;}
-  std::filesystem::rename(pending,save);bus.save().clear_dirty();return true;
+  {std::ofstream f(std::filesystem::u8path(pending),std::ios::binary|std::ios::trunc);if(!f.write(reinterpret_cast<const char*>(content.data()),content.size()))return false;}
+  std::string why;
+  if(!gbarecomp::debug::replace_file_preserving(pending,save,&why))throw std::runtime_error(why);
+  bus.save().clear_dirty();return true;
  }
  gbarecomp::debug::SnapshotContext snapshot() {
   gbarecomp::debug::SnapshotContext context;
@@ -164,7 +177,7 @@ void* ascendant_pinball_open(const char* rom,const char* bios,const char* save) 
   m->bus.io().set_ppu(&m->ppu);m->bus.io().set_bus(&m->bus);m->bus.save().configure_sram(32768);
   if(save&&*save) {
    m->save=save;
-   if(std::filesystem::exists(save)) {
+   if(std::filesystem::exists(std::filesystem::u8path(save))) {
     const auto saved=bytes(save);
     if(saved.size()!=32768||!m->bus.save().load_sram_bytes(saved.data(),saved.size()))throw std::runtime_error("Existing SRAM must be exactly 32768 bytes");
    }
@@ -256,8 +269,8 @@ int ascendant_pinball_state(void* handle,const char* path,int load) {
     const auto hud=m->table_view.save_hud();content.insert(content.end(),hud.begin(),hud.end());
     content.insert(content.end(),payload.begin(),payload.end());
     const std::string pending=std::string(path)+".pending";
-    {std::ofstream file(pending,std::ios::binary|std::ios::trunc);if(!file.write(reinterpret_cast<const char*>(content.data()),content.size()))throw std::runtime_error("Quick state could not be written");}
-    std::filesystem::rename(pending,path);
+    {std::ofstream file(std::filesystem::u8path(pending),std::ios::binary|std::ios::trunc);if(!file.write(reinterpret_cast<const char*>(content.data()),content.size()))throw std::runtime_error("Quick state could not be written");}
+    if(!gbarecomp::debug::replace_file_preserving(pending,path,&error))throw std::runtime_error(error);
    }
   }
   capture(*m);return ok;

@@ -14,7 +14,7 @@ W.pages={
       'Manual mod ZIP imports and local play work without an account. ModCompass browsing and direct installation use your account.'}},
   {title='Play here. Continue anywhere.',tag='SAVES & CLOUD',icon='news',body='You can play without signing in. Saves stay on this device. A free account connects your saves, Bank, profile and friends across your own devices.',
     tips={'Normal save: your adventure progress and an emulator-compatible .sav export. Portable suspend: the exact running moment, including a battle.',
-      'To switch devices: open the in-game menu, save a portable suspend and upload it. Wait for Available on your other devices. On the other device, sign in, restore games and saves, then Continue.',
+      'Sign in once to sync normal saves automatically. On another device, sign in and your cloud progress is restored. For the exact running moment, save and upload a portable suspend in the in-game menu; wait for Save synced to your cloud before switching.',
       'Both devices need the same app build and imported game version. Private game-cache upload is optional and has its own storage quota. It shares your imports only with your account.'}},
   {title='Make yourself at home.',tag='READY TO PLAY',icon='star',body='Sign in to an existing ModCompass account or create one here. Confirm your email once. You stay signed in on this device until you sign out.',
     tips={'Cloud saves and your Bank travel with your account. Friends, trading, cups and gift codes use the same profile.',
