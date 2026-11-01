@@ -414,7 +414,12 @@ end
 
 function NamingScreen:confirm()
   local name = table.concat(self.glyphs)
-  if name == "" then
+  if self.kind == "mon" and require("src.core.GameVersion").isGen3()
+      and not name:find("%S") then
+    -- Gen3 SaveInputText leaves the existing nickname untouched when the
+    -- keyboard contains only spaces. Still dismiss and release the caller.
+    name = nil
+  elseif name == "" then
     name = (self.presets and self.presets[1]) or self.default or "A"
   end
   Sound.play(self.game.data, "Press_AB")
