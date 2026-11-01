@@ -76,7 +76,9 @@ return function(game)
   if edition~='emerald'then assert(getmetatable(screen)==require('src.ui.Gen3RsSaveMenu')and screen.phase=='confirm')end
   if edition=='emerald'then
     assert(getmetatable(screen)==require('src.render.TextBox'),'Emerald save prompt must remain owned by its Start menu')
-    for _=1,10 do
+    -- Each A first finishes the currently printing page; the write and final
+    -- saved-message callback must both complete before expecting the field.
+    for _=1,40 do
       if game.stack:top()==world then break end
       press('a',30)
     end
