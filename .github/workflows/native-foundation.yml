@@ -38,6 +38,7 @@ jobs:
           luajit tests/engine/gba_raw_walk_speed.lua
           luajit tests/engine/gba_carried_movement.lua
           luajit tests/engine/music_held_map_owner.lua
+          STORY_WRITER_TEST_DIR="$RUNNER_TEMP" luajit tests/engine/story_report_writer.lua
       - name: Automatic ROM palette program import, bounds and public consumers
         run: |
           luajit tests/engine/gen3_palette_program_import.lua
