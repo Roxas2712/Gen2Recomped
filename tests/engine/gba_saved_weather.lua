@@ -9,6 +9,7 @@ local Commands=require('src.script.Commands')
 local Game=require('src.core.Game')
 local OW=require('src.world.OverworldController')
 local oldVersion,oldSave,oldData=V.get(),Game.save,Game.data
+local oldWorld,oldInput,oldStack=Game.overworld,Game.input,Game.stack
 for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   V.set(edition)
   for old=0,14 do for new=0,14 do
@@ -39,9 +40,11 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   T.eq(S.get(save,40),1,'doweather never counts rain twice')
   Gen3Commands.setCycleWeather(context,'ROUTE119_CYCLE')
   T.eq(S.get(save,40),1,'cycle special delegates to the same saved-weather setter')
+  local fixture=require('tools.player-runtime.fixture').new(edition)
   Game.data,Game.save=data,save
-  local world={map={id='A',def={weather=21}},
-    updateGen3WeatherStage=function()return save.gen3WeatherStage end}
+  local world=fixture.world
+  world.map={id='A',def={weather=21}}
+  world.updateGen3WeatherStage=function()return save.gen3WeatherStage end
   OW.applyMapWeather(world,{via='warp'})
   T.eq(save.gen3Weather,3,'map header stores its translated original cycle')
   T.eq(save.gen3WeatherActive,3,'map entry activates its committed answer immediately')
@@ -71,4 +74,5 @@ save={gen3Weather=2,gen3Stats={[40]=7}}
 W.set(save,3)
 T.eq(S.get(save,40),7,'non-GBA callers cannot gain a Gen3 weather statistic')
 V.set(oldVersion);Game.save,Game.data=oldSave,oldData
+Game.overworld,Game.input,Game.stack=oldWorld,oldInput,oldStack
 T.finish('All-five GBA saved weather translation, original rain counter and deferred activation')
