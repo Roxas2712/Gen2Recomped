@@ -30,3 +30,9 @@ pixels and original special pointers, captures final renderer views, checks
 the female-player/male-bag case, and verifies party, inventory, player-name,
 Pokédex and draw-time save/RNG preservation. Its prepared scene is not ordinary
 campaign completion; continue the accepted first-badge campaign separately.
+
+The critical-roll comparison uses synthetic level-30 battlers. Its host-side
+Wally constructor probe isolates the presentation bridge, then checks the real
+constructor's critical-exclusion metadata. It does not pretend to supply the
+original borrowed Zigzagoon or ROM art. The dedicated tutorial contracts and
+native scene above exercise those strict requirements separately.
