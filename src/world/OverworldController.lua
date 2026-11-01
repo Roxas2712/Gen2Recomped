@@ -17208,10 +17208,11 @@ function OverworldState:updateScriptMoves()
         -- and gen5ChunkHandoff carries them into the new zone; refused here,
         -- they stopped a row short and the player stepped out alone.
         if offMapStep and self.map.def and self.map.def.gen5 then offMapStep = false end
-        -- An RS escort can be one cell ahead of the player (Briney's boat
+        -- A Hoenn escort can be one cell ahead of the player (Briney's boat
         -- is). Let that actor take the connected edge step while the player
         -- is still following; crossConnection then rebases both together.
-        if offMapStep and (GameVersion.get() == "ruby" or GameVersion.get() == "sapphire")
+        if offMapStep and (GameVersion.get() == "ruby" or GameVersion.get() == "sapphire"
+                          or GameVersion.get() == "emerald")
            and self.map.connection and self.map:connection(COMPASS[mv.dir]) then
           for _, other in ipairs(self.scriptMoves) do
             if other.entity == self.player then offMapStep = false break end

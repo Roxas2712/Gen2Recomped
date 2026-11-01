@@ -35,5 +35,28 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen','red',
   end
  end
 end
-Music.playMap=playMap;V.set(original)
+Music.playMap=playMap
+-- A paired Hoenn actor can lead the player by one cell across a connection.
+-- A lone walker or an edge without that connection must still be refused.
+local OW=require('src.world.OverworldController')
+for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
+ for _,paired in ipairs{false,true}do
+  for _,connected in ipairs{false,true}do
+   local f=F.new(edition);local w,p=f.world,f.player
+   local boat={id='boat',cellX=4,cellY=19,px=64,py=304,stepFrames=16}
+   w.npcs={boat};w.entities={p,boat};p.cellX=4;p.cellY=18
+   function w.map:connection(direction)return connected and direction=='south'and{}or nil end
+   w:scriptMove(boat,'down',1,nil,nil,.25)
+   if paired then w:scriptMove(p,'down',1,nil,nil,.25)end
+   OW.updateScriptMoves(w)
+   local allowed=paired and connected and(edition=='ruby'or edition=='sapphire'or edition=='emerald')
+   T.eq(boat.moving==true,allowed,edition..' connected paired escort owns its edge step')
+   if allowed then
+    T.eq(boat.targetY,20);T.eq(boat.scriptMoveFrames,4)
+    T.eq(p.targetY,19);T.eq(p.stepFramesCur,4)
+   else T.eq(w.scriptMoves[1].remaining,-1,'unsupported off-map actor is retired')end
+  end
+ end
+end
+V.set(original)
 T.finish('Hoenn sailing music hold, native release, once-only seam ownership and other-edition isolation')
