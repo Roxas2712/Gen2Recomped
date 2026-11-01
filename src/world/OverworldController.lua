@@ -4820,13 +4820,19 @@ function OverworldState:finishPlayerStep(stepped, scripted)
   if stepped and self.pendingSeamMusic then
     local mapId = self.pendingSeamMusic
     self.pendingSeamMusic = nil
-    local rs = GameVersion.get() == "ruby" or GameVersion.get() == "sapphire"
-    -- pokeruby sub_8053F0C: Briney's native script holds this special flag
-    -- through every sea-route seam, then clears it before fadedefaultbgm.
-    local held = rs and Game.save.flags and Game.save.flags.FLAG_G3_4001
-    if mapId == self.map.id and not held then
-      require("src.core.Music").playMap(Game.data, mapId, Game.save.onBike,
-                                        self.player.surfing)
+    local version = GameVersion.get()
+    local hoenn = version == "ruby" or version == "sapphire" or version == "emerald"
+    -- All three Hoenn scripts hold this flag across Briney's sea-route seams.
+    -- Their explicit landing commands own the default-music fade and release;
+    -- a deferred ordinary map cue must not replace the voyage's sailing song.
+    local held = hoenn and Game.save.flags and Game.save.flags.FLAG_G3_4001
+    if mapId == self.map.id then
+      local music = require("src.core.Music")
+      if held then
+        music.rememberMap(Game.data, mapId, Game.save.onBike, self.player.surfing)
+      else
+        music.playMap(Game.data, mapId, Game.save.onBike, self.player.surfing)
+      end
     end
   end
   -- ...AND THE LEVEL THEY ARE NOW ON, which a step changes and nothing here
@@ -17206,10 +17212,11 @@ function OverworldState:updateScriptMoves()
         -- and gen5ChunkHandoff carries them into the new zone; refused here,
         -- they stopped a row short and the player stepped out alone.
         if offMapStep and self.map.def and self.map.def.gen5 then offMapStep = false end
-        -- An RS escort can be one cell ahead of the player (Briney's boat
+        -- A Hoenn escort can be one cell ahead of the player (Briney's boat
         -- is). Let that actor take the connected edge step while the player
         -- is still following; crossConnection then rebases both together.
-        if offMapStep and (GameVersion.get() == "ruby" or GameVersion.get() == "sapphire")
+        if offMapStep and (GameVersion.get() == "ruby" or GameVersion.get() == "sapphire"
+                          or GameVersion.get() == "emerald")
            and self.map.connection and self.map:connection(COMPASS[mv.dir]) then
           for _, other in ipairs(self.scriptMoves) do
             if other.entity == self.player then offMapStep = false break end
