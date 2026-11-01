@@ -44,6 +44,12 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
  T.eq(M.lookup(record,edition=='ruby'and'sapphire'or'ruby',0),nil,'another cartridge cannot supply labels')
  local value=record.strings[0];record.strings[0]=nil
  T.eq(M.valid(record,edition),false,'missing row invalidates cache readiness');record.strings[0]=value
+ local Cache=require('src.import.CacheFs');local read=Cache.read
+ Cache.read=function()return 'return {}'end
+ T.eq(#M.missing(edition),1,'an older constants cache requires the missing table')
+ Cache.read=function()return 'invalid Lua constants' end
+ T.eq(#M.missing(edition),1,'unreadable constants cannot mark the import ready')
+ Cache.read=read
  T.eq(M.extract(rom,{romSha1='other'},hash,edition,decode),nil,'manifest must match the admitted cartridge')
  T.eq(M.extract(rom,{romSha1=hash},'other',edition,decode),nil,'unknown ROM cannot use pinned offsets')
  local ptr=pointers[p.at];pointers[p.at]=nil
