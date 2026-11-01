@@ -28,6 +28,10 @@ function Bridge.missing()
     end
   end
   local c=read('data/generated/constants.lua')
+  local pool=read('data/generated/map_scripts.lua')
+  if not require('src.import.Gen3RsWhiteout').valid(c and c.gen3RsWhiteout,'emerald',pool)then
+    absent[#absent+1]='<emerald:native-whiteout-recovery>'
+  end
   local s=c and c.gen3EmeraldPresentation
   if type(s)~='table'or s.version~='emerald'or s.format~=1 or type(s.songIds)~='table'
     or not s.songIds.MUS_INTRO or not s.songIds.MUS_INTRO_BATTLE or not s.songIds.MUS_TITLE
@@ -82,6 +86,7 @@ function Bridge.extract(extractor)
   require('src.import.Gen3EmeraldCableCarAssets').extract(extractor)
   require('src.import.Gen3EmeraldWeatherAssets').extract(extractor)
   require('src.import.Gen3EmeraldBirchAssets').extract(extractor)
+  require('src.import.Gen3RsWhiteout').extract(extractor)
   local audio=assert(extractor._audio)
   audio.special=audio.special or {}
   for role,name in pairs({intro='MUS_INTRO',introBattle='MUS_INTRO_BATTLE',title='MUS_TITLE'})do
