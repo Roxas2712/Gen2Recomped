@@ -69,7 +69,7 @@ local function playerIconFrame(game)
   if not (okReq and okReq2) then return nil end
   local sprites = data.sprites or {}
   local walkId = FieldDefaults.fieldValue(data, "playerSprites", "walk")
-  local ok, form = pcall(Sprites.playerForm, data)
+  local ok, form = pcall(Sprites.playerForm, data, game.save)
   if ok and form and form.walk and sprites[form.walk] then walkId = form.walk end
   local def = walkId and sprites[walkId]
   local img = def and loadIconImage(def.image)
