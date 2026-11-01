@@ -102,7 +102,7 @@ Cache.rootReport=function()return {kind='save'}end
 -- components have independent damaged-cache tests; make them ready here
 -- without pretending their absent manifests are a complete cartridge.
 local nativeMissing={}
-for _,name in ipairs({'Gen3EmeraldPresentation','Gen3FrlgPresentation','Gen3RsPresentation',
+for _,name in ipairs({'Gen3StandardStrings','Gen3EmeraldPresentation','Gen3FrlgPresentation','Gen3RsPresentation',
   'Gen3RsBag','Gen3RsSummaryAssets','Gen3RsPartyAssets','Gen3RsMapData',
   'Gen3RsBirchAssets','Gen3RsStarterAssets','Gen3RsBattlePanelAssets',
   'Gen3RsWallyAssets','Gen3RsPokenavAssets','Gen3RsStorageAssets',

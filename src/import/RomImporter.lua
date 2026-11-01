@@ -1360,6 +1360,7 @@ local function markerFor(version)
     -- Re-extract these tables through the normal cache gate, retaining saves.
     revision=revision..'gba-pickup-v'..require('src.import.Gen3PickupProfiles').REVISION..':'
     revision=revision..'gba-engine-audio-roles-v'..require('src.import.Gen3EngineAudioRoles').REVISION..':'
+    revision=revision..'gba-standard-script-strings-v'..require('src.import.Gen3StandardStrings').REVISION..':'
   end
   if version=='emerald'then
     revision=revision..'emerald-first-rescue-v'..require('src.import.Gen3FirstBattle').REVISION..':'
@@ -2099,8 +2100,9 @@ function RomImporter.readyReport(version)
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
     local absent=require('src.import.Gen3SafariAssets').missing(version)
     if #absent==0 then absent=require('src.import.Gen3StatGrowthAssets').missing(version)end
+    if #absent==0 then absent=require('src.import.Gen3StandardStrings').missing(version)end
     CacheFs.prefix=savedPrefix
-    if #absent>0 then return{ok=false,missing=absent,why='The native GBA Safari or level-up data is incomplete.'}end
+    if #absent>0 then return{ok=false,missing=absent,why='The native GBA Safari, level-up or script-string data is incomplete.'}end
   end
   if version=='firered'or version=='leafgreen'or version=='emerald'then
     local savedPrefix=CacheFs.prefix;CacheFs.prefix=GameVersion.cachePrefix(version)
