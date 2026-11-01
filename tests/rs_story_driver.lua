@@ -49,6 +49,7 @@ return function(game)
     return source
   end
   local seq=0;local busy=false;local lastMap;local lastParty=0
+  local creditPages=setmetatable({},{__mode='k'})
   if lineage then
     report.lineage=lineage;report.continuedOwnNormalSave=true
     for key,value in pairs(lineage.inherited)do report[key]=value end
@@ -79,6 +80,22 @@ return function(game)
     if s.enemy then r.enemy=fields(s.enemy.mon or s.enemy,{'species','level','hp','status'})end
     if s.player then r.battler=fields(s.player.mon or s.player,{'species','level','hp','status'})end
     local battle=package.loaded['src.battle.BattleState']
+    -- A forced replacement can be waiting while the other slot remains
+    -- alive. Export that visible party ownership during messages as well
+    -- as the move menu; do not infer it from the last selected party row.
+    if battle and getmetatable(s)==battle then
+      r.livePlayers={}
+      for _,position in ipairs{battle.POS.PLAYER_LEFT,battle.POS.PLAYER_RIGHT}do
+        local active=s:battlerAt(position)
+        if active and active.mon and active.mon.hp>0 then
+          local row=fields(active.mon,{'species','level','hp','status'});row.position=position
+          for index,mon in ipairs(game.save.party or{})do
+            if mon==active.mon then row.partyIndex=index;break end
+          end
+          r.livePlayers[#r.livePlayers+1]=row
+        end
+      end
+    end
     if battle and getmetatable(s)==battle and(s.phase=='menu'or s.phase=='moveSelect')then
       local chooser=s:menuBattler()
       if chooser and chooser.mon then
@@ -145,6 +162,20 @@ return function(game)
       r.playerPP=s.player and s.player.curMoves and s.player.curMoves[1].pp
     end
     if s.gen3Ball then r.ball=fields(s.gen3Ball,{'phase','phaseFrame','sendOut','monHidden','caught'})end
+    if (s.screenId=='Gen3RsCredits'or s.screenId=='Gen3EmeraldCredits')and s.state then
+      local state=s.state
+      r.nativeCredits=fields(state,{'mainFunc','endDelay','imgCounter','showMons','closed'})
+      local pages=creditPages[state]
+      if not pages then
+        pages={};local manifest=state.m:manifest('data/generated/gba/credits_rse/manifest.lua')
+        for index,page in ipairs(manifest.pages)do pages[page]=index end
+        creditPages[state]=pages
+      end
+      if state.text then r.nativeCredits.textPage=pages[state.text]end
+      local task=state.m.tasks:get(state.mainId)
+      if task then r.nativeCredits.scene=task.data[7]end
+      r.nativeCredits.paletteFadeActive=state.m.ppu.palette:fadeActive()
+    end
     return r
   end
   local function snapshot(persistReport)
