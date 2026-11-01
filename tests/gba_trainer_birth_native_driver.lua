@@ -68,6 +68,10 @@ return function(game)
       game.input:overlayPressed('b');U.wait(1);game.input:overlayReleased('b');U.wait(12)
     end
     assert(game.stack:top()==battle and battle.phase=='menu','Prepared original trainer intro did not reach menu')
+    -- The logical decision precedes the last native throw/send-out frames.
+    -- Capture the settled player/healthboxes rather than that transition.
+    U.wait(240)
+    assert(game.stack:top()==battle and battle.phase=='menu','Native trainer menu did not remain stable')
     local bytes=Save.encode(game.save);local rng=love.math.getRandomState()
     assert(require('src.render.GraphicsScope').call(battle.draw,battle))
     assert(bytes==Save.encode(game.save)and rng==love.math.getRandomState(),'Trainer draw changed save/RNG')
