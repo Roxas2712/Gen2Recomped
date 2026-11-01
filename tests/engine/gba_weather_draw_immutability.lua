@@ -37,7 +37,13 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'}do
   T.eq(Json.encode(g.save),before,'day rollover waits for a field update')
   T.eq(w:updateGen3WeatherStage(),2,'field update advances by elapsed days')
   T.eq(g.save.gen3WeatherDay,19)
-  T.eq(w:battleWeather(),'RAIN','battle weather observes the newly committed cycle')
+  T.eq(w:battleWeather(),nil,'calendar stage changes preserve the already saved sunny weather')
+  T.eq(g.save.gen3Weather,2,'daily update does not retranslate a saved byte')
+  local rainCount=(g.save.gen3Stats or{})[40]or 0
+  w:applyMapWeather({via='warp'})
+  T.eq(w:battleWeather(),'RAIN','next map-header commitment resolves the new cycle stage')
+  T.eq(g.save.gen3Weather,5,'native saved weather stores the resolved thunderstorm')
+  T.eq((g.save.gen3Stats or{})[40],rainCount+1,'new rainy commitment increments the original statistic once')
   T.eq(w:updateGen3WeatherStage(),2,'repeated updates do not double-count elapsed days')
   os.time=function()return 22*86400 end
   T.eq(w:updateGen3WeatherStage(),1,'multi-day advances retain the original four-stage cycle')
