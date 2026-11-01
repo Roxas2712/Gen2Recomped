@@ -100,6 +100,7 @@ return function(game)
       local chooser=s:menuBattler()
       if chooser and chooser.mon then
         r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
+        r.menuBattler.stages=fields(chooser.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'})
         for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
       end
       r.visibleOpponents={}
