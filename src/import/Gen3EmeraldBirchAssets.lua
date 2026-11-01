@@ -28,6 +28,7 @@ function M.extract(x)
     count=function(name,stride)return S.count(name,stride)end}
   load('src.import.gba.games.emerald.uc')(V)
   V.MESSAGE_BOX_PAL=V.sym('gMessageBox_Pal')
+  V.DOWN_ARROW_GFX=V.sym('sDownArrowTiles')
   local chromeLoad=require('compat.gen1-rs.Loader').new('emerald',{
     ['src.import.gba.versions']=V,
     ['src.core.GameVersion']=require('src.import.Gen3EmeraldCreditsAssets').versionBinding()})
