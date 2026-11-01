@@ -3,6 +3,14 @@
 -- geometry replaces image decoding only; native renderer acceptance is separate.
 package.path='./?.lua;./?/init.lua;'..package.path
 love=require('tests.love_stub');local T=require('tests.harness')
+-- Native indexed layers set nearest filtering on their image resource.
+-- Keep this renderer boundary local to this synthetic-image fixture.
+local originalNewImage=love.graphics.newImage
+love.graphics.newImage=function(...)
+ local image=originalNewImage(...)
+ image.setFilter=function()end
+ return image
+end
 local A=require('src.import.Gen3EmeraldRaySceneAssets')
 local man={layers={},sprites={},palettes={},smokeCoords={}}
 for i=1,10 do man.smokeCoords[i]={i-5,5-i}end
@@ -76,4 +84,5 @@ end
 local pre,full=scenario(0),scenario(1)
 T.check(full>pre,'both halves retain their different original scope')
 love.filesystem.load=originalLoad
+love.graphics.newImage=originalNewImage
 T.finish('Pinned Emerald cinematic native task sequence and unskippable completion')
