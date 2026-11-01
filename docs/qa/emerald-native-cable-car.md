@@ -4,7 +4,8 @@ Contributions by Roxas2712. See `LICENSE-ROXAS2712.md`.
 
 Emerald previously took the cable-car destination warp directly. Ruby/Sapphire
 already ran the original ride. Emerald now has its own ROM-derived layers,
-palettes, OAM and complete actor picture arrays, including its Zigzagoon passer-by.
+palettes, OAM and complete actor picture arrays, including the original fourth
+Zigzagoon entry.
 The existing pinned GBA cable-car machine supplies movement, parallax, weather and
 fades; its original licence and provenance remain unchanged.
 
@@ -23,3 +24,13 @@ campaign continues separately from its normal lower-station SAVE33.
 
 Original references: [ride and weather sequence](https://github.com/pret/pokeemerald/blob/master/src/cable_car.c),
 [actor identities](https://github.com/pret/pokeemerald/blob/master/include/constants/event_objects.h).
+
+Native qualification: Emerald runtime `11a3fa3b05bc33485a0627d069d6034034d37797`
+passed all four view cases and both real station-script rides, with 18 final
+renderer captures. Each ride completed at native frame 629; music 425 produced
+nonzero PCM. Draw preserved save/RNG, and the actual up/down station prompts,
+cancellation and return squares passed. The corresponding Sapphire regression
+passed at `c8c9fc30d18126a127a32bcb9f130e84eec2bdbc`, also with 18 captures and
+both real station flows. Both parents exited 0 with frozen sources unchanged.
+These are prepared fixtures, with no ordinary story credit. Focused contracts
+passed 113 new cache/arrival checks and 185 existing portable-travel checks.
