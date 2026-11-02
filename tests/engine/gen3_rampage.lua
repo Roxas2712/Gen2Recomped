@@ -5,6 +5,7 @@ local R=require('src.battle.Gen3Rampage')
 for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
  local f=require('tests.enemy_actions.fixture').new('.','gen2',edition,3,'unified',function(data,_,ids)
   data.pokemon.CHARMANDER.abilities={}
+  data.type_chart.matchups[#data.type_chart.matchups+1]={attacker='NORMAL',defender='GHOST',multiplier=0}
   data.items.QA_PERSIM={name='PERSIM BERRY',holdEffect='CURE_CONFUSION'}
   for _,row in ipairs{{'THRASH',37},{'PETAL_DANCE',80},{'OUTRAGE',200}} do
    local id,n=row[1],row[2];ids[id]=id
@@ -102,6 +103,7 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
  end
  do
   local x,b,u,t=fresh('THRASH',1,false);x.use();b:endOfTurn()
+  T.eq(require('src.battle.TypeChart').effectiveness('NORMAL',{'GHOST'}),0,'fixture contains original Normal/Ghost immunity')
   t.curTypes={'GHOST'};local hp=t.mon.hp;x.use()
   T.eq(t.mon.hp,hp,'original type immunity prevents the continuation damage')
   T.eq(u.thrashTurns,2,'immunity retains the lock until its native end-turn phase')
