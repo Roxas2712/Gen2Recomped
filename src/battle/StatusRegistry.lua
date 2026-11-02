@@ -70,6 +70,9 @@ function StatusRegistry.inflict(battle, target, status, opts)
   target.mon.status = status
   if require("src.core.GameVersion").isGen3() then
     target.mon.toxic = status == "PSN" and opts.toxic == true or nil
+    if status == 'SLP' or status == 'FRZ' then
+      require('src.battle.Gen3Rampage').cancel(target)
+    end
   end
   local msgs
   local display = displayName(target)

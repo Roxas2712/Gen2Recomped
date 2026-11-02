@@ -101,6 +101,7 @@ return function(game)
       if chooser and chooser.mon then
         r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
         r.menuBattler.stages=fields(chooser.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'})
+        r.menuBattler.volatiles=fields(chooser,{'thrashTurns','confusedTurns','cursed'})
         for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
       end
       r.visibleOpponents={}
@@ -122,8 +123,8 @@ return function(game)
     end
     if s.player and s.player.mon and s.enemy and s.enemy.mon then
       r.nativeBattle={turnCount=s.turnCount,result=s.result,
-        player=fields(s.player,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns'}),
-        enemy=fields(s.enemy,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns'}),
+        player=fields(s.player,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns','thrashTurns','confusedTurns','cursed'}),
+        enemy=fields(s.enemy,{'lastMove','gbaWrapTurns','gbaWrapMove','gbaWrapSource','trappingTurns','boundTurns','thrashTurns','confusedTurns','cursed'}),
         playerStages=fields(s.player.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'}),
         enemyStages=fields(s.enemy.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'})}
       if s.current then r.nativeBattle.current=fields(s.current,{'kind','text','anim'})end
