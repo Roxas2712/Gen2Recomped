@@ -27,6 +27,7 @@ parser.add_argument('--driver',required=True)
 parser.add_argument('--cache-source',type=Path,help='Prior accepted import; reuse cache only when all extraction inputs match')
 parser.add_argument('--installed-profile',type=Path,help='Read-only input: clone only this edition cache, never player saves')
 parser.add_argument('--story-save-source',type=Path,help='Resume a qualified own RS/LeafGreen normal-menu checkpoint; never personal saves')
+parser.add_argument('--recover-story-cache-refresh',action='store_true',help='Recover only a witnessed Emerald SAVE from a completed driver rejected for rebuilding its old cache; keep that prior run failed')
 parser.add_argument('--story-ending-save-source',type=Path,help='Resume a qualified own ordinary LeafGreen native Hall autosave; never a prepared fixture')
 parser.add_argument('--verify-story-continue',action='store_true',help="Queue the RS driver's ordinary CONTINUE verification and exit")
 parser.add_argument('--speed',type=int,default=8)
@@ -34,6 +35,7 @@ parser.add_argument('--timeout',type=int,default=1200)
 parser.add_argument('--freeze',type=Path,help=argparse.SUPPRESS)
 parser.add_argument('--tracked-sources',type=Path,help=argparse.SUPPRESS)
 args=parser.parse_args()
+assert not args.recover_story_cache_refresh or (args.story_save_source and args.edition=='emerald')
 assert not (args.story_save_source and args.story_ending_save_source), 'Choose one checkpoint kind'
 assert not args.story_ending_save_source or args.edition in('firered','leafgreen')
 driver=Path(args.driver)
@@ -143,7 +145,11 @@ if args.story_save_source or args.story_ending_save_source:
     elif args.edition in ('ruby','sapphire','emerald'):
         interrupted=(sv['status']=='fail'and sv.get('exitCode')==124 and
             sv.get('stoppedOwnChildReason')in('native QA timeout','absolute resource-slot deadline'))
-        if interrupted:
+        if args.recover_story_cache_refresh:
+            from rs_story_checkpoint import qualify_cache_refresh
+            inherited,failed_tail_proof=qualify_cache_refresh(args.edition,prior.name,sv,sr,checkpoint,
+                json.loads((prior/'story-commands.json').read_text()),json.loads((prior/'story-state.json').read_text()))
+        elif interrupted:
             if sv.get('frozenSourceUnchanged')is not True:
                 from qa_storage import qa_restore_copy
                 from story_frozen_sources import verify_frozen_sources
@@ -155,7 +161,7 @@ if args.story_save_source or args.story_ending_save_source:
         else:
             from rs_story_checkpoint import qualify
             inherited=qualify(args.edition,prior.name,sv,sr,checkpoint)
-        if sv['status']!='pass'and not interrupted:
+        if sv['status']!='pass'and not interrupted and not args.recover_story_cache_refresh:
             # No unprocessed input may hide progress after the saved tail.
             assert len(json.loads((prior/'story-commands.json').read_text()))==len(sr['commands'])
     else:
