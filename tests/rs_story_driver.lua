@@ -101,7 +101,7 @@ return function(game)
       if chooser and chooser.mon then
         r.menuBattler=fields(chooser.mon,{'species','level','hp','status'})
         r.menuBattler.stages=fields(chooser.stages,{'attack','defense','spatk','spdef','speed','accuracy','evasion'})
-        r.menuBattler.volatiles=fields(chooser,{'thrashTurns','confusedTurns','cursed'})
+        r.menuBattler.volatiles=fields(chooser,{'thrashTurns','confusedTurns','cursed','tormented','disabledMove','disabledTurns','encoreMove','encoreTurns','tauntTurns'})
         for index,mon in ipairs(game.save.party or{})do if mon==chooser.mon then r.menuBattler.partyIndex=index;break end end
       end
       r.visibleOpponents={}
