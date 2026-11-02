@@ -35,7 +35,13 @@ function M.attack(game,U,press,slot)
       if (b.moveIndex-1)%2~=column then press(column==0 and'left'or'right',8)end
     end
     assert(b.moveIndex==slot,'Ordinary move navigation did not reach requested slot')
+    local turn=b.turnCount
     press('a',12)
-    return advanceBattle()or'turn returned to battle menu'
+    local outcome=advanceBattle()
+    if outcome then return outcome end
+    if b.turnCount==turn and b.phase=='moveSelect'then
+      return 'move selection refused without advancing turn'
+    end
+    return 'turn returned to battle menu'
 end
 return M

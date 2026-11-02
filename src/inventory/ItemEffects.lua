@@ -665,11 +665,8 @@ end
 -- act on: what it heals, what it cures, which EV it moves and by how much,
 -- and what it does to friendship.  This runs that record.
 --
--- WHAT IT DELIBERATELY DOES NOT TAKE: an item whose record says only `stone`
--- or only `battle` falls through to the branches below, because the stones
--- already work by name and the X items belong to the battle side.  A RARE
--- CANDY falls through too.  The point is to add Hoenn's items, not to take
--- Johto's away.
+-- Stones and RARE CANDY retain their existing branches. GBA battle tonics
+-- are admitted separately by Gen3BattleItems before the legacy Gen1 paths.
 -- ---------------------------------------------------------------------------
 local GEN3_EV_MAX = 255            -- per stat
 local GEN3_EV_TOTAL = 510          -- across the six
@@ -1004,6 +1001,11 @@ function ItemEffects.use(data, save, itemId, target, battle, moveIndex, ow)
 
   -- HOENN'S OWN ANSWER FIRST, when the cartridge gave one.  Everything below
   -- is Gen 1's and Gen 2's, keyed by a name Emerald's items do not carry.
+  do
+    local kind, msgs = require('src.inventory.Gen3BattleItems').use(data, save,
+      rawItemId, gen3Record(data, rawItemId), battle, ow)
+    if kind then return kind, msgs end
+  end
   do
     local kind, msgs, extra = gen3Use(data, save, rawItemId, target, battle,
                                       moveIndex)
