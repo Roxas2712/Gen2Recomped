@@ -109,3 +109,13 @@ private build recipe uses mstan/gbrecompiled at its documented pinned revision;
 its authors' existing rights and licence obligations remain unchanged. No
 runtime checkout, cartridge, ROM-derived C, binary or battery file is bundled
 with this contribution. See docs/TCG-GBC.md and docs/TCG-MOD-API.md.
+
+## Original Emerald cinematic reference
+
+The two Rayquaza cinematic reference sources listed in
+`compat/gen1-rs/provenance.json` come byte-for-byte from the pinned Gen1Recomp
+revision under the existing GPLv3 and Section 7 terms in
+`compat/gen1-rs/reference/LICENSE.MD`. Their existing BOIS CLUB GAMES, LLC
+credit remains applicable. The host ownership and cache checks are
+integration contributions by Roxas2712.
+No excluded launcher implementation or cartridge content is included.

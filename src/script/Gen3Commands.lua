@@ -3540,7 +3540,8 @@ local function doRayquazaScene(ctx)
   -- A DATASET WITHOUT THE ART MUST NOT PARK THE SCRIPT.  An older cache has
   -- no cutscene record, and a screen that draws nothing and waits for a key
   -- would strand the save at the one point in the story it cannot go round.
-  if not (okScene and Gen3Cutscene.record(game)) then return end
+  if not (okScene and ((Gen3Cutscene.available and Gen3Cutscene.available(game))
+      or Gen3Cutscene.record(game))) then return end
   local part = tonumber(getVar(ctx.save, 0x8004)) or 0
   local pushed = pcall(Screens.push, game, "Gen3Cutscene", {
     part = part,

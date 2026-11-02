@@ -219,7 +219,9 @@
     "src/ui/game3/list_menu.lua": "ac67ca2414857fc2dc0757805b7385b710b772871eebd9638b6f6d5937df45bd",
     "src/ui/game3/hall_of_fame_pc.lua": "4b240bc785361025151b4e888bbbf20b6769c0524de36d7c60caba335c74faf1",
     "src/import/gba/party_chrome_extract.lua": "f9b24c4cbf94c4c65256c0eaac3abc1dd1fe68055a8524239d05ca31689c96ca",
-    "src/ui/game3/party_chrome.lua": "2bf1717ac82ccb6cf44185e5f54dd3ac11b3cc602d1eb4fabad26bc7147065e0"
+    "src/ui/game3/party_chrome.lua": "2bf1717ac82ccb6cf44185e5f54dd3ac11b3cc602d1eb4fabad26bc7147065e0",
+    "src/ui/game3/rse/rayquaza_scene.lua": "be250ec2c6d052033f84a14db01f4223c41a22a8761b9a6292b404fa66ca3457",
+    "src/import/gba/rse/rayquaza_scene_extract.lua": "007f660aee8550a5d4cca28e1d4f920d17281af188040bffcd5bffbbb366774c"
   },
-  "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison; original Emerald common main-menu presentation and callback adapter"
+  "scope": "Exact read-only RS boot, Birch/naming/font, bag, summary, party, map and Wally controller reference; independent host adapters; no launcher, ROMs, saves or generated assets; native RS PokeNav controllers, extraction and markings reference; native RS PC storage reference controllers, chrome, extraction, release and policy; native RS cable-car art extraction, tile layers, ride controller and actor IDs; exact Emerald boot/title, intro scenery and extractors with edition-specific symbols, song/species enums and intro animation names; exact healthbox reference for native rendering comparison; original Emerald common main-menu presentation and callback adapter; byte-exact original Emerald Rayquaza cinematic controller and native indexed-art extractor"
 }
