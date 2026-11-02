@@ -101,6 +101,32 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
   b:endOfTurn();T.eq(u.confusedTurns,nil,'status cancellation has no fatigue')
  end
  do
+  local x,b,u,t=fresh('THRASH',1,false);x.use();b:endOfTurn()
+  t.curTypes={'GHOST'};local hp=t.mon.hp;x.use()
+  T.eq(t.mon.hp,hp,'original type immunity prevents the continuation damage')
+  T.eq(u.thrashTurns,2,'immunity retains the lock until its native end-turn phase')
+  b:endOfTurn();T.eq(u.thrashTurns,nil,'WasUnableToUseMove cancels the immune continuation')
+  T.eq(u.confusedTurns,nil,'type-immunity cancellation does not cause fatigue')
+ end
+ do
+  local x,b,u,t=fresh('OUTRAGE',1,false);x.use();b:endOfTurn()
+  u.confusedTurns=4;b.rng=function(lo)return lo or 0 end
+  local hp=u.mon.hp;b:executeAction(u,t,u.thrashMove)
+  T.check(u.mon.hp<hp,'actual confusion self-damage executes')
+  T.eq(u.thrashTurns,2,'self-damage retains rampage until its native end-turn phase')
+  b:endOfTurn();T.eq(u.thrashTurns,nil)
+  T.eq(u.confusedTurns,3,'interruption does not reroll the existing confusion')
+ end
+ do
+  local x,b,u,t=fresh('OUTRAGE',1,false);x.use();b:endOfTurn()
+  u.mon.status='PAR';b.rng=function(lo)return lo or 0 end
+  b:executeAction(u,t,u.thrashMove)
+  local expected=2;if edition=='ruby'or edition=='sapphire'then expected=nil end
+  T.eq(u.thrashTurns,expected,
+   'RS paralysis cancels immediately; FRLG/E retain the lock until end turn')
+  b:endOfTurn();T.eq(u.thrashTurns,nil);T.eq(u.confusedTurns,nil,'full paralysis never causes fatigue')
+ end
+ do
   local x,b,u,t=fresh('OUTRAGE',0,false);x.use();b:endOfTurn()
   u.flinched=true;b:executeAction(u,t,u.thrashMove)
   T.eq(u.thrashTurns,nil,'actual flinch canceller releases native rampage')

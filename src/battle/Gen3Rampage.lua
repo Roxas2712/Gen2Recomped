@@ -8,6 +8,10 @@ local V=require('src.core.GameVersion')
 local cache=setmetatable({},{__mode='k'})
 function R.cancel(user)
  user.thrashTurns,user.thrashMove,user.thrashAnnounced,user.thrashTarget=nil,nil,nil,nil
+ user.gbaRampageUnable=nil
+end
+function R.deferCancellation(user)
+ if (user.thrashTurns or 0)>0 then user.gbaRampageUnable=true end
 end
 function R.activate(ctx)
  local user=ctx.user
@@ -21,6 +25,7 @@ end
 function R.tick(battle,user)
  if not V.isGen3() or not user.thrashTurns then return end
  user.thrashTurns=user.thrashTurns-1
+ if user.gbaRampageUnable then R.cancel(user);return end
  if user.thrashTurns>0 then return end
  R.cancel(user)
  if user.confusedTurns or require('src.battle.Abilities').refusesStatus(user,'CONFUSION') then return end
@@ -30,8 +35,13 @@ function R.tick(battle,user)
  -- The existing native after-action item phase resolves Persim/Lum after
  -- this fatigue message. Do not run the older immediate berry consumer.
 end
-function R.interrupted(user,reason,presentation)
+function R.interrupted(user,reason,presentation,selfHit)
  if reason=='gen3_sleep' or presentation and (presentation.blockedStatus=='SLP' or presentation.blockedStatus=='FRZ') then return end
+ -- Confusion self-damage is read by WasUnableToUseMove at ENDTURN_THRASH.
+ -- FRLG/E removed RS's immediate paralysis cancellation as well.
+ if selfHit or presentation and presentation.blockedStatus=='PAR' and V.get()~='ruby' and V.get()~='sapphire' then
+  R.deferCancellation(user);return
+ end
  R.cancel(user)
 end
 function R.protected(user,target,move,record)
@@ -55,7 +65,7 @@ function R.builtin(id,base)
   if base.onProtect then return base.onProtect(ctx,...) end
  end
  out.onMiss=function(ctx,reason,...)
-  if V.isGen3() and reason=='immune' then R.cancel(ctx.user) end
+  if V.isGen3() and reason=='immune' then R.deferCancellation(ctx.user) end
   if base.onMiss then return base.onMiss(ctx,reason,...) end
  end
  cache[base]=out;return out

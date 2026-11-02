@@ -4,6 +4,8 @@ The shared `THRASH_PETAL_DANCE_EFFECT` initialized two or three *remaining succe
 
 The GBA adapter initializes the original two/three-round duration and decrements it in the battler counter phase before Disable. Forced turns retain ordinary PP ownership and their complete attack presentation. Protect cancels the lock at its native pre-PP boundary; admission of an already selected zero-PP forced turn remains separate from the subsequent PP command. Fatigue respects existing confusion and Own Tempo, and native Persim/Lum handling stays in the item schedule. Sleep/freeze infliction, flinch, Truant and infatuation release the affected lock. Earlier-generation records keep their existing behavior.
 
+Type immunity and confusion self-damage retain their lock until `WasUnableToUseMove` in the original end-turn phase, where they cancel without new fatigue. Full paralysis cancels immediately in Ruby/Sapphire; FireRed/LeafGreen/Emerald defer this cancellation to that phase. The existing shared volatile cleanup preserves only this pending GBA rampage until its owner releases it.
+
 The high PP use against Phoebe in the ordinary Emerald trace was also inspected: Dusclops's Pressure and consecutive Protects explain the repeated initial charges. That observation alone was not treated as a PP bug.
 
 Original semantic references (no cartridge data or decompilation source files are distributed here):

@@ -8752,7 +8752,7 @@ function BattleState:statusInterrupt(user, target, move)
   end
   local canMove, msgs, selfHit, reason, presentation = Status.beforeMove(user, self.rng, self, move)
   if GameVersion.isGen3() and not canMove then
-    require('src.battle.Gen3Rampage').interrupted(user, reason, presentation)
+    require('src.battle.Gen3Rampage').interrupted(user, reason, presentation, selfHit)
   end
   for i, m in ipairs(msgs) do
     self:sayStatusMsg(user,m,presentation and presentation.index==i and presentation.kind or nil)
@@ -8834,7 +8834,11 @@ end
 -- INVULNERABLE -- the famous Fly/Dig invulnerability glitch.
 function BattleState:clearVolatiles(user, selfHit)
   user.bideTurns, user.bideDamage = nil, nil
-  user.thrashTurns, user.thrashMove, user.thrashAnnounced = nil, nil, nil
+  -- Native GBA confusion self-damage (and FRLG/E full paralysis) leaves
+  -- the rampage lock for WasUnableToUseMove in its end-turn phase.
+  if not (GameVersion.isGen3() and user.gbaRampageUnable) then
+    user.thrashTurns, user.thrashMove, user.thrashAnnounced = nil, nil, nil
+  end
   user.charging, user.chargeReady = nil, nil
   user.trappingTurns = nil -- the opponent is freed via the live mirror
   if selfHit then
