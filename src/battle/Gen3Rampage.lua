@@ -13,6 +13,14 @@ end
 function R.deferCancellation(user)
  if (user.thrashTurns or 0)>0 then user.gbaRampageUnable=true end
 end
+function R.continuing(user,action)
+ local locked=user and user.thrashMove
+ if not user or (user.thrashTurns or 0)<=0 or not locked or not action or action.id~=locked.id then return false end
+ -- Native planning lends a fresh action wrapper to the same learned slot.
+ -- Its table identity is not the ownership of the original selected PP.
+ local choices=require('src.battle.EnemyMoveChoice')
+ return choices.slot(action)==choices.slot(locked)
+end
 function R.activate(ctx)
  local user=ctx.user
  if not user.thrashTurns or user.thrashTurns<=0 then

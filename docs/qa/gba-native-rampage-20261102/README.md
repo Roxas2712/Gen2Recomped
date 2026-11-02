@@ -6,7 +6,7 @@ The GBA adapter initializes the original two/three-round duration and decrements
 
 Type immunity and confusion self-damage retain their lock until `WasUnableToUseMove` in the original end-turn phase, where they cancel without new fatigue. Full paralysis cancels immediately in Ruby/Sapphire; FireRed/LeafGreen/Emerald defer this cancellation to that phase. The existing shared volatile cleanup preserves only this pending GBA rampage until its owner releases it.
 
-The high PP use against Phoebe in the ordinary Emerald trace was also inspected: Dusclops's Pressure and consecutive Protects explain the repeated initial charges. That observation alone was not treated as a PP bug.
+The high PP use against Phoebe in the ordinary Emerald trace was also inspected: Dusclops's Pressure and consecutive Protects explain the repeated initial charges. That observation alone was not treated as a PP bug. A subsequent native ordinary-input fixture independently exposed another debit: the native planner wraps forced actions, while the old PP continuation check compared action-table identity. GBA rampage now follows the locked move and its actual learned-slot owner through these wrappers. A separately selected slot cannot borrow that continuation exception. The regression goes through the real planner before testing both its free continuation and Protect-canceled debit.
 
 Original semantic references (no cartridge data or decompilation source files are distributed here):
 

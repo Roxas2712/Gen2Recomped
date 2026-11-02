@@ -9014,6 +9014,7 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   -- check turn 1 of literally every link battle.
   local isContinuation = releasing
       or (user.thrashTurns and user.thrashTurns > 0 and moveInst == user.thrashMove)
+      or (GameVersion.isGen3() and require('src.battle.Gen3Rampage').continuing(user,moveInst))
       or moveInst == user.rageMove
   -- Native Protect cancels MULTIPLETURNS after forced-move admission but
   -- before Rampage's PP command. A zero-PP forced move is still admitted;

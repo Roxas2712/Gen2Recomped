@@ -44,6 +44,23 @@ for _,edition in ipairs{'ruby','sapphire','emerald','firered','leafgreen'} do
   end end
  end
  do
+  for _,enemy in ipairs{false,true}do
+   local x,b,u,t=fresh('OUTRAGE',1,enemy);x.use();b:endOfTurn()
+   local choices=require('src.battle.EnemyMoveChoice')
+   local action=require('src.battle.Gen3ChoiceBand').plan(b,u,u.thrashMove)
+   T.check(action~=u.thrashMove and choices.slot(action)==choices.slot(u.thrashMove),
+    'native planner supplies a distinct action with the same selected PP owner')
+   T.check(R.continuing(u,action),'fresh native action wrapper retains its running lock')
+   b:performMove(u,t,action)
+   T.eq(x.pp(),9,'ordinary planned continuation does not spend selected PP again')
+   b:endOfTurn()
+   action=require('src.battle.Gen3ChoiceBand').plan(b,u,action);t.protecting=true
+   b:performMove(u,t,action)
+   T.eq(x.pp(),8,'wrapped Protect cancellation still reaches its original PP command')
+   T.eq(u.thrashTurns,nil,'Protect cancels the wrapped native continuation')
+  end
+ end
+ do
   local x,b,u,t=fresh('OUTRAGE',1,false);t.abilityOverride='PRESSURE'
   x.use();T.eq(x.pp(),8,'Pressure costs two PP for initial selection')
   b:endOfTurn();x.move.pp=0;x.use()

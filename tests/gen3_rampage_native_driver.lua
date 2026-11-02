@@ -89,6 +89,7 @@ return function(game)
    if b.phase=='messages'then press('b',4)else U.wait(1)end
   end
   complete(row.duration)
+  row.finalPP=mon.moves[1].pp;row.fatigue=b.player.confusedTurns;persist()
   assert(#row.endTurns==row.duration and row.animationStarts==row.duration,'Original duration/animation count differs')
   assert(captured==row.duration,'A continuation animation never reached the final renderer')
   assert(mon.moves[1].pp==initialPP-1,'A normal locked continuation spent another selected PP')
@@ -99,7 +100,6 @@ return function(game)
    assert((event.confusedAfter>0)==(n==row.duration),'Fatigue appeared on the wrong original round')
   end
   assert(not b.player.thrashMove and not b.player.thrashTarget and b.player.confusedTurns,'Native lock did not release into fatigue')
-  row.finalPP=mon.moves[1].pp;row.fatigue=b.player.confusedTurns
   shot('native-rampage-'..row.duration..'-unlocked-fatigue',b)
  end
  report.drawPreservesSaveRng=true;report.realImportedMoves=true;report.ordinaryMoveSelection=true
