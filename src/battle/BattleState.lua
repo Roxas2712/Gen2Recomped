@@ -7282,6 +7282,7 @@ end
 function BattleState:gen3BattlerCountersTick(b, scheduled)
   if b and b.mon and b.mon.hp > 0 then
     if GameVersion.isGen3() then
+      require("src.battle.Gen3Rampage").tick(self, b)
       require("src.battle.Gen3Disable").tick(self, b)
       require("src.battle.Gen3Encore").tick(self, b)
       require("src.battle.Gen3LockOn").tick(self, b)
@@ -8743,12 +8744,16 @@ function BattleState:statusInterrupt(user, target, move)
   if Abilities.loafs(user) then
     if user.truantLoafing then
       user.truantLoafing = nil
+      if GameVersion.isGen3() then require('src.battle.Gen3Rampage').cancel(user) end
       self:sayNext(Strings("%s is\nloafing around!", displayName(user)))
       return true
     end
     user.truantLoafing = true
   end
   local canMove, msgs, selfHit, reason, presentation = Status.beforeMove(user, self.rng, self, move)
+  if GameVersion.isGen3() and not canMove then
+    require('src.battle.Gen3Rampage').interrupted(user, reason, presentation)
+  end
   for i, m in ipairs(msgs) do
     self:sayStatusMsg(user,m,presentation and presentation.index==i and presentation.kind or nil)
   end
@@ -8816,6 +8821,7 @@ function BattleState:statusInterrupt(user, target, move)
                          displayName(user.infatuated)))
     if self.rng(0, 1) == 0 then
       self:sayNext(Strings("%s is\nimmobilized by love!", displayName(user)))
+      if GameVersion.isGen3() then require('src.battle.Gen3Rampage').cancel(user) end
       return true
     end
   end
@@ -9005,10 +9011,15 @@ local function performMove(battle, user, target, moveInst, isCalled, suppressAni
   local isContinuation = releasing
       or (user.thrashTurns and user.thrashTurns > 0 and moveInst == user.thrashMove)
       or moveInst == user.rageMove
+  -- Native Protect cancels MULTIPLETURNS after forced-move admission but
+  -- before Rampage's PP command. A zero-PP forced move is still admitted;
+  -- the canceled continuation may debit its selected slot if PP remains.
+  local rampageDebit = GameVersion.isGen3()
+    and require('src.battle.Gen3Rampage').protected(user,target,move,record) and not isCalled
   local enemyUnlimited = not user.isPlayer and self.kind ~= "link"
       and self.ruleset and self.ruleset.enemyUnlimitedPP
   local nativePP = GameVersion.isGen3()
-    and require("src.battle.Gen3PPCommand").prepare(self, user, target, moveInst, isContinuation, isCalled)
+    and require("src.battle.Gen3PPCommand").prepare(self, user, target, moveInst, isContinuation, isCalled, rampageDebit)
   if nativePP and self._gbaMoveFrame then self._gbaMoveFrame.ppIndex = nativePP.index end
   if not nativePP and not isContinuation and not moveInst.struggle and not isCalled
       and not enemyUnlimited and EnemyMoveChoice.exhausted(moveInst) then

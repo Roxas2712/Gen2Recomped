@@ -1,0 +1,18 @@
+# GBA rampage timing and presentation
+
+The shared `THRASH_PETAL_DANCE_EFFECT` initialized two or three *remaining successful hits*, then decremented only after another hit. On GBA this produced three or four attacks, held the lock across missed rounds, and suppressed the animation/announcement of subsequent hits. It also confused the user during the attack rather than the original end-turn phase.
+
+The GBA adapter initializes the original two/three-round duration and decrements it in the battler counter phase before Disable. Forced turns retain ordinary PP ownership and their complete attack presentation. Protect cancels the lock at its native pre-PP boundary; admission of an already selected zero-PP forced turn remains separate from the subsequent PP command. Fatigue respects existing confusion and Own Tempo, and native Persim/Lum handling stays in the item schedule. Sleep/freeze infliction, flinch, Truant and infatuation release the affected lock. Earlier-generation records keep their existing behavior.
+
+The high PP use against Phoebe in the ordinary Emerald trace was also inspected: Dusclops's Pressure and consecutive Protects explain the repeated initial charges. That observation alone was not treated as a PP bug.
+
+Original semantic references (no cartridge data or decompilation source files are distributed here):
+
+- [Emerald battle scripts](https://github.com/pret/pokeemerald/blob/731ad5bfd6e6f265508d0efcca0ba42f9dcf5881/data/battle_scripts_1.s): `BattleScript_EffectRampage`.
+- [Emerald script commands](https://github.com/pret/pokeemerald/blob/731ad5bfd6e6f265508d0efcca0ba42f9dcf5881/src/battle_script_commands.c): Protect in `Cmd_attackcanceler`, `MOVE_EFFECT_THRASH`, confusion immunity and `Cmd_confuseifrepeatingattackends`.
+- [Emerald battle utilities](https://github.com/pret/pokeemerald/blob/731ad5bfd6e6f265508d0efcca0ba42f9dcf5881/src/battle_util.c): `ENDTURN_THRASH`, `WasUnableToUseMove`, `CancelMultiTurnMoves`.
+- Ruby/Sapphire revision `5784633ce4ef7ade1a7f2d2d0c288e3d5e6cdd7f`; FireRed/LeafGreen revision `ce6406d8c2eaf46d543c8a2606de0c3cb1951982` carry the corresponding script and counter phases.
+
+Validation status: five-edition engine cases are prepared in `tests/engine/gen3_rampage.lua`. Local runtime tests and actual final-renderer checks remain pending while the previously coordinated external test window runs. No ordinary campaign completion is claimed by these fixtures.
+
+Contributions by Roxas2712 follow `LICENSE-ROXAS2712.md`. Existing upstream and third-party rights remain unchanged.
