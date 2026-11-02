@@ -21,9 +21,18 @@ end
 local spec={version='emerald',format=1,songIds={MUS_INTRO=1,MUS_INTRO_BATTLE=2,MUS_TITLE=3},
   speciesIds={SPECIES_GROUDON=4,SPECIES_KYOGRE=5}}
 files['data/generated/constants.lua']={gen3EmeraldPresentation=spec}
+local recovery={format=1,version='emerald',entry='S0000001',labels={'S0000001'}}
+files['data/generated/constants.lua'].gen3RsWhiteout=recovery
+files['data/generated/map_scripts.lua']={scripts={S0000001={{'end'}}}}
 Fs.read=function(path)return files[path]and Writer.encode(files[path])end
 Fs.exists=function()return true end
 T.eq(#M.missing(),0,'complete native Emerald boot cache')
+files['data/generated/constants.lua'].gen3RsWhiteout=nil
+T.eq(M.missing()[1],'<emerald:native-whiteout-recovery>','old cache must import missing original recovery graph')
+files['data/generated/constants.lua'].gen3RsWhiteout=recovery
+files['data/generated/map_scripts.lua'].scripts.S0000001=nil
+T.eq(M.missing()[1],'<emerald:native-whiteout-recovery>','metadata alone cannot replace missing native commands')
+files['data/generated/map_scripts.lua'].scripts.S0000001={{'end'}}
 for _,component in ipairs(components)do
  delegated[component.name]={'<fixture:'..component.name..'>'}
  T.eq(#M.missing(),1,'aggregate readiness retains component rejection')
@@ -45,7 +54,7 @@ for _,value in ipairs({true,7,'invalid'})do
  T.eq(#M.missing(),1,'malformed constants fail readiness without raising')
 end
 Fs.read=function()return 'not valid Lua'end
-T.eq(#M.missing(),5,'unreadable manifests and metadata remain missing')
+T.eq(#M.missing(),6,'unreadable manifests and metadata remain missing')
 Fs.read,Fs.exists=oldRead,oldExists
 for _,component in ipairs(components)do component.module.missing=component.missing end
 T.finish('Emerald native boot cache readiness')

@@ -178,6 +178,31 @@ def _qualify(edition, name, verification, report, checkpoint, *, checkpoint_reco
 def qualify(edition,name,verification,report,checkpoint):
     return _qualify(edition,name,verification,report,checkpoint)
 
+def qualify_cache_refresh(edition,name,verification,report,checkpoint,queue,state):
+    """Recover SAVE only after a completed Emerald readiness-cache rebuild.
+
+    The outer cache-reuse test stays failed. This explicit recovery admits
+    neither crashed imports nor unfinished drivers and never changes its files.
+    """
+    assert edition=='emerald'
+    assert verification['status']=='fail' and verification.get('exitCode')==0
+    assert verification.get('unexpectedImporterRun') is True
+    assert verification.get('frozenSourceUnchanged') is True
+    assert verification.get('fullImport') is False and verification.get('cacheSource')
+    assert not verification.get('stoppedOwnChildReason')
+    assert report['status']=='pass' and not report.get('error')
+    assert report.get('expectedNativeEmeraldLeagueRecovery') is True
+    assert report.get('continuedThroughUI') is True and report.get('checkpointFullSavePreserved') is True
+    from story_frozen_sources import verify_processed_queue
+    verify_processed_queue(queue,report,state)
+    last=checkpoint['saveMenuCommandRange'][1]
+    assert queue[-1]=={'op':'finish'}
+    assert all(row['input'].get('op')=='shot' for row in report['commands'][last:])
+    assert state['savedGameCount']==checkpoint['snapshotAfterSaveCommand']['savedGameCount']
+    inherited=_qualify(edition,name,verification,report,checkpoint,checkpoint_recovery=True)
+    return inherited,{'method':'completed-normal-save-after-readiness-cache-refresh',
+        'checkpointOnly':True,'priorRunCompleted':False,'savedThroughSeq':last}
+
 def qualify_interrupted(edition,name,verification,report,checkpoint,queue,state,source_audit=None):
     """Admit only the last fully witnessed SAVE, retaining the failed run.
 

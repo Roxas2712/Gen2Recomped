@@ -296,11 +296,16 @@ return function(game)
     -- ClearTempFieldEventData clears the first four flag bytes on map load.
     -- A smashed rock uses FLAG_TEMP_11, so its in-memory reset is authentic;
     -- FLAG_TEMP_20 is outside those bytes and must remain protected.
+    -- Independently evaluate the cartridge reset graph on a detached test
+    -- snapshot. The original disk bytes and all party/player/item fields
+    -- above remain exact; no production repair helper supplies this oracle.
+    local continuationSave,recoveredLeague=require('tests.drivers.hoenn_recovery_oracle').expected(originalSave,game.data,edition)
+    report.expectedNativeEmeraldLeagueRecovery=recoveredLeague
     local keys={};report.transientFlagsCleared={}
-    for key in pairs(originalSave.flags or{})do keys[key]=true end
+    for key in pairs(continuationSave.flags or{})do keys[key]=true end
     for key in pairs(game.save.flags or{})do keys[key]=true end
     for key in pairs(keys)do
-      local before,after=(originalSave.flags or{})[key],(game.save.flags or{})[key]
+      local before,after=(continuationSave.flags or{})[key],(game.save.flags or{})[key]
       if before~=after then
         local id=type(key)=='string'and tonumber(key:match('^FLAG_G3_(%x%x%x%x)$'),16)
         assert(id and id<0x20 and after==nil,'Continue changed persistent flag '..tostring(key))
@@ -315,7 +320,7 @@ return function(game)
       end
       return out
     end
-    assert(Serialize.encode(permanentVars(game.save.gen3Vars))==Serialize.encode(permanentVars(originalSave.gen3Vars)),
+    assert(Serialize.encode(permanentVars(game.save.gen3Vars))==Serialize.encode(permanentVars(continuationSave.gen3Vars)),
       'Continue changed persistent script variables')
     report.continuedThroughUI=true;report.checkpointFullSavePreserved=true
     report.transientVarsExcluded='Native RS VAR_TEMP_0..F (4000..400F) and special vars (8000+) are map/call-local'

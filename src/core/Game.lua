@@ -2411,6 +2411,12 @@ function Game:restoreSave(loaded, recovered)
       Logger.info("FireRed save repair: synchronized in-progress Elite Four flags")
     end
   end
+  if require("src.core.GameVersion").get()=="emerald" then
+    local recoveryGame={save=loaded,data=self.data,stack=self.stack}
+    if require("src.import.Gen3RsWhiteout").repairEmeraldLeagueReturn(recoveryGame) then
+      Logger.info("Emerald save repair: recovered interrupted League return through native whiteout script")
+    end
+  end
   -- Pre-fix FireRed port saves could already own a TM/HM without ITEM_TM_CASE.
   -- Repair that impossible-on-cartridge state before validation/UI adoption.
   local okBag, Bag = pcall(require, "src.inventory.Bag")
