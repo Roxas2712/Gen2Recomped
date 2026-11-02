@@ -34,10 +34,12 @@ return function(game)
   local function menu(turn)
    for _=1,12000 do
     if game.stack:top()==b and b.phase=='menu'and not b.current and #b.queue==0
-     and not b.showPlayerBack and not b.showEnemyTrainer and b.turnCount==turn then return end
+     and not b.showPlayerBack and not b.showEnemyTrainer and (b.turnCount or 0)==turn then return end
     if game.stack:top()==b and b.phase~='messages'then U.wait(1)else press('b',4)end
    end
-   error('battle did not return to expected turn '..turn)
+   report.waitFailure={expectedTurn=turn,actualTurn=b.turnCount or 0,phase=b.phase,
+    queue=#b.queue,shownPlayerBack=b.showPlayerBack,shownEnemyTrainer=b.showEnemyTrainer}
+   persist();error('battle did not return to expected turn '..turn)
   end
   local function selectBagItem()
    if (b.menuIndex-1)%2==0 then press('right')end
@@ -48,7 +50,7 @@ return function(game)
    for _=1,#bag.rows do if bag:selected().id==id then break end;press('down')end
    assert(bag:selected().id==id);shot('tonic-'..id..'-bag');press('a',60)
   end
-  menu(0);selectBagItem();menu(1)
+  menu(0);shot('tonic-'..id..'-ready');selectBagItem();menu(1)
   assert(game.save.inventory[id]==1,'native bag did not consume exactly one item')
   assert(not b.player.xAccuracy and b.player.stages.special==nil,'legacy G1 state leaked into GBA')
   if stat=='focusEnergy'then assert(b.player.focusEnergy)
