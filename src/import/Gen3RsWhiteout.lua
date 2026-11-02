@@ -1,11 +1,11 @@
--- The native RS whiteout script repairs story state before the heal warp,
+-- The native Hoenn whiteout script repairs story state before the heal warp,
 -- including Mr. Briney's ferry location. A heal warp alone can strand a
 -- player on Dewford after losing a mainland battle.
 local M={}
 local OPS={call=true,['goto']=true,compare_var_to_value=true,goto_if=true,checkflag=true,
   clearflag=true,setflag=true,setvar=true,['return']=true,['end']=true}
 function M.read(x)
-  assert(x.version=='ruby'or x.version=='sapphire')
+  assert(x.version=='ruby'or x.version=='sapphire'or x.version=='emerald')
   local S=require('compat.gen1-rs.Loader').new(x.version)('src.import.gba.syms').of(x.version)
   local root=S.off('EventScript_WhiteOut');local queue={root};local seen={};local scripts={};local labels={}
   while #queue>0 do
@@ -39,7 +39,7 @@ function M.extract(x)
 end
 function M.valid(spec,version,pool)
   if type(spec)~='table'or spec.format~=1 or spec.version~=version
-    or (version~='ruby'and version~='sapphire')or type(spec.entry)~='string'
+    or (version~='ruby'and version~='sapphire'and version~='emerald')or type(spec.entry)~='string'
     or type(spec.labels)~='table'or #spec.labels==0 or type(pool)~='table'
     or type(pool.scripts)~='table'then return false end
   for _,label in ipairs(spec.labels)do if type(pool.scripts[label])~='table'then return false end end
@@ -60,5 +60,16 @@ function M.apply(game,world)
     onDone=function()completed=true end})
   assert(completed and not runner:isRunning(),'Native RS whiteout state reset failed or unexpectedly yielded')
   return true
+end
+-- Older Emerald builds omitted the whiteout graph. A SAVE made after a
+-- League loss can therefore still carry an active room state at the League
+-- healing point. Run the same cartridge recovery before loading that map;
+-- never reset an in-progress SAVE inside an Elite Four room.
+function M.repairEmeraldLeagueReturn(game,world)
+  if require('src.core.GameVersion').get()~='emerald'then return false end
+  local save=game.save;local map=save and save.player and save.player.map
+  if map~='MAP_G00_N08'and map~='MAP_G16_N10'then return false end
+  if not save.gen3Vars or (tonumber(save.gen3Vars[0x409C])or 0)==0 then return false end
+  return M.apply(game,world)
 end
 return M

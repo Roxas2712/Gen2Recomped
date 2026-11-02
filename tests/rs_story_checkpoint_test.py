@@ -3,7 +3,7 @@ from pathlib import Path
 import copy,sys,unittest
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'tools'))
-from rs_story_checkpoint import qualify,qualify_interrupted,first_badge_starter_proof
+from rs_story_checkpoint import qualify,qualify_interrupted,qualify_cache_refresh,first_badge_starter_proof
 
 class CheckpointTests(unittest.TestCase):
     def fixture(self,e='sapphire'):
@@ -106,6 +106,45 @@ class CheckpointTests(unittest.TestCase):
             self.assertFalse(proof['priorRunCompleted']);self.assertEqual(proof['savedThroughSeq'],2)
             self.assertEqual(proof['discardedCompletedCommands'],1);self.assertEqual(f,before)
             self.assertRaises(AssertionError,qualify,*f[:5])
+
+    def cache_refresh_fixture(self):
+        f=self.interrupted_fixture('emerald')[:7]
+        f[2].update(exitCode=0,frozenSourceUnchanged=True,unexpectedImporterRun=True,
+                    fullImport=False,cacheSource='isolated-previous-cache')
+        f[2].pop('stoppedOwnChildReason')
+        f[3].update(status='pass',expectedNativeEmeraldLeagueRecovery=True)
+        f[3]['commands']=f[3]['commands'][:2]
+        f[5]=f[5][:2]+[{'op':'finish'}]
+        return f
+
+    def test_completed_cache_refresh_recovers_save_without_passing_failed_run(self):
+        f=self.cache_refresh_fixture();before=copy.deepcopy(f)
+        inherited,proof=qualify_cache_refresh(*f)
+        self.assertTrue(inherited['naturalStarterAccepted']);self.assertTrue(proof['checkpointOnly'])
+        self.assertFalse(proof['priorRunCompleted']);self.assertEqual(f,before)
+        self.assertRaises(AssertionError,qualify,*f[:5])
+
+    def test_cache_refresh_refuses_crashes_incomplete_queues_and_changed_origins(self):
+        for change in ('crash','stop','source','not-import','full-import','cache','driver','oracle',
+                       'continue','save-equality','queue','new-save','tail','origin','personal','other-edition'):
+            f=self.cache_refresh_fixture()
+            if change=='crash':f[2]['exitCode']=1
+            elif change=='stop':f[2]['stoppedOwnChildReason']='fatal importer error'
+            elif change=='source':f[2]['frozenSourceUnchanged']=False
+            elif change=='not-import':f[2]['unexpectedImporterRun']=False
+            elif change=='full-import':f[2]['fullImport']=True
+            elif change=='cache':f[2]['cacheSource']=None
+            elif change=='driver':f[3]['status']='running'
+            elif change=='oracle':f[3]['expectedNativeEmeraldLeagueRecovery']=False
+            elif change=='continue':f[3]['continuedThroughUI']=False
+            elif change=='save-equality':f[3]['checkpointFullSavePreserved']=False
+            elif change=='queue':f[5][0]['button']='b'
+            elif change=='new-save':f[6]['savedGameCount']+=1
+            elif change=='tail':f[3]['commands'].append({'seq':3,'input':{'op':'step','dir':'down'}});f[5]=f[5][:2]+[{'op':'step','dir':'down'},{'op':'finish'}];f[6]['seq']=4
+            elif change=='origin':f[3]['lineage']['inherited']['naturalStarterAccepted']=False
+            elif change=='personal':f[4]['personalSave']=True
+            elif change=='other-edition':f[0]='ruby'
+            with self.subTest(change=change):self.assertRaises(AssertionError,qualify_cache_refresh,*f)
 
     def test_interrupted_recovery_refuses_new_writes_bad_sources_and_unproven_origin(self):
         for change in('new-save','wrong-driver','no-audit','bad-audit','wrong-stop','queue','no-origin','not-save-yes'):
